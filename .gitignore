@@ -1,0 +1,14 @@
+.DS_Store
+RemoteSystemsTempFiles
+.vscode/
+/.metadata/
+components/amb/.settings/language.settings.xml
+components/ecu/ecu_firmware/build
+components/ecu/ecu_firmware/Drivers
+components/ecu/ecu_firmware/.vscode
+libraries/githash/githash.h
+*.launch
+.settings/*
+# Ignore STM32 HAL & CMSIS driver files
+components/tel/Drivers/CMSIS/Device/ST/STM32F1xx/*
+components/tel/Drivers/STM32F1xx_HAL_Driver/*

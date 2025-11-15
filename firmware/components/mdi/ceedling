@@ -1,0 +1,7 @@
+#!/bin/bash
+
+ruby ../../../tools/ceedling/vendor/ceedling/bin/ceedling $*
+
+
+
+

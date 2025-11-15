@@ -1,14 +1,53 @@
-.DS_Store
-RemoteSystemsTempFiles
+
+# IDE
 .vscode/
-/.metadata/
-components/amb/.settings/language.settings.xml
-components/ecu/ecu_firmware/build
-components/ecu/ecu_firmware/Drivers
-components/ecu/ecu_firmware/.vscode
-libraries/githash/githash.h
+.idea/
+*.swp
+*.swo
+*~
 *.launch
-.settings/*
-# Ignore STM32 HAL & CMSIS driver files
-components/tel/Drivers/CMSIS/Device/ST/STM32F1xx/*
-components/tel/Drivers/STM32F1xx_HAL_Driver/*
+.settings/
+.metadata/
+RemoteSystemsTempFiles
+
+# Build system - CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CMakeUserPresets.json
+compile_commands.json
+CMakePresets.json.user
+
+# Build system - Ninja
+.ninja_deps
+.ninja_log
+build.ninja
+.ninja*
+
+# Build artifacts
+build/
+*/build/
+**/build/
+*.o
+*.a
+*.so
+*.elf
+*.bin
+*.hex
+*.map
+*.lst
+*.d
+*.su
+*.gch
+
+# STM32CubeMX
+*.ioc.old
+
+
+# Temporary/Backup files
+*.tmp
+*.bak
+*.orig
+*_backup/
+*.swp
+*.swo

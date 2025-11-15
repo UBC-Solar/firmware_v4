@@ -9,6 +9,7 @@
 .settings/
 .metadata/
 RemoteSystemsTempFiles
+.clangd
 
 # Build system - CMake
 CMakeCache.txt

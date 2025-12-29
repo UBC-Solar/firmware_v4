@@ -52,3 +52,5 @@ build/
 *_backup/
 *.swp
 *.swo
+*.idx
+*.index

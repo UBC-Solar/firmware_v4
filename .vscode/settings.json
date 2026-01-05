@@ -3,6 +3,7 @@
         "${workspaceFolder}/firmware/components/tel",
         "${workspaceFolder}/firmware/components/mdi",
         "${workspaceFolder}/firmware/components/drd"
+
     ],
     "cmake.buildDirectory": "${sourceDirectory}/build",
     "cmake.cmakePath": "cube-cmake",

@@ -54,3 +54,4 @@ build/
 *.swo
 *.idx
 *.index
+*.cache

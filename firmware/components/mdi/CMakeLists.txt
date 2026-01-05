@@ -46,6 +46,7 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/CAN_comms/CAN_comms.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/evan.c
     #TODO: make this a symbolic reference to avoid hardcoding
 )
 

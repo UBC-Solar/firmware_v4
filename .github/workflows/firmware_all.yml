@@ -36,7 +36,13 @@ jobs:
 
       - name: Verify binary exists
         run: |
-          ls -lh firmware/components/${{ matrix.module }}/build/**/*.elf || echo "Binary not found"
+          set -e
+          echo "Searching for .elf files..."
+          if ! find firmware/components/${{ matrix.module }}/build -type f -name "*.elf" | grep -q .; then
+            echo "ERROR: No .elf produced"
+            exit 1
+          fi
+          find firmware/components/${{ matrix.module }}/build -type f -name "*.elf" -print -exec ls -lh {} \;
 
   unit-tests:
     runs-on: ubuntu-latest
@@ -56,5 +62,4 @@ jobs:
 
       - name: Run MDI Unit Tests
         run: |
-          cd firmware/components/mdi
-          ./ceedling test:all
+          make utest

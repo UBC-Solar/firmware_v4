@@ -60,6 +60,6 @@ jobs:
       - name: Install Ceedling
         run: gem install --no-document ceedling
 
-      - name: Run MDI Unit Tests
+      - name: Run All Unit Tests
         run: |
           make utest

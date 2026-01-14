@@ -5,12 +5,12 @@ on:
     paths:
       - 'firmware/**'
       - 'Makefile'
-      - '.github/workflows/firmware.yml'
+      - '.github/workflows/firmware_all.yml'
   pull_request:
     paths:
       - 'firmware/**'
       - 'Makefile'
-      - '.github/workflows/firmware.yml'
+      - '.github/workflows/firmware_all.yml'
   workflow_dispatch:
 
 jobs:

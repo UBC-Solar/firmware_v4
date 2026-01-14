@@ -1,3 +1,5 @@
+# Top level makefile used to make building from the command line simple.
+
 .PHONY: all mdi tel drd clean help debug release utest
 
 BUILD_DIR := build

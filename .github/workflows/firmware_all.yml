@@ -2,13 +2,11 @@ name: Firmware All CI
 
 on:
   push:
-    branches: [ main, develop ]
     paths:
       - 'firmware/**'
       - 'Makefile'
       - '.github/workflows/firmware.yml'
   pull_request:
-    branches: [ main, develop ]
     paths:
       - 'firmware/**'
       - 'Makefile'
@@ -60,30 +58,3 @@ jobs:
         run: |
           cd firmware/components/mdi
           ./ceedling test:all
-
-  build-all:
-    runs-on: ubuntu-latest
-    needs: [build, unit-tests]
-    if: success()
-    
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake ninja-build gcc-arm-none-eabi libnewlib-arm-none-eabi
-
-      - name: Build all modules (Debug)
-        run: make all debug
-
-      - name: Build all modules (Release)
-        run: make all release
-
-      - name: Summary
-        run: |
-          echo "✓ All modules built successfully"
-          echo "✓ Unit tests passed"
-          find firmware/components -name "*.elf" -type f

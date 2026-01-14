@@ -8,7 +8,7 @@
       "servertype": "jlink",
       "cwd": "${workspaceFolder}",
       "executable": "${command:cmake.launchTargetPath}",
-      "device": "STM32F103RC",
+      "device": "STM32F103RB",
       "interface": "swd",
       "runToEntryPoint": "main",
       "swoConfig": {

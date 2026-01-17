@@ -1,12 +1,12 @@
 # firmware_v4
 
-This repository contains all of the firmware for UBC Solar's fourth-generation vehicle, `TO BE NAMED`
+This repository contains all of the firmware for UBC Solar's fourth-generation vehicle, `Cascadia`
 
-Each custom device on the car for which the team has written firmware has its own folder in the `/components/` directory.
+Each custom device on the car for which the team has written firmware has its own folder in the `firmware/components/` directory.
 
-When adding a firmware project for another device on the car to this repository, start by creating a folder in the `/components/` directory named using the 3-letter identifier for the device (eg. `bms`, `ecu`, `mcb`), if one does not already exist. Then, place the firmware project for the device in the corresponding 3-letter ID folder.
+When adding a firmware project for another device on the car to this repository, follow the steps on this wiki page `TODO`.
 
-In addition to the firmware for hardware on the car in `/components/`, any tools that have been developed for working with this hardware can be found in the `/tools/` folder. 
+In addition to the firmware for hardware on the car in `firmware/components/`, any common library code can be found in `firmware/common`, and any tools that have been developed for working with hardware/firmware can be found in the `/tools/` folder. 
 
 ## Contributing
 
@@ -16,8 +16,8 @@ For information on getting set up to work on the projects that use STM32CubeIDE,
 
 Team members create branches directly on this repository (rather than repository forks) to facilitate work in parallel on this codebase. Branches on the repository should follow the naming scheme
 
-`user/<name>/<project>/<feature>`
+`<name>-<project>-<feature>`
 
-where the values delimited by `<>` should be replaced by your information. **No spaces please.** You may use your first name or your GitHub username for `<name>`. For example, `user/a2k-hanlon/bms/fsm`.
+where the values delimited by `<>` should be replaced by your information. **No spaces please.** You may use your first name or your GitHub username for `<name>`. For example, `a2k-hanlon/bms/fsm`.
 
 Once your contributions are error-free and ready to add to the main branch, create a PR with the default PR template and submit it to another team member to review and approve your work, allowing you you merge it.

@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         module: [mdi, tel]
-        mode: [Debug, Release]
+        mode: [Release]
     
     steps:
       - uses: actions/checkout@v4
@@ -55,7 +55,7 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.1'
+          ruby-version: '3.2'
 
       - name: Install Ceedling
         run: gem install --no-document ceedling

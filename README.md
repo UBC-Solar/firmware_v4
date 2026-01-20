@@ -10,14 +10,14 @@ In addition to the firmware for hardware on the car in `firmware/components/`, a
 
 ## Contributing
 
-The firmware projects in this repository (so far) are written in C and developed using either STM32CubeIDE or PlatformIO.
-For information on getting set up to work on the projects that use STM32CubeIDE, please visit the team's [tutorial on STM32CubeIDE](https://wiki.ubcsolar.com/tutorials/stm32cubeide).
+The firmware projects in this repository are written in C and developed using our VS Code STM32-Cube-extension based development environment. But the firmware can be built from anywhere using CMake + Ninja as long as the right dependencies are installed.
+For information on getting set up to work with our build system and development environment, please visit the team's [tutorial on the STM32 VS Code extension](https://wiki.ubcsolar.com/).
 
 
-Team members create branches directly on this repository (rather than repository forks) to facilitate work in parallel on this codebase. Branches on the repository should follow the naming scheme
+Team members create branches directly on this repository to facilitate work in parallel on this codebase. Branches on the repository should follow the naming scheme
 
 `<name>-<project>-<feature>`
 
-where the values delimited by `<>` should be replaced by your information. **No spaces please.** You may use your first name or your GitHub username for `<name>`. For example, `a2k-hanlon/bms/fsm`.
+where the values delimited by `<>` should be replaced by your information. **No spaces please.** You may use your first name or your GitHub username for `<name>`. For example, `EvanO12-drd-drive-state-logic`.
 
 Once your contributions are error-free and ready to add to the main branch, create a PR with the default PR template and submit it to another team member to review and approve your work, allowing you you merge it.

@@ -1,0 +1,65 @@
+name: Firmware All CI
+
+on:
+  push:
+    paths:
+      - 'firmware/**'
+      - 'Makefile'
+      - '.github/workflows/firmware_all.yml'
+  pull_request:
+    paths:
+      - 'firmware/**'
+      - 'Makefile'
+      - '.github/workflows/firmware_all.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module: [mdi, tel]
+        mode: [Release]
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build gcc-arm-none-eabi libnewlib-arm-none-eabi
+
+      - name: Build ${{ matrix.module }} (${{ matrix.mode }})
+        run: make ${{ matrix.module }} ${{ matrix.mode }}
+
+      - name: Verify binary exists
+        run: |
+          set -e
+          echo "Searching for .elf files..."
+          if ! find firmware/components/${{ matrix.module }}/build -type f -name "*.elf" | grep -q .; then
+            echo "ERROR: No .elf produced"
+            exit 1
+          fi
+          find firmware/components/${{ matrix.module }}/build -type f -name "*.elf" -print -exec ls -lh {} \;
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      - name: Install Ceedling
+        run: gem install --no-document ceedling
+
+      - name: Run All Unit Tests
+        run: |
+          make utest

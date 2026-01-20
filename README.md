@@ -4,17 +4,17 @@ The Driver Dashboard (DRD) is a PCB designed to act as the central hub of the in
 
 Additionally, this project was sponsored by [**PCBWay**](https://www.pcbway.com/), who provided PCB manufacturing support and quick design review for the DRD! During the review process, they clarified aspects of the layout and identified a design fault, which was confirmed and resolved prior to the board being produced.
 
-![DRD overview](doc/drd-overview.png)
+![DRD overview](media/drd-overview.png)
 
 *Overall view of the Driver Dashboard (DRD) PCB.*
 
 ### Front Side
-![DRD front](doc/drd-front.png) 
+![DRD front](media/drd-front.png) 
 
 *Front side of the DRD showing user interface components and signal routing.*
 
 ### Back Side
-![DRD back](doc/drd-back.png)
+![DRD back](media/drd-back.png)
 
 *Back side of the DRD highlighting power routing and ground plane coverage.*
 
@@ -41,28 +41,28 @@ The DRD layout was driven by mechanical constraints and dashboard integration re
 With the various subsystems involving 30+ GPIOs, analog signals, and most importantly communication lines, various routing practices were used during this design process.
 
 ### Ground Plane Continuity
-![Ground plane jumper](doc/drd-ground-jumper.png)
+![Ground plane jumper](media/drd-ground-jumper.png)
 
 *0 Ω resistors used as signal jumpers to preserve ground plane continuity and short return paths.*
 
 In order to prevent the GND plane being cut off by traces, 0 ohm resistors were used for some digital signals to bypass routes to create a continuous place for short return paths.
 
 ### Trace Geometry
-![Curved routing](doc/drd-curved-routing.png)
+![Curved routing](media/drd-curved-routing.png)
 
 *Curved trace routing used to avoid abrupt geometry changes and maintain consistent signal behavior.*
 
 Curved traces were used in place of 90-degree corners to avoid sudden changes in the geometry. An abrupt change will create a small area where the impedance will be decreased due to a larger area being present in the bend that causes slight impedance discontinuites in addition to minor reflections in fast signals.
 
 ### Ground Stitching Vias
-![Ground stitching vias](doc/drd-stitching-vias.png)
+![Ground stitching vias](media/drd-stitching-vias.png)
 
 *Ground stitching vias used to reduce return path impedance and improve plane connectivity.*
 
 Stiching vias were put in place as some traces switched between the planes due to hte large number of signals coming from the MCU. Stiching vias act as a stable reference for signals when they cross planes by having a continuous GND trace going from the top to bottom layer of the board that prevents magnetic coupling from the outside going to the inside.
 
 ### CAN Differential Pair Routing
-![CAN routing](doc/drd-can-routing.png)
+![CAN routing](media/drd-can-routing.png)
 
 *CAN differential pair routing with consistent spacing and coupling to maintain noise immunity.*
 

@@ -1,12 +1,12 @@
-# DRD PCBWay Showcase
+# UBC Solar x PCbWay Driver Dashboard Showcase!
 
-The Driver Dashboard (DRD) is a PCB designed to act as the central hub of the interface between the driver and the solar racing car featuring LEDs, switches, and an LCD to display critical information of the car. This repository will go into details about the hardware design of this PCB from schematic to layout design.
+The Driver Dashboard (DRD) is a PCB designed to act as the central hub of the interface between the driver and the solar racing car featuring LEDs, switches, and an LCD to display critical information of the car. This repository will go into details about the hardware design of this PCB from schematic to layout design. 
+
+Additionally, this project was sponsored by [**PCBWay**](https://www.pcbway.com/), who provided PCB manufacturing support and quick design review for the DRD! During the review process, they clarified aspects of the layout and identified a design fault, which was confirmed and resolved prior to the board being produced.
 
 ![DRD overview](doc/drd-overview.png)
 
 *Overall view of the Driver Dashboard (DRD) PCB.*
-
-This project was sponsored by PCBWay, who provided PCB manufacturing support and quick design review for the DRD. During the review process, they clarified aspects of the layout and identified a design fault, which was confirmed and resolved prior to the board being produced.
 
 ### Front Side
 ![DRD front](doc/drd-front.png) 
@@ -20,7 +20,17 @@ This project was sponsored by PCBWay, who provided PCB manufacturing support and
 
 ## Project Overview
 
-The DRD is controlled by an STM32 microcontroller responsible for managing low-voltage vehicle functions, including exterior lighting control and drive-state selection. The board interfaces with the vehicle CAN bus to receive real-time telemetry such as fault conditions, motor controller status signals, and the supplemental battery voltage, which are processed and displayed to the driver.
+The DRD is controlled by an STM32F103RCT6 microcontroller responsible for managing 
+* Low-voltage vehicle functions 
+* Exterior lighting control of TruFlex Turn signals, fault, and hazard lights.
+* Drive-state selection for park, reverse, and forward
+* LCD Display for car vitals, speed, drive state, etc.
+
+ The board interfaces with the vehicle CAN bus to receive real-time telemetry such as fault conditions, M2096 Mitsuba motor controller status signals, and the supplemental battery voltage, which are processed and displayed to the driver.
+
+## Motor Control
+Here is an example of the result of this board:
+![motor_spinning](./media/motor.gif)
 
 ## Layout 
 

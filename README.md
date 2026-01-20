@@ -3,16 +3,19 @@
 The Driver Dashboard (DRD) is a PCB designed to act as the central hub of the interface between the driver and the solar racing car featuring LEDs, switches, and an LCD to display critical information of the car. This repository will go into details about the hardware design of this PCB from schematic to layout design.
 
 ![DRD overview](doc/drd-overview.png)
+
 *Overall view of the Driver Dashboard (DRD) PCB.*
 
 This project was sponsored by PCBWay, who provided PCB manufacturing support and quick design review for the DRD. During the review process, they clarified aspects of the layout and identified a design fault, which was confirmed and resolved prior to the board being produced.
 
 ### Front Side
-![DRD front](doc/drd-front.png)
+![DRD front](doc/drd-front.png) 
+
 *Front side of the DRD showing user interface components and signal routing.*
 
 ### Back Side
 ![DRD back](doc/drd-back.png)
+
 *Back side of the DRD highlighting power routing and ground plane coverage.*
 
 ## Project Overview
@@ -29,24 +32,28 @@ With the various subsystems involving 30+ GPIOs, analog signals, and most import
 
 ### Ground Plane Continuity
 ![Ground plane jumper](doc/drd-ground-jumper.png)
+
 *0 Ω resistors used as signal jumpers to preserve ground plane continuity and short return paths.*
 
 In order to prevent the GND plane being cut off by traces, 0 ohm resistors were used for some digital signals to bypass routes to create a continuous place for short return paths.
 
 ### Trace Geometry
 ![Curved routing](doc/drd-curved-routing.png)
+
 *Curved trace routing used to avoid abrupt geometry changes and maintain consistent signal behavior.*
 
 Curved traces were used in place of 90-degree corners to avoid sudden changes in the geometry. An abrupt change will create a small area where the impedance will be decreased due to a larger area being present in the bend that causes slight impedance discontinuites in addition to minor reflections in fast signals.
 
 ### Ground Stitching Vias
 ![Ground stitching vias](doc/drd-stitching-vias.png)
+
 *Ground stitching vias used to reduce return path impedance and improve plane connectivity.*
 
 Stiching vias were put in place as some traces switched between the planes due to hte large number of signals coming from the MCU. Stiching vias act as a stable reference for signals when they cross planes by having a continuous GND trace going from the top to bottom layer of the board that prevents magnetic coupling from the outside going to the inside.
 
 ### CAN Differential Pair Routing
 ![CAN routing](doc/drd-can-routing.png)
+
 *CAN differential pair routing with consistent spacing and coupling to maintain noise immunity.*
 
 CAN communication uses differential pair signaling, where a signal and its inverse are transmitted on a matched pair of traces such that external interference couples similarly into both lines. The receiver measures the voltage difference between the two signals, improving noise immunity by rejecting common-mode interference in the electrically noisy vehicle environment.

@@ -1,4 +1,5 @@
-# firmware_v4
+# firmware_v4 
+UBC Solar's V4 car firmware. PCBs sponsored with PCBWay! See documentation links in headings below.
 
 ## See the [Driver Dashboard PCB Sponsored with PCBWay!](./docs/DRD.md)
 

@@ -25,7 +25,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "CAN_comms.h"
-#include "evan.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -109,14 +108,6 @@ int main(void)
   while (1)
   {
     HAL_Delay(100);
-    int evan_age = returnEvanAge();
-    evan_age++;
-
-    if (evan_age > 20)
-    {
-      evan_age--;
-    }
-    // CAN_comms_Add_Tx_message(CAN_comms_Tx_msg_t *CAN_comms_Tx_msg);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

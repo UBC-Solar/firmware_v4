@@ -14,7 +14,7 @@
  * 
  * @internal
  */
-void DEBUG_IO_print(const char* fmt, ...);
+
 
  /**
  * @brief Generic Macro for printf style debug logging. Users should call this macro for all
@@ -25,6 +25,8 @@ void DEBUG_IO_print(const char* fmt, ...);
  * @param ... Variable arguments matching the format string
  *
  */
+void DEBUG_IO_print(const char* fmt, ...);
+
 #ifdef DEBUG
     #define DEBUG_IO_PRINT(fmt, ...) DEBUG_IO_print(fmt, ##__VA_ARGS__)
 #else

@@ -1,6 +1,12 @@
 
 # IDE
+
+# IDE
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
 .idea/
 *.swp
 *.swo
@@ -9,7 +15,6 @@
 .settings/
 .metadata/
 RemoteSystemsTempFiles
-.clangd
 
 # Build system - CMake
 CMakeCache.txt
@@ -52,6 +57,3 @@ build/
 *_backup/
 *.swp
 *.swo
-*.idx
-*.index
-*.cache

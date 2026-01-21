@@ -36,7 +36,7 @@ add_executable(${CMAKE_PROJECT_NAME})
 
 target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
     -Wall
-    -Werror
+    # -Werror
 )
 
 

@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        module: [mdi, tel]
+        module: [mdi, tel, drd]
         mode: [Release]
     
     steps:

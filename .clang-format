@@ -1,0 +1,15 @@
+
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+ColumnLimit: 100
+
+BreakBeforeBraces: Allman  
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+BinPackParameters: false
+BinPackArguments: false
+PointerAlignment: Left      # int* []
+DerivePointerAlignment: false

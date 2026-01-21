@@ -1,7 +1,4 @@
 {
-  // -----------------------------
-  // CMake / STM32 Cube (as you already have working)
-  // -----------------------------
   "cmake.sourceDirectory": [
     "${workspaceFolder}/firmware/components/tel",
     "${workspaceFolder}/firmware/components/mdi",

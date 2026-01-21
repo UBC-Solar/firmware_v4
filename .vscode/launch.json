@@ -27,7 +27,6 @@
         ]
       }
     },
-
     {
       "name": "ST-LINK (active ELF path)",
       "type": "stlinkgdbtarget",

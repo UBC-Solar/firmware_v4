@@ -1,4 +1,4 @@
-# UBC Solar x PCbWay Driver Dashboard Showcase!
+# UBC Solar x PCBWay Driver Dashboard Showcase!
 
 The Driver Dashboard (DRD) is a PCB designed to act as the central hub of the interface between the driver and the solar racing car featuring LEDs, switches, and an LCD to display critical information of the car. This repository will go into details about the hardware design of this PCB from schematic to layout design. 
 

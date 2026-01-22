@@ -10,6 +10,7 @@
 .metadata/
 RemoteSystemsTempFiles
 .clangd
+.DS_Store
 
 # Build system - CMake
 CMakeCache.txt

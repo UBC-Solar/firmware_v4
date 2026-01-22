@@ -1,0 +1,47 @@
+Checks: >
+  -*,
+  clang-analyzer-*,
+  bugprone-*,
+  performance-*,
+  readability-*,
+  modernize-*,
+  misc-*,
+  readability-identifier-naming
+
+# Disable checks that are often noisy in embedded or in C-heavy codebases
+  -modernize-use-trailing-return-type,
+  -modernize-use-auto,
+  -readability-magic-numbers,
+  -readability-identifier-length
+
+WarningsAsErrors: ''
+HeaderFilterRegex: '^(?!.*(/Drivers/|/Middlewares/|/Third_Party/|/build/)).*'
+
+CheckOptions:
+  # ---- Naming rules ----
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+  - key: readability-identifier-naming.LocalVariableCase
+    value: lower_case
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.MemberCase
+    value: lower_case
+  - key: readability-identifier-naming.FunctionCase
+    value: CamelCase
+
+  # If you want types in CamelCase too (common):
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypedefCase
+    value: CamelCase
+
+  # ---- Keep your previous options ----
+  - key: readability-implicit-bool-conversion.AllowIntegerConditions
+    value: 'true'
+  - key: bugprone-assert-side-effect
+    value: 'true'

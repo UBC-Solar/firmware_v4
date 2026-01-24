@@ -1,6 +1,6 @@
 # RTD Temperature Sensor Library
 
-A driver library for reading temperature from PT1000 RTD sensors using the MAX31865 chip over SPI
+A driver library for reading temperature from PT1000 RTD sensors using the MAX31865 chip over SPI.
 
 ## Overview
 
@@ -14,9 +14,9 @@ Hardware:
 
 ## Functions
 
-### 1. RTD_Init()
+### 1. RtdDriverInit()
 
-void RTD_Init(void);
+void RtdDriverInit(void);
 
 Description: Initializes the MAX31865 chip for continuous temperature readings.
 
@@ -27,44 +27,41 @@ Returns: Nothing
 What it does:
 - Configures the chip for auto-conversion mode
 - Sets up 3-wire RTD connection
-- Sets fault thresholds to max range
 
 When to call: Once during system startup, after SPI is initialized.
 
 ---
 
-### 2. RTD_GetTemperature()
+### 2. RtdDriverGetTemp()
 
-Rtd_status_t RTD_GetTemperature(uint32_t* temperature, Rtd_faults_t* faults);
+Rtd_status_t RtdDriverGetTemp(uint32_t* temperature);
 
 Description: Reads the current temperature from the RTD sensor.
 
 Parameters:
 - temperature - Pointer where temperature (in °C) will be stored
-- faults - Pointer to fault status structure (required but not really used)
 
 Returns:
 - RtdStatusOk - Temperature read successfully
-- RtdStatusFault - Temperature read but with fault flag
-- RtdFaultReadAttemptExceded - Timeout reading faults
+- RtdStatusFault - Temperature read with fault bit set (indicates sensor issue)
 
 When to call: Whenever you want a temperature reading (e.g., in main loop).
 
-Note: The faults parameter exists but isn't very useful for typical use. Just check if the return status is RtdStatusOk.
+Note: The fault detection is based on the simple fault bit (bit 0) in the RTD data register. If the fault bit is set, the temperature reading should not be trusted.
 
 ## Typical Usage
 
 Step 1: Initialize all peripherals (HAL, clocks, GPIO, SPI)
 
-Step 2: Call RTD_Init() once
+Step 2: Call RtdDriverInit() once
 
-Step 3: In your main loop, call RTD_GetTemperature() to read temperature
+Step 3: In your main loop, call RtdDriverGetTemp() to read temperature
 
 Step 4: Check if return status is RtdStatusOk, then use the temperature value
 
 ### Example
 
-```
+```c
 #include "rtd.h"
 
 int main(void){
@@ -73,13 +70,12 @@ int main(void){
     MX_GPIO_Init();
     MX_SPI1_Init();
 
-    RTD_Init();
+    RtdDriverInit();
     
     uint32_t temperature;
-    Rtd_faults_t faults;
     
     while (1) {
-        if (RTD_GetTemperature(&temperature, &faults) == RtdStatusOk) {
+        if (RtdDriverGetTemp(&temperature) == RtdStatusOk) {
             printf("Temperature: %lu°C\n", temperature);
         } else {
             printf("Error reading temperature\n");
@@ -113,4 +109,4 @@ Example: If resistance = 1038.5Ω, then temperature = 10°C
 
 - Temperature readings are continuous in the background (using auto-conversion mode)
 - Temperature is returned as an integer (no decimal places)
-- The fault detection exists in the code but isn't typically useful for  temperature reading
+- Fault detection uses the simple fault bit from the RTD data register (bit 0), which indicates basic sensor faults

@@ -2,7 +2,7 @@
  * rtd.h
  *
  *  Created on: Nov 1, 2025
- *      Author: Luke
+ *      Author: Luke Santosham & Martin Wu
  */
 
 #ifndef INC_RTD_H_
@@ -11,28 +11,30 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef union {
-    struct {
-        bool OUV : 1;                    // bit0 = D2 (Over/undervoltage)
-        bool RTDIN_Low_Voltage : 1;      // bit1 = D3
-        bool REFIN_Low : 1;              // bit2 = D4
-        bool REFIN_High : 1;             // bit3 = D5
-        bool Low_Threshold_Violation : 1;// bit4 = D6
-        bool High_Threshold_Violation : 1;// bit5 = D7
-    } faults;
-    uint8_t bits;
-} Rtd_faults_t;
+typedef enum
+{
+    RtdStatusOk,
+    RtdStatusFault
+} Rtd_status_t;
 
-typedef enum {
-	RtdStatusOk,
-	RtdStatusFault,
-	RtdFaultReadAttemptExceded
-}Rtd_status_t;
+// PUBLIC FUNCTIONS
 
-//PUBLIC FUNCTIONS
-Rtd_status_t RTD_GetTemperature(uint32_t* temperature, Rtd_faults_t* status);
-void RTD_Init();
-uint32_t RTD_test();
+/*
+ * @brief:		Gets the temperature and status of the RTD
+ * @param[out]:	temperature; a uint32_t of the temperature read from the RTD
+ * 				converted from the resistance ratio.
+ * @returns		status of the RTD as an enumerator (RtdStatusOk or RtdStatusFault).
+ */
+Rtd_status_t RtdDriverGetTemp(uint32_t* temperature);
 
+/*
+ * @brief:      Initializes the MAX31865 RTD interface.
+ * @details:    Writes the desired configuration settings (bias, conversion mode,
+ *              wiring type, and filter selection) to the configuration register.
+ * @param:      None.
+ * @returns:    None.
+ */
+void RtdDriverInit();
+uint32_t RtdDriverTest();
 
 #endif /* INC_RTD_H_ */

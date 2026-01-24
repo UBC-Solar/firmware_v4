@@ -1,47 +1,47 @@
 #include <stdint.h>
 
 /** LCD Screen Constants */
-#define DIRTY_PAGE_CHANGE 0xFF
+#define LCD_DRIVER_DIRTY_PAGE_CHANGE 0xFF
 
-#define SCREEN_HEIGHT 64
-#define SCREEN_WIDTH 128
+#define LCD_DRIVER_SCREEN_HEIGHT 64
+#define LCD_DRIVER_SCREEN_WIDTH 128
 
-#define BOTTOM_RIGHT_X 127
-#define BOTTOM_RIGHT_Y 63
+#define LCD_DRIVER_BOTTOM_RIGHT_X 127
+#define LCD_DRIVER_BOTTOM_RIGHT_Y 63
 
-#define ST7565_DIRTY_PAGES
+#define LCD_DRIVER_ST7565_DIRTY_PAGES
 
 /* Font Parameters */
-#define FONT_HEADER_TYPE 0
-#define FONT_HEADER_ORIENTATION 1
-#define FONT_HEADER_START 2
-#define FONT_HEADER_LETTERS 3
-#define FONT_HEADER_HEIGHT 4
+#define LCD_DRIVER_FONT_HEADER_TYPE 0
+#define LCD_DRIVER_FONT_HEADER_ORIENTATION 1
+#define LCD_DRIVER_FONT_HEADER_START 2
+#define LCD_DRIVER_FONT_HEADER_LETTERS 3
+#define LCD_DRIVER_FONT_HEADER_HEIGHT 4
 
-#define FONT_TYPE_FIXED 0
-#define FONT_TYPE_PROPORTIONAL 1
+#define LCD_DRIVER_FONT_TYPE_FIXED 0
+#define LCD_DRIVER_FONT_TYPE_PROPORTIONAL 1
 
-#define FONT_ORIENTATION_VERTICAL_CEILING 2
+#define LCD_DRIVER_FONT_ORIENTATION_VERTICAL_CEILING 2
 
 /* LCD COMMAND PARAMS */
-#define CMD_SET_ADC_NORMAL 0xA0
-#define CMD_DISPLAY_OFF 0xAE
-#define CMD_SET_COM_NORMAL 0xC0
-#define CMD_SET_BIAS_9 0xA2
-#define CMD_SET_POWER_CONTROL 0x28
-#define CMD_SET_RESISTOR_RATIO 0x20
-#define CMD_SET_VOLUME_FIRST 0x81
-#define CMD_SET_CONTRAST 0x11
-#define CMD_DISPLAY_ON 0xAF
-#define CMD_SET_ALLPTS_NORMAL 0xA4
+#define LCD_DRIVER_CMD_SET_ADC_NORMAL 0xA0
+#define LCD_DRIVER_CMD_DISPLAY_OFF 0xAE
+#define LCD_DRIVER_CMD_SET_COM_NORMAL 0xC0
+#define LCD_DRIVER_CMD_SET_BIAS_9 0xA2
+#define LCD_DRIVER_CMD_SET_POWER_CONTROL 0x28
+#define LCD_DRIVER_CMD_SET_RESISTOR_RATIO 0x20
+#define LCD_DRIVER_CMD_SET_VOLUME_FIRST 0x81
+#define LCD_DRIVER_CMD_SET_CONTRAST 0x11
+#define LCD_DRIVER_CMD_DISPLAY_ON 0xAF
+#define LCD_DRIVER_CMD_SET_ALLPTS_NORMAL 0xA4
 
 /** Command: Set the current page (0..7). */
-#define CMD_SET_PAGE 0b10110000
+#define LCD_DRIVER_CMD_SET_PAGE 0b10110000
 /** Command: set the least significant 4 bits of the column address. */
-#define CMD_COLUMN_LOWER 0b00000000
+#define LCD_DRIVER_CMD_COLUMN_LOWER 0b00000000
 /** Command: set the most significant 4 bits of the column address. */
-#define CMD_COLUMN_UPPER 0b00010000
-#define CMD_DISPLAY_START 0b01000000
+#define LCD_DRIVER_CMD_COLUMN_UPPER 0b00010000
+#define LCD_DRIVER_CMD_DISPLAY_START 0b01000000
 
 typedef struct
 {
@@ -49,7 +49,7 @@ typedef struct
     uint8_t y1;
     uint8_t x2;
     uint8_t y2;
-} bounding_box_t;
+} BoundingBox;
 
 /* LCD Drawing Functions */
 
@@ -60,7 +60,7 @@ typedef struct
  * @param y The y coordinate (1-based).
  * @param color 1 to set the pixel, 0 to clear it.
  */
-void lcd_pixel(uint8_t x, uint8_t y, uint8_t colour);
+void LcdDriverSetPixel(uint8_t x, uint8_t y, uint8_t colour);
 
 /**
  * @brief Clears a rectangular area in the internal display buffer.
@@ -70,12 +70,12 @@ void lcd_pixel(uint8_t x, uint8_t y, uint8_t colour);
  * @param x2 Right coordinate (1-based).
  * @param y2 Bottom coordinate (1-based).
  */
-void lcd_clear_bounding_box(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2);
+void LcdDriverClearBoundingBox(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2);
 
 /**
  * @brief Refreshes the LCD display by calling the ST7565 display update.
  */
-void lcd_refresh();
+void LcdDriverRefresh();
 
 /**
  * @brief Draws a rectangle outline using the internal pixel function.
@@ -86,7 +86,7 @@ void lcd_refresh();
  * @param y2 Bottom coordinate (1-based).
  * @param color 1 to draw pixel.
  */
-void draw_rectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t color);
+void LcdDriverDrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t color);
 
 /**
  * @brief Draws a text string using an external graphics library.
@@ -96,13 +96,13 @@ void draw_rectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t colo
  * @param y Starting y coordinate.
  * @param font Pointer to the font to use.
  * @param spacing Spacing between characters.
- * @return bounding_box_t The bounding box of the drawn text.
+ * @return BoundingBox The bounding box of the drawn text.
  */
-bounding_box_t draw_text(char* string,
-                         unsigned char x,
-                         unsigned char y,
-                         const unsigned char* font,
-                         unsigned char spacing);
+BoundingBox LcdDriverDrawText(char* string,
+                              unsigned char x,
+                              unsigned char y,
+                              const unsigned char* font,
+                              unsigned char spacing);
 
 /**
  * @brief Draws a single character using an external graphics library.
@@ -111,10 +111,10 @@ bounding_box_t draw_text(char* string,
  * @param x Starting x coordinate.
  * @param y Starting y coordinate.
  * @param font Pointer to the font to use.
- * @return bounding_box_t The bounding box of the drawn character.
+ * @return BoundingBox The bounding box of the drawn character.
  */
-bounding_box_t
-draw_char(unsigned char c, unsigned char x, unsigned char y, const unsigned char* font);
+BoundingBox
+LcdDriverDrawChar(unsigned char c, unsigned char x, unsigned char y, const unsigned char* font);
 
 /* LCD Initializing Functions */
 
@@ -123,11 +123,11 @@ draw_char(unsigned char c, unsigned char x, unsigned char y, const unsigned char
  *
  * @param cmd The command byte to send.
  */
-void LCD_write_command(uint8_t cmd);
+void LcdDriverWriteCommand(uint8_t cmd);
 
 /**
  * @brief Sends data to the LCD via SPI.
  *
  * @param data The data byte to send.
  */
-void LCD_write_data(uint8_t data);
+void LcdDriverWriteData(uint8_t data);

@@ -53,7 +53,9 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     ${CMAKE_CURRENT_SOURCE_DIR}/app/evan_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/evan_driver.c
-
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/lcd_app.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/lcd_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/font_verdana.c
 )
 
 # Add include paths

@@ -1,10 +1,10 @@
 #include "lcd_app.h"
-#include "cyclic_data_handler.h"
-#include "diagnostic.h"
-#include "drd_freertos.h"
-#include "fault_lights.h"
+// #include "cyclic_data_handler.h"
+// #include "diagnostic.h"
+// #include "drd_freertos.h"
+// #include "fault_lights.h"
 #include "lcd_driver.h"
-#include "soc.h"
+// #include "soc.h"
 #include <stdio.h>
 
 /*--------------------------------------------------------------------------
@@ -219,7 +219,7 @@ void LcdAppDisplaySpeedDrivePage(volatile uint32_t* speed, volatile uint8_t unit
                                          LCD_APP_SPEED_Y + 10,
                                          LCD_APP_SPEED_NULL_FONT,
                                          LCD_APP_SPEED_SPACING + 10);
-        g_diagnostics.cyclic_flags.speed_timeout = true;
+        // g_diagnostics.cyclic_flags.speed_timeout = true;
     }
     else if (*speed < 10)
     { // Single digit speed
@@ -229,7 +229,7 @@ void LcdAppDisplaySpeedDrivePage(volatile uint32_t* speed, volatile uint8_t unit
                                          LCD_APP_SPEED_Y,
                                          LCD_APP_SPEED_FONT,
                                          LCD_APP_SPEED_SPACING);
-        g_diagnostics.cyclic_flags.speed_timeout = false;
+        // g_diagnostics.cyclic_flags.speed_timeout = false;
     }
     else if (*speed < 100)
     { // Double digit second
@@ -239,7 +239,7 @@ void LcdAppDisplaySpeedDrivePage(volatile uint32_t* speed, volatile uint8_t unit
                                          LCD_APP_SPEED_Y,
                                          LCD_APP_SPEED_FONT,
                                          LCD_APP_SPEED_SPACING);
-        g_diagnostics.cyclic_flags.speed_timeout = false;
+        // g_diagnostics.cyclic_flags.speed_timeout = false;
     }
     else
     {
@@ -249,20 +249,20 @@ void LcdAppDisplaySpeedDrivePage(volatile uint32_t* speed, volatile uint8_t unit
                                          LCD_APP_SPEED_Y,
                                          LCD_APP_SPEED_FONT,
                                          LCD_APP_SPEED_SPACING);
-        g_diagnostics.cyclic_flags.speed_timeout = false;
+        // g_diagnostics.cyclic_flags.speed_timeout = false;
     }
 
     /* Draw the speed units */
     switch (units)
     {
-    case KPH:
+    case LCD_APP_KPH:
         LcdDriverDrawText("kph",
                           LCD_APP_SPEED_X + LCD_APP_SPEED_UNIT_KPH_X,
                           LCD_APP_SPEED_UNIT_Y,
                           LCD_APP_SPEED_UNITS_FONT,
                           LCD_APP_SPEED_UNITS_SPACING);
         break;
-    case MPH:
+    case LCD_APP_MPH:
         LcdDriverDrawText("mph",
                           LCD_APP_SPEED_X + LCD_APP_SPEED_UNIT_MPH_X,
                           LCD_APP_SPEED_UNIT_Y,
@@ -299,21 +299,21 @@ void LcdAppDisplaySOCDrivePage(volatile uint32_t* soc)
         sprintf(soc_str, "--");
         old_bb_soc = LcdDriverDrawText(
             soc_str, LCD_APP_SOC_TWODIGIT_X, LCD_APP_SOC_Y, LCD_APP_SOC_FONT, LCD_APP_SOC_SPACING);
-        g_diagnostics.cyclic_flags.soc_timeout = true;
+        // g_diagnostics.cyclic_flags.soc_timeout = true;
     }
     else if (*soc < 10)
     {
         sprintf(soc_str, "%01lu", (unsigned long)*soc);
         old_bb_soc = LcdDriverDrawText(
             soc_str, LCD_APP_SOC_ONEDIGIT_X, LCD_APP_SOC_Y, LCD_APP_SOC_FONT, LCD_APP_SOC_SPACING);
-        g_diagnostics.cyclic_flags.soc_timeout = false;
+        // g_diagnostics.cyclic_flags.soc_timeout = false;
     }
     else if (*soc < 100)
     {
         sprintf(soc_str, "%02lu", (unsigned long)*soc);
         old_bb_soc = LcdDriverDrawText(
             soc_str, LCD_APP_SOC_TWODIGIT_X, LCD_APP_SOC_Y, LCD_APP_SOC_FONT, LCD_APP_SOC_SPACING);
-        g_diagnostics.cyclic_flags.soc_timeout = false;
+        // g_diagnostics.cyclic_flags.soc_timeout = false;
     }
     else
     {
@@ -323,7 +323,7 @@ void LcdAppDisplaySOCDrivePage(volatile uint32_t* soc)
                                        LCD_APP_SOC_Y,
                                        LCD_APP_SOC_FONT,
                                        LCD_APP_SOC_SPACING);
-        g_diagnostics.cyclic_flags.soc_timeout = false;
+        // g_diagnostics.cyclic_flags.soc_timeout = false;
     }
 
     LcdDriverDrawChar(
@@ -378,7 +378,7 @@ void LcdAppDisplayDriveStateDrivePage(volatile drive_state_t* state)
     if (state == NULL)
     { // Stale data for drive state
         sprintf(state_str, "-");
-        g_diagnostics.cyclic_flags.drive_state_timeout = true;
+        // g_diagnostics.cyclic_flags.drive_state_timeout = true;
     }
     else
     {
@@ -397,7 +397,7 @@ void LcdAppDisplayDriveStateDrivePage(volatile drive_state_t* state)
             state_str[0] = LCD_APP_ERROR_SYMBOL;
             break;
         }
-        g_diagnostics.cyclic_flags.drive_state_timeout = false;
+        // g_diagnostics.cyclic_flags.drive_state_timeout = false;
     }
 
     LcdDriverClearBoundingBox(
@@ -802,8 +802,8 @@ void LcdAppDisplayPowerBar(volatile int16_t* pack_current, volatile uint16_t* pa
     LcdDriverDrawRectangle(
         LCD_APP_BAR_LEFT, LCD_APP_BAR_TOP, LCD_APP_BAR_RIGHT, LCD_APP_BAR_BOTTOM, 1);
 
-    g_diagnostics.cyclic_flags.current_timeout = (pack_current == NULL) ? true : false;
-    g_diagnostics.cyclic_flags.voltage_timeout = (pack_voltage == NULL) ? true : false;
+    // g_diagnostics.cyclic_flags.current_timeout = (pack_current == NULL) ? true : false;
+    // g_diagnostics.cyclic_flags.voltage_timeout = (pack_voltage == NULL) ? true : false;
 
     /* If either of voltage or current equals NULL, we display a cross over the bar*/
     if (pack_current == NULL || pack_voltage == NULL)
@@ -894,7 +894,7 @@ void LcdAppDisplaySpeedDebugPage(volatile uint32_t* speed, volatile uint8_t unit
                                          LCD_APP_DEBUG_SPEED_Y + 10,
                                          LCD_APP_DEBUG_SPEED_FONT,
                                          LCD_APP_DEBUG_SPEED_SPACING + 10);
-        g_diagnostics.cyclic_flags.speed_timeout = true;
+        // g_diagnostics.cyclic_flags.speed_timeout = true;
     }
     else if (*speed < 10)
     { // Single digit speed
@@ -904,7 +904,7 @@ void LcdAppDisplaySpeedDebugPage(volatile uint32_t* speed, volatile uint8_t unit
                                          LCD_APP_DEBUG_SPEED_Y,
                                          LCD_APP_DEBUG_SPEED_FONT,
                                          LCD_APP_DEBUG_SPEED_SPACING);
-        g_diagnostics.cyclic_flags.speed_timeout = false;
+        // g_diagnostics.cyclic_flags.speed_timeout = false;
     }
     else if (*speed < 100)
     { // Double digit second
@@ -914,7 +914,7 @@ void LcdAppDisplaySpeedDebugPage(volatile uint32_t* speed, volatile uint8_t unit
                                          LCD_APP_DEBUG_SPEED_Y,
                                          LCD_APP_DEBUG_SPEED_FONT,
                                          LCD_APP_DEBUG_SPEED_SPACING);
-        g_diagnostics.cyclic_flags.speed_timeout = false;
+        // g_diagnostics.cyclic_flags.speed_timeout = false;
     }
     else
     {
@@ -924,20 +924,20 @@ void LcdAppDisplaySpeedDebugPage(volatile uint32_t* speed, volatile uint8_t unit
                                          LCD_APP_DEBUG_SPEED_Y,
                                          LCD_APP_DEBUG_SPEED_FONT,
                                          LCD_APP_DEBUG_SPEED_SPACING);
-        g_diagnostics.cyclic_flags.speed_timeout = false;
+        // g_diagnostics.cyclic_flags.speed_timeout = false;
     }
 
     /* Draw the speed units */
     switch (units)
     {
-    case KPH:
+    case LCD_APP_KPH:
         LcdDriverDrawText("kph",
                           LCD_APP_DEBUG_SPEED_X + LCD_APP_DEBUG_SPEED_UNIT_KPH_X,
                           LCD_APP_DEBUG_SPEED_UNIT_Y,
                           LCD_APP_DEBUG_SPEED_UNITS_FONT,
                           LCD_APP_DEBUG_SPEED_UNITS_SPACING);
         break;
-    case MPH:
+    case LCD_APP_MPH:
         LcdDriverDrawText("mph",
                           LCD_APP_DEBUG_SPEED_X + LCD_APP_DEBUG_SPEED_UNIT_MPH_X,
                           LCD_APP_DEBUG_SPEED_UNIT_Y,
@@ -976,7 +976,7 @@ void LcdAppDisplaySocDebugPage(volatile uint32_t* soc)
                                        LCD_APP_SOC_Y,
                                        LCD_APP_DEBUG_SOC_FONT,
                                        LCD_APP_DEBUG_SOC_SPACING);
-        g_diagnostics.cyclic_flags.soc_timeout = true;
+        // g_diagnostics.cyclic_flags.soc_timeout = true;
     }
     else if (*soc < 10)
     {
@@ -986,7 +986,7 @@ void LcdAppDisplaySocDebugPage(volatile uint32_t* soc)
                                        LCD_APP_DEBUG_SOC_Y,
                                        LCD_APP_DEBUG_SOC_FONT,
                                        LCD_APP_DEBUG_SOC_SPACING);
-        g_diagnostics.cyclic_flags.soc_timeout = false;
+        // g_diagnostics.cyclic_flags.soc_timeout = false;
     }
     else if (*soc < 100)
     {
@@ -996,7 +996,7 @@ void LcdAppDisplaySocDebugPage(volatile uint32_t* soc)
                                        LCD_APP_DEBUG_SOC_Y,
                                        LCD_APP_DEBUG_SOC_FONT,
                                        LCD_APP_DEBUG_SOC_SPACING);
-        g_diagnostics.cyclic_flags.soc_timeout = false;
+        // g_diagnostics.cyclic_flags.soc_timeout = false;
     }
     else
     {
@@ -1006,7 +1006,7 @@ void LcdAppDisplaySocDebugPage(volatile uint32_t* soc)
                                        LCD_APP_DEBUG_SOC_Y,
                                        LCD_APP_DEBUG_SOC_FONT,
                                        LCD_APP_DEBUG_SOC_SPACING);
-        g_diagnostics.cyclic_flags.soc_timeout = false;
+        // g_diagnostics.cyclic_flags.soc_timeout = false;
     }
 
     LcdDriverDrawChar(LCD_APP_SOC_UNITS,
@@ -1029,7 +1029,7 @@ void LcdAppDisplayDriveStateDebugPage(volatile drive_state_t* state)
     if (state == NULL)
     { // Stale data for drive state
         sprintf(state_str, "-");
-        g_diagnostics.cyclic_flags.drive_state_timeout = true;
+        // g_diagnostics.cyclic_flags.drive_state_timeout = true;
     }
     else
     {
@@ -1048,7 +1048,7 @@ void LcdAppDisplayDriveStateDebugPage(volatile drive_state_t* state)
             state_str[0] = LCD_APP_ERROR_SYMBOL;
             break;
         }
-        g_diagnostics.cyclic_flags.drive_state_timeout = false;
+        // g_diagnostics.cyclic_flags.drive_state_timeout = false;
     }
 
     LcdDriverClearBoundingBox(
@@ -1070,54 +1070,54 @@ void LcdAppDisplayDriveStateDebugPage(volatile drive_state_t* state)
  */
 void LcdAppCanRxHandle(uint32_t msg_id, uint8_t* data)
 {
-    if (msg_id == CAN_ID_PACK_CURRENT)
-    {
-        int16_t tmp_pack_current = (data[1] << 8) | (data[0]);
-        tmp_pack_current /= 65.535;
-        set_cyclic_pack_current(tmp_pack_current);
+    // if (msg_id == CAN_ID_PACK_CURRENT)
+    // {
+    //     int16_t tmp_pack_current = (data[1] << 8) | (data[0]);
+    //     tmp_pack_current /= 65.535;
+    //     set_cyclic_pack_current(tmp_pack_current);
 
-        g_pack_current_soc = tmp_pack_current;
-    }
+    //     g_pack_current_soc = tmp_pack_current;
+    // }
 
-    if (msg_id == CAN_ID_PACK_VOLTAGE)
-    {
-        uint16_t tmp_pack_voltage = (data[1] << 8) | (data[0]);
-        tmp_pack_voltage /= PACK_VOLTAGE_DIVISOR;
-        set_cyclic_pack_voltage(tmp_pack_voltage);
+    // if (msg_id == CAN_ID_PACK_VOLTAGE)
+    // {
+    //     uint16_t tmp_pack_voltage = (data[1] << 8) | (data[0]);
+    //     tmp_pack_voltage /= PACK_VOLTAGE_DIVISOR;
+    //     set_cyclic_pack_voltage(tmp_pack_voltage);
 
-        g_total_pack_voltage_soc = tmp_pack_voltage;
+    //     g_total_pack_voltage_soc = tmp_pack_voltage;
 
-        osEventFlagsSet(calculate_soc_flagHandle, SOC_CALCULATE_ON);
-    }
+    //     osEventFlagsSet(calculate_soc_flagHandle, SOC_CALCULATE_ON);
+    // }
 
-    if (msg_id == STR_CAN_MSG_ID)
-    {
-        uint8_t next_page = (data[0] & 1);
+    // if (msg_id == STR_CAN_MSG_ID)
+    // {
+    //     uint8_t next_page = (data[0] & 1);
 
-        if (next_page)
-        {
-            if (g_LCD_page < LCD_APP_MAXPAGES)
-            {
-                g_LCD_page_change = 1;
-                g_LCD_page++;
-            }
-            else
-            {
-                g_LCD_page_change = 1;
-                g_LCD_page = 1;
-            }
-        }
-        //    	else if(previous_page){
-        //    		if(g_LCD_page > 1){
-        //    			g_LCD_page_change = 1;
-        //    			g_LCD_page--;
-        //			}
-        //    	}
-    }
+    //     if (next_page)
+    //     {
+    //         if (g_LCD_page < LCD_APP_MAXPAGES)
+    //         {
+    //             g_LCD_page_change = 1;
+    //             g_LCD_page++;
+    //         }
+    //         else
+    //         {
+    //             g_LCD_page_change = 1;
+    //             g_LCD_page = 1;
+    //         }
+    //     }
+    //     //    	else if(previous_page){
+    //     //    		if(g_LCD_page > 1){
+    //     //    			g_LCD_page_change = 1;
+    //     //    			g_LCD_page--;
+    //     //			}
+    //     //    	}
+    // }
 
-    if (msg_id == CAN_ID_MDI_TEMP)
-    {
-        uint8_t temperature = data[0];
-        set_cyclic_temperature(temperature);
-    }
+    // if (msg_id == CAN_ID_MDI_TEMP)
+    // {
+    //     uint8_t temperature = data[0];
+    //     set_cyclic_temperature(temperature);
+    // }
 }

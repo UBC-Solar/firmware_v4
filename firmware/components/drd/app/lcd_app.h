@@ -5,7 +5,7 @@
  * References the library: https://github.com/mberntsen/STM32-Libraries
  */
 
-#include "drive_state.h"
+// #include "drive_state.h"
 #include "font_verdana.h"
 #include "spi.h"
 #include "stdbool.h"
@@ -235,7 +235,7 @@
 #define LCD_APP_BAR_LEFT 0
 #define LCD_APP_BAR_TOP 0
 #define LCD_APP_BAR_BOTTOM 15
-#define LCD_APP_BAR_RIGHT BOTTOM_RIGHT_X
+#define LCD_APP_BAR_RIGHT LCD_DRIVER_BOTTOM_RIGHT_X
 #define LCD_APP_CENTER_X 43
 
 #define LCD_APP_DEBUG_SPEED_FONT (Verdana32)
@@ -305,6 +305,15 @@ typedef struct
 //	volatile uint8_t* motor_cont_temperature;
 //	volatile uint8_t* motor_therm_temperature;
 // }; LcdAppTemperature;
+
+typedef enum
+{
+    INVALID = (uint8_t)0x00,
+    FORWARD = (uint8_t)0x01,
+    CRUISE = (uint8_t)0x02,
+    PARK = (uint8_t)0x03,
+    REVERSE = (uint8_t)0x04
+} drive_state_t;
 
 typedef struct
 {
@@ -434,12 +443,12 @@ void LcdAppDisplayWarnings(LcdAppWarnings* warnings);
  */
 void LcdAppDisplaySpeedDebugPage(volatile uint32_t* speed, volatile uint8_t units);
 
-/**
- * @brief Displays the drive state on the LCD.
- *
- * @param state The drive state (e.g., FORWARD_STATE, PARK_STATE, REVERSE_STATE).
- */
-void LcdAppDisplayDriveStateDebugPage(volatile drive_state_t* state);
+// /**
+//  * @brief Displays the drive state on the LCD.
+//  *
+//  * @param state The drive state (e.g., FORWARD_STATE, PARK_STATE, REVERSE_STATE).
+//  */
+// void LcdAppDisplayDriveStateDebugPage(volatile drive_state_t* state);
 
 /**
  * @brief Displays the state of charge (SOC) on the LCD.

@@ -41,53 +41,38 @@
 #define CONFIG_FILT50HZ 0x00 // 60Hz filter
 
 // PRIVATE FUNCTION PROTOTYPES
-static bool RTD_WriteRegister(uint8_t address_with_write_bit, uint8_t data);
-static bool RTD_ReadRegister(uint8_t address_read, uint8_t* data);
-static bool RTD_ResistanceToTemp(uint32_t* temp);
+static bool RTDWriteRegister(uint8_t address_with_write_bit, uint8_t data);
+static bool RTDReadRegister(uint8_t address_read, uint8_t* data);
+static RtdStatus RTDReadResistance(uint16_t* buffer);
+static void RTDResistanceToTemp(uint16_t buffer, uint32_t* temp);
 
 // PUBLIC FUNCTIONS
-Rtd_status_t RtdDriverGetTemp(uint32_t* temperature)
+RtdStatus RtdDriverGetTemp(uint32_t* temperature)
 {
-    bool fault_flag;
-    Rtd_status_t status;
+    uint16_t buffer = 0;
+    RtdStatus status;
 
-    // get temperature and fault flag from RTD register
-    fault_flag = RTD_ResistanceToTemp(temperature);
+    status = RTDReadResistance(&buffer);
+    if (status != RtdStatusOk)
+    {
+        return status;
+    }
 
-    // assign the RTD status based on fault flag
-    if (fault_flag)
-        status = RtdStatusFault;
-    else
-        status = RtdStatusOk;
+    if (buffer & 0x01)
+    {
+        return RtdStatusFault;
+    }
 
-    return status;
+    RTDResistanceToTemp(buffer, temperature);
+
+    return RtdStatusOk;
 }
 
 void RtdDriverInit(void)
 {
     /* Compose config: VBIAS | AUTO | 3WIRE | filter 50Hz (CONFIG_FILT50HZ=0) */
     uint8_t config = CONFIG_VBIAS | CONFIG_AUTO | CONFIG_3WIRE | CONFIG_FILT50HZ;
-    RTD_WriteRegister(CONFIG_REG_W, config);
-}
-
-uint32_t RtdDriverTest()
-{
-    uint8_t config = CONFIG_VBIAS | CONFIG_AUTO | CONFIG_3WIRE | CONFIG_FILT50HZ;
-    uint32_t temperature;
-    float resistance;
-    uint16_t buffer;
-    uint8_t msb = 0, lsb = 0;
-    RTD_WriteRegister(CONFIG_REG_W, config);
-    HAL_Delay(1000);
-    config = 10;
-    // get the MSB of the ratio
-    RTD_ReadRegister(RTD_MSB_REG_R, &msb);
-    // get the LSB of the ratio
-    RTD_ReadRegister(RTD_LSB_REG_R, &lsb);
-    buffer = ((uint16_t)msb << 8) | lsb;
-    resistance = (buffer) / 32768.0f * (float)REFERENCE_RESISTANCE;
-    return temperature = (uint32_t)((resistance - RESISTANCE_AT_0C) /
-                                    (COEFF_OF_RESISTANCE_PLAT * RESISTANCE_AT_0C));
+    RTDWriteRegister(CONFIG_REG_W, config);
 }
 
 // PRIVATE FUNCTIONS
@@ -98,7 +83,7 @@ uint32_t RtdDriverTest()
  * @param[in]:  data; the 8-bit value to write to the selected register.
  * @returns:    true if an SPI error occurred, false on success.
  */
-static bool RTD_WriteRegister(uint8_t address_with_write_bit, uint8_t data)
+static bool RTDWriteRegister(uint8_t address_with_write_bit, uint8_t data)
 {
     uint8_t tx[2];
     uint8_t rx[2];
@@ -124,7 +109,7 @@ static bool RTD_WriteRegister(uint8_t address_with_write_bit, uint8_t data)
  * @returns:    true if an SPI error occurred during transmit or receive,
  *              false on success.
  */
-static bool RTD_ReadRegister(uint8_t address_read, uint8_t* data)
+static bool RTDReadRegister(uint8_t address_read, uint8_t* data)
 {
     uint8_t tx[2];
     uint8_t rx[2];
@@ -147,41 +132,36 @@ static bool RTD_ReadRegister(uint8_t address_read, uint8_t* data)
 
     return hal_err;
 }
-/*
- * @brief:      Reads the RTD resistance ratio, converts it into a temperature, and
- *              detects conversion faults.
- * @details:    Retrieves the 15-bit resistance ratio measurement, masks out the
- *              fault flag, and scales the remaining bits by the reference
- *              resistance. The temperature is computed using a simplified linear
- *              PT1000 approximation.
- * @param[out]: temp; pointer to a uint32_t where the converted temperature is stored.
- * @returns:    true if the measurement contains a fault flag, false if the reading
- *              is valid.
- */
-static bool RTD_ResistanceToTemp(uint32_t* temp)
+static RtdStatus RTDReadResistance(uint16_t* buffer)
 {
-
-    uint32_t resistance, temperature;
-    uint16_t buffer;
     uint8_t msb = 0, lsb = 0;
-    bool fault_flag;
+    bool hal_err;
 
-    // get the MSB of the ratio
-    RTD_ReadRegister(RTD_MSB_REG_R, &msb);
-    // get the LSB of the ratio
-    RTD_ReadRegister(RTD_LSB_REG_R, &lsb);
-    buffer = ((uint16_t)msb << 8) | lsb;
+    hal_err = RTDReadRegister(RTD_MSB_REG_R, &msb);
+    if (hal_err)
+    {
+        return RtdStatusHalError;
+    }
 
-    // Fault detection
-    fault_flag = buffer & 0x01;
+    hal_err = RTDReadRegister(RTD_LSB_REG_R, &lsb);
+    if (hal_err)
+    {
+        return RtdStatusHalError;
+    }
 
-    // get the fault flag and resistance of the RTD
-    resistance = buffer >> 1;
+    *buffer = ((uint16_t)msb << 8) | lsb;
+
+    return RtdStatusOk;
+}
+
+static void RTDResistanceToTemp(uint16_t buffer, uint32_t* temp)
+{
+    uint32_t resistance, temperature;
+
+    resistance = (buffer >> 1);
     resistance = resistance / 32768 * REFERENCE_RESISTANCE;
 
     temperature =
         (uint32_t)((resistance - RESISTANCE_AT_0C) / (COEFF_OF_RESISTANCE_PLAT * RESISTANCE_AT_0C));
     *temp = temperature;
-
-    return fault_flag;
 }

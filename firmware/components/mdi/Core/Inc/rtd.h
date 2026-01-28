@@ -14,8 +14,9 @@
 typedef enum
 {
     RtdStatusOk,
-    RtdStatusFault
-} Rtd_status_t;
+    RtdStatusFault,
+    RtdStatusHalError
+} RtdStatus;
 
 // PUBLIC FUNCTIONS
 
@@ -23,9 +24,10 @@ typedef enum
  * @brief:		Gets the temperature and status of the RTD
  * @param[out]:	temperature; a uint32_t of the temperature read from the RTD
  * 				converted from the resistance ratio.
- * @returns		status of the RTD as an enumerator (RtdStatusOk or RtdStatusFault).
+ * @returns		status of the RTD as an enumerator (RtdStatusOk, RtdStatusFault, or
+ * RtdStatusHalError).
  */
-Rtd_status_t RtdDriverGetTemp(uint32_t* temperature);
+RtdStatus RtdDriverGetTemp(uint32_t* temperature);
 
 /*
  * @brief:      Initializes the MAX31865 RTD interface.
@@ -35,6 +37,5 @@ Rtd_status_t RtdDriverGetTemp(uint32_t* temperature);
  * @returns:    None.
  */
 void RtdDriverInit();
-uint32_t RtdDriverTest();
 
 #endif /* INC_RTD_H_ */

@@ -44,6 +44,8 @@ Parameters:
 Returns:
 - RtdStatusOk - Temperature read successfully
 - RtdStatusFault - Temperature read with fault bit set (indicates sensor issue)
+- RtdStatusHalError - SPI communication error (HAL failure)
+
 
 When to call: Whenever you want a temperature reading (e.g., in main loop).
 

@@ -51,8 +51,8 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
-    ${CMAKE_CURRENT_SOURCE_DIR}/app/evan_app.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/driver/src/evan_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/src/evan_app.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/evan_driver.c
 )
 
 # Add include paths

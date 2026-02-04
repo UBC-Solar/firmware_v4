@@ -145,8 +145,7 @@ static void RtdResistanceToTemp(uint16_t buffer, uint32_t* temp)
 {
     uint32_t resistance, temperature;
 
-    resistance = (buffer >> 1);
-    resistance = resistance / 32768 * REFERENCE_RESISTANCE;
+    resistance = buffer / 32768.0f * (float)REFERENCE_RESISTANCE;
 
     temperature =
         (uint32_t)((resistance - RESISTANCE_AT_0C) / (COEFF_OF_RESISTANCE_PLAT * RESISTANCE_AT_0C));

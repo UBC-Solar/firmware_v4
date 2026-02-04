@@ -15,7 +15,7 @@ typedef enum
 {
     RtdStatusOk,
     RtdStatusFault,
-    RtdStatusHalError
+    RtdStatusHalError,
 } RtdStatus;
 
 // PUBLIC FUNCTIONS

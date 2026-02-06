@@ -25,12 +25,13 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "tasks.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
 
+/* USER CODE BEGIN PTD */
+typedef StaticTask_t osStaticThreadDef_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -46,6 +47,19 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 
+/* Definitions for TasksDriveState */
+osThreadId_t TasksDriveStateHandle;
+uint32_t TasksDriveStateBuffer[256];
+osStaticThreadDef_t TasksDriveStateControlBlock;
+
+const osThreadAttr_t TasksDriveState_attributes = {
+  .name = "TasksDriveState",
+  .cb_mem = &TasksDriveStateControlBlock,
+  .cb_size = sizeof(TasksDriveStateControlBlock),
+  .stack_mem = &TasksDriveStateBuffer[0],
+  .stack_size = sizeof(TasksDriveStateBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -95,11 +109,13 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
+  /* creation of TasksDriveState */
+  TasksDriveStateHandle = osThreadNew(TasksDriveState, NULL, &TasksDriveState_attributes);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
   /* add events, ... */
+
   /* USER CODE END RTOS_EVENTS */
 
 }

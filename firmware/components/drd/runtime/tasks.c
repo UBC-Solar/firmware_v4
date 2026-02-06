@@ -1,7 +1,7 @@
 #include "tasks.h"
 
 /* DRIVE STATE TASK */
-void drive_state_task(void) {
+void TasksDriveState(void) {
     for(;;)
     {
         // function calls begin here

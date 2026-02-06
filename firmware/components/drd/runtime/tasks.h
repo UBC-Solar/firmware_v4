@@ -9,6 +9,6 @@
  * Manages the drive system state machine and control logic.
  * Executes with at a 1ms period. Task runs indefinitely until system shutdown.
  */
-void drive_state_task(void);
+void TasksDriveState(void);
 
 #endif //__TASKS_H__

@@ -1,4 +1,8 @@
+#include "main.h"
 #include <stdint.h>
+
+/* Internal SPI handle for LCD communication */
+static SPI_HandleTypeDef* sg_spi_handle = NULL;
 
 /** LCD Screen Constants */
 #define LCD_DRIVER_DIRTY_PAGE_CHANGE 0xFF
@@ -49,7 +53,7 @@ typedef struct
     uint8_t y1;
     uint8_t x2;
     uint8_t y2;
-} BoundingBox;
+} LcdDriverBoundingBox;
 
 /* LCD Drawing Functions */
 
@@ -96,13 +100,13 @@ void LcdDriverDrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint
  * @param y Starting y coordinate.
  * @param font Pointer to the font to use.
  * @param spacing Spacing between characters.
- * @return BoundingBox The bounding box of the drawn text.
+ * @return LcdDriverBoundingBox The bounding box of the drawn text.
  */
-BoundingBox LcdDriverDrawText(char* string,
-                              unsigned char x,
-                              unsigned char y,
-                              const unsigned char* font,
-                              unsigned char spacing);
+LcdDriverBoundingBox LcdDriverDrawText(char* string,
+                                       unsigned char x,
+                                       unsigned char y,
+                                       const unsigned char* font,
+                                       unsigned char spacing);
 
 /**
  * @brief Draws a single character using an external graphics library.
@@ -111,9 +115,9 @@ BoundingBox LcdDriverDrawText(char* string,
  * @param x Starting x coordinate.
  * @param y Starting y coordinate.
  * @param font Pointer to the font to use.
- * @return BoundingBox The bounding box of the drawn character.
+ * @return LcdDriverBoundingBox The bounding box of the drawn character.
  */
-BoundingBox
+LcdDriverBoundingBox
 LcdDriverDrawChar(unsigned char c, unsigned char x, unsigned char y, const unsigned char* font);
 
 /* LCD Initializing Functions */

@@ -12,12 +12,12 @@
 --------------------------------------------------------------------------*/
 
 /* Static variables to store old bounding boxes for updating text fields */
-static BoundingBox old_bb_speed = {0, 0, 0, 0};
-static BoundingBox old_bb_drive_state = {0, 0, 0, 0};
-static BoundingBox old_bb_drive_mode = {0, 0, 0, 0};
-static BoundingBox old_bb_soc = {0, 0, 0, 0};
-static BoundingBox old_bb_fault_indicator = {0, 0, 0, 0};
-static BoundingBox old_bb_warning_indicator = {0, 0, 0, 0};
+static LcdDriverBoundingBox old_bb_speed = {0, 0, 0, 0};
+static LcdDriverBoundingBox old_bb_drive_state = {0, 0, 0, 0};
+static LcdDriverBoundingBox old_bb_drive_mode = {0, 0, 0, 0};
+static LcdDriverBoundingBox old_bb_soc = {0, 0, 0, 0};
+static LcdDriverBoundingBox old_bb_fault_indicator = {0, 0, 0, 0};
+static LcdDriverBoundingBox old_bb_warning_indicator = {0, 0, 0, 0};
 
 static char faults[8][10] = {0};
 static char warning_char[8][10] = {0};
@@ -654,7 +654,7 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data)
     // TODO: When assigning with CAN ensure that the name is set too
 
     // Stores a Bounding Box used for changing temp symbol position
-    BoundingBox bb = {0};
+    LcdDriverBoundingBox bb = {0};
 
     // Variables to hold values based on what temperature is being displayed
     char temp_label[8];
@@ -1060,6 +1060,29 @@ void LcdAppDisplayDriveStateDebugPage(volatile drive_state_t* state)
                                            LCD_APP_DEBUG_STATE_SPACING);
 
     LcdDriverRefresh();
+}
+void LcdAppInit(SPI_HandleTypeDef* hspi)
+{
+    HAL_GPIO_WritePin(DISPLAY_RESET_GPIO_Port, DISPLAY_RESET_Pin, GPIO_PIN_RESET);
+    HAL_Delay(30);
+    HAL_GPIO_WritePin(DISPLAY_RESET_GPIO_Port, DISPLAY_RESET_Pin, GPIO_PIN_SET);
+    HAL_Delay(30);
+
+    sg_spi_handle = hspi;
+
+    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_ADC_NORMAL);
+    LcdDriverWriteCommand(LCD_DRIVER_CMD_DISPLAY_OFF);
+    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_COM_NORMAL + 8); // This makes the drawing flipped
+    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_BIAS_9);
+    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_POWER_CONTROL | 0x7);
+    LcdDriverWriteCommand(
+        LCD_DRIVER_CMD_SET_RESISTOR_RATIO |
+        0x6); // set lcd operating voltage (regulator resistor, ref voltage resistor)
+    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_VOLUME_FIRST);
+    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_CONTRAST - 5);
+    LcdDriverWriteCommand(LCD_DRIVER_CMD_DISPLAY_START);
+    LcdDriverWriteCommand(LCD_DRIVER_CMD_DISPLAY_ON);
+    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_ALLPTS_NORMAL);
 }
 
 /*

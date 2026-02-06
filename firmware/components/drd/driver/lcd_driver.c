@@ -1,11 +1,7 @@
 #include "lcd_driver.h"
-#include "main.h"
 
 /* Internal buffer for pixel operations (assumes a 128x64 display) */
 static uint8_t lcd_buffer[(128 * 64) / 8];
-
-/* Internal SPI handle for LCD communication */
-static SPI_HandleTypeDef* sg_spi_handle = NULL;
 
 static uint8_t lcd_flipped = 0;
 
@@ -154,16 +150,16 @@ void LcdDriverDrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint
  * @param y Starting y coordinate.
  * @param font Pointer to the font to use.
  * @param spacing Spacing between characters.
- * @return BoundingBox The bounding box of the drawn text.
+ * @return LcdDriverBoundingBox The bounding box of the drawn text.
  */
-BoundingBox LcdDriverDrawText(char* string,
-                              unsigned char x,
-                              unsigned char y,
-                              const unsigned char* font,
-                              unsigned char spacing)
+LcdDriverBoundingBox LcdDriverDrawText(char* string,
+                                       unsigned char x,
+                                       unsigned char y,
+                                       const unsigned char* font,
+                                       unsigned char spacing)
 {
-    BoundingBox ret;
-    BoundingBox tmp = {0};
+    LcdDriverBoundingBox ret;
+    LcdDriverBoundingBox tmp = {0};
 
     ret.x1 = x;
     ret.y1 = y;
@@ -192,14 +188,14 @@ BoundingBox LcdDriverDrawText(char* string,
  * @param x Starting x coordinate.
  * @param y Starting y coordinate.
  * @param font Pointer to the font to use.
- * @return BoundingBox The bounding box of the drawn character.
+ * @return LcdDriverBoundingBox The bounding box of the drawn character.
  */
-BoundingBox
+LcdDriverBoundingBox
 LcdDriverDrawChar(unsigned char c, unsigned char x, unsigned char y, const unsigned char* font)
 {
     unsigned short pos;
     uint8_t width;
-    BoundingBox ret;
+    LcdDriverBoundingBox ret;
 
     ret.x1 = x;
     ret.y1 = y;
@@ -297,33 +293,4 @@ void LcdDriverWriteData(uint8_t data)
 
     uint8_t data_arr[1] = {data};
     HAL_SPI_Transmit(sg_spi_handle, data_arr, 1, 10);
-}
-
-/**
- * @brief Initializes the LCD based on the ST7565 library and prints the field names.
- *
- * @param hspi Pointer to the SPI handle.
- */
-void LcdDriverInit(SPI_HandleTypeDef* hspi)
-{
-    HAL_GPIO_WritePin(DISPLAY_RESET_GPIO_Port, DISPLAY_RESET_Pin, GPIO_PIN_RESET);
-    HAL_Delay(30);
-    HAL_GPIO_WritePin(DISPLAY_RESET_GPIO_Port, DISPLAY_RESET_Pin, GPIO_PIN_SET);
-    HAL_Delay(30);
-
-    sg_spi_handle = hspi;
-
-    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_ADC_NORMAL);
-    LcdDriverWriteCommand(LCD_DRIVER_CMD_DISPLAY_OFF);
-    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_COM_NORMAL + 8); // This makes the drawing flipped
-    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_BIAS_9);
-    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_POWER_CONTROL | 0x7);
-    LcdDriverWriteCommand(
-        LCD_DRIVER_CMD_SET_RESISTOR_RATIO |
-        0x6); // set lcd operating voltage (regulator resistor, ref voltage resistor)
-    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_VOLUME_FIRST);
-    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_CONTRAST - 5);
-    LcdDriverWriteCommand(LCD_DRIVER_CMD_DISPLAY_START);
-    LcdDriverWriteCommand(LCD_DRIVER_CMD_DISPLAY_ON);
-    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_ALLPTS_NORMAL);
 }

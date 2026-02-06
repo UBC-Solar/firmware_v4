@@ -475,6 +475,6 @@ void LcdAppCanRxHandle(uint32_t msg_id, uint8_t* data);
  *
  * @param hspi Pointer to the SPI handle.
  */
-void LcdDriverInit(SPI_HandleTypeDef* hspi);
+void LcdAppInit(SPI_HandleTypeDef* hspi);
 
 #endif // LCD_GRAPHICS_H

@@ -1,12 +1,11 @@
-/*
- *  drive_state.c
- *
+/**
+ *  @file drive_state.c
  *  @brief Handles the drive state for the car. Takes ADC, GPIO and CAN inputs and
  *         outputs DAC values, MDI flags, and CAN data messages
  * 
- *  Created: Jan 28, 2026
- *  Author:  Tony Chen
-*/
+ *  @author Tony Chen
+ *  @date Jan 28, 2026
+ */
 
 #include "drive_state.h"
 
@@ -20,7 +19,7 @@ volatile drive_flags_t g_drive_flags;
 
 /* DRIVE STATE FINITE STATE MACHINE */
 
-void drive_state_fms_handler() {
+void drive_state_fsm_handler() {
 
     update_drive_flags();
 

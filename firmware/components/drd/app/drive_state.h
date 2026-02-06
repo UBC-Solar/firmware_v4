@@ -48,5 +48,7 @@ typedef enum {
 extern volatile drive_state_t g_drive_state;
 extern volatile drive_flags_t g_drive_flags;
 
+/* FUNCTION PROTOTYPES */
+void drive_state_fsm_handler(void);
 
 #endif /* __DRIVE_STATE_H_ */

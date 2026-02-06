@@ -8,6 +8,16 @@
 #ifndef __DRIVE_STATE_H__
 #define __DRIVE_STATE_H__
 
+/* INCLUDES */
+#include <stdlib.h>
+#include <stdbool.h>
+
+/* DRIVE STATE DEFINES */
+#define DRIVE_STATE_FSM_DELAY 25
+#define REGEN_DAC_ON          1023
+#define REGEN_DAC_OFF         0
+#define ACCEL_DAC_OFF         0
+
 /* DRIVE STATE DATA TYPES */
 
 typedef struct {
@@ -34,6 +44,9 @@ typedef enum {
     CRUISE = (uint8_t) 0x04
 } drive_state_t;
 
+/* GLOBAL VARIABLES */
 extern volatile drive_state_t g_drive_state;
+extern volatile drive_flags_t g_drive_flags;
+
 
 #endif /* __DRIVE_STATE_H_ */

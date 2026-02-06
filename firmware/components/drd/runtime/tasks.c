@@ -1,10 +1,11 @@
 #include "tasks.h"
+#include "drive_state.h"
 
 /* DRIVE STATE TASK */
 void TasksDriveState(void) {
     for(;;)
     {
-        // function calls begin here
-        osDelay(1);
+        osDelay(DRIVE_STATE_FSM_DELAY);
+        drive_state_fms_handler();
     }
 }

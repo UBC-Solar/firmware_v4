@@ -1,7 +1,7 @@
-#include <stdio.h>
-#include <stdarg.h>
 #include "debug_io.h"
 #include "stm32f1xx_hal.h"
+#include <stdarg.h>
+#include <stdio.h>
 
 int __io_putchar(int ch)
 {

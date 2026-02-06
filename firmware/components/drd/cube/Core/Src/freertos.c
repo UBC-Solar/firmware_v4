@@ -25,13 +25,13 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "runtime/tasks.h"
+#include "tasks.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
-typedef StaticTask_t osStaticThreadDef_t;
-/* USER CODE BEGIN PTD */
 
+/* USER CODE BEGIN PTD */
+typedef StaticTask_t osStaticThreadDef_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -47,6 +47,19 @@ typedef StaticTask_t osStaticThreadDef_t;
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 
+/* Definitions for TasksDriveState */
+osThreadId_t TasksDriveStateHandle;
+uint32_t TasksDriveStateBuffer[256];
+osStaticThreadDef_t TasksDriveStateControlBlock;
+
+const osThreadAttr_t TasksDriveState_attributes = {
+  .name = "TasksDriveState",
+  .cb_mem = &TasksDriveStateControlBlock,
+  .cb_size = sizeof(TasksDriveStateControlBlock),
+  .stack_mem = &TasksDriveStateBuffer[0],
+  .stack_size = sizeof(TasksDriveStateBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -55,18 +68,6 @@ const osThreadAttr_t defaultTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
-/* Definitions for DriveStateTask */
-osThreadId_t DriveStateTaskHandle;
-uint32_t DriveStateTaskBuffer[ 256 ];
-osStaticThreadDef_t DriveStateTaskControlBlock;
-const osThreadAttr_t DriveStateTask_attributes = {
-  .name = "DriveStateTask",
-  .cb_mem = &DriveStateTaskControlBlock,
-  .cb_size = sizeof(DriveStateTaskControlBlock),
-  .stack_mem = &DriveStateTaskBuffer[0],
-  .stack_size = sizeof(DriveStateTaskBuffer),
-  .priority = (osPriority_t) osPriorityLow,
-};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -74,7 +75,6 @@ const osThreadAttr_t DriveStateTask_attributes = {
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
-void DriveState_task(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -108,15 +108,14 @@ void MX_FREERTOS_Init(void) {
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
-  /* creation of DriveStateTask */
-  DriveStateTaskHandle = osThreadNew(DriveState_task, NULL, &DriveStateTask_attributes);
-
   /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
+  /* creation of TasksDriveState */
+  TasksDriveStateHandle = osThreadNew(drive_state_task, NULL, &TasksDriveState_attributes);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
   /* add events, ... */
+
   /* USER CODE END RTOS_EVENTS */
 
 }
@@ -137,22 +136,6 @@ void StartDefaultTask(void *argument)
     osDelay(1);
   }
   /* USER CODE END StartDefaultTask */
-}
-
-/* USER CODE BEGIN Header_DriveState_task */
-/**
-* @brief Function implementing the DriveStateTask thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_DriveState_task */
-void DriveState_task(void *argument)
-{
-  /* USER CODE BEGIN DriveState_task */
-  /* Infinite loop */
-  drive_state_task();
-
-  /* USER CODE END DriveState_task */
 }
 
 /* Private application code --------------------------------------------------*/

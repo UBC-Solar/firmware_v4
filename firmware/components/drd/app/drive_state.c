@@ -2,7 +2,7 @@
  *  @file drive_state.c
  *  @brief Handles the drive state for the car. Takes ADC, GPIO and CAN inputs and
  *         outputs DAC values, MDI flags, and CAN data messages
- * 
+ *
  *  @author Tony Chen
  *  @date Jan 28, 2026
  */
@@ -19,7 +19,8 @@ volatile drive_flags_t g_drive_flags;
 
 /* DRIVE STATE FINITE STATE MACHINE */
 
-void drive_state_fsm_handler() {
+void drive_state_fsm_handler()
+{
 
     update_drive_flags();
 
@@ -33,58 +34,139 @@ void drive_state_fsm_handler() {
     clear_drive_flags(g_drive_flags);
 }
 
-drive_state_t compute_next_state(drive_state_t drive_state, drive_flags_t drive_flags) {
+drive_state_t compute_next_state(drive_state_t drive_state, drive_flags_t drive_flags)
+{
 
     const bool allow_state_change = drive_flags.brake_on && drive_flags.velocity_under_threshold;
 
-    const int requests = (int)drive_flags.forward_request + (int)drive_flags.reverse_request + (int)drive_flags.park_request;
+    const int requests = (int)drive_flags.forward_request + (int)drive_flags.reverse_request +
+                         (int)drive_flags.park_request;
 
-    if (requests > 1 || !allow_state_change) return drive_state;
-
-    switch (drive_state) {
-        case PARK:
-            if (drive_flags.forward_request) drive_state = FORWARD;
-            if (drive_flags.reverse_request) drive_state = REVERSE;
+    if (requests > 1 || !allow_state_change)
         return drive_state;
 
-        case FORWARD:
-            if (drive_flags.park_request) drive_state = PARK;
-            if (drive_flags.reverse_request) drive_state = REVERSE;
+    switch (drive_state)
+    {
+    case PARK:
+        if (drive_flags.forward_request)
+            drive_state = FORWARD;
+        if (drive_flags.reverse_request)
+            drive_state = REVERSE;
         return drive_state;
 
-        case REVERSE:
-            if (drive_flags.park_request) drive_state = PARK;
-            if (drive_flags.forward_request) drive_state = FORWARD;
+    case FORWARD:
+        if (drive_flags.park_request)
+            drive_state = PARK;
+        if (drive_flags.reverse_request)
+            drive_state = REVERSE;
         return drive_state;
 
-        default:
-            return PARK;
+    case REVERSE:
+        if (drive_flags.park_request)
+            drive_state = PARK;
+        if (drive_flags.forward_request)
+            drive_state = FORWARD;
+        return drive_state;
+
+    default:
+        return PARK;
     }
 }
 
-motor_control_t compute_next_command(drive_state_t drive_state, drive_flags_t drive_flags) {
+motor_control_t compute_next_command(drive_state_t drive_state, drive_flags_t drive_flags)
+{
 
-    if (drive_flags.brake_on || drive_flags.park_request) return get_motor_command(ACCEL_DAC_OFF, REGEN_DAC_OFF);
+    if (drive_flags.brake_on || drive_flags.park_request)
+        return get_motor_command(ACCEL_DAC_OFF, REGEN_DAC_OFF);
 
-    if (drive_state == REVERSE) {
+    if (drive_state == REVERSE)
+    {
         return get_motor_command(g_throttle_DAC, REGEN_DAC_OFF);
     }
 
     return get_motor_command(g_throttle_DAC, drive_flags.regen_on ? REGEN_DAC_ON : REGEN_DAC_OFF);
 }
 
-motor_control_t get_motor_command() {
+motor_control_t get_motor_command()
+{
     // do later
 }
 
 /* DRIVE STATE DATA COLLECTION */
 
-void update_drive_flags(void) {
+void update_drive_flags(void) {}
 
-}
-
-void clear_drive_flags(drive_flags_t drive_flags) {
+void clear_drive_flags(drive_flags_t drive_flags)
+{
     g_drive_flags.park_request = false;
     g_drive_flags.forward_request = false;
     g_drive_flags.reverse_request = false;
+}
+
+/* SETS DRIVE STATE FLAGS */
+
+void drive_state_interrupt_handler(uint16_t toggle)
+{
+
+    switch (toggle)
+    {
+    case BRK_IN_Pin:
+        break_on_handler(); // in progress
+        break;
+
+    case DRIVE_STATE_NEXT_Pin:
+        next_state_handler(g_drive_state);
+        break;
+
+    case DRIVE_STATE_PREV_Pin:
+        prev_state_handler(g_drive_state);
+        break;
+
+    case ECO_POWER_Pin:
+        eco_power_handler(); // in progress
+        break;
+    }
+}
+// PARK -> FORWARD -> REVERSE -> PARK
+void next_state_handler(drive_state_t drive_state)
+{
+
+    switch (drive_state)
+    {
+    case PARK:
+        g_drive_flags.forward_request = true;
+        break;
+
+    case FORWARD:
+        g_drive_flags.reverse_request = true;
+        break;
+
+    case REVERSE:
+        g_drive_flags.park_request = true; // cap at reverse to remove rotation
+        break;
+    }
+}
+// PARK -> REVERSE -> FORWARD -> PARK
+void prev_state_handler(drive_state_t drive_state)
+{
+
+    switch (drive_state)
+    {
+    case PARK:
+        g_drive_flags.reverse_request = true; // cap at park to remove rotation
+        break;
+
+    case FORWARD:
+        g_drive_flags.park_request = true;
+        break;
+
+    case REVERSE:
+        g_drive_flags.forward_request = true;
+        break;
+    }
+}
+
+void eco_power_handler(void)
+{
+    // implement functionality
 }

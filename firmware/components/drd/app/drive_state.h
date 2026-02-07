@@ -50,5 +50,6 @@ extern volatile drive_flags_t g_drive_flags;
 
 /* FUNCTION PROTOTYPES */
 void drive_state_fsm_handler(void);
+void drive_state_interrupt_handler(uint16_t toggle);
 
 #endif /* __DRIVE_STATE_H_ */

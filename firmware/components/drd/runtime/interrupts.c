@@ -14,17 +14,3 @@
  */
 
  #include "interrupts.h"
-
- void drive_state_interrupt_handler(uint16_t toggle) { // in progress
-    if (toggle == BRK_IN_Pin) {
-        break_on_handler();
-    }
-
-    if (toggle == DRIVE_STATE_NEXT_Pin) {
-
-    }
-
-    if (toggle == DRIVE_STATE_PREV_Pin) {
-
-    }
- }

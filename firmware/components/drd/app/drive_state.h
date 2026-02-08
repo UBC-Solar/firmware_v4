@@ -12,17 +12,40 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#include "drivers.h"
+#include "interrupts.h"
+#include "tasks.h"
+
 /* DRIVE STATE DEFINES */
+#define MC_DAC_MAX     1023        // Note: This gets capped by MDI to 920 anyways for safety
+#define MAX(a, b) ((a) < (b) ? (b) : (a))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
 #define DRIVE_STATE_FSM_DELAY 25
 #define REGEN_DAC_ON          1023
 #define REGEN_DAC_OFF         0
 #define ACCEL_DAC_OFF         0
+
+#define HIGHEST_ADC           1950     
+#define LOWEST_ADC             800
+
+#define ADC_LOWER_DEADZONE 10 
+#define ADC_NO_THROTTLE_MAX 630                 // https://ubcsolar26.monday.com/boards/7524367653/pulses/8891936447/posts/4032506875
+#define ADC_FULL_THROTTLE_MIN 1350
+
+#define ADC_UPPER_DEADZONE 4000 
+#define ADC_MAX_DIFFERENCE 99999
+
+#define WHEEL_RADIUS 0.283
+#define M_PI 3.14159
+#define VELOCITY_THRESHOLD 0.5
 
 /* DRIVE STATE DATA TYPES */
 
 typedef struct {
     volatile bool brake_on;
     volatile bool regen_on;
+    volatile bool cruise_on;
     volatile bool velocity_under_threshold;
     volatile bool forward_request;
     volatile bool reverse_request;
@@ -47,6 +70,7 @@ typedef enum {
 /* GLOBAL VARIABLES */
 extern volatile drive_state_t g_drive_state;
 extern volatile drive_flags_t g_drive_flags;
+extern volatile uint32_t g_velocity_kmh;
 
 /* FUNCTION PROTOTYPES */
 void drive_state_fsm_handler(void);

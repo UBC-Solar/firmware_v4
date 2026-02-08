@@ -13,4 +13,11 @@
  * @date    Feb 4 2026
  */
 
- #include "interrupts.h"
+#include "interrupts.h"
+#include "drive_state.h"
+
+/* GPIO INTERRUPT CALLBACKS */
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+    drive_state_interrupt_handler(GPIO_Pin);
+}

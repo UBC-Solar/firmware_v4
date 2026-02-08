@@ -14,10 +14,23 @@
  */
 
 #include "drivers.h"
-#include "drive_state.h"
 
 /* DRIVE STATE DRIVERS */
 
-void HAL_GPIO_EXT1_Callback(uint16_t GPIO_Pin) {
-    drive_state_interrupt_handler(GPIO_Pin);
+uint8_t gpio_read_pin(GPIO_TypeDef* port, uint16_t pin) {
+    return HAL_GPIO_ReadPin(port, pin);
+}
+
+void gpio_toggle_pin(GPIO_TypeDef* port, uint16_t pin) {
+    HAL_GPIO_TogglePin(port, pin);
+}
+
+uint16_t adc_read_accel_1(void) { return adc_read(&hadc1); }
+uint16_t adc_read_accel_2(void) { return adc_read(&hadc2); }
+
+static uint16_t read_adc(ADC_HandleTypeDef* hadc)
+{
+	HAL_ADC_Start(hadc);
+	HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
+	return HAL_ADC_GetValue(hadc);
 }

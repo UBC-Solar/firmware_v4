@@ -29,7 +29,6 @@
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
-
 /* USER CODE BEGIN PTD */
 typedef StaticTask_t osStaticThreadDef_t;
 /* USER CODE END PTD */

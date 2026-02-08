@@ -1,6 +1,9 @@
 #ifndef __TASKS_H__
 #define __TASKS_H__
 
+/* INCLUDES */
+#include "drive_state.h"
+
 /* TASK FUNCTION PROTOTYPES */
 
 /**

@@ -118,7 +118,7 @@ void drive_state_interrupt_handler(uint16_t toggle)
     switch (toggle)
     {
     case BRAKE_INPUT_PIN:
-        break_on_handler(); // in progress
+        break_on_handler();
         break;
 
     case DRIVE_NEXT_PIN:
@@ -130,7 +130,7 @@ void drive_state_interrupt_handler(uint16_t toggle)
         break;
 
     case ECO_POWER_PIN:
-        eco_power_handler(); // in progress
+        eco_power_handler();
         break;
     }
 }
@@ -203,7 +203,7 @@ void get_acceleration_readings(void)
 
 void normalize_adc_values(uint16_t adc1, uint16_t adc2) {
 
-    (void)adc2;
+    (void)adc2; // use adc2?
 
     if (adc1 <= LOWEST_ADC) {
         g_throttle_DAC = 1023;

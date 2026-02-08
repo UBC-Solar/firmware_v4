@@ -15,7 +15,6 @@
  */
 
 #include "tasks.h"
-#include "drive_state.h"
 
 /* DRIVE STATE TASK */
 void TasksDriveState(void) {

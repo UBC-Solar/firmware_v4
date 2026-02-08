@@ -9,6 +9,19 @@
 
 #include "drive_state.h"
 
+/* FUNCTION DECLARATIONS */
+drive_state_t compute_next_state(drive_state_t drive_state, drive_flags_t drive_flags);
+motor_control_t compute_next_command(drive_state_t drive_state, drive_flags_t drive_flags);
+motor_control_t get_motor_command(uint16_t accel_DAC, uint16_t regen_DAC);
+void update_drive_flags(void);
+void clear_drive_flags(void);
+void break_on_handler(void);
+void next_state_handler(drive_state_t drive_state);
+void prev_state_handler(drive_state_t drive_state);
+void eco_power_handler(void);
+void normalize_adc_values(uint16_t adc1, uint16_t adc2);
+bool accel_validity(uint16_t adc1, uint16_t adc2);
+
 /* GLOBAL VARIABLES */
 uint16_t g_throttle_DAC = 0;
 

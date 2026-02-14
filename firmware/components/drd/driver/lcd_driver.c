@@ -1,26 +1,5 @@
 #include "lcd_driver.h"
 
-/* Internal buffer for pixel operations (assumes a 128x64 display) */
-static uint8_t lcd_buffer[(128 * 64) / 8];
-
-static uint8_t lcd_flipped = 0;
-
-// DIRTY PAGES optimization variable
-#ifdef LCD_DRIVER_ST7565_DIRTY_PAGES
-static uint8_t lcd_dirty_pages;
-#endif
-
-/*--------------------------------------------------------------------------
-  Internal Helper Functions
---------------------------------------------------------------------------*/
-
-/**
- * @brief Sets or clears a single pixel in the internal display buffer.
- *
- * @param x The x coordinate (0-based).
- * @param y The y coordinate (0-based).
- * @param color 1 to set the pixel, 0 to clear it.
- */
 void LcdDriverSetPixel(uint8_t x, uint8_t y, uint8_t colour)
 {
     if (x >= LCD_DRIVER_SCREEN_WIDTH || y >= LCD_DRIVER_SCREEN_HEIGHT)
@@ -42,14 +21,6 @@ void LcdDriverSetPixel(uint8_t x, uint8_t y, uint8_t colour)
     }
 }
 
-/**
- * @brief Clears a rectangular area in the internal display buffer.
- *
- * @param x1 Left coordinate
- * @param y1 Top coordinate
- * @param x2 Right coordinate
- * @param y2 Bottom coordinate
- */
 void LcdDriverClearBoundingBox(unsigned char x1,
                                unsigned char y1,
                                unsigned char x2,
@@ -69,10 +40,8 @@ void LcdDriverClearBoundingBox(unsigned char x1,
     }
 }
 
-/**
- * @brief Refreshes the LCD display by calling the ST7565 display update.
- */
-void LcdDriverRefresh() {
+void LcdDriverRefresh()
+{
     for (int y = 0; y < 8; y++)
     {
 
@@ -118,15 +87,6 @@ void LcdDriverRefresh() {
 #endif
 }
 
-/**
- * @brief Draws a rectangle outline using the internal pixel function.
- *
- * @param x1 Left coordinate (1-based).
- * @param y1 Top coordinate (1-based).
- * @param x2 Right coordinate (1-based).
- * @param y2 Bottom coordinate (1-based).
- * @param color 1 to draw pixel.
- */
 void LcdDriverDrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t color)
 {
     for (uint8_t x = x1; x <= x2; x++)
@@ -141,16 +101,6 @@ void LcdDriverDrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint
     }
 }
 
-/**
- * @brief Draws a text string using an external graphics library.
- *
- * @param str The null-terminated string to draw.
- * @param x Starting x coordinate.
- * @param y Starting y coordinate.
- * @param font Pointer to the font to use.
- * @param spacing Spacing between characters.
- * @return LcdDriverBoundingBox The bounding box of the drawn text.
- */
 LcdDriverBoundingBox LcdDriverDrawText(char* string,
                                        unsigned char x,
                                        unsigned char y,
@@ -180,15 +130,6 @@ LcdDriverBoundingBox LcdDriverDrawText(char* string,
     return ret;
 }
 
-/**
- * @brief Draws a single character using an external graphics library.
- *
- * @param c The character to draw.
- * @param x Starting x coordinate.
- * @param y Starting y coordinate.
- * @param font Pointer to the font to use.
- * @return LcdDriverBoundingBox The bounding box of the drawn character.
- */
 LcdDriverBoundingBox
 LcdDriverDrawChar(unsigned char c, unsigned char x, unsigned char y, const unsigned char* font)
 {
@@ -256,9 +197,6 @@ LcdDriverDrawChar(unsigned char c, unsigned char x, unsigned char y, const unsig
     return ret;
 }
 
-/**
- * @brief Changes the screen
- */
 void LcdDriverChangeScreen()
 {
     lcd_dirty_pages = LCD_DRIVER_DIRTY_PAGE_CHANGE;
@@ -266,11 +204,6 @@ void LcdDriverChangeScreen()
     LcdDriverRefresh();
 }
 
-/**
- * @brief Sends a command to the LCD via SPI.
- *
- * @param cmd The command byte to send.
- */
 void LcdDriverWriteCommand(uint8_t cmd)
 {
     /* Set A0 low for command */
@@ -280,11 +213,6 @@ void LcdDriverWriteCommand(uint8_t cmd)
     HAL_SPI_Transmit(sg_spi_handle, cmd_arr, 1, 10);
 }
 
-/**
- * @brief Sends data to the LCD via SPI so that the specified pixels turn black (or white).
- *
- * @param data The data byte to send.
- */
 void LcdDriverWriteData(uint8_t data)
 {
     /* Set A0 high for data */

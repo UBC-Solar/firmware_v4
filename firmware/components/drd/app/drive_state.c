@@ -8,7 +8,9 @@
  */
 
 #include "drive_state.h"
+#include "gpio_driver.h"
 #include "adc_driver.h"
+#include "CAN_comms.h"
 
 /* FUNCTION DECLARATIONS */
 DriveStateStates ComputeNextState(void);
@@ -23,7 +25,7 @@ void EcoPowerHandler(void);
 uint16_t g_throttle_DAC = 0;
 
 volatile DriveStateStates g_drive_state = PARK;
-volatile DriveStateFlags g_drive_flags;
+volatile DriveStateFlags g_drive_flags = {0};
 
 /* DRIVE STATE FINITE STATE MACHINE */
 
@@ -37,6 +39,13 @@ void DriveStateFsmHandler()
 
     // TODO: set_cyclic_drive_state(g_drive_state);
 
+    DEBUG_IO_PRINT("DriveState=%u\r\n", g_drive_state);
+    
+    DEBUG_IO_PRINT("NextStateRequested=%u\r\n", g_drive_flags.next_state_request);
+    DEBUG_IO_PRINT("PrevStateRequested=%u\r\n", g_drive_flags.prev_state_request);
+    DEBUG_IO_PRINT("BrakeEnabled=%u\r\n", g_drive_flags.brake_on);
+    DEBUG_IO_PRINT("EcoModeEnabled=%u\r\n", g_drive_flags.eco_mode_on);
+
     ClearDriveFlags();
 }
 
@@ -45,36 +54,37 @@ DriveStateStates ComputeNextState(void)
 
     const bool allow_state_change = g_drive_flags.brake_on && g_drive_flags.velocity_under_threshold;
 
-    const int requests = (uint8_t)g_drive_flags.next_state_request + (uint8_t)g_drive_flags.prev_state_request; // is this needed with a switch?
+    const bool invalid_requests = g_drive_flags.next_state_request && g_drive_flags.prev_state_request;
 
-    if (requests > 1 || !allow_state_change)
+    if (invalid_requests || !allow_state_change) 
+    {
         return g_drive_state;
+    }
 
     /* HANDLE CYCLE LOGIC HERE */
 
-    // PARK -> FORWARD -> REVERSE
-
+    // FORWARD -> PARK -> REVERSE
     switch (g_drive_state)
     {
     case PARK:
         if (g_drive_flags.next_state_request)
-            g_drive_state = FORWARD;
+            g_drive_state = REVERSE;
         if (g_drive_flags.prev_state_request)
-            g_drive_state = PARK;
+            g_drive_state = FORWARD;
         return g_drive_state;
 
     case FORWARD:
         if (g_drive_flags.next_state_request)
-            g_drive_state = REVERSE;
-        if (g_drive_flags.prev_state_request)
             g_drive_state = PARK;
+        if (g_drive_flags.prev_state_request)
+            g_drive_state = FORWARD;
         return g_drive_state;
 
     case REVERSE:
         if (g_drive_flags.next_state_request)
             g_drive_state = REVERSE;
         if (g_drive_flags.prev_state_request)
-            g_drive_state = FORWARD;
+            g_drive_state = PARK;
         return g_drive_state;
 
     default:
@@ -85,8 +95,10 @@ DriveStateStates ComputeNextState(void)
 DriveStateMotorControl ComputeNextCommand(void)
 {
 
-    if (g_drive_flags.brake_on || (g_drive_state == PARK))
+    if (g_drive_flags.brake_on || (g_drive_state == PARK)) 
+    {
         return GetMotorCommand(ACCEL_DAC_OFF, REGEN_DAC_OFF);
+    }
 
     if (g_drive_state == REVERSE)
     {
@@ -159,7 +171,7 @@ void EcoPowerHandler(void)
     }
 }
  
-/* CAN MESSAGE HANDLERS */
+/* CAN MESSAGE INPUT HANDLERS */
 
 void VelocityHandler(uint8_t* data) {
     uint32_t rpm = (data[4] >> 3) | ((data[5] & 0x7f) << 5);
@@ -177,6 +189,16 @@ void SteeringCanMsgHandler(uint8_t *data) { // not configured on STR yet regen i
 
     g_drive_flags.regen_on = ((data[0] >> 0) & 0x01);
     g_drive_flags.cruise_on = ((data[0] >> 1) & 0x01);
+}
+
+static uint16_t x;
+void MotorCommandPackAndSend(DriveStateMotorControl* motor_command, bool isr) {
+    CAN_comms_Tx_msg_t msg;
+    msg.header = drive_control_header;
+
+    uint8_t data[8] = {0};
+
+
 }
 
 #ifdef DEBUG

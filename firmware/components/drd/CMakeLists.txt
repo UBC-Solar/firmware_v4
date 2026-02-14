@@ -54,6 +54,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/app/evan_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/drive_state.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/soc.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/adc_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/evan_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/drivers.c
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/tasks.c

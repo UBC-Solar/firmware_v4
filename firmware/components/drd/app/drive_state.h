@@ -13,9 +13,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "drivers.h"
-#include "adc_driver.h"
-
 /* DRIVE STATE DEFINES */
 #define MC_DAC_MAX            1023    // Note: This gets capped by MDI to 920 anyways for safety
 #define DRIVE_STATE_FSM_DELAY 25
@@ -49,7 +46,7 @@ typedef enum {
     FORWARD = (uint8_t) 0x01,
     PARK = (uint8_t) 0x02,
     REVERSE = (uint8_t) 0x03,
-    CRUISE = (uint8_t) 0x04
+    // CRUISE = (uint8_t) 0x04
 } DriveStateStates;
 
 /* GLOBAL VARIABLES */

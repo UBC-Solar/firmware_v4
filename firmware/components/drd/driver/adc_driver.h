@@ -15,7 +15,8 @@
 /* Throttle range (pedal position mapping) */
 #define ADC_NO_THROTTLE_MAX       630
 #define ADC_FULL_THROTTLE_MIN     1350
-#define MC_DAC_MAX                433
+#define MC_DAC_MAX                1023 // 433
+#define MC_DAC_MIN                0
 
 /* ERROR FLAGS */
 typedef enum {

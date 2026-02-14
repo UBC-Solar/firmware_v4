@@ -1,5 +1,5 @@
 #include "adc_driver.h"
-#include "drivers.h"
+#include "gpio_driver.h"
 #include <stdlib.h>
 
 /* PRIVATE VARIABLES */
@@ -26,7 +26,7 @@ uint16_t AdcDriverReadThrottle(void)
     uint16_t adc2 = ReadAdc(&hadc2);
     
     if (!ValidateAdcReadings(adc1, adc2)) {
-        return 0;  // Invalid sensors = no throttle
+        return MC_DAC_MIN;  // Invalid sensors = no throttle
     }
     
     return NormalizeToDac(adc1, adc2);
@@ -64,7 +64,7 @@ static bool ValidateAdcReadings(uint16_t adc1, uint16_t adc2)
 }
 
 /* ADC CONVERSION TO DAC */
-static uint16_t convert_to_dac(uint16_t adc)
+static uint16_t ConvertToDac(uint16_t adc)
 {
     adc = MIN(MAX(adc, ADC_NO_THROTTLE_MAX), ADC_FULL_THROTTLE_MIN);    // Keep adc val within throttle range
     return ((adc - ADC_NO_THROTTLE_MAX) * MC_DAC_MAX) / (ADC_FULL_THROTTLE_MIN - ADC_NO_THROTTLE_MAX);      // Find ratio between 0 to 1 and then * 1023
@@ -75,23 +75,23 @@ static uint16_t NormalizeToDac(uint16_t adc1, uint16_t adc2)
     (void)adc2; // unused adc value
     
     if (adc1 <= ADC_LOWEST_VALID) {
-        return 433;
+        return MC_DAC_MAX;
     }
     
     if (adc1 >= ADC_HIGHEST_VALID) {
-        return 0;
+        return MC_DAC_MIN;
     }
     
     // Linear interpolation from ADC range to DAC range
     uint32_t range = (uint32_t)(ADC_HIGHEST_VALID - ADC_LOWEST_VALID);
-    uint32_t value = (uint32_t)(adc_avg - ADC_LOWEST_VALID);
-    uint32_t scaled = (value * 433) / range;
+    uint32_t value = (uint32_t)(adc1 - ADC_LOWEST_VALID);
+    uint32_t scaled = (value * MC_DAC_MAX) / range;
     
-    uint16_t dac_value = (uint16_t)(433 - scaled);
+    uint16_t dac_value = (uint16_t)(MC_DAC_MAX - scaled);
     
     // Clamp to valid range
-    if (dac_value > 433) {
-        dac_value = 433;
+    if (dac_value > MC_DAC_MAX) {
+        dac_value = MC_DAC_MAX;
     }
     
     return dac_value;

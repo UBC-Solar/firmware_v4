@@ -15,6 +15,7 @@
  */
 
 #include "tasks.h"
+#include "cmsis_os2.h"
 
 /* DRIVE STATE TASK */
 void TasksDriveState(void) {

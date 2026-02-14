@@ -7,10 +7,8 @@
 CYCLIC_DATA(uint32_t, cyclic_speed, MAX_CYCLE_TIME);        // Vehicle speed (km/h)
 CYCLIC_DATA(int16_t, cyclic_pack_current, MAX_CYCLE_TIME);  // Battery pack current
 CYCLIC_DATA(uint16_t, cyclic_pack_voltage, MAX_CYCLE_TIME); // Battery pack voltage
-CYCLIC_DATA(uint8_t,
-            cyclic_drive_state,
-            MAX_CYCLE_TIME);                      // Current drive state (e.g., PARK, FORWARD)
-CYCLIC_DATA(uint8_t, cyclic_soc, MAX_CYCLE_TIME); // State of Charge (SOC %)
+CYCLIC_DATA(uint8_t, cyclic_drive_state, MAX_CYCLE_TIME);   // Drive state (ie. PARK, FORWARD)
+CYCLIC_DATA(uint8_t, cyclic_soc, MAX_CYCLE_TIME);           // State of Charge (SOC %)
 
 // Create functions that update the cyclic data.
 void set_cyclic_speed(uint32_t speed) { CYCLIC_DATA_SET(cyclic_speed, speed); }

@@ -4,8 +4,8 @@
 // #include "drd_freertos.h"
 // #include "fault_lights.h"
 #include "lcd_driver.h"
-// #include "soc.h"
 #include <stdio.h>
+// #include "soc.h"
 
 /*--------------------------------------------------------------------------
   Internal Types & Variables
@@ -1061,29 +1061,8 @@ void LcdAppDisplayDriveStateDebugPage(volatile drive_state_t* state)
 
     LcdDriverRefresh();
 }
-void LcdAppInit(SPI_HandleTypeDef* hspi)
-{
-    HAL_GPIO_WritePin(DISPLAY_RESET_GPIO_Port, DISPLAY_RESET_Pin, GPIO_PIN_RESET);
-    HAL_Delay(30);
-    HAL_GPIO_WritePin(DISPLAY_RESET_GPIO_Port, DISPLAY_RESET_Pin, GPIO_PIN_SET);
-    HAL_Delay(30);
 
-    sg_spi_handle = hspi;
-
-    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_ADC_NORMAL);
-    LcdDriverWriteCommand(LCD_DRIVER_CMD_DISPLAY_OFF);
-    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_COM_NORMAL + 8); // This makes the drawing flipped
-    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_BIAS_9);
-    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_POWER_CONTROL | 0x7);
-    LcdDriverWriteCommand(
-        LCD_DRIVER_CMD_SET_RESISTOR_RATIO |
-        0x6); // set lcd operating voltage (regulator resistor, ref voltage resistor)
-    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_VOLUME_FIRST);
-    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_CONTRAST - 5);
-    LcdDriverWriteCommand(LCD_DRIVER_CMD_DISPLAY_START);
-    LcdDriverWriteCommand(LCD_DRIVER_CMD_DISPLAY_ON);
-    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_ALLPTS_NORMAL);
-}
+void LcdAppInit(SPI_HandleTypeDef* hspi) { LcdDriverInit(hspi); }
 
 /*
  * @brief CAN rx function which parses message data needed by the LCD

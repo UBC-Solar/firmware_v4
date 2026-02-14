@@ -1,5 +1,4 @@
 #include "main.h"
-#include <stdint.h>
 
 /* Internal SPI handle for LCD communication */
 static SPI_HandleTypeDef* sg_spi_handle = NULL;
@@ -135,3 +134,10 @@ void LcdDriverWriteCommand(uint8_t cmd);
  * @param data The data byte to send.
  */
 void LcdDriverWriteData(uint8_t data);
+
+/**
+ * @brief Initializes the LCD and SPI interface.
+ *
+ * @param hspi Pointer to the SPI handle.
+ */
+void LcdDriverInit(SPI_HandleTypeDef* hspi);

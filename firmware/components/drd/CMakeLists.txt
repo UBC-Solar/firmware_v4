@@ -56,16 +56,18 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/app/lcd_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/lcd_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/font_verdana.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/cyclic_data_handler.c
 )
+
+message(STATUS "CMAKE_CURRENT_SOURCE_DIR = ${CMAKE_CURRENT_SOURCE_DIR}")
+message(STATUS "Cyclic path = ${CMAKE_CURRENT_SOURCE_DIR}/../../../common/cyclic_data")
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     ${CMAKE_CURRENT_SOURCE_DIR}/app
     ${CMAKE_CURRENT_SOURCE_DIR}/driver
-    ${CMAKE_CURRENT_SOURCE_DIR}/driver/font_verdana.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/driver/lcd_driver.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/app/lcd_app.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/cyclic_data/
 )
 
 # Add project symbols (macros)

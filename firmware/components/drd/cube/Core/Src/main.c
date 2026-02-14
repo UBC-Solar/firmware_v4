@@ -21,11 +21,14 @@
 #include "adc.h"
 #include "can.h"
 #include "cmsis_os.h"
+#include "cyclic_data_handler.h"
 #include "gpio.h"
 #include "iwdg.h"
 #include "lcd_app.h"
 #include "spi.h"
+#include "stm32f1xx_hal.h"
 #include "usart.h"
+#include <stdint.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -101,7 +104,9 @@ int main(void)
     MX_SPI1_Init();
     MX_UART4_Init();
     /* USER CODE BEGIN 2 */
-
+    LcdAppInit(&hspi1);
+    g_lcd_data.speed_units = LCD_APP_KPH;
+    uint32_t speed = 55;
     /* USER CODE END 2 */
 
     /* Init scheduler */
@@ -118,9 +123,9 @@ int main(void)
     while (1)
     {
         /* USER CODE END WHILE */
-        LcdAppInit(&hspi1);
-        uint32_t soc = 10;
-        LcdAppDisplaySOCDrivePage(&soc);
+        LcdAppDisplaySpeedDrivePage(&speed, g_lcd_data.speed_units);
+        LcdAppDisplayDriveModeDrivePage(g_lcd_data.drive_mode);
+        HAL_Delay(500);
         /* USER CODE BEGIN 3 */
     }
     /* USER CODE END 3 */

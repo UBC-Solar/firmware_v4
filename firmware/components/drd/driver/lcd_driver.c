@@ -72,8 +72,7 @@ void LcdDriverClearBoundingBox(unsigned char x1,
 /**
  * @brief Refreshes the LCD display by calling the ST7565 display update.
  */
-void LcdDriverRefresh()
-{
+void LcdDriverRefresh() {
     for (int y = 0; y < 8; y++)
     {
 
@@ -293,4 +292,28 @@ void LcdDriverWriteData(uint8_t data)
 
     uint8_t data_arr[1] = {data};
     HAL_SPI_Transmit(sg_spi_handle, data_arr, 1, 10);
+}
+
+void LcdDriverInit(SPI_HandleTypeDef* hspi)
+{
+    HAL_GPIO_WritePin(DISPLAY_RESET_GPIO_Port, DISPLAY_RESET_Pin, GPIO_PIN_RESET);
+    HAL_Delay(30);
+    HAL_GPIO_WritePin(DISPLAY_RESET_GPIO_Port, DISPLAY_RESET_Pin, GPIO_PIN_SET);
+    HAL_Delay(30);
+
+    sg_spi_handle = hspi;
+
+    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_ADC_NORMAL);
+    LcdDriverWriteCommand(LCD_DRIVER_CMD_DISPLAY_OFF);
+    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_COM_NORMAL + 8); // This makes the drawing flipped
+    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_BIAS_9);
+    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_POWER_CONTROL | 0x7);
+    LcdDriverWriteCommand(
+        LCD_DRIVER_CMD_SET_RESISTOR_RATIO |
+        0x6); // set lcd operating voltage (regulator resistor, ref voltage resistor)
+    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_VOLUME_FIRST);
+    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_CONTRAST - 5);
+    LcdDriverWriteCommand(LCD_DRIVER_CMD_DISPLAY_START);
+    LcdDriverWriteCommand(LCD_DRIVER_CMD_DISPLAY_ON);
+    LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_ALLPTS_NORMAL);
 }

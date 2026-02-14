@@ -42,7 +42,7 @@ void drive_state_fsm_handler()
 
     // set_cyclic_drive_state(g_drive_state);
 
-    clear_drive_flags(); // why clear
+    clear_drive_flags();
 }
 
 drive_state_t compute_next_state(drive_state_t drive_state, drive_flags_t drive_flags)
@@ -50,32 +50,35 @@ drive_state_t compute_next_state(drive_state_t drive_state, drive_flags_t drive_
 
     const bool allow_state_change = drive_flags.brake_on && drive_flags.velocity_under_threshold;
 
-    const int requests = (int)drive_flags.forward_request + (int)drive_flags.reverse_request +
-                         (int)drive_flags.park_request;
+    const int requests = (int)drive_flags.next_state_request + (int)drive_flags.prev_state_request; // is this needed with a switch?
 
     if (requests > 1 || !allow_state_change)
         return drive_state;
 
+    /* HANDLE CYCLE LOGIC HERE */
+
+    // PARK -> FORWARD -> REVERSE
+
     switch (drive_state)
     {
     case PARK:
-        if (drive_flags.forward_request)
+        if (drive_flags.next_state_request)
             drive_state = FORWARD;
-        if (drive_flags.reverse_request)
-            drive_state = REVERSE;
+        if (drive_flags.prev_state_request)
+            drive_state = PARK;
         return drive_state;
 
     case FORWARD:
-        if (drive_flags.park_request)
-            drive_state = PARK;
-        if (drive_flags.reverse_request)
+        if (drive_flags.next_state_request)
             drive_state = REVERSE;
+        if (drive_flags.prev_state_request)
+            drive_state = PARK;
         return drive_state;
 
     case REVERSE:
-        if (drive_flags.park_request)
-            drive_state = PARK;
-        if (drive_flags.forward_request)
+        if (drive_flags.next_state_request)
+            drive_state = REVERSE;
+        if (drive_flags.prev_state_request)
             drive_state = FORWARD;
         return drive_state;
 
@@ -87,7 +90,7 @@ drive_state_t compute_next_state(drive_state_t drive_state, drive_flags_t drive_
 motor_control_t compute_next_command(drive_state_t drive_state, drive_flags_t drive_flags)
 {
 
-    if (drive_flags.brake_on || drive_flags.park_request)
+    if (drive_flags.brake_on || (drive_state == PARK))
         return get_motor_command(ACCEL_DAC_OFF, REGEN_DAC_OFF);
 
     if (drive_state == REVERSE)
@@ -117,9 +120,8 @@ void update_drive_flags(void)
 
 void clear_drive_flags(void)
 {
-    g_drive_flags.park_request = false;
-    g_drive_flags.forward_request = false;
-    g_drive_flags.reverse_request = false;
+    g_drive_flags.next_state_request = false;
+    g_drive_flags.prev_state_request = false;
 }
 
 /* SETS DRIVE STATE FLAGS */
@@ -135,11 +137,11 @@ void drive_state_interrupt_handler(uint16_t toggle)
         break;
 
     case DRIVE_NEXT_PIN:
-        next_state_handler(g_drive_state);
+        g_drive_flags.next_state_request = true;
         break;
 
     case DRIVE_PREV_PIN:
-        prev_state_handler(g_drive_state);
+        g_drive_flags.prev_state_request = true;
         break;
 
     case ECO_POWER_PIN:
@@ -152,44 +154,6 @@ void break_on_handler() {
     g_drive_flags.brake_on = true;
     motor_control_t motor_command = get_motor_command(ACCEL_DAC_OFF, REGEN_DAC_OFF);
 }
-// PARK -> FORWARD -> REVERSE -> PARK
-void next_state_handler(drive_state_t drive_state)
-{
-
-    switch (drive_state)
-    {
-    case PARK:
-        g_drive_flags.forward_request = true;
-        break;
-
-    case FORWARD:
-        g_drive_flags.reverse_request = true;
-        break;
-
-    case REVERSE:
-        g_drive_flags.park_request = true; // cap at reverse to remove rotation
-        break;
-    }
-}
-// PARK -> REVERSE -> FORWARD -> PARK
-void prev_state_handler(drive_state_t drive_state)
-{
-
-    switch (drive_state)
-    {
-    case PARK:
-        g_drive_flags.reverse_request = true; // cap at park to remove rotation
-        break;
-
-    case FORWARD:
-        g_drive_flags.park_request = true;
-        break;
-
-    case REVERSE:
-        g_drive_flags.forward_request = true;
-        break;
-    }
-}
 
 void eco_power_handler(void)
 {
@@ -199,8 +163,10 @@ void eco_power_handler(void)
         g_drive_flags.eco_mode_on = true;
     }
 }
-
+ 
 /* ACCELERATION READINGS */
+
+/* ADC DRIVER LOGIC */
 void get_acceleration_readings(void)
 {
     uint16_t adc1 = adc_read_accel_1();
@@ -221,7 +187,6 @@ void normalize_adc_values(uint16_t adc1, uint16_t adc2) {
     if (adc1 <= LOWEST_ADC) {
         g_throttle_DAC = 1023;
         return;
-    }
 
     if (adc1 >= HIGHEST_ADC) {
         g_throttle_DAC = 0;

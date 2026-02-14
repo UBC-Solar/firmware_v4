@@ -46,9 +46,8 @@ typedef struct {
     volatile bool regen_on;
     volatile bool cruise_on;
     volatile bool velocity_under_threshold;
-    volatile bool forward_request;
-    volatile bool reverse_request;
-    volatile bool park_request;
+    volatile bool next_state_request;
+    volatile bool prev_state_request;
     volatile bool eco_mode_on;
 } drive_flags_t;
 

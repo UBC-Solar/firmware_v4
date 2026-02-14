@@ -57,6 +57,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/lcd_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/font_verdana.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/cyclic_data_handler.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/tasks.c
 )
 
 message(STATUS "CMAKE_CURRENT_SOURCE_DIR = ${CMAKE_CURRENT_SOURCE_DIR}")
@@ -68,6 +69,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/app
     ${CMAKE_CURRENT_SOURCE_DIR}/driver
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/cyclic_data/
+    ${CMAKE_CURRENT_SOURCE_DIR}/runtime
 )
 
 # Add project symbols (macros)

@@ -27,10 +27,10 @@ typedef enum {
 
 /* FUNCTION PROTOTYPES */
 
-uint16_t adc_driver_read_throttle(void);
+uint16_t AdcDriverReadThrottle(void);
 
-adc_error_t adc_driver_get_error(void);
+adc_error_t AdcDriverGetError(void);
 
-bool adc_driver_read_raw(uint16_t *adc1, uint16_t *adc2);
+bool AdcDriverReadRaw(uint16_t *adc1, uint16_t *adc2);
 
 #endif /* __ADC_DRIVER_H__ */

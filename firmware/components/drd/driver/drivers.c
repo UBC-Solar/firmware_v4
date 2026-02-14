@@ -18,10 +18,10 @@
 /* FUNCTION DECLARATIONS */
 
 /* DRIVE STATE DRIVERS */
-uint8_t gpio_read_pin(GPIO_TypeDef* port, uint16_t pin) {
+uint8_t GpioReadPin(GPIO_TypeDef* port, uint16_t pin) {
     return HAL_GPIO_ReadPin(port, pin);
 }
 
-void gpio_toggle_pin(GPIO_TypeDef* port, uint16_t pin) {
+void GpioTogglePin(GPIO_TypeDef* port, uint16_t pin) {
     HAL_GPIO_TogglePin(port, pin);
 }

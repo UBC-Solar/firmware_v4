@@ -23,7 +23,7 @@
 #define DEBUG_LED0_PORT         DEBUG_LED_GPIO_Port
 
 /* DRIVERS FUNCTION PROTOTYPES */
-uint8_t gpio_read_pin(GPIO_TypeDef* port, uint16_t pin);
-void gpio_toggle_pin(GPIO_TypeDef* port, uint16_t pin);
+uint8_t GpioReadPin(GPIO_TypeDef* port, uint16_t pin);
+void GpioTogglePin(GPIO_TypeDef* port, uint16_t pin);
 
 #endif //__DRIVERS_H__

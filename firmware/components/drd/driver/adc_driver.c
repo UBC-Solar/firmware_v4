@@ -6,39 +6,39 @@
 static adc_error_t g_last_error = ADC_FAULT_NONE;
 
 /* PRIVATE FUNCTION DECLARATIONS */
-static uint16_t read_adc(ADC_HandleTypeDef* hadc);
-static bool validate_adc_readings(uint16_t adc1, uint16_t adc2);
-static uint16_t normalize_to_dac(uint16_t adc1, uint16_t adc2);
+static uint16_t ReadAdc(ADC_HandleTypeDef* hadc);
+static bool ValidateAdcReadings(uint16_t adc1, uint16_t adc2);
+static uint16_t NormalizeToDac(uint16_t adc1, uint16_t adc2);
 
 /* ADC DRIVER FUNCTIONALITY */
-static uint16_t read_adc(ADC_HandleTypeDef* hadc)
+static uint16_t ReadAdc(ADC_HandleTypeDef* hadc)
 {
 	HAL_ADC_Start(hadc);
 	HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
 	return HAL_ADC_GetValue(hadc);
 }
 
-uint16_t adc_driver_read_throttle(void)
+uint16_t AdcDriverReadThrottle(void)
 {
     g_last_error = ADC_FAULT_NONE;
     
-    uint16_t adc1 = read_adc(&hadc1);
-    uint16_t adc2 = read_adc(&hadc2);
+    uint16_t adc1 = ReadAdc(&hadc1);
+    uint16_t adc2 = ReadAdc(&hadc2);
     
-    if (!validate_adc_readings(adc1, adc2)) {
+    if (!ValidateAdcReadings(adc1, adc2)) {
         return 0;  // Invalid sensors = no throttle
     }
     
-    return normalize_to_dac(adc1, adc2);
+    return NormalizeToDac(adc1, adc2);
 }
 
 /* VALIDATION AND ERROR HANDLING */
-adc_error_t adc_driver_get_error(void)
+adc_error_t AdcDriverGetError(void)
 {
     return g_last_error;
 }
 
-static bool validate_adc_readings(uint16_t adc1, uint16_t adc2)
+static bool ValidateAdcReadings(uint16_t adc1, uint16_t adc2)
 {
     g_last_error = ADC_FAULT_NONE;
     
@@ -70,7 +70,7 @@ static uint16_t convert_to_dac(uint16_t adc)
     return ((adc - ADC_NO_THROTTLE_MAX) * MC_DAC_MAX) / (ADC_FULL_THROTTLE_MIN - ADC_NO_THROTTLE_MAX);      // Find ratio between 0 to 1 and then * 1023
 }
 
-static uint16_t normalize_to_dac(uint16_t adc1, uint16_t adc2)
+static uint16_t NormalizeToDac(uint16_t adc1, uint16_t adc2)
 {
     (void)adc2; // unused adc value
     

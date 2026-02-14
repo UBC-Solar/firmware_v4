@@ -109,10 +109,10 @@ motor_control_t GetMotorCommand(uint16_t accel_DAC, uint16_t regen_DAC)
 /* DRIVE STATE DATA COLLECTION */
 void UpdateDriveFlags(void)
 {
-    bool brake_pressed = gpio_read_pin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN); // adjust
+    bool brake_pressed = GpioReadPin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN); // adjust
     g_drive_flags.brake_on = brake_pressed;
 
-    g_throttle_DAC = adc_driver_read_throttle();
+    g_throttle_DAC = AdcDriverReadThrottle();
 }
 
 void ClearDriveFlags(void)
@@ -124,7 +124,7 @@ void ClearDriveFlags(void)
 /* SETS DRIVE STATE FLAGS */
 void DriveStateInterruptHandler(uint16_t toggle)
 {
-    gpio_toggle_pin(DEBUG_LED0_PORT, DEBUG_LED0_PIN);
+    GpioTogglePin(DEBUG_LED0_PORT, DEBUG_LED0_PIN);
 
     switch (toggle)
     {
@@ -153,7 +153,7 @@ void BreakOnHandler() {
 
 void EcoPowerHandler(void)
 {
-    if(!gpio_read_pin(ECO_POWER_PORT, ECO_POWER_PIN)) {
+    if(!GpioReadPin(ECO_POWER_PORT, ECO_POWER_PIN)) {
         g_drive_flags.eco_mode_on = false;
     } else {
         g_drive_flags.eco_mode_on = true;

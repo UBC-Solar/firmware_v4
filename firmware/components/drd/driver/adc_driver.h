@@ -15,7 +15,7 @@
 /* Throttle range (pedal position mapping) */
 #define ADC_NO_THROTTLE_MAX       630
 #define ADC_FULL_THROTTLE_MIN     1350
-#define MC_DAC_MAX                1023
+#define MC_DAC_MAX                433
 
 /* ERROR FLAGS */
 typedef enum {
@@ -23,13 +23,13 @@ typedef enum {
     ADC1_SENSOR_FAULT = 0x01,
     ADC2_SENSOR_FAULT = 0x02,
     ADC_ERROR_DISAGREEMENT = 0x04,
-} adc_error_t;
+} AdcError;
 
 /* FUNCTION PROTOTYPES */
 
 uint16_t AdcDriverReadThrottle(void);
 
-adc_error_t AdcDriverGetError(void);
+AdcError AdcDriverGetError(void);
 
 bool AdcDriverReadRaw(uint16_t *adc1, uint16_t *adc2);
 

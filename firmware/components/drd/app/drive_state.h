@@ -36,13 +36,13 @@ typedef struct {
     volatile bool next_state_request;
     volatile bool prev_state_request;
     volatile bool eco_mode_on;
-} drive_flags_t;
+} DriveStateFlags;
 
 typedef struct {
     uint16_t accel_DAC_value;
     uint16_t regen_DAC_value;
     uint8_t motor_control_flags;
-} motor_control_t;
+} DriveStateMotorControl;
 
 typedef enum {
     INVALID = (uint8_t) 0x00,
@@ -50,11 +50,11 @@ typedef enum {
     PARK = (uint8_t) 0x02,
     REVERSE = (uint8_t) 0x03,
     CRUISE = (uint8_t) 0x04
-} drive_state_t;
+} DriveStateStates;
 
 /* GLOBAL VARIABLES */
-extern volatile drive_state_t g_drive_state;
-extern volatile drive_flags_t g_drive_flags;
+extern volatile DriveStateStates g_drive_state;
+extern volatile DriveStateFlags g_drive_flags;
 extern volatile uint32_t g_velocity_kmh;
 
 /* FUNCTION PROTOTYPES */

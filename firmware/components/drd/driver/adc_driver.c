@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 /* PRIVATE VARIABLES */
-static adc_error_t g_last_error = ADC_FAULT_NONE;
+static AdcError g_last_error = ADC_FAULT_NONE;
 
 /* PRIVATE FUNCTION DECLARATIONS */
 static uint16_t ReadAdc(ADC_HandleTypeDef* hadc);
@@ -33,7 +33,7 @@ uint16_t AdcDriverReadThrottle(void)
 }
 
 /* VALIDATION AND ERROR HANDLING */
-adc_error_t AdcDriverGetError(void)
+AdcError AdcDriverGetError(void)
 {
     return g_last_error;
 }
@@ -75,7 +75,7 @@ static uint16_t NormalizeToDac(uint16_t adc1, uint16_t adc2)
     (void)adc2; // unused adc value
     
     if (adc1 <= ADC_LOWEST_VALID) {
-        return 1023;
+        return 433;
     }
     
     if (adc1 >= ADC_HIGHEST_VALID) {
@@ -85,13 +85,13 @@ static uint16_t NormalizeToDac(uint16_t adc1, uint16_t adc2)
     // Linear interpolation from ADC range to DAC range
     uint32_t range = (uint32_t)(ADC_HIGHEST_VALID - ADC_LOWEST_VALID);
     uint32_t value = (uint32_t)(adc_avg - ADC_LOWEST_VALID);
-    uint32_t scaled = (value * 1023) / range;
+    uint32_t scaled = (value * 433) / range;
     
-    uint16_t dac_value = (uint16_t)(1023 - scaled);
+    uint16_t dac_value = (uint16_t)(433 - scaled);
     
     // Clamp to valid range
-    if (dac_value > 1023) {
-        dac_value = 1023;
+    if (dac_value > 433) {
+        dac_value = 433;
     }
     
     return dac_value;

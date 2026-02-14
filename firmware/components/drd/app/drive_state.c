@@ -11,9 +11,9 @@
 #include "adc_driver.h"
 
 /* FUNCTION DECLARATIONS */
-drive_state_t ComputeNextState(drive_state_t drive_state, drive_flags_t drive_flags);
-motor_control_t ComputeNextCommand(drive_state_t drive_state, drive_flags_t drive_flags);
-motor_control_t GetMotorCommand(uint16_t accel_DAC, uint16_t regen_DAC);
+DriveStateStates ComputeNextState(void);
+DriveStateMotorControl ComputeNextCommand(void);
+DriveStateMotorControl GetMotorCommand(uint16_t accel_DAC, uint16_t regen_DAC);
 void UpdateDriveFlags(void);
 void ClearDriveFlags(void);
 void BreakOnHandler(void);
@@ -22,8 +22,8 @@ void EcoPowerHandler(void);
 /* GLOBAL VARIABLES */
 uint16_t g_throttle_DAC = 0;
 
-volatile drive_state_t g_drive_state = PARK;
-volatile drive_flags_t g_drive_flags;
+volatile DriveStateStates g_drive_state = PARK;
+volatile DriveStateFlags g_drive_flags;
 
 /* DRIVE STATE FINITE STATE MACHINE */
 
@@ -31,75 +31,74 @@ void DriveStateFsmHandler()
 {
     UpdateDriveFlags();
 
-    drive_state_t next_drive_state = ComputeNextState(g_drive_state, g_drive_flags);
-    g_drive_state = next_drive_state;
+    DriveStateStates next_drive_state = ComputeNextState();
 
-    motor_control_t motor_command = ComputeNextCommand(g_drive_state, g_drive_flags);
+    DriveStateMotorControl motor_command = ComputeNextCommand();
 
     // TODO: set_cyclic_drive_state(g_drive_state);
 
     ClearDriveFlags();
 }
 
-drive_state_t ComputeNextState(drive_state_t drive_state, drive_flags_t drive_flags)
+DriveStateStates ComputeNextState(void)
 {
 
-    const bool allow_state_change = drive_flags.brake_on && drive_flags.velocity_under_threshold;
+    const bool allow_state_change = g_drive_flags.brake_on && g_drive_flags.velocity_under_threshold;
 
-    const int requests = (int)drive_flags.next_state_request + (int)drive_flags.prev_state_request; // is this needed with a switch?
+    const int requests = (uint8_t)g_drive_flags.next_state_request + (uint8_t)g_drive_flags.prev_state_request; // is this needed with a switch?
 
     if (requests > 1 || !allow_state_change)
-        return drive_state;
+        return g_drive_state;
 
     /* HANDLE CYCLE LOGIC HERE */
 
     // PARK -> FORWARD -> REVERSE
 
-    switch (drive_state)
+    switch (g_drive_state)
     {
     case PARK:
-        if (drive_flags.next_state_request)
-            drive_state = FORWARD;
-        if (drive_flags.prev_state_request)
-            drive_state = PARK;
-        return drive_state;
+        if (g_drive_flags.next_state_request)
+            g_drive_state = FORWARD;
+        if (g_drive_flags.prev_state_request)
+            g_drive_state = PARK;
+        return g_drive_state;
 
     case FORWARD:
-        if (drive_flags.next_state_request)
-            drive_state = REVERSE;
-        if (drive_flags.prev_state_request)
-            drive_state = PARK;
-        return drive_state;
+        if (g_drive_flags.next_state_request)
+            g_drive_state = REVERSE;
+        if (g_drive_flags.prev_state_request)
+            g_drive_state = PARK;
+        return g_drive_state;
 
     case REVERSE:
-        if (drive_flags.next_state_request)
-            drive_state = REVERSE;
-        if (drive_flags.prev_state_request)
-            drive_state = FORWARD;
-        return drive_state;
+        if (g_drive_flags.next_state_request)
+            g_drive_state = REVERSE;
+        if (g_drive_flags.prev_state_request)
+            g_drive_state = FORWARD;
+        return g_drive_state;
 
     default:
         return PARK;
     }
 }
 
-motor_control_t ComputeNextCommand(drive_state_t drive_state, drive_flags_t drive_flags)
+DriveStateMotorControl ComputeNextCommand(void)
 {
 
-    if (drive_flags.brake_on || (drive_state == PARK))
+    if (g_drive_flags.brake_on || (g_drive_state == PARK))
         return GetMotorCommand(ACCEL_DAC_OFF, REGEN_DAC_OFF);
 
-    if (drive_state == REVERSE)
+    if (g_drive_state == REVERSE)
     {
         return GetMotorCommand(g_throttle_DAC, REGEN_DAC_OFF);
     }
 
-    return GetMotorCommand(g_throttle_DAC, drive_flags.regen_on ? REGEN_DAC_ON : REGEN_DAC_OFF);
+    return GetMotorCommand(g_throttle_DAC, g_drive_flags.regen_on ? REGEN_DAC_ON : REGEN_DAC_OFF);
 }
 
-motor_control_t GetMotorCommand(uint16_t accel_DAC, uint16_t regen_DAC)
+DriveStateMotorControl GetMotorCommand(uint16_t accel_DAC, uint16_t regen_DAC)
 {
-    motor_control_t motor_command;
+    DriveStateMotorControl motor_command;
     motor_command.accel_DAC_value = accel_DAC;
     motor_command.regen_DAC_value = regen_DAC;
 
@@ -148,7 +147,7 @@ void DriveStateInterruptHandler(uint16_t toggle)
 
 void BreakOnHandler() {
     g_drive_flags.brake_on = true;
-    motor_control_t motor_command = GetMotorCommand(ACCEL_DAC_OFF, REGEN_DAC_OFF);
+    DriveStateMotorControl motor_command = GetMotorCommand(ACCEL_DAC_OFF, REGEN_DAC_OFF);
 }
 
 void EcoPowerHandler(void)

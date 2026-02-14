@@ -39,8 +39,10 @@ void DriveStateFsmHandler()
 
     // TODO: set_cyclic_drive_state(g_drive_state);
 
+    // Prints current state
     DEBUG_IO_PRINT("DriveState=%u\r\n", g_drive_state);
-    
+
+    // Prints requested flags
     DEBUG_IO_PRINT("NextStateRequested=%u\r\n", g_drive_flags.next_state_request);
     DEBUG_IO_PRINT("PrevStateRequested=%u\r\n", g_drive_flags.prev_state_request);
     DEBUG_IO_PRINT("BrakeEnabled=%u\r\n", g_drive_flags.brake_on);
@@ -120,7 +122,7 @@ DriveStateMotorControl GetMotorCommand(uint16_t accel_DAC, uint16_t regen_DAC)
 /* DRIVE STATE DATA COLLECTION */
 void UpdateDriveFlags(void)
 {
-    bool brake_pressed = GpioReadPin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN); // adjust
+    bool brake_pressed = ReadBrakePin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN); // adjust
     g_drive_flags.brake_on = brake_pressed;
 
     g_throttle_DAC = AdcDriverReadThrottle();
@@ -135,7 +137,7 @@ void ClearDriveFlags(void)
 /* SETS DRIVE STATE FLAGS */
 void DriveStateInterruptHandler(uint16_t toggle)
 {
-    GpioTogglePin(DEBUG_LED0_PORT, DEBUG_LED0_PIN);
+    ToggleLedPin(DEBUG_LED0_PORT, DEBUG_LED0_PIN);
 
     switch (toggle)
     {
@@ -191,15 +193,15 @@ void SteeringCanMsgHandler(uint8_t *data) { // not configured on STR yet regen i
     g_drive_flags.cruise_on = ((data[0] >> 1) & 0x01);
 }
 
-static uint16_t x;
-void MotorCommandPackAndSend(DriveStateMotorControl* motor_command, bool isr) {
-    CAN_comms_Tx_msg_t msg;
-    msg.header = drive_control_header;
+// static uint16_t x;
+// void MotorCommandPackAndSend(DriveStateMotorControl* motor_command, bool isr) {
+//     CAN_comms_Tx_msg_t msg;
+//     msg.header = drive_control_header;
 
-    uint8_t data[8] = {0};
+//     uint8_t data[8] = {0};
 
 
-}
+// }
 
 #ifdef DEBUG
 void StateRequestCanMsgHandler(uint8_t* data) {

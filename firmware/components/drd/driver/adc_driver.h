@@ -5,6 +5,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define MAX(a, b) ((a) < (b) ? (b) : (a))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
 /* ADC CONFIGURATION DEFINES */
 #define ADC_LOWEST_VALID          800
 #define ADC_HIGHEST_VALID         1950
@@ -15,7 +18,7 @@
 /* Throttle range (pedal position mapping) */
 #define ADC_NO_THROTTLE_MAX       630
 #define ADC_FULL_THROTTLE_MIN     1350
-#define MC_DAC_MAX                1023 // 433
+#define MC_DAC_MAX                1023 // 433 for Cascadia
 #define MC_DAC_MIN                0
 
 /* ERROR FLAGS */
@@ -28,7 +31,7 @@ typedef enum {
 
 /* FUNCTION PROTOTYPES */
 
-uint16_t AdcDriverReadThrottle(void);
+uint16_t AcceleratorDriverReadThrottle(void);
 
 AdcError AdcDriverGetError(void);
 

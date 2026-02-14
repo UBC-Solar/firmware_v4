@@ -18,7 +18,7 @@ static uint16_t ReadAdc(ADC_HandleTypeDef* hadc)
 	return HAL_ADC_GetValue(hadc);
 }
 
-uint16_t AdcDriverReadThrottle(void)
+uint16_t AcceleratorDriverReadThrottle(void)
 {
     g_last_error = ADC_FAULT_NONE;
     

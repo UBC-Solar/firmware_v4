@@ -8,9 +8,10 @@
  */
 
 #include "drive_state.h"
-#include "gpio_driver.h"
 #include "adc_driver.h"
-#include "CAN_comms.h"
+#include "debug_io.h"
+#include "gpio_driver.h"
+// #include "CAN_comms.h"
 
 /* FUNCTION DECLARATIONS */
 DriveStateStates ComputeNextState(void);
@@ -54,11 +55,13 @@ void DriveStateFsmHandler()
 DriveStateStates ComputeNextState(void)
 {
 
-    const bool allow_state_change = g_drive_flags.brake_on && g_drive_flags.velocity_under_threshold;
+    const bool allow_state_change =
+        g_drive_flags.brake_on && g_drive_flags.velocity_under_threshold;
 
-    const bool invalid_requests = g_drive_flags.next_state_request && g_drive_flags.prev_state_request;
+    const bool invalid_requests =
+        g_drive_flags.next_state_request && g_drive_flags.prev_state_request;
 
-    if (invalid_requests || !allow_state_change) 
+    if (invalid_requests || !allow_state_change)
     {
         return g_drive_state;
     }
@@ -97,7 +100,7 @@ DriveStateStates ComputeNextState(void)
 DriveStateMotorControl ComputeNextCommand(void)
 {
 
-    if (g_drive_flags.brake_on || (g_drive_state == PARK)) 
+    if (g_drive_flags.brake_on || (g_drive_state == PARK))
     {
         return GetMotorCommand(ACCEL_DAC_OFF, REGEN_DAC_OFF);
     }
@@ -125,7 +128,7 @@ void UpdateDriveFlags(void)
     bool brake_pressed = ReadBrakePin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN); // adjust
     g_drive_flags.brake_on = brake_pressed;
 
-    g_throttle_DAC = AdcDriverReadThrottle();
+    g_throttle_DAC = AcceleratorDriverReadThrottle();
 }
 
 void ClearDriveFlags(void)
@@ -159,35 +162,44 @@ void DriveStateInterruptHandler(uint16_t toggle)
     }
 }
 
-void BreakOnHandler() {
+void BreakOnHandler()
+{
     g_drive_flags.brake_on = true;
     DriveStateMotorControl motor_command = GetMotorCommand(ACCEL_DAC_OFF, REGEN_DAC_OFF);
 }
 
 void EcoPowerHandler(void)
 {
-    if(!GpioReadPin(ECO_POWER_PORT, ECO_POWER_PIN)) {
+    if (!ReadEcoPin(ECO_POWER_PORT, ECO_POWER_PIN))
+    {
         g_drive_flags.eco_mode_on = false;
-    } else {
+    }
+    else
+    {
         g_drive_flags.eco_mode_on = true;
     }
 }
- 
+
 /* CAN MESSAGE INPUT HANDLERS */
 
-void VelocityHandler(uint8_t* data) {
+void VelocityHandler(uint8_t* data)
+{
     uint32_t rpm = (data[4] >> 3) | ((data[5] & 0x7f) << 5);
     float velocity = (WHEEL_RADIUS * 2.0f * M_PI * rpm) / 60.0f;
     g_velocity_kmh = velocity * 3.6f;
 
-    if (velocity < VELOCITY_THRESHOLD) {
+    if (velocity < VELOCITY_THRESHOLD)
+    {
         g_drive_flags.velocity_under_threshold = true;
-    } else {
+    }
+    else
+    {
         g_drive_flags.velocity_under_threshold = false;
     }
 }
 
-void SteeringCanMsgHandler(uint8_t *data) { // not configured on STR yet regen is for bit 0 and cruise for bit 1
+void SteeringCanMsgHandler(uint8_t* data)
+{ // not configured on STR yet regen is for bit 0 and cruise for bit 1
 
     g_drive_flags.regen_on = ((data[0] >> 0) & 0x01);
     g_drive_flags.cruise_on = ((data[0] >> 1) & 0x01);
@@ -200,19 +212,20 @@ void SteeringCanMsgHandler(uint8_t *data) { // not configured on STR yet regen i
 
 //     uint8_t data[8] = {0};
 
-
 // }
 
 #ifdef DEBUG
-void StateRequestCanMsgHandler(uint8_t* data) {
+void StateRequestCanMsgHandler(uint8_t* data)
+{
     int value = data[0];
 
-    switch (value) {
-        case 0:
-            g_drive_flags.next_state_request = true;
+    switch (value)
+    {
+    case 0:
+        g_drive_flags.next_state_request = true;
         break;
-        case 1:
-            g_drive_flags.prev_state_request = true;
+    case 1:
+        g_drive_flags.prev_state_request = true;
         break;
     }
 }

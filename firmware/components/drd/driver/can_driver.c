@@ -1,5 +1,5 @@
 #include "can.h"
-#include "CAN_comms.h"
+// #include "CAN_comms.h"
 #include "drive_state.h"
 
 /**

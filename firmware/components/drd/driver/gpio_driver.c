@@ -13,12 +13,16 @@
  * @date    Feb 7 2026
  */
 
-#include "gpio_drivers.h"
+#include "gpio_driver.h"
 
 /* FUNCTION DECLARATIONS */
 
 /* DRIVE STATE DRIVERS */
 uint8_t ReadBrakePin(GPIO_TypeDef* port, uint16_t pin) {
+    return HAL_GPIO_ReadPin(port, pin);
+}
+
+uint8_t ReadEcoPin(GPIO_TypeDef* port, uint16_t pin) {
     return HAL_GPIO_ReadPin(port, pin);
 }
 

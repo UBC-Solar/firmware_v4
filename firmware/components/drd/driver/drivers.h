@@ -25,7 +25,5 @@
 /* DRIVERS FUNCTION PROTOTYPES */
 uint8_t gpio_read_pin(GPIO_TypeDef* port, uint16_t pin);
 void gpio_toggle_pin(GPIO_TypeDef* port, uint16_t pin);
-uint16_t adc_read_accel_1(void);
-uint16_t adc_read_accel_2(void);
 
 #endif //__DRIVERS_H__

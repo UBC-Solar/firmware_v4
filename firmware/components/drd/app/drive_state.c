@@ -8,6 +8,7 @@
  */
 
 #include "drive_state.h"
+#include "adc_driver.h"
 
 /* FUNCTION DECLARATIONS */
 drive_state_t compute_next_state(drive_state_t drive_state, drive_flags_t drive_flags);
@@ -16,11 +17,7 @@ motor_control_t get_motor_command(uint16_t accel_DAC, uint16_t regen_DAC);
 void update_drive_flags(void);
 void clear_drive_flags(void);
 void break_on_handler(void);
-void next_state_handler(drive_state_t drive_state);
-void prev_state_handler(drive_state_t drive_state);
 void eco_power_handler(void);
-void normalize_adc_values(uint16_t adc1, uint16_t adc2);
-bool accel_validity(uint16_t adc1, uint16_t adc2);
 
 /* GLOBAL VARIABLES */
 uint16_t g_throttle_DAC = 0;
@@ -32,7 +29,6 @@ volatile drive_flags_t g_drive_flags;
 
 void drive_state_fsm_handler()
 {
-
     update_drive_flags();
 
     drive_state_t next_drive_state = compute_next_state(g_drive_state, g_drive_flags);
@@ -40,7 +36,7 @@ void drive_state_fsm_handler()
 
     motor_control_t motor_command = compute_next_command(g_drive_state, g_drive_flags);
 
-    // set_cyclic_drive_state(g_drive_state);
+    // TODO: set_cyclic_drive_state(g_drive_state);
 
     clear_drive_flags();
 }
@@ -111,11 +107,12 @@ motor_control_t get_motor_command(uint16_t accel_DAC, uint16_t regen_DAC)
 }
 
 /* DRIVE STATE DATA COLLECTION */
-
 void update_drive_flags(void)
 {
     bool brake_pressed = gpio_read_pin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN); // adjust
     g_drive_flags.brake_on = brake_pressed;
+
+    g_throttle_DAC = adc_driver_read_throttle();
 }
 
 void clear_drive_flags(void)
@@ -125,7 +122,6 @@ void clear_drive_flags(void)
 }
 
 /* SETS DRIVE STATE FLAGS */
-
 void drive_state_interrupt_handler(uint16_t toggle)
 {
     gpio_toggle_pin(DEBUG_LED0_PORT, DEBUG_LED0_PIN);
@@ -164,61 +160,7 @@ void eco_power_handler(void)
     }
 }
  
-/* ACCELERATION READINGS */
-
-/* ADC DRIVER LOGIC */
-void get_acceleration_readings(void)
-{
-    uint16_t adc1 = adc_read_accel_1();
-    uint16_t adc2 = adc_read_accel_2();
-
-    if (!accel_validity(adc1, adc2)) {
-        g_throttle_DAC = 0;
-        return;
-    }
-
-    normalize_adc_values(adc1, adc2);
-}
-
-void normalize_adc_values(uint16_t adc1, uint16_t adc2) {
-
-    (void)adc2; // use adc2?
-
-    if (adc1 <= LOWEST_ADC) {
-        g_throttle_DAC = 1023;
-        return;
-
-    if (adc1 >= HIGHEST_ADC) {
-        g_throttle_DAC = 0;
-        return;
-    }
-
-    uint32_t range = (uint32_t)(HIGHEST_ADC - LOWEST_ADC);
-    uint32_t value = (uint32_t)(adc1 - LOWEST_ADC);
-    uint32_t scaled = (uint32_t)((value * 1023) / range);
-
-    uint16_t raw_throttle_DAC = (uint16_t)(1023 - scaled);
-
-    g_throttle_DAC = ((raw_throttle_DAC < 0) ? 0 : raw_throttle_DAC);
-}
-
-uint16_t convert_to_dac(uint16_t adc) {
-    adc = MIN(MAX(adc, ADC_NO_THROTTLE_MAX), ADC_FULL_THROTTLE_MIN);
-    return ((adc - ADC_NO_THROTTLE_MAX) * MC_DAC_MAX) / (ADC_FULL_THROTTLE_MIN - ADC_NO_THROTTLE_MAX);
-}
-
-bool accel_validity(uint16_t adc1, uint16_t adc2) {
-    if ((adc1 < ADC_LOWER_DEADZONE) || (adc1 > ADC_UPPER_DEADZONE) ||
-        (adc2 < ADC_LOWER_DEADZONE) || (adc2 > ADC_UPPER_DEADZONE)) {
-        return false;
-    }
-
-    if (abs(adc1 - adc2) > ADC_MAX_DIFFERENCE) {
-        return false;
-    }
-
-    return true;
-}
+/* CAN MESSAGE HANDLERS */
 
 void velocity_handler(uint8_t* data) {
     uint32_t rpm = (data[4] >> 3) | ((data[5] & 0x7f) << 5);
@@ -244,13 +186,10 @@ void state_request_can_msg_handler(uint8_t* data) {
 
     switch (value) {
         case 0:
-            g_drive_flags.park_request = true;
+            g_drive_flags.next_state_request = true;
         break;
         case 1:
-            g_drive_flags.reverse_request = true;
-        break;
-        case 2:
-            g_drive_flags.forward_request = true;
+            g_drive_flags.prev_state_request = true;
         break;
     }
 }

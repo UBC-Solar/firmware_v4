@@ -16,7 +16,6 @@
 #include "drivers.h"
 
 /* FUNCTION DECLARATIONS */
-static uint16_t read_adc(ADC_HandleTypeDef* hadc);
 
 /* DRIVE STATE DRIVERS */
 uint8_t gpio_read_pin(GPIO_TypeDef* port, uint16_t pin) {
@@ -25,14 +24,4 @@ uint8_t gpio_read_pin(GPIO_TypeDef* port, uint16_t pin) {
 
 void gpio_toggle_pin(GPIO_TypeDef* port, uint16_t pin) {
     HAL_GPIO_TogglePin(port, pin);
-}
-
-uint16_t adc_read_accel_1(void) { return read_adc(&hadc1); }
-uint16_t adc_read_accel_2(void) { return read_adc(&hadc2); }
-
-static uint16_t read_adc(ADC_HandleTypeDef* hadc)
-{
-	HAL_ADC_Start(hadc);
-	HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
-	return HAL_ADC_GetValue(hadc);
 }

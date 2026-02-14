@@ -19,5 +19,5 @@
 /* GPIO INTERRUPT CALLBACKS */
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-    drive_state_interrupt_handler(GPIO_Pin);
+    DriveStateInterruptHandler(GPIO_Pin);
 }

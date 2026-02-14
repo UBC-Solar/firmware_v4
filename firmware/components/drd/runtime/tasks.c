@@ -21,6 +21,6 @@ void TasksDriveState(void) {
     for(;;)
     {
         osDelay(DRIVE_STATE_FSM_DELAY);
-        drive_state_fsm_handler();
+        DriveStateFsmHandler();
     }
 }

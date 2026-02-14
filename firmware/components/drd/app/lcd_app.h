@@ -358,8 +358,8 @@ extern LcdAppBattFaults g_lcd_batt_faults;
 extern LcdAppMotorFaults g_lcd_motor_faults;
 extern LcdAppWarnings g_lcd_warnings;
 extern LcdAppTemperature g_lcd_temperatures[8];
-extern uint8_t g_LCD_page;
-extern uint8_t g_LCD_page_change;
+extern uint8_t g_lcd_page;
+extern uint8_t g_lcd_page_change;
 
 /**
  * @brief Displays the speed on the LCD.
@@ -381,7 +381,7 @@ void LcdAppDisplayDriveStateDrivePage(volatile drive_state_t* state);
  *
  * @param soc The state of charge (in percent).
  */
-void LcdAppDisplaySOCDrivePage(volatile uint32_t* soc);
+void LcdAppDisplaySocDrivePage(volatile uint32_t* soc);
 
 /**
  * @brief Displays a battery power bar based on pack current and voltage.
@@ -458,9 +458,16 @@ void LcdAppDisplaySpeedDebugPage(volatile uint32_t* speed, volatile uint8_t unit
 void LcdAppDisplaySocDebugPage(volatile uint32_t* soc);
 
 /**
+ * @brief Displays the drive state on the LCD debug page.
+ *
+ * @param state The drive state (e.g., FORWARD_STATE, PARK_STATE, REVERSE_STATE).
+ */
+void LcdAppDisplayDriveStateDebugPage(volatile drive_state_t* state);
+
+/**
  * @brief Changes the screen
  */
-void LcdDriverChangeScreen();
+void LcdAppChangeScreen();
 
 /*
  * @brief CAN rx function which parses message data needed by the LCD

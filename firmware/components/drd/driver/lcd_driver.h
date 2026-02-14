@@ -151,3 +151,8 @@ void LcdDriverWriteData(uint8_t data);
  * @param hspi Pointer to the SPI handle.
  */
 void LcdDriverInit(SPI_HandleTypeDef* hspi);
+
+/**
+ * @brief Changes the screen
+ */
+void LcdDriverChangeScreen();

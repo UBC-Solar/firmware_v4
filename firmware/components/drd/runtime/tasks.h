@@ -14,7 +14,7 @@ void TasksDriveState(void);
 /**
  * @brief LCD update task main loop
  *
- * Initialilzes the LCD Driver and manages the LCD pages switch logic and 
+ * Initialilzes the LCD Driver and manages the LCD pages switch logic
  * Executes with at a 1ms period. Task runs indefinitely until system shutdown.
  */
 void TasksLcdUpdate(void);

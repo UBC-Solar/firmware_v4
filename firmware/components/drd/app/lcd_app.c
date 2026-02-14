@@ -286,7 +286,7 @@ void LcdAppDisplaySpeedDrivePage(volatile uint32_t* speed, volatile uint8_t unit
  *
  * @param soc The state of charge (in percent).
  */
-void LcdAppDisplaySOCDrivePage(volatile uint32_t* soc)
+void LcdAppDisplaySocDrivePage(volatile uint32_t* soc)
 {
     char soc_str[12];
 
@@ -1063,6 +1063,8 @@ void LcdAppDisplayDriveStateDebugPage(volatile drive_state_t* state)
 }
 
 void LcdAppInit(SPI_HandleTypeDef* hspi) { LcdDriverInit(hspi); }
+
+void LcdAppChangeScreen() { LcdDriverChangeScreen(); }
 
 /*
  * @brief CAN rx function which parses message data needed by the LCD

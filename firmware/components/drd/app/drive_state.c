@@ -14,6 +14,12 @@
 // #include "CAN_comms.h"
 
 /* FUNCTION DECLARATIONS */
+typedef struct
+{
+    DriveStateFlags flags;
+    uint16_t throttle_DAC;
+} DriveStateInputs;
+
 DriveStateStates ComputeNextState(const DriveStateFlags* flags);
 DriveStateMotorControl ComputeNextCommand(const DriveStateFlags* flags, uint16_t throttle_DAC);
 DriveStateMotorControl GetMotorCommand(uint16_t accel_DAC, uint16_t regen_DAC);

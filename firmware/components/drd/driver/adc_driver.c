@@ -75,11 +75,11 @@ static uint16_t NormalizeToDac(uint16_t adc1, uint16_t adc2)
     (void)adc2; // unused adc value
     
     if (adc1 <= ADC_LOWEST_VALID) {
-        return MC_DAC_MAX;
+        return MC_DAC_MAX; // adjust for cascadia use MC_DAC_MAX
     }
     
     if (adc1 >= ADC_HIGHEST_VALID) {
-        return MC_DAC_MIN;
+        return MC_DAC_MIN; // do the same here use MC_DAC_MIN
     }
     
     // Linear interpolation from ADC range to DAC range
@@ -87,7 +87,7 @@ static uint16_t NormalizeToDac(uint16_t adc1, uint16_t adc2)
     uint32_t value = (uint32_t)(adc1 - ADC_LOWEST_VALID);
     uint32_t scaled = (value * MC_DAC_MAX) / range;
     
-    uint16_t dac_value = (uint16_t)(MC_DAC_MAX - scaled);
+    uint16_t dac_value = (uint16_t)(scaled); // MC_DAC_MAC - scaled for cascadia
     
     // Clamp to valid range
     if (dac_value > MC_DAC_MAX) {

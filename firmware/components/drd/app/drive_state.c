@@ -15,9 +15,18 @@
 // #include "CAN_comms.h"
 
 /* GLOBAL VARIABLES */
-static volatile DriveStateStates g_drive_state = PARK;
-static volatile DriveStateFlags g_drive_flags = {0};
-static volatile uint32_t g_velocity_kmh = 0;
+volatile DriveStateStates g_drive_state = PARK;
+volatile DriveStateFlags g_drive_flags = {
+    .brake_on = false,
+    .regen_on = false,
+    .cruise_on = false,
+    .velocity_under_threshold = true,
+    .next_state_request = false,
+    .prev_state_request = false,
+    .eco_mode_on = false,
+};
+volatile uint32_t g_velocity_kmh = 0;
+volatile uint16_t g_throttle_dac = 0;
 
 /* FUNCTION DECLARATIONS */
 typedef struct
@@ -60,39 +69,47 @@ void DriveStateFsmHandler()
 DriveStateStates ComputeNextState(const DriveStateFlags* flags)
 {
 
-    const bool allow_state_change = flags->brake_on && flags->velocity_under_threshold;
-
+    // Reject if both NEXT and PREV are set - rocker switch malfunction or bounce
     const bool invalid_requests = flags->next_state_request && flags->prev_state_request;
 
-    if (invalid_requests || !allow_state_change)
+    if (invalid_requests)
     {
-        return g_drive_state;
+        return g_drive_state; // Stay in current state, ignore conflicting requests
     }
 
     /* HANDLE CYCLE LOGIC HERE */
 
-    // FORWARD -> PARK -> REVERSE
+    static uint32_t last_ms = 0;
+    uint32_t current_ms = HAL_GetTick();
+
+    // Linear progression: FORWARD <-> PARK <-> REVERSE
+    // NEXT/PREV are rocker switch: NEXT = move right, PREV = move left
     switch (g_drive_state)
     {
     case PARK:
         if (flags->next_state_request)
             g_drive_state = REVERSE;
-        if (flags->prev_state_request)
+        else if (flags->prev_state_request)
             g_drive_state = FORWARD;
         return g_drive_state;
 
     case FORWARD:
-        if (flags->next_state_request)
-            g_drive_state = PARK;
-        if (flags->prev_state_request)
-            g_drive_state = FORWARD;
+        if ((uint32_t)(current_ms - last_ms) > DEBOUNCE_MS)
+        {
+            if (flags->next_state_request)
+                g_drive_state = PARK;
+            last_ms = current_ms;
+        }
+
         return g_drive_state;
 
     case REVERSE:
-        if (flags->next_state_request)
-            g_drive_state = REVERSE;
-        if (flags->prev_state_request)
-            g_drive_state = PARK;
+        if ((uint32_t)(current_ms - last_ms) > DEBOUNCE_MS)
+        {
+            if (flags->prev_state_request)
+                g_drive_state = PARK;
+            last_ms = current_ms;
+        }
         return g_drive_state;
 
     default:
@@ -128,7 +145,7 @@ DriveStateMotorControl GetMotorCommand(uint16_t accel_DAC, uint16_t regen_DAC)
 /* DRIVE STATE DATA COLLECTION */
 DriveStateInputs UpdateDriveFlags(void)
 {
-    bool brake_pressed = ReadBrakePin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN);
+    bool brake_pressed = !ReadBrakePin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN);
 
     DriveStateInputs inputs = {
         .flags = g_drive_flags,
@@ -137,6 +154,7 @@ DriveStateInputs UpdateDriveFlags(void)
 
     inputs.flags.brake_on = brake_pressed;
     inputs.throttle_DAC = AcceleratorDriverReadThrottle();
+    g_throttle_dac = inputs.throttle_DAC;
 
     return inputs;
 }
@@ -176,6 +194,7 @@ void BreakOnHandler()
 {
     g_drive_flags.brake_on = true;
     DriveStateMotorControl motor_command = GetMotorCommand(ACCEL_DAC_OFF, REGEN_DAC_OFF);
+    ToggleBrakeLedPin(BRAKE_LED_PORT, BRAKE_LED_PIN);
 }
 
 void EcoPowerHandler(void)
@@ -224,19 +243,19 @@ void SteeringCanMsgHandler(uint8_t* data)
 
 // }
 
-#ifdef DEBUG
-void StateRequestCanMsgHandler(uint8_t* data)
-{
-    int value = data[0];
+// #ifdef DEBUG
+// void StateRequestCanMsgHandler(uint8_t* data)
+// {
+//     int value = data[0];
 
-    switch (value)
-    {
-    case 0:
-        g_drive_flags.next_state_request = true;
-        break;
-    case 1:
-        g_drive_flags.prev_state_request = true;
-        break;
-    }
-}
-#endif
+//     switch (value)
+//     {
+//     case 0:
+//         g_drive_flags.next_state_request = true;
+//         break;
+//     case 1:
+//         g_drive_flags.prev_state_request = true;
+//         break;
+//     }
+// }
+// #endif

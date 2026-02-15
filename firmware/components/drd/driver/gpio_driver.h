@@ -22,9 +22,13 @@
 #define DEBUG_LED0_PIN          DEBUG_LED_Pin
 #define DEBUG_LED0_PORT         DEBUG_LED_GPIO_Port
 
+#define BRAKE_LED_PIN           BRK_OUT_Pin
+#define BRAKE_LED_PORT          BRK_OUT_GPIO_Port
+
 /* DRIVERS FUNCTION PROTOTYPES */
 uint8_t ReadBrakePin(GPIO_TypeDef* port, uint16_t pin);
 uint8_t ReadEcoPin(GPIO_TypeDef* port, uint16_t pin);
 void ToggleLedPin(GPIO_TypeDef* port, uint16_t pin);
+void ToggleBrakeLedPin(GPIO_TypeDef* port, uint16_t pin);
 
 #endif //__DRIVERS_H__

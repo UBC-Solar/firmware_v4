@@ -18,7 +18,8 @@
 #include "cmsis_os2.h"
 
 /* DRIVE STATE TASK */
-void TasksDriveState(void) {
+void TasksDriveState(void *argument) {
+    (void) argument;  // Unused parameter
     for(;;)
     {
         osDelay(DRIVE_STATE_FSM_DELAY);

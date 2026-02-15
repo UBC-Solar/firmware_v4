@@ -7,11 +7,17 @@
  *  @date Jan 28, 2026
  */
 
+/* INCLUDES */
 #include "drive_state.h"
 #include "adc_driver.h"
 #include "debug_io.h"
 #include "gpio_driver.h"
 // #include "CAN_comms.h"
+
+/* GLOBAL VARIABLES */
+static volatile DriveStateStates g_drive_state = PARK;
+static volatile DriveStateFlags g_drive_flags = {0};
+static volatile uint32_t g_velocity_kmh = 0;
 
 /* FUNCTION DECLARATIONS */
 typedef struct
@@ -27,10 +33,6 @@ DriveStateInputs UpdateDriveFlags(void);
 void ClearDriveFlags(void);
 void BreakOnHandler(void);
 void EcoPowerHandler(void);
-
-/* GLOBAL VARIABLES */
-volatile DriveStateStates g_drive_state = PARK;
-volatile DriveStateFlags g_drive_flags = {0};
 
 /* DRIVE STATE FINITE STATE MACHINE */
 void DriveStateFsmHandler()

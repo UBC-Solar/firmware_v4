@@ -24,6 +24,7 @@
 
 /* DRIVERS FUNCTION PROTOTYPES */
 uint8_t ReadBrakePin(GPIO_TypeDef* port, uint16_t pin);
+uint8_t ReadEcoPin(GPIO_TypeDef* port, uint16_t pin);
 void ToggleLedPin(GPIO_TypeDef* port, uint16_t pin);
 
 #endif //__DRIVERS_H__

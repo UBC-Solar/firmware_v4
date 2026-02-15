@@ -49,11 +49,6 @@ typedef enum {
     // CRUISE = (uint8_t) 0x04
 } DriveStateStates;
 
-/* GLOBAL VARIABLES */
-extern volatile DriveStateStates g_drive_state;
-extern volatile DriveStateFlags g_drive_flags;
-extern volatile uint32_t g_velocity_kmh;
-
 /* FUNCTION PROTOTYPES */
 void DriveStateFsmHandler(void);
 void DriveStateInterruptHandler(uint16_t toggle);

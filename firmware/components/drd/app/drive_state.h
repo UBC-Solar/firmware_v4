@@ -25,6 +25,12 @@
 #define VELOCITY_THRESHOLD    0.5
 
 /* DRIVE STATE DATA TYPES */
+typedef struct
+{
+    DriveStateFlags flags;
+    uint16_t throttle_DAC;
+} DriveStateInputs;
+
 typedef struct {
     volatile bool brake_on;
     volatile bool regen_on;

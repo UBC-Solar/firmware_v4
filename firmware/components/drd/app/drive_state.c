@@ -35,7 +35,8 @@ typedef struct
     uint16_t throttle_DAC;
 } DriveStateInputs;
 
-DriveStateStates ComputeNextState(const DriveStateFlags* flags);
+// DriveStateStates ComputeNextState(const DriveStateFlags* flags);
+DriveStateStates ComputeNextStateHandler(void);
 DriveStateMotorControl ComputeNextCommand(const DriveStateFlags* flags, uint16_t throttle_DAC);
 DriveStateMotorControl GetMotorCommand(uint16_t accel_DAC, uint16_t regen_DAC);
 DriveStateInputs UpdateDriveFlags(void);
@@ -66,56 +67,55 @@ void DriveStateFsmHandler()
     ClearDriveFlags();
 }
 
-DriveStateStates ComputeNextState(const DriveStateFlags* flags)
-{
+// DriveStateStates ComputeNextState(const DriveStateFlags* flags)
+// {
 
-    // Reject if both NEXT and PREV are set - rocker switch malfunction or bounce
-    const bool invalid_requests = flags->next_state_request && flags->prev_state_request;
+//     // Reject if both NEXT and PREV are set - rocker switch malfunction or bounce
+//     const bool invalid_requests = flags->next_state_request && flags->prev_state_request;
 
-    if (invalid_requests)
-    {
-        return g_drive_state; // Stay in current state, ignore conflicting requests
-    }
+//     if (invalid_requests)
+//     {
+//         return g_drive_state; // Stay in current state, ignore conflicting requests
+//     }
 
-    /* HANDLE CYCLE LOGIC HERE */
+//     /* HANDLE CYCLE LOGIC HERE */
 
-    static uint32_t last_ms = 0;
-    uint32_t current_ms = HAL_GetTick();
+//     // static uint32_t last_ms = 0;
+//     // uint32_t current_ms = HAL_GetTick();
 
-    // Linear progression: FORWARD <-> PARK <-> REVERSE
-    // NEXT/PREV are rocker switch: NEXT = move right, PREV = move left
-    switch (g_drive_state)
-    {
-    case PARK:
-        if (flags->next_state_request)
-            g_drive_state = REVERSE;
-        else if (flags->prev_state_request)
-            g_drive_state = FORWARD;
-        return g_drive_state;
+//     // Linear progression: FORWARD <-> PARK <-> REVERSE
+//     switch (g_drive_state)
+//     {
+//     case PARK:
+//         if (flags->next_state_request)
+//             g_drive_state = REVERSE;
+//         else if (flags->prev_state_request)
+//             g_drive_state = FORWARD;
+//         return g_drive_state;
 
-    case FORWARD:
-        if ((uint32_t)(current_ms - last_ms) > DEBOUNCE_MS)
-        {
-            if (flags->next_state_request)
-                g_drive_state = PARK;
-            last_ms = current_ms;
-        }
+//     case FORWARD:
+//         // if ((uint32_t)(current_ms - last_ms) > DEBOUNCE_MS)
+//         // {
+//         //     if (flags->next_state_request)
+//         //         g_drive_state = PARK;
+//         //     last_ms = current_ms;
+//         // }
 
-        return g_drive_state;
+//         return g_drive_state;
 
-    case REVERSE:
-        if ((uint32_t)(current_ms - last_ms) > DEBOUNCE_MS)
-        {
-            if (flags->prev_state_request)
-                g_drive_state = PARK;
-            last_ms = current_ms;
-        }
-        return g_drive_state;
+//     case REVERSE:
+//         // if ((uint32_t)(current_ms - last_ms) > DEBOUNCE_MS)
+//         // {
+//         //     if (flags->prev_state_request)
+//         //         g_drive_state = PARK;
+//         //     last_ms = current_ms;
+//         // }
+//         return g_drive_state;
 
-    default:
-        return PARK;
-    }
-}
+//     default:
+//         return PARK;
+//     }
+// }
 
 DriveStateMotorControl ComputeNextCommand(const DriveStateFlags* flags, uint16_t throttle_DAC)
 {
@@ -166,7 +166,7 @@ void ClearDriveFlags(void)
 }
 
 /* SETS DRIVE STATE FLAGS */
-void DriveStateInterruptHandler(uint16_t toggle)
+void DriveStatesHandler(uint16_t toggle)
 {
     ToggleLedPin(DEBUG_LED0_PORT, DEBUG_LED0_PIN);
 
@@ -178,15 +178,45 @@ void DriveStateInterruptHandler(uint16_t toggle)
 
     case DRIVE_NEXT_PIN:
         g_drive_flags.next_state_request = true;
+        ComputeNextStateHandler();
         break;
 
     case DRIVE_PREV_PIN:
         g_drive_flags.prev_state_request = true;
+        ComputeNextStateHandler();
         break;
 
     case ECO_POWER_PIN:
         EcoPowerHandler();
         break;
+    }
+}
+
+DriveStateStates ComputeNextStateHandler(void) {
+
+    switch (g_drive_state) {
+        case PARK:
+            if (g_drive_flags.next_state_request) {
+                g_drive_state = REVERSE;
+            }
+
+            else if (g_drive_flags.prev_state_request) {
+                g_drive_state = FORWARD;
+            }
+            break;
+        case FORWARD:
+            if (g_drive_flags.next_state_request) {
+                g_drive_state = PARK;
+            }
+            break;
+        case REVERSE:
+            if (g_drive_flags.prev_state_request) {
+                g_drive_state = PARK;
+            }
+            break;
+        default:
+            g_drive_state = PARK;
+            break;
     }
 }
 

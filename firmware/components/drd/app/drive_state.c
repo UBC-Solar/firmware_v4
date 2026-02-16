@@ -52,9 +52,16 @@ void MotorControlQueryData(void);
 /* DRIVE STATE FINITE STATE MACHINE */
 void DriveStateFsmHandler()
 {
-    UpdateBrakePedalFlags();
+    #ifndef DEBUG
+    __disable_irq(); // test for now
+    #endif
 
+    UpdateBrakePedalFlags();
     DriveStateMotorControl motor_command = ComputeNextCommand();
+
+    #ifndef DEBUG
+    __enable_irq();
+    #endif
 
     // TODO: set_cyclic_drive_state(g_drive_state);
 
@@ -123,7 +130,7 @@ uint8_t UpdateMotorCommandFlags(void)
 void DriveStateInterruptHandler(uint16_t toggle)
 {
     static uint32_t last_toggle = 0;
-    uint32_t current_toggle = HAL_GetTick();
+    uint32_t current_toggle = HAL_GetTick(); // testing a lock functionality
 
     ToggleLedPin(DEBUG_LED0_PORT, DEBUG_LED0_PIN);
 
@@ -251,10 +258,14 @@ void StateRequestCanMsgHandler(uint8_t* data)
     case 0:
         g_drive_flags.next_state_request = true;
         g_drive_flags.prev_state_request = false;
+        ComputeNextStateHandler();
+        ClearDriveStateFlags();
         break;
     case 1:
         g_drive_flags.prev_state_request = true;
         g_drive_flags.next_state_request = false;
+        ComputeNextStateHandler();
+        ClearDriveStateFlags();
         break;
     }
 }
@@ -282,7 +293,6 @@ void VechicleStateCANRxHandler(uint32_t msg_id, uint8_t* data)
 }
 
 /* CAN DATA TX*/
-static uint16_t x;
 void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr)
 {
     CAN_comms_Tx_msg_t msg;
@@ -294,8 +304,6 @@ void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr)
     uint8_t accel_second_byte = (uint8_t)(motor_command->accel_DAC_value >> 0);
     uint8_t regen_first_byte = (uint8_t)(motor_command->regen_DAC_value >> 8) & 0xFF;
     uint8_t regen_second_byte = (uint8_t)(motor_command->regen_DAC_value >> 0);
-
-    x = motor_command->accel_DAC_value;
 
     data[0] = accel_first_byte;
     data[1] = accel_second_byte;

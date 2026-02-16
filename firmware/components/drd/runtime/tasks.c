@@ -1,6 +1,8 @@
 #include "tasks.h"
+#include "cmsis_os2.h"
 #include "cyclic_data_handler.h"
 #include "lcd_app.h"
+#include "spi.h"
 
 /* DRIVE STATE TASK */
 void TasksDriveState(void)
@@ -12,9 +14,10 @@ void TasksDriveState(void)
     }
 }
 
-/* DRIVE STATE TASK */
+/* LCD UPDATE TASK */
 void LcdUpdateTask(void)
 {
+
     LcdAppInit(&hspi1);
 
     // KPH or MPH
@@ -30,6 +33,7 @@ void LcdUpdateTask(void)
         }
 
         // Constantly gets faults
+        // TODO: HANDLE WITH CYCLIC DATA
         g_lcd_batt_faults.battery_fault = false;
         g_lcd_batt_faults.charge_overcurrent_fault = false;
         g_lcd_batt_faults.discharge_overcurrent_fault = false;
@@ -58,13 +62,15 @@ void LcdUpdateTask(void)
         g_lcd_warnings.pack_overcharge = false;
         g_lcd_warnings.pack_overdischarge = false;
 
+        // TODO: PUT THIS IN LCD APP, LcdAppPageController function
+
         // Handles what is displayed
-        switch (1)
+        switch (g_lcd_page)
         {
-        case 1:
-            g_lcd_data.speed = get_cyclic_speed();
-            g_lcd_data.drive_state = get_cyclic_drive_state();
-            g_lcd_data.soc = get_cyclic_soc();
+        case DRIVE_PAGE:
+            g_lcd_data.speed = CyclicDataGetSpeed();
+            g_lcd_data.drive_state = CyclicDataGetDriveState();
+            g_lcd_data.soc = CyclicDataGetSoc();
 
             LcdAppDisplaySpeedDrivePage(g_lcd_data.speed, g_lcd_data.speed_units);
             LcdAppDisplayDriveStateDrivePage(g_lcd_data.drive_state);
@@ -72,55 +78,46 @@ void LcdUpdateTask(void)
             LcdAppDisplayFaultIndicator(&g_lcd_batt_faults, &g_lcd_motor_faults);
             LcdAppDisplayWarningIndicator(&g_lcd_warnings);
             break;
-
-        case 2:
+        case FAULTS_PAGE:
             LcdAppDisplayFaults(&g_lcd_batt_faults, &g_lcd_motor_faults);
             break;
-        case 3:
+        case WARNINGS_PAGE:
             LcdAppDisplayWarnings(&g_lcd_warnings);
             break;
-        case 4:
-            g_lcd_temperatures[0].temp_label = 0x1;
-            g_lcd_temperatures[1].temp_label = 0x2;
-            g_lcd_temperatures[2].temp_label = 0x3;
-            g_lcd_temperatures[3].temp_label = 0x4;
-            g_lcd_temperatures[4].temp_label = 0x5;
-            g_lcd_temperatures[5].temp_label = 0x6;
-            g_lcd_temperatures[6].temp_label = 0x7;
-            g_lcd_temperatures[7].temp_label = 0x8;
+        case TEMPERATURE_PAGE:
+            g_lcd_temperatures[MPPTA].temperature = CyclicDataGetMpptATemperature();
+            g_lcd_temperatures[MPPTB].temperature = CyclicDataGetMpptBTemperature();
+            g_lcd_temperatures[MPPTC].temperature = CyclicDataGetMpptCTemperature();
+            g_lcd_temperatures[MPPTD].temperature = CyclicDataGetMpptDTemperature();
+            g_lcd_temperatures[BATT_MIN].temperature = CyclicDataGetBatteryMinTemperature();
+            g_lcd_temperatures[BATT_MAX].temperature = CyclicDataGetBatteryMaxTemperature();
+            g_lcd_temperatures[MOTOR_CONT].temperature = CyclicDataGetMtrControllerTemperature();
+            g_lcd_temperatures[MOTOR_THERM].temperature = CyclicDataGetMtrThermistorTemperature();
 
-            g_lcd_temperatures[0].temperature = NULL;
-            g_lcd_temperatures[1].temperature = NULL;
-            g_lcd_temperatures[2].temperature = NULL;
-            g_lcd_temperatures[3].temperature = NULL;
-            g_lcd_temperatures[4].temperature = NULL;
-            g_lcd_temperatures[5].temperature = NULL;
-            g_lcd_temperatures[6].temperature = NULL;
-            g_lcd_temperatures[7].temperature = NULL;
-
-            LcdAppDisplayTemperature(g_lcd_temperatures[0]);
-            LcdAppDisplayTemperature(g_lcd_temperatures[1]);
-            LcdAppDisplayTemperature(g_lcd_temperatures[2]);
-            LcdAppDisplayTemperature(g_lcd_temperatures[3]);
-            LcdAppDisplayTemperature(g_lcd_temperatures[4]);
-            LcdAppDisplayTemperature(g_lcd_temperatures[5]);
-            LcdAppDisplayTemperature(g_lcd_temperatures[6]);
-            LcdAppDisplayTemperature(g_lcd_temperatures[7]);
+            LcdAppDisplayTemperature(g_lcd_temperatures[MPPTA]);
+            LcdAppDisplayTemperature(g_lcd_temperatures[MPPTB]);
+            LcdAppDisplayTemperature(g_lcd_temperatures[MPPTC]);
+            LcdAppDisplayTemperature(g_lcd_temperatures[MPPTD]);
+            LcdAppDisplayTemperature(g_lcd_temperatures[BATT_MIN]);
+            LcdAppDisplayTemperature(g_lcd_temperatures[BATT_MAX]);
+            LcdAppDisplayTemperature(g_lcd_temperatures[MOTOR_CONT]);
+            LcdAppDisplayTemperature(g_lcd_temperatures[MOTOR_THERM]);
             break;
-        case 5:
-            g_lcd_data.speed = get_cyclic_speed();
-            g_lcd_data.drive_state = get_cyclic_drive_state();
-            g_lcd_data.soc = get_cyclic_soc();
-            g_lcd_data.pack_current = get_cyclic_pack_current();
-            g_lcd_data.pack_voltage = get_cyclic_pack_voltage();
+        case DEBUG_PAGE:
+            g_lcd_data.speed = CyclicDataGetSpeed();
+            g_lcd_data.drive_state = CyclicDataGetDriveState();
+            g_lcd_data.soc = CyclicDataGetSoc();
+            g_lcd_data.pack_current = CyclicDataGetPackCurrent();
+            g_lcd_data.pack_voltage = CyclicDataGetPackVoltage();
 
             LcdAppDisplaySpeedDebugPage(g_lcd_data.speed, g_lcd_data.speed_units);
             LcdAppDisplayDriveStateDebugPage(g_lcd_data.drive_state);
             LcdAppDisplaySocDebugPage((volatile uint32_t*)g_lcd_data.soc);
             LcdAppDisplayPowerBar(g_lcd_data.pack_current, g_lcd_data.pack_voltage);
+            break;
         default:
             break;
         }
     }
-    osDelay(LCD_APP_LCD_UPDATE_DELAY);
+    osDelay(LCD_APP_UPDATE_DELAY);
 }

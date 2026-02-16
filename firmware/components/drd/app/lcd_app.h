@@ -1,5 +1,5 @@
-#ifndef LCD_GRAPHICS_H
-#define LCD_GRAPHICS_H
+#ifndef __LCD_APP_H
+#define __LCD_APP_H
 
 /**
  * References the library: https://github.com/mberntsen/STM32-Libraries
@@ -7,7 +7,6 @@
 
 // #include "drive_state.h"
 #include "font_verdana.h"
-#include "spi.h"
 #include "stdbool.h"
 #include "stdint.h"
 #include <main.h>
@@ -189,42 +188,34 @@
 #define LCD_APP_TEMP_DEGREES_OFFSET_X 2
 #define LCD_APP_TEMP_DEGREES_OFFSET_Y 2
 
-#define LCD_APP_MPPT_A_LABEL 0x1
 #define LCD_APP_MPPT_A_CHARS "PTA:"
 #define LCD_APP_MPPT_A_X 0
 #define LCD_APP_MPPT_A_Y 0
 
-#define LCD_APP_MPPT_B_LABEL 0x2
 #define LCD_APP_MPPT_B_CHARS "PTB:"
 #define LCD_APP_MPPT_B_X 0
 #define LCD_APP_MPPT_B_Y 16
 
-#define LCD_APP_MPPT_C_LABEL 0x3
 #define LCD_APP_MPPT_C_CHARS "PTC:"
 #define LCD_APP_MPPT_C_X 0
 #define LCD_APP_MPPT_C_Y 32
 
-#define LCD_APP_MPPT_D_LABEL 0x4
 #define LCD_APP_MPPT_D_CHARS "PTD:"
 #define LCD_APP_MPPT_D_X 0
 #define LCD_APP_MPPT_D_Y 48
 
-#define LCD_APP_BATT_MAX_LABEL 0x5
 #define LCD_APP_BATT_MAX_CHARS "BMAX:"
 #define LCD_APP_BATT_MAX_X 62
 #define LCD_APP_BATT_MAX_Y 0
 
-#define LCD_APP_BATT_MIN_LABEL 0x6
 #define LCD_APP_BATT_MIN_CHARS "BMIN:"
 #define LCD_APP_BATT_MIN_X 62
 #define LCD_APP_BATT_MIN_Y 16
 
-#define LCD_APP_MTR_CONT_LABEL 0x7
 #define LCD_APP_MTR_CONT_CHARS "MC:"
 #define LCD_APP_MTR_CONT_X 62
 #define LCD_APP_MTR_CONT_Y 32
 
-#define LCD_APP_MTR_THERM_LABEL 0x8
 #define LCD_APP_MTR_THERM_CHARS "MT:"
 #define LCD_APP_MTR_THERM_X 62
 #define LCD_APP_MTR_THERM_Y 48
@@ -275,7 +266,7 @@
 /** LCD Screen Constants */
 #define LCD_APP_MAXPAGES 5
 
-#define LCD_APP_LCD_UPDATE_DELAY 200
+#define LCD_APP_UPDATE_DELAY 200
 
 /*	Datatypes */
 typedef struct
@@ -295,16 +286,17 @@ typedef struct
     uint8_t temp_label;
 } LcdAppTemperature;
 
-// typedef struct {
-//	volatile uint8_t* mppt_a_temperature;
-//	volatile uint8_t* mppt_b_temperature;
-//	volatile uint8_t* mppt_c_temperature;
-//	volatile uint8_t* mppt_d_temperature;
-//	volatile uint8_t* batt_min_temperature;
-//	volatile uint8_t* batt_max_temperature;
-//	volatile uint8_t* motor_cont_temperature;
-//	volatile uint8_t* motor_therm_temperature;
-// }; LcdAppTemperature;
+typedef enum
+{
+    MPPTA = (uint8_t)0x00,
+    MPPTB = (uint8_t)0x01,
+    MPPTC = (uint8_t)0x02,
+    MPPTD = (uint8_t)0x03,
+    BATT_MIN = (uint8_t)0x04,
+    BATT_MAX = (uint8_t)0x05,
+    MOTOR_CONT = (uint8_t)0x06,
+    MOTOR_THERM = (uint8_t)0x07
+} LcdAppTemperatureLabel;
 
 typedef enum
 {
@@ -351,6 +343,15 @@ typedef struct
     volatile bool pack_overdischarge;
     volatile bool pack_overcharge;
 } LcdAppWarnings;
+
+typedef enum
+{
+    DRIVE_PAGE = 0x00,
+    FAULTS_PAGE = 0x01,
+    WARNINGS_PAGE = 0x02,
+    TEMPERATURE_PAGE = 0x03,
+    DEBUG_PAGE = 0x04
+} LcdAppScreens;
 
 /*	User Variables	*/
 extern LcdAppData g_lcd_data;
@@ -478,7 +479,7 @@ void LcdAppChangeScreen();
 void LcdAppCanRxHandle(uint32_t msg_id, uint8_t* data);
 
 /**
- * @brief Initializes the LCD and SPI interface.
+ * @brief Initializes the LCD App and SPI interface.
  *
  * @param hspi Pointer to the SPI handle.
  */

@@ -663,9 +663,10 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data)
     uint8_t temp_y;
     uint8_t temp_shift;
 
+    // Set variables based on what temperature is displayed and clear appropriate area of screen
     switch (temperature_data.temp_label)
     {
-    case LCD_APP_MPPT_A_LABEL:
+    case MPPTA:
         sprintf(temp_label, "%s", LCD_APP_MPPT_A_CHARS);
         temp_x = LCD_APP_MPPT_A_X;
         temp_y = LCD_APP_MPPT_A_Y;
@@ -673,7 +674,7 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data)
         LcdDriverClearBoundingBox(
             LCD_APP_TEMP_MPPT_OFFSET, LCD_APP_MPPT_A_Y, LCD_APP_BATT_MAX_X - 2, LCD_APP_MPPT_B_Y);
         break;
-    case LCD_APP_MPPT_B_LABEL:
+    case MPPTB:
         sprintf(temp_label, "%s", LCD_APP_MPPT_B_CHARS);
         temp_x = LCD_APP_MPPT_B_X;
         temp_y = LCD_APP_MPPT_B_Y;
@@ -681,7 +682,7 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data)
         LcdDriverClearBoundingBox(
             LCD_APP_TEMP_MPPT_OFFSET, LCD_APP_MPPT_B_Y, LCD_APP_BATT_MAX_X - 2, LCD_APP_MPPT_C_Y);
         break;
-    case LCD_APP_MPPT_C_LABEL:
+    case MPPTC:
         sprintf(temp_label, "%s", LCD_APP_MPPT_C_CHARS);
         temp_x = LCD_APP_MPPT_C_X;
         temp_y = LCD_APP_MPPT_C_Y;
@@ -689,7 +690,7 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data)
         LcdDriverClearBoundingBox(
             LCD_APP_TEMP_MPPT_OFFSET, LCD_APP_MPPT_C_Y, LCD_APP_BATT_MAX_X - 2, LCD_APP_MPPT_D_Y);
         break;
-    case LCD_APP_MPPT_D_LABEL:
+    case MPPTD:
         sprintf(temp_label, "%s", LCD_APP_MPPT_D_CHARS);
         temp_x = LCD_APP_MPPT_D_X;
         temp_y = LCD_APP_MPPT_D_Y;
@@ -699,7 +700,7 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data)
                                   LCD_APP_BATT_MAX_X - 2,
                                   LCD_DRIVER_BOTTOM_RIGHT_Y);
         break;
-    case LCD_APP_BATT_MAX_LABEL:
+    case BATT_MAX:
         sprintf(temp_label, "%s", LCD_APP_BATT_MAX_CHARS);
         temp_x = LCD_APP_BATT_MAX_X;
         temp_y = LCD_APP_BATT_MAX_Y;
@@ -709,7 +710,7 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data)
                                   LCD_DRIVER_BOTTOM_RIGHT_X,
                                   LCD_APP_BATT_MIN_Y);
         break;
-    case LCD_APP_BATT_MIN_LABEL:
+    case BATT_MIN:
         sprintf(temp_label, "%s", LCD_APP_BATT_MIN_CHARS);
         temp_x = LCD_APP_BATT_MIN_X;
         temp_y = LCD_APP_BATT_MIN_Y;
@@ -719,7 +720,7 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data)
                                   LCD_DRIVER_BOTTOM_RIGHT_X,
                                   LCD_APP_MTR_CONT_Y);
         break;
-    case LCD_APP_MTR_CONT_LABEL:
+    case MOTOR_CONT:
         sprintf(temp_label, "%s", LCD_APP_MTR_CONT_CHARS);
         temp_x = LCD_APP_MTR_CONT_X;
         temp_y = LCD_APP_MTR_CONT_Y;
@@ -729,7 +730,7 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data)
                                   LCD_DRIVER_BOTTOM_RIGHT_X,
                                   LCD_APP_MTR_THERM_Y);
         break;
-    case LCD_APP_MTR_THERM_LABEL:
+    case MOTOR_THERM:
         sprintf(temp_label, "%s", LCD_APP_MTR_THERM_CHARS);
         temp_x = LCD_APP_MTR_THERM_X;
         temp_y = LCD_APP_MTR_THERM_Y;
@@ -1062,8 +1063,30 @@ void LcdAppDisplayDriveStateDebugPage(volatile drive_state_t* state)
     LcdDriverRefresh();
 }
 
-void LcdAppInit(SPI_HandleTypeDef* hspi) { LcdDriverInit(hspi); }
+/**
+ * @brief Initializes the LCD App and SPI interface.
+ *
+ * @param hspi Pointer to the SPI handle.
+ */
+void LcdAppInit(SPI_HandleTypeDef* hspi)
+{
+    // Initialize the temperature labels for each temperature struct in the array
+    g_lcd_temperatures[0].temp_label = MPPTA;
+    g_lcd_temperatures[1].temp_label = MPPTB;
+    g_lcd_temperatures[2].temp_label = MPPTC;
+    g_lcd_temperatures[3].temp_label = MPPTD;
+    g_lcd_temperatures[4].temp_label = BATT_MIN;
+    g_lcd_temperatures[5].temp_label = BATT_MAX;
+    g_lcd_temperatures[6].temp_label = MOTOR_CONT;
+    g_lcd_temperatures[7].temp_label = MOTOR_THERM;
 
+    // Initialize the LCD driver
+    LcdDriverInit(hspi);
+}
+
+/**
+ * @brief Changes the screen
+ */
 void LcdAppChangeScreen() { LcdDriverChangeScreen(); }
 
 /*

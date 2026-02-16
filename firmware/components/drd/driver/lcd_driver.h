@@ -1,3 +1,6 @@
+#ifndef __LCD_DRIVER_H__
+#define __LCD_DRIVER_H__
+
 #include "main.h"
 
 #define LCD_DRIVER_ST7565_DIRTY_PAGES
@@ -156,3 +159,5 @@ void LcdDriverInit(SPI_HandleTypeDef* hspi);
  * @brief Changes the screen
  */
 void LcdDriverChangeScreen();
+
+#endif /* __LCD_DRIVER_H__ */

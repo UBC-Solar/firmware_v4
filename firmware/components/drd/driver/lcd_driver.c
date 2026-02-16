@@ -238,7 +238,7 @@ void LcdDriverInit(SPI_HandleTypeDef* hspi)
     LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_POWER_CONTROL | 0x7);
     LcdDriverWriteCommand(
         LCD_DRIVER_CMD_SET_RESISTOR_RATIO |
-        0x6); // set lcd operating voltage (regulator resistor, ref voltage resistor)
+        0x6); // set lcd operating voltage (regulator resistor, rf voltage resistor)e
     LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_VOLUME_FIRST);
     LcdDriverWriteCommand(LCD_DRIVER_CMD_SET_CONTRAST - 5);
     LcdDriverWriteCommand(LCD_DRIVER_CMD_DISPLAY_START);

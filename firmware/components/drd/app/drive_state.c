@@ -140,6 +140,9 @@ void DriveStateInterruptHandler(uint16_t toggle)
 
 void ComputeNextStateHandler(void)
 {
+    if (!g_drive_flags.velocity_under_threshold) {
+        return;
+    }
 
     switch (g_drive_state)
     {

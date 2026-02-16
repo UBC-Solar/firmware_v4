@@ -24,8 +24,6 @@
 #define M_PI 3.14159
 #define VELOCITY_THRESHOLD 0.5
 
-#define DEBOUNCE_MS 3
-
 /* DRIVE STATE DATA TYPES */
 typedef struct
 {

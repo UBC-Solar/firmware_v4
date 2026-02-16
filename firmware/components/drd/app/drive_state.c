@@ -32,15 +32,22 @@ volatile uint32_t g_velocity_kmh = 0;
 volatile uint16_t g_throttle_dac = 0;
 
 /* FUNCTION DECLARATIONS */
-// DriveStateStates ComputeNextState(const DriveStateFlags* flags);
 DriveStateMotorControl ComputeNextCommand(void);
 DriveStateMotorControl GetMotorCommand(uint16_t accel_DAC, uint16_t regen_DAC);
+uint8_t UpdateMotorCommandFlags(void);
 void UpdateBrakePedalFlags(void);
 void ClearDriveStateFlags(void);
 void ComputeNextStateHandler(void);
 void BreakOnHandler(void);
 void EcoPowerHandler(void);
+void VelocityHandler(uint8_t* data);
+void SteeringCanMsgHandler(uint8_t* data);
+void VechicleStateCANRxHandler(uint32_t msg_id, uint8_t* data);
+#ifdef DEBUG
+void StateRequestCanMsgHandler(uint8_t* data);
+#endif
 void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr);
+void MotorControlQueryData(void);
 
 /* DRIVE STATE FINITE STATE MACHINE */
 void DriveStateFsmHandler()
@@ -83,6 +90,7 @@ DriveStateMotorControl GetMotorCommand(uint16_t accel_DAC, uint16_t regen_DAC)
     DriveStateMotorControl motor_command;
     motor_command.accel_DAC_value = accel_DAC;
     motor_command.regen_DAC_value = regen_DAC;
+    motor_command.motor_control_flags = UpdateMotorCommandFlags();
 
     return motor_command;
 }
@@ -90,8 +98,10 @@ DriveStateMotorControl GetMotorCommand(uint16_t accel_DAC, uint16_t regen_DAC)
 /* DRIVE STATE DATA COLLECTION */
 void UpdateBrakePedalFlags(void)
 {
-    bool brake_pressed = !ReadBrakePin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN);
-    g_drive_flags.brake_on = brake_pressed;
+    if (g_drive_flags.brake_on && ReadBrakePin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN)) {
+        g_drive_flags.brake_on = false;
+    }
+
     g_throttle_dac = AcceleratorDriverReadThrottle();
 }
 
@@ -99,6 +109,14 @@ void ClearDriveStateFlags(void)
 {
     g_drive_flags.next_state_request = false;
     g_drive_flags.prev_state_request = false;
+}
+
+uint8_t UpdateMotorCommandFlags(void)
+{
+    uint8_t flags = 0;
+    flags |= ((g_drive_state == REVERSE) ? 0 : 1); // Direction Bit: 0 (REVERSE), 1 (FORWARD/PARK)
+    flags |= (g_drive_flags.eco_mode_on ? 1 << 1 : 0);
+    return flags;
 }
 
 /* SETS DRIVE STATE FLAGS */
@@ -274,12 +292,16 @@ void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr)
 
     uint8_t accel_first_byte = (uint8_t)(motor_command->accel_DAC_value >> 8) & 0xFF;
     uint8_t accel_second_byte = (uint8_t)(motor_command->accel_DAC_value >> 0);
+    uint8_t regen_first_byte = (uint8_t)(motor_command->regen_DAC_value >> 8) & 0xFF;
+    uint8_t regen_second_byte = (uint8_t)(motor_command->regen_DAC_value >> 0);
 
     x = motor_command->accel_DAC_value;
 
     data[0] = accel_first_byte;
     data[1] = accel_second_byte;
-    data[3] = g_drive_flags.eco_mode_on;
+    data[2] = regen_first_byte;
+    data[3] = regen_second_byte;
+    data[4] = motor_command->motor_control_flags;
 
     memcpy(msg.data, data, CAN_DATA_SIZE);
 

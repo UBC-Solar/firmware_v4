@@ -23,7 +23,7 @@ uint8_t ReadBrakePin(GPIO_TypeDef* port, uint16_t pin)
     return (HAL_GPIO_ReadPin(port, pin) == GPIO_PIN_RESET);
 }
 
-uint8_t ReadEcoPin(GPIO_TypeDef* port, uint16_t pin) { 
+uint8_t ReadEcoPowerPin(GPIO_TypeDef* port, uint16_t pin) { 
     return HAL_GPIO_ReadPin(port, pin); 
 }
 

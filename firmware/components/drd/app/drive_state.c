@@ -178,7 +178,7 @@ void BreakOnHandler()
 
 void EcoPowerHandler(void)
 {
-    if (!ReadEcoPin(ECO_POWER_PORT, ECO_POWER_PIN))
+    if (!ReadEcoPowerPin(ECO_POWER_PORT, ECO_POWER_PIN))
     {
         g_drive_flags.eco_mode_on = false;
     }

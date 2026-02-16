@@ -103,8 +103,8 @@ void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : ECO_POWER_Pin */
   GPIO_InitStruct.Pin = ECO_POWER_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(ECO_POWER_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/

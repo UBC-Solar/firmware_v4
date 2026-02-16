@@ -10,12 +10,12 @@
 /* INCLUDES */
 #include <string.h>
 
-#include "drive_state.h"
-#include "adc_driver.h"
-#include "debug_io.h"
-#include "gpio_driver.h"
-#include "can_driver.h"
 #include "CAN_comms.h"
+#include "adc_driver.h"
+#include "can_driver.h"
+#include "debug_io.h"
+#include "drive_state.h"
+#include "gpio_driver.h"
 
 /* GLOBAL VARIABLES */
 volatile DriveStateStates g_drive_state = PARK;
@@ -140,7 +140,8 @@ void DriveStateInterruptHandler(uint16_t toggle)
 
 void ComputeNextStateHandler(void)
 {
-    if (!g_drive_flags.velocity_under_threshold) {
+    if (!g_drive_flags.velocity_under_threshold)
+    {
         return;
     }
 
@@ -238,27 +239,30 @@ void StateRequestCanMsgHandler(uint8_t* data)
 #endif
 
 /* CAN DATA RX */
-void VechicleStateCANRxHandler(uint32_t msg_id, uint8_t *data) {
+void VechicleStateCANRxHandler(uint32_t msg_id, uint8_t* data)
+{
 
-    switch (msg_id) {
-        case FRAME0:
-            VelocityHandler(data);
-            break;
-        case STR_CAN_MSG_ID:
-            SteeringCanMsgHandler(data);
-            break;
+    switch (msg_id)
+    {
+    case FRAME0:
+        VelocityHandler(data);
+        break;
+    case STR_CAN_MSG_ID:
+        SteeringCanMsgHandler(data);
+        break;
 
-        #ifdef DEBUG
-        case 0x500:
-            StateRequestCanMsgHandler(data);
-            break;
-        #endif
+#ifdef DEBUG
+    case 0x500:
+        StateRequestCanMsgHandler(data);
+        break;
+#endif
     }
 }
 
 /* CAN DATA TX*/
 static uint16_t x;
-void MotorCommandPackAndSend(DriveStateMotorControl* motor_command, bool isr) {
+void MotorCommandPackAndSend(DriveStateMotorControl* motor_command, bool isr)
+{
     CAN_comms_Tx_msg_t msg;
     msg.header = drive_control_header;
 
@@ -266,7 +270,7 @@ void MotorCommandPackAndSend(DriveStateMotorControl* motor_command, bool isr) {
 
     uint8_t accel_first_byte = (uint8_t)(motor_command->accel_DAC_value >> 8) & 0xFF;
     uint8_t accel_second_byte = (uint8_t)(motor_command->accel_DAC_value >> 0);
-    
+
     x = motor_command->accel_DAC_value;
 
     data[0] = accel_first_byte;
@@ -275,14 +279,18 @@ void MotorCommandPackAndSend(DriveStateMotorControl* motor_command, bool isr) {
 
     memcpy(msg.data, data, CAN_DATA_SIZE);
 
-    if (isr) {
+    if (isr)
+    {
         CAN_comms_Add_Tx_messageISR(&msg);
-    } else {
+    }
+    else
+    {
         CAN_comms_Add_Tx_message(&msg);
     }
 }
 
-void MotorControlQueryData(void) {
+void MotorControlQueryData(void)
+{
     CAN_comms_Tx_msg_t msg;
 
     msg.header = mdu_request_header;

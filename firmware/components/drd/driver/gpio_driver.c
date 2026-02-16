@@ -23,14 +23,8 @@ uint8_t ReadBrakePin(GPIO_TypeDef* port, uint16_t pin)
     return (HAL_GPIO_ReadPin(port, pin) == GPIO_PIN_RESET);
 }
 
-uint8_t ReadEcoPowerPin(GPIO_TypeDef* port, uint16_t pin) { 
-    return HAL_GPIO_ReadPin(port, pin); 
-}
+uint8_t ReadEcoPowerPin(GPIO_TypeDef* port, uint16_t pin) { return HAL_GPIO_ReadPin(port, pin); }
 
-void ToggleLedPin(GPIO_TypeDef* port, uint16_t pin) { 
-    HAL_GPIO_TogglePin(port, pin); 
-}
+void ToggleLedPin(GPIO_TypeDef* port, uint16_t pin) { HAL_GPIO_TogglePin(port, pin); }
 
-void ToggleBrakeLedPin(GPIO_TypeDef* port, uint16_t pin) {
-    HAL_GPIO_TogglePin(port, pin);
-}
+void ToggleBrakeLedPin(GPIO_TypeDef* port, uint16_t pin) { HAL_GPIO_TogglePin(port, pin); }

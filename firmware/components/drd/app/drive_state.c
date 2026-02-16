@@ -8,11 +8,14 @@
  */
 
 /* INCLUDES */
+#include <string.h>
+
 #include "drive_state.h"
 #include "adc_driver.h"
 #include "debug_io.h"
 #include "gpio_driver.h"
-// #include "CAN_comms.h"
+#include "can_driver.h"
+#include "CAN_comms.h"
 
 /* GLOBAL VARIABLES */
 volatile DriveStateStates g_drive_state = PARK;
@@ -188,8 +191,7 @@ void EcoPowerHandler(void)
     }
 }
 
-/* CAN MESSAGE INPUT HANDLERS */
-
+/* CAN MESSAGE RX HANDLERS */
 void VelocityHandler(uint8_t* data)
 {
     uint32_t rpm = (data[4] >> 3) | ((data[5] & 0x7f) << 5);
@@ -213,28 +215,74 @@ void SteeringCanMsgHandler(uint8_t* data)
     g_drive_flags.cruise_on = ((data[0] >> 1) & 0x01);
 }
 
-// static uint16_t x;
-// void MotorCommandPackAndSend(DriveStateMotorControl* motor_command, bool isr) {
-//     CAN_comms_Tx_msg_t msg;
-//     msg.header = drive_control_header;
+#ifdef DEBUG
+void StateRequestCanMsgHandler(uint8_t* data)
+{
+    int value = data[0];
 
-//     uint8_t data[8] = {0};
+    switch (value)
+    {
+    case 0:
+        g_drive_flags.next_state_request = true;
+        g_drive_flags.prev_state_request = false;
+        break;
+    case 1:
+        g_drive_flags.prev_state_request = true;
+        g_drive_flags.next_state_request = false;
+        break;
+    }
+}
+#endif
 
-// }
+/* CAN DATA RX */
+void VechicleStateCANRxHandler(uint32_t msg_id, uint8_t *data) {
 
-// #ifdef DEBUG
-// void StateRequestCanMsgHandler(uint8_t* data)
-// {
-//     int value = data[0];
+    switch (msg_id) {
+        case FRAME0:
+            VelocityHandler(data);
+            break;
+        case STR_CAN_MSG_ID:
+            SteeringCanMsgHandler(data);
+            break;
 
-//     switch (value)
-//     {
-//     case 0:
-//         g_drive_flags.next_state_request = true;
-//         break;
-//     case 1:
-//         g_drive_flags.prev_state_request = true;
-//         break;
-//     }
-// }
-// #endif
+        #ifdef DEBUG
+        case 0x500:
+            StateRequestCanMsgHandler(data);
+            break;
+        #endif
+    }
+}
+
+/* CAN DATA TX*/
+static uint16_t x;
+void MotorCommandPackAndSend(DriveStateMotorControl* motor_command, bool isr) {
+    CAN_comms_Tx_msg_t msg;
+    msg.header = drive_control_header;
+
+    uint8_t data[8] = {0};
+
+    uint8_t accel_first_byte = (uint8_t)(motor_command->accel_DAC_value >> 8) & 0xFF;
+    uint8_t accel_second_byte = (uint8_t)(motor_command->accel_DAC_value >> 0);
+    
+    x = motor_command->accel_DAC_value;
+
+    data[0] = accel_first_byte;
+    data[1] = accel_second_byte;
+    data[3] = g_drive_flags.eco_mode_on;
+
+    memcpy(msg.data, data, CAN_DATA_SIZE);
+
+    if (isr) {
+        CAN_comms_Add_Tx_messageISR(&msg);
+    } else {
+        CAN_comms_Add_Tx_message(&msg);
+    }
+}
+
+void MotorControlQueryData(void) {
+    CAN_comms_Tx_msg_t msg;
+
+    msg.header = mdu_request_header;
+    msg.data[0] = MDU_REQUEST_FRAME;
+    CAN_comms_Add_Tx_message(&msg);
+}

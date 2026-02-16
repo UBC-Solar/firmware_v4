@@ -1,7 +1,6 @@
 #include "can_driver.h"
 #include "CAN_comms.h"
 #include "can.h"
-#include "drive_state.h"
 
 /**
  *  CAN Message Header for drive control

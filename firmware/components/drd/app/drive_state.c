@@ -40,6 +40,7 @@ void ClearDriveStateFlags(void);
 void ComputeNextStateHandler(void);
 void BreakOnHandler(void);
 void EcoPowerHandler(void);
+void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr);
 
 /* DRIVE STATE FINITE STATE MACHINE */
 void DriveStateFsmHandler()
@@ -49,6 +50,8 @@ void DriveStateFsmHandler()
     DriveStateMotorControl motor_command = ComputeNextCommand();
 
     // TODO: set_cyclic_drive_state(g_drive_state);
+
+    MotorCommandPackAndSend(&motor_command, false);
 
     // Prints current state
     DEBUG_IO_PRINT("DriveState=%u\r\n", g_drive_state);
@@ -180,6 +183,7 @@ void BreakOnHandler()
 {
     g_drive_flags.brake_on = true;
     DriveStateMotorControl motor_command = GetMotorCommand(ACCEL_DAC_OFF, REGEN_DAC_OFF);
+    MotorCommandPackAndSend(&motor_command, true);
     ToggleBrakeLedPin(BRAKE_LED_PORT, BRAKE_LED_PIN);
 }
 
@@ -261,7 +265,7 @@ void VechicleStateCANRxHandler(uint32_t msg_id, uint8_t* data)
 
 /* CAN DATA TX*/
 static uint16_t x;
-void MotorCommandPackAndSend(DriveStateMotorControl* motor_command, bool isr)
+void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr)
 {
     CAN_comms_Tx_msg_t msg;
     msg.header = drive_control_header;

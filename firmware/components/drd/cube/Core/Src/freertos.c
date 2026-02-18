@@ -19,7 +19,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
-#include "task.h"
+#include "tasks.h"
 #include "main.h"
 #include "cmsis_os.h"
 

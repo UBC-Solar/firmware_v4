@@ -20,7 +20,7 @@
 /* DRIVE STATE DRIVERS */
 uint8_t ReadBrakePin(GPIO_TypeDef* port, uint16_t pin)
 {
-    return (HAL_GPIO_ReadPin(port, pin) == GPIO_PIN_RESET);
+    return HAL_GPIO_ReadPin(port, pin);
 }
 
 uint8_t ReadEcoPowerPin(GPIO_TypeDef* port, uint16_t pin) { return HAL_GPIO_ReadPin(port, pin); }

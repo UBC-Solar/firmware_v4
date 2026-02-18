@@ -41,31 +41,23 @@ void ComputeNextStateHandler(void);
 void BreakOnHandler(void);
 void EcoPowerHandler(void);
 void VelocityHandler(uint8_t* data);
-void SteeringCanMsgHandler(uint8_t* data);
-void VechicleStateCANRxHandler(uint32_t msg_id, uint8_t* data);
+// void SteeringCanMsgHandler(uint8_t* data);
+// void VechicleStateCANRxHandler(uint32_t msg_id, uint8_t* data);
 #ifdef DEBUG
 void StateRequestCanMsgHandler(uint8_t* data);
 #endif
-void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr);
-void MotorControlQueryData(void);
+// void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr);
+// void MotorControlQueryData(void);
 
 /* DRIVE STATE FINITE STATE MACHINE */
 void DriveStateFsmHandler()
 {
-    #ifndef DEBUG
-    __disable_irq(); // test for now
-    #endif
-
     UpdateBrakePedalFlags();
     DriveStateMotorControl motor_command = ComputeNextCommand();
 
-    #ifndef DEBUG
-    __enable_irq();
-    #endif
-
     // TODO: set_cyclic_drive_state(g_drive_state);
 
-    MotorCommandPackAndSend(&motor_command, false);
+    // MotorCommandPackAndSend(&motor_command, false);
 
     // Prints current state
     DEBUG_IO_PRINT("DriveState=%u\r\n", g_drive_state);
@@ -97,7 +89,7 @@ DriveStateMotorControl GetMotorCommand(uint16_t accel_DAC, uint16_t regen_DAC)
     DriveStateMotorControl motor_command;
     motor_command.accel_DAC_value = accel_DAC;
     motor_command.regen_DAC_value = regen_DAC;
-    motor_command.motor_control_flags = UpdateMotorCommandFlags();
+    //motor_command.motor_control_flags = UpdateMotorCommandFlags();
 
     return motor_command;
 }
@@ -129,8 +121,8 @@ uint8_t UpdateMotorCommandFlags(void)
 /* SETS DRIVE STATE FLAGS */
 void DriveStateInterruptHandler(uint16_t toggle)
 {
-    static uint32_t last_toggle = 0;
-    uint32_t current_toggle = HAL_GetTick(); // testing a lock functionality
+    // static uint32_t last_toggle = 0;
+    // uint32_t current_toggle = HAL_GetTick(); // testing a lock functionality
 
     ToggleLedPin(DEBUG_LED0_PORT, DEBUG_LED0_PIN);
 
@@ -141,9 +133,9 @@ void DriveStateInterruptHandler(uint16_t toggle)
         break;
 
     case DRIVE_NEXT_PIN:
-        if ((current_toggle - last_toggle) < 100)
-            return; // lock
-        last_toggle = current_toggle;
+        //if ((current_toggle - last_toggle) < 100)
+        //    return; // lock
+        // last_toggle = current_toggle;
         g_drive_flags.next_state_request = true;
         g_drive_flags.prev_state_request = false;
         ComputeNextStateHandler();
@@ -151,9 +143,9 @@ void DriveStateInterruptHandler(uint16_t toggle)
         break;
 
     case DRIVE_PREV_PIN:
-        if ((current_toggle - last_toggle) < 100)
-            return; // lock
-        last_toggle = current_toggle;
+        //if ((current_toggle - last_toggle) < 100)
+        //    return; // lock
+        // last_toggle = current_toggle;
         g_drive_flags.prev_state_request = true;
         g_drive_flags.next_state_request = false;
         ComputeNextStateHandler();
@@ -208,7 +200,7 @@ void BreakOnHandler()
 {
     g_drive_flags.brake_on = true;
     DriveStateMotorControl motor_command = GetMotorCommand(ACCEL_DAC_OFF, REGEN_DAC_OFF);
-    MotorCommandPackAndSend(&motor_command, true);
+    // MotorCommandPackAndSend(&motor_command, true);
     ToggleBrakeLedPin(BRAKE_LED_PORT, BRAKE_LED_PIN);
 }
 
@@ -272,62 +264,62 @@ void StateRequestCanMsgHandler(uint8_t* data)
 #endif
 
 /* CAN DATA RX */
-void VechicleStateCANRxHandler(uint32_t msg_id, uint8_t* data)
-{
+// void VechicleStateCANRxHandler(uint32_t msg_id, uint8_t* data)
+// {
 
-    switch (msg_id)
-    {
-    case FRAME0:
-        VelocityHandler(data);
-        break;
-    case STR_CAN_MSG_ID:
-        SteeringCanMsgHandler(data);
-        break;
+//     switch (msg_id)
+//     {
+//     case FRAME0:
+//         VelocityHandler(data);
+//         break;
+//     case STR_CAN_MSG_ID:
+//         SteeringCanMsgHandler(data);
+//         break;
 
-#ifdef DEBUG
-    case 0x500:
-        StateRequestCanMsgHandler(data);
-        break;
-#endif
-    }
-}
+// #ifdef DEBUG
+//     case 0x500:
+//         StateRequestCanMsgHandler(data);
+//         break;
+// #endif
+//     }
+// }
 
 /* CAN DATA TX*/
-void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr)
-{
-    CAN_comms_Tx_msg_t msg;
-    msg.header = drive_control_header;
+// void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr)
+// {
+//     CAN_comms_Tx_msg_t msg;
+//     msg.header = drive_control_header;
 
-    uint8_t data[8] = {0};
+//     uint8_t data[8] = {0};
 
-    uint8_t accel_first_byte = (uint8_t)(motor_command->accel_DAC_value >> 8) & 0xFF;
-    uint8_t accel_second_byte = (uint8_t)(motor_command->accel_DAC_value >> 0);
-    uint8_t regen_first_byte = (uint8_t)(motor_command->regen_DAC_value >> 8) & 0xFF;
-    uint8_t regen_second_byte = (uint8_t)(motor_command->regen_DAC_value >> 0);
+//     uint8_t accel_first_byte = (uint8_t)(motor_command->accel_DAC_value >> 8) & 0xFF;
+//     uint8_t accel_second_byte = (uint8_t)(motor_command->accel_DAC_value >> 0);
+//     uint8_t regen_first_byte = (uint8_t)(motor_command->regen_DAC_value >> 8) & 0xFF;
+//     uint8_t regen_second_byte = (uint8_t)(motor_command->regen_DAC_value >> 0);
 
-    data[0] = accel_first_byte;
-    data[1] = accel_second_byte;
-    data[2] = regen_first_byte;
-    data[3] = regen_second_byte;
-    data[4] = motor_command->motor_control_flags;
+//     data[0] = accel_first_byte;
+//     data[1] = accel_second_byte;
+//     data[2] = regen_first_byte;
+//     data[3] = regen_second_byte;
+//     data[4] = motor_command->motor_control_flags;
 
-    memcpy(msg.data, data, CAN_DATA_SIZE);
+//     memcpy(msg.data, data, CAN_DATA_SIZE);
 
-    if (isr)
-    {
-        CAN_comms_Add_Tx_messageISR(&msg);
-    }
-    else
-    {
-        CAN_comms_Add_Tx_message(&msg);
-    }
-}
+//     if (isr)
+//     {
+//         CAN_comms_Add_Tx_messageISR(&msg);
+//     }
+//     else
+//     {
+//         CAN_comms_Add_Tx_message(&msg);
+//     }
+// }
 
-void MotorControlQueryData(void)
-{
-    CAN_comms_Tx_msg_t msg;
+// void MotorControlQueryData(void)
+// {
+//     CAN_comms_Tx_msg_t msg;
 
-    msg.header = mdu_request_header;
-    msg.data[0] = MDU_REQUEST_FRAME;
-    CAN_comms_Add_Tx_message(&msg);
-}
+//     msg.header = mdu_request_header;
+//     msg.data[0] = MDU_REQUEST_FRAME;
+//     CAN_comms_Add_Tx_message(&msg);
+// }

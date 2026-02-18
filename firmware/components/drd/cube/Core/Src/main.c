@@ -25,6 +25,7 @@
 #include "spi.h"
 #include "usart.h"
 #include "gpio.h"
+#include "tasks.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -108,7 +109,7 @@ int main(void)
   MX_FREERTOS_Init();
 
   /* Start scheduler */
-  osKernelStart();
+  // osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
 
@@ -116,6 +117,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    TasksDriveState(NULL);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

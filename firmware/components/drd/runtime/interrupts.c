@@ -18,7 +18,6 @@
 #include "gpio_driver.h"
 
 /* GPIO INTERRUPT CALLBACKS */
-
-// extern volatile int g_next;
-// extern volatile int g_prev;
-
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+    DriveStateInterruptHandler(GPIO_Pin);
+}

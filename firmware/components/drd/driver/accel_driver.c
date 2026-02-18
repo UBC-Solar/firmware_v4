@@ -1,4 +1,4 @@
-#include "adc_driver.h"
+#include "accel_driver.h"
 #include "gpio_driver.h"
 #include <stdlib.h>
 

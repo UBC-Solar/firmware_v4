@@ -11,7 +11,7 @@
 #include <string.h>
 
 #include "CAN_comms.h"
-#include "adc_driver.h"
+#include "accel_driver.h"
 #include "can_driver.h"
 #include "debug_io.h"
 #include "drive_state.h"
@@ -37,7 +37,7 @@ DriveStateMotorControl GetMotorCommand(uint16_t accel_DAC, uint16_t regen_DAC);
 uint8_t UpdateMotorCommandFlags(void);
 void UpdateBrakePedalFlags(void);
 void ClearDriveStateFlags(void);
-void ComputeNextStateHandler(void);
+void ComputeNextState(void);
 void BreakOnHandler(void);
 void EcoPowerHandler(void);
 void VelocityHandler(uint8_t* data);
@@ -54,6 +54,7 @@ void DriveStateFsmHandler()
 {
     UpdateBrakePedalFlags();
     DriveStateMotorControl motor_command = ComputeNextCommand();
+    ComputeNextState();
 
     // TODO: set_cyclic_drive_state(g_drive_state);
 
@@ -67,6 +68,49 @@ void DriveStateFsmHandler()
     DEBUG_IO_PRINT("PrevStateRequested=%u\r\n", g_drive_flags.prev_state_request);
     DEBUG_IO_PRINT("BrakeEnabled=%u\r\n", g_drive_flags.brake_on);
     DEBUG_IO_PRINT("EcoModeEnabled=%u\r\n", g_drive_flags.eco_mode_on);
+}
+
+void ComputeNextState(void)
+{
+
+    bool valid_state_change = !(g_drive_flags.next_state_request && g_drive_flags.prev_state_request);
+
+    bool valid_drive_state = !(g_drive_flags.velocity_under_threshold) && valid_state_change;
+
+    if (!g_drive_flags.velocity_under_threshold)
+    {
+        return;
+    }
+
+    switch (g_drive_state)
+    {
+    case PARK:
+        if (g_drive_flags.next_state_request)
+        {
+            g_drive_state = REVERSE;
+        }
+
+        else if (g_drive_flags.prev_state_request)
+        {
+            g_drive_state = FORWARD;
+        }
+        break;
+    case FORWARD:
+        if (g_drive_flags.next_state_request)
+        {
+            g_drive_state = PARK;
+        }
+        break;
+    case REVERSE:
+        if (g_drive_flags.prev_state_request)
+        {
+            g_drive_state = PARK;
+        }
+        break;
+    default:
+        g_drive_state = PARK;
+        break;
+    }
 }
 
 DriveStateMotorControl ComputeNextCommand(void)
@@ -121,9 +165,6 @@ uint8_t UpdateMotorCommandFlags(void)
 /* SETS DRIVE STATE FLAGS */
 void DriveStateInterruptHandler(uint16_t toggle)
 {
-    // static uint32_t last_toggle = 0;
-    // uint32_t current_toggle = HAL_GetTick(); // testing a lock functionality
-
     ToggleLedPin(DEBUG_LED0_PORT, DEBUG_LED0_PIN);
 
     switch (toggle)
@@ -133,65 +174,15 @@ void DriveStateInterruptHandler(uint16_t toggle)
         break;
 
     case DRIVE_NEXT_PIN:
-        //if ((current_toggle - last_toggle) < 100)
-        //    return; // lock
-        // last_toggle = current_toggle;
         g_drive_flags.next_state_request = true;
-        g_drive_flags.prev_state_request = false;
-        ComputeNextStateHandler();
-        ClearDriveStateFlags();
         break;
 
     case DRIVE_PREV_PIN:
-        //if ((current_toggle - last_toggle) < 100)
-        //    return; // lock
-        // last_toggle = current_toggle;
         g_drive_flags.prev_state_request = true;
-        g_drive_flags.next_state_request = false;
-        ComputeNextStateHandler();
-        ClearDriveStateFlags();
         break;
 
     case ECO_POWER_PIN:
         EcoPowerHandler();
-        break;
-    }
-}
-
-void ComputeNextStateHandler(void)
-{
-    if (!g_drive_flags.velocity_under_threshold)
-    {
-        return;
-    }
-
-    switch (g_drive_state)
-    {
-    case PARK:
-        if (g_drive_flags.next_state_request)
-        {
-            g_drive_state = REVERSE;
-        }
-
-        else if (g_drive_flags.prev_state_request)
-        {
-            g_drive_state = FORWARD;
-        }
-        break;
-    case FORWARD:
-        if (g_drive_flags.next_state_request)
-        {
-            g_drive_state = PARK;
-        }
-        break;
-    case REVERSE:
-        if (g_drive_flags.prev_state_request)
-        {
-            g_drive_state = PARK;
-        }
-        break;
-    default:
-        g_drive_state = PARK;
         break;
     }
 }

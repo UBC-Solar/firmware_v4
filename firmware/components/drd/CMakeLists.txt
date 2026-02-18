@@ -61,7 +61,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/evan_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/gpio_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/can_driver.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/task.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/tasks.c
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/interrupts.c
     ${COMMON_SOURCES}
 )

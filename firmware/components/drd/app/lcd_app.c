@@ -29,7 +29,7 @@ LcdAppMotorFaults g_lcd_motor_faults = {0};
 LcdAppWarnings g_lcd_warnings = {0};
 LcdAppTemperature g_lcd_temperatures[8] = {0};
 
-uint8_t g_lcd_page = 1;
+uint8_t g_lcd_page = 0;
 uint8_t g_lcd_page_change = 0;
 
 // Helper Function declarations
@@ -745,6 +745,8 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data)
                                   LCD_DRIVER_BOTTOM_RIGHT_Y);
         break;
     default:
+        temp_x = LCD_APP_MTR_THERM_X;
+        temp_y = LCD_APP_MTR_THERM_Y;
         break;
     }
 
@@ -1157,7 +1159,7 @@ void LcdAppCanRxHandle(uint32_t msg_id, uint8_t* data)
 /**
  * @brief Handles the screen logic for the LCD App, including page changes and updating displayed data.
  */
- void LcdAppPageController(void);void LcdAppPageController()
+ void LcdAppPageController(void)
 {
     // Temporary, will add cyclic data when CAN is implemented.
     // TODO: HANDLE WITH CYCLIC DATA
@@ -1197,8 +1199,8 @@ void LcdAppCanRxHandle(uint32_t msg_id, uint8_t* data)
         g_lcd_data.soc = CyclicDataGetSoc();
 
         LcdAppDisplaySpeedDrivePage(g_lcd_data.speed, g_lcd_data.speed_units);
-        LcdAppDisplayDriveStateDrivePage(g_lcd_data.drive_state);
         LcdAppDisplaySocDrivePage((volatile uint32_t*)g_lcd_data.soc);
+        LcdAppDisplayDriveStateDrivePage((volatile drive_state_t*) g_lcd_data.drive_state);
         LcdAppDisplayFaultIndicator(&g_lcd_batt_faults, &g_lcd_motor_faults);
         LcdAppDisplayWarningIndicator(&g_lcd_warnings);
         break;
@@ -1235,7 +1237,7 @@ void LcdAppCanRxHandle(uint32_t msg_id, uint8_t* data)
         g_lcd_data.pack_voltage = CyclicDataGetPackVoltage();
 
         LcdAppDisplaySpeedDebugPage(g_lcd_data.speed, g_lcd_data.speed_units);
-        LcdAppDisplayDriveStateDebugPage(g_lcd_data.drive_state);
+        LcdAppDisplayDriveStateDebugPage((volatile drive_state_t*) g_lcd_data.drive_state);
         LcdAppDisplaySocDebugPage((volatile uint32_t*)g_lcd_data.soc);
         LcdAppDisplayPowerBar(g_lcd_data.pack_current, g_lcd_data.pack_voltage);
         break;

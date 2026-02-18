@@ -29,7 +29,6 @@
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
-
 /* USER CODE BEGIN PTD */
 typedef StaticTask_t osStaticThreadDef_t;
 /* USER CODE END PTD */
@@ -46,6 +45,20 @@ typedef StaticTask_t osStaticThreadDef_t;
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
+
+/* Definitions for TasksLcdUpdate */
+osThreadId_t TasksLcdUpdateHandle;
+uint32_t TasksLcdUpdateBuffer[256];
+osStaticThreadDef_t TasksLcdUpdateControlBlock;
+
+const osThreadAttr_t TasksLcdUpdate_attributes = {
+  .name = "TasksLcdUpdate",
+  .cb_mem = &TasksLcdUpdateControlBlock,
+  .cb_size = sizeof(TasksLcdUpdateControlBlock),
+  .stack_mem = &TasksLcdUpdateBuffer[0],
+  .stack_size = sizeof(TasksLcdUpdateBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
 
 /* Definitions for TasksDriveState */
 osThreadId_t TasksDriveStateHandle;
@@ -109,14 +122,15 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  /* creation of TasksDriveState */
-  //TasksDriveStateHandle = osThreadNew(TasksDriveState, NULL, &TasksDriveState_attributes);
+  /* creation of TasksLcdUpdate */
+  TasksLcdUpdateHandle = osThreadNew(TasksLcdUpdate, NULL, &TasksLcdUpdate_attributes);
+    //TasksDriveStateHandle = osThreadNew(TasksDriveState, NULL, &TasksDriveState_attributes);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
   /* add events, ... */
 
-  /* USER CODE END RTOS_EVENTS */ 
+  /* USER CODE END RTOS_EVENTS */
 
 }
 

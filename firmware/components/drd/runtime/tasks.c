@@ -15,7 +15,7 @@ void TasksDriveState(void)
 }
 
 /* LCD UPDATE TASK */
-void LcdUpdateTask(void)
+void TasksLcdUpdate(void *argument)
 {
     LcdAppInit(&hspi1);
 

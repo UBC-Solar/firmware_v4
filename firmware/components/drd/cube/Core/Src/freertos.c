@@ -110,13 +110,13 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* creation of TasksDriveState */
-  TasksDriveStateHandle = osThreadNew(TasksDriveState, NULL, &TasksDriveState_attributes);
+  //TasksDriveStateHandle = osThreadNew(TasksDriveState, NULL, &TasksDriveState_attributes);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
   /* add events, ... */
 
-  /* USER CODE END RTOS_EVENTS */
+  /* USER CODE END RTOS_EVENTS */ 
 
 }
 

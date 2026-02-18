@@ -7,17 +7,32 @@
 #define MAX_CYCLE_TIME 1000 // Maximum cycle time in milliseconds
 
 // Set functions for cyclic data
-void set_cyclic_speed(uint32_t speed);
-void set_cyclic_pack_current(int16_t current);
-void set_cyclic_pack_voltage(uint16_t voltage);
-void set_cyclic_drive_state(uint8_t state);
-void set_cyclic_soc(uint8_t soc);
+void CyclicDataSetSpeed(uint32_t speed);
+void CyclicDataSetPackCurrent(int16_t current);
+void CyclicDataSetPackVoltage(uint16_t voltage);
+void CyclicDataSetDriveState(uint8_t state);
+void CyclicDataSetSoc(uint8_t soc);
+void CyclicDataSetMpptATemperature(uint8_t temperature);
+void CyclicDataSetMpptBTemperature(uint8_t temperature);
+void CyclicDataSetMpptCTemperature(uint8_t temperature);
+void CyclicDataSetMpptDTemperature(uint8_t temperature);
+void CyclicDataSetBatteryMinTemperature(uint8_t temperature);
+void CyclicDataSetBatteryMaxTemperature(uint8_t temperature);
+void CyclicDataSetMtrContTemperature(uint8_t temperature);
+void CyclicDataSetMtrThermTemperature(uint8_t temperature);
 
 // Get functions for cyclic data
-uint32_t* get_cyclic_speed(void);
-int16_t* get_cyclic_pack_current(void);
-uint16_t* get_cyclic_pack_voltage(void);
-uint8_t* get_cyclic_drive_state(void);
-uint8_t* get_cyclic_soc(void);
-
+uint32_t* CyclicDataGetSpeed(void);
+int16_t* CyclicDataGetPackCurrent(void);
+uint16_t* CyclicDataGetPackVoltage(void);
+uint8_t* CyclicDataGetDriveState(void);
+uint8_t* CyclicDataGetSoc(void);
+uint8_t* CyclicDataGetMpptATemperature(void);
+uint8_t* CyclicDataGetMpptBTemperature(void);
+uint8_t* CyclicDataGetMpptCTemperature(void);
+uint8_t* CyclicDataGetMpptDTemperature(void);
+uint8_t* CyclicDataGetBatteryMinTemperature(void);
+uint8_t* CyclicDataGetBatteryMaxTemperature(void);
+uint8_t* CyclicDataGetMtrContTemperature(void);
+uint8_t* CyclicDataGetMtrThermTemperature(void);
 #endif // CYCLIC_DATA_HANDLER_H

@@ -5,19 +5,6 @@
 
 #define LCD_DRIVER_ST7565_DIRTY_PAGES
 
-/* Internal SPI handle for LCD communication */
-static SPI_HandleTypeDef* sg_spi_handle = NULL;
-
-/* Internal buffer for pixel operations (assumes a 128x64 display) */
-static uint8_t lcd_buffer[(128 * 64) / 8];
-
-static uint8_t lcd_flipped = 0;
-
-// DIRTY PAGES optimization variable
-#ifdef LCD_DRIVER_ST7565_DIRTY_PAGES
-static uint8_t lcd_dirty_pages;
-#endif
-
 /** LCD Screen Constants */
 #define LCD_DRIVER_DIRTY_PAGE_CHANGE 0xFF
 

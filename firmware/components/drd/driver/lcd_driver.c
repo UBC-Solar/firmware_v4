@@ -1,5 +1,18 @@
 #include "lcd_driver.h"
 
+/* Internal SPI handle for LCD communication */
+static SPI_HandleTypeDef* sg_spi_handle = NULL;
+
+/* Internal buffer for pixel operations (assumes a 128x64 display) */
+static uint8_t lcd_buffer[(128 * 64) / 8];
+
+static uint8_t lcd_flipped = 0;
+
+// DIRTY PAGES optimization variable
+#ifdef LCD_DRIVER_ST7565_DIRTY_PAGES
+static uint8_t lcd_dirty_pages;
+#endif
+
 void LcdDriverSetPixel(uint8_t x, uint8_t y, uint8_t colour)
 {
     if (x >= LCD_DRIVER_SCREEN_WIDTH || y >= LCD_DRIVER_SCREEN_HEIGHT)

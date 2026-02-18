@@ -14,7 +14,7 @@
   "cmake.preferredGenerators": [
     "Ninja"
   ],
-  "editor.formatOnSave": true,
+  "editor.formatOnSave": false,
   "[c]": {
     "editor.defaultFormatter": "STMicroelectronics.stm32cube-ide-clangd"
   },
@@ -25,7 +25,6 @@
   "stm32cube-ide-clangd.arguments": [
     "starm-clangd",
     "--clang-tidy",
-    "--compile-commands-dir=${sourceDirectory}/build",
     "--query-driver=${env:CUBE_BUNDLE_PATH}/gnu-tools-for-stm32/13.3.1+st.9/bin/arm-none-eabi-gcc",
     "--query-driver=${env:CUBE_BUNDLE_PATH}/gnu-tools-for-stm32/13.3.1+st.9/bin/arm-none-eabi-g++"
   ],

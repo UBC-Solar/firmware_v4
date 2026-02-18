@@ -114,7 +114,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    TasksDriveState(NULL);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

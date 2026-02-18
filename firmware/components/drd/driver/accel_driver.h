@@ -1,5 +1,5 @@
-#ifndef __ADC_DRIVER_H__
-#define __ADC_DRIVER_H__
+#ifndef __ACCEL_DRIVER_H__
+#define __ACCEL_DRIVER_H__
 
 /* INCLUDES */
 #include <stdbool.h>
@@ -38,4 +38,4 @@ AdcError AdcDriverGetError(void);
 
 bool AdcDriverReadRaw(uint16_t* adc1, uint16_t* adc2);
 
-#endif /* __ADC_DRIVER_H__ */
+#endif /* __ACCEL_DRIVER_H__ */

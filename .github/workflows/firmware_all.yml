@@ -61,5 +61,20 @@ jobs:
         run: gem install --no-document ceedling
 
       - name: Run All Unit Tests
+        run: make utest
+
+  format-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install clang-format
         run: |
-          make utest
+          sudo apt-get update
+          sudo apt-get install -y clang-format
+
+      - name: Check clang-format
+        run:  make format-check

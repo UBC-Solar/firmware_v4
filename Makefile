@@ -1,6 +1,6 @@
 # Top level makefile used to make building from the command line simple.
 
-.PHONY: all mdi tel drd clean help debug release utest
+.PHONY: all mdi tel drd clean help debug release utest format format-check
 
 debug release Debug Release:
 	@:
@@ -11,13 +11,15 @@ MODE := Debug  # default
 help:
 	@echo "Solar v4 Firmware Build"
 	@echo "Targets:"
-	@echo "  make all debug      - Build all modules (Debug)"
-	@echo "  make all release    - Build all modules (Release)"
-	@echo "  make mdi debug      - Build MDI in Debug"
-	@echo "  make mdi release    - Build MDI in Release"
-	@echo "  make utest          - Run all unit tests"
-	@echo "  make utest mdi      - Run unit tests for MDI only"
-	@echo "  make clean          - Remove all build directories"
+	@echo "  make all debug        - Build all modules (Debug)"
+	@echo "  make all release      - Build all modules (Release)"
+	@echo "  make mdi debug        - Build MDI in Debug"
+	@echo "  make mdi release      - Build MDI in Release"
+	@echo "  make utest            - Run all unit tests"
+	@echo "  make utest mdi        - Run unit tests for MDI only"
+	@echo "  make format           - Auto-format source files"
+	@echo "  make format-check     - Verify formatting (CI-safe)"
+	@echo "  make clean            - Remove all build directories"
 
 ifeq (,$(filter debug release,$(MAKECMDGOALS)))
     MODE := Debug
@@ -29,7 +31,6 @@ else
         MODE := Release
     endif
 endif
-
 
 FILTERED_GOALS := $(filter-out debug release,$(MAKECMDGOALS))
 
@@ -60,6 +61,30 @@ utest:
 	@echo "=== Running all unit tests ==="
 	cd firmware/components/mdi/ && ./ceedling test:all
 
+# --------------------------------------------------------------------
+# Clang-format support
+# Formats only app/, driver/, runtime/, and common/ folders
+# across all firmware components
+# --------------------------------------------------------------------
+
+FORMAT_FILES := $(shell find firmware \
+	-type f \( -name "*.c" -o -name "*.h" -o -name "*.cpp" \) \
+	\( \
+		-path "*/app/*" \
+		-o -path "*/driver/*" \
+		-o -path "*/runtime/*" \
+		-o -path "*/common/*" \
+	\) \
+	-not -path "*/build/*")
+
+format:
+	@echo "=== Formatting source files ==="
+	@clang-format -i $(FORMAT_FILES)
+	@echo "Format complete."
+
+format-check:
+	@echo "=== Checking clang-format ==="
+	@clang-format --dry-run --Werror $(FORMAT_FILES)
 
 clean:
 	@echo "Cleaning all build folders..."

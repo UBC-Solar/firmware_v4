@@ -28,15 +28,15 @@ const CAN_TxHeaderTypeDef mdu_request_header = {.StdId = 0,
  */
 void CAN_tasks_init()
 {
-    CAN_comms_config_t CAN_comms_config_tel = {0};
-    // CAN_FilterTypeDef can_filter = {0};
-    // CAN_filter_init(&can_filter);
+    CAN_comms_config_t CAN_comms_config_drd = {0};
+    //CAN_FilterTypeDef can_filter = {0};
+    //CAN_filter_init(&can_filter);
 
-    CAN_comms_config_tel.hcan = &hcan;
-    // CAN_comms_config_tel.CAN_Filter = can_filter;
-    CAN_comms_config_tel.CAN_comms_Rx_callback = CAN_comms_Rx_callback;
+    CAN_comms_config_drd.hcan = &hcan;
+    //CAN_comms_config_drd.CAN_Filter = can_filter;
+    CAN_comms_config_drd.CAN_comms_Rx_callback = CAN_comms_Rx_callback;
 
-    CAN_comms_init(&CAN_comms_config_tel);
+    CAN_comms_init(&CAN_comms_config_drd);
 }
 
 

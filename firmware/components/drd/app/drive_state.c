@@ -79,7 +79,7 @@ void ComputeNextState(void)
 
     bool valid_drive_state = g_drive_flags.velocity_under_threshold && valid_state_change;
 
-    if (!g_drive_flags.velocity_under_threshold)
+    if (!valid_drive_state)
     {
         return;
     }
@@ -195,7 +195,7 @@ void BreakOnHandler()
 {
     g_drive_flags.brake_on = true;
     DriveStateMotorControl motor_command = GetMotorCommand(ACCEL_DAC_OFF, REGEN_DAC_OFF);
-    // MotorCommandPackAndSend(&motor_command, true);
+    MotorCommandPackAndSend(&motor_command, true);
     SetBrakeLedPin(BRAKE_LED_PORT, BRAKE_LED_PIN, 1);
 }
 

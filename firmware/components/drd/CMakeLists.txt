@@ -53,8 +53,12 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     ${CMAKE_CURRENT_SOURCE_DIR}/app/evan_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/evan_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/lcd_app.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/lcd_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/font_verdana.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/cyclic_data_handler.c
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/tasks.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/app/diagnostics.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/diagnostic.c
 )
 
 # Add include paths
@@ -62,6 +66,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     ${CMAKE_CURRENT_SOURCE_DIR}/app
     ${CMAKE_CURRENT_SOURCE_DIR}/driver
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/cyclic_data/
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/CAN_comms
 )

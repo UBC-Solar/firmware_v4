@@ -4,6 +4,7 @@
 
 /* FUNCTION PROTOTYPES */
 void VechicleStateCANRxHandler(uint32_t msg_id, uint8_t* data);
+void CAN_filter_init(CAN_FilterTypeDef* can_filter);
 
 /**
  *  CAN Message Header for drive control

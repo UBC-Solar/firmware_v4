@@ -18,5 +18,6 @@ extern const CAN_TxHeaderTypeDef drive_control_header;
 extern const CAN_TxHeaderTypeDef mdu_request_header;
 
 void CAN_comms_Rx_callback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg);
+void CAN_tasks_init();
 
 #endif /* __CAN_DRIVER_H___ */

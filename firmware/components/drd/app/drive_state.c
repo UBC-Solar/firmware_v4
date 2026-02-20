@@ -68,14 +68,17 @@ void DriveStateFsmHandler()
     DEBUG_IO_PRINT("PrevStateRequested=%u\r\n", g_drive_flags.prev_state_request);
     DEBUG_IO_PRINT("BrakeEnabled=%u\r\n", g_drive_flags.brake_on);
     DEBUG_IO_PRINT("EcoModeEnabled=%u\r\n", g_drive_flags.eco_mode_on);
+
+    ClearDriveStateFlags();
 }
 
 void ComputeNextState(void)
 {
 
-    bool valid_state_change = !(g_drive_flags.next_state_request && g_drive_flags.prev_state_request);
+    bool valid_state_change =
+        !(g_drive_flags.next_state_request && g_drive_flags.prev_state_request);
 
-    bool valid_drive_state = !(g_drive_flags.velocity_under_threshold) && valid_state_change;
+    bool valid_drive_state = g_drive_flags.velocity_under_threshold && valid_state_change;
 
     if (!g_drive_flags.velocity_under_threshold)
     {
@@ -133,7 +136,7 @@ DriveStateMotorControl GetMotorCommand(uint16_t accel_DAC, uint16_t regen_DAC)
     DriveStateMotorControl motor_command;
     motor_command.accel_DAC_value = accel_DAC;
     motor_command.regen_DAC_value = regen_DAC;
-    //motor_command.motor_control_flags = UpdateMotorCommandFlags();
+    // motor_command.motor_control_flags = UpdateMotorCommandFlags();
 
     return motor_command;
 }
@@ -141,11 +144,13 @@ DriveStateMotorControl GetMotorCommand(uint16_t accel_DAC, uint16_t regen_DAC)
 /* DRIVE STATE DATA COLLECTION */
 void UpdateBrakePedalFlags(void)
 {
-    if (g_drive_flags.brake_on && ReadBrakePin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN)) {
-        g_drive_flags.brake_on = false;
-    }
+
+    g_drive_flags.brake_on = ReadBrakePin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN);
+    SetBrakeLedPin(BRAKE_LED_PORT, BRAKE_LED_PIN, g_drive_flags.brake_on);
 
     g_throttle_dac = AcceleratorDriverReadThrottle();
+
+    EcoPowerHandler();
 }
 
 void ClearDriveStateFlags(void)
@@ -181,9 +186,9 @@ void DriveStateInterruptHandler(uint16_t toggle)
         g_drive_flags.prev_state_request = true;
         break;
 
-    case ECO_POWER_PIN:
-        EcoPowerHandler();
-        break;
+        // case ECO_POWER_PIN:
+        //     g_drive_flags.eco_mode_on = true;
+        //     break;
     }
 }
 
@@ -192,7 +197,7 @@ void BreakOnHandler()
     g_drive_flags.brake_on = true;
     DriveStateMotorControl motor_command = GetMotorCommand(ACCEL_DAC_OFF, REGEN_DAC_OFF);
     // MotorCommandPackAndSend(&motor_command, true);
-    ToggleBrakeLedPin(BRAKE_LED_PORT, BRAKE_LED_PIN);
+    SetBrakeLedPin(BRAKE_LED_PORT, BRAKE_LED_PIN, 1);
 }
 
 void EcoPowerHandler(void)

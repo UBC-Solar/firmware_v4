@@ -29,6 +29,6 @@
 uint8_t ReadBrakePin(GPIO_TypeDef* port, uint16_t pin);
 uint8_t ReadEcoPowerPin(GPIO_TypeDef* port, uint16_t pin);
 void ToggleLedPin(GPIO_TypeDef* port, uint16_t pin);
-void ToggleBrakeLedPin(GPIO_TypeDef* port, uint16_t pin);
+void SetBrakeLedPin(GPIO_TypeDef* port, uint16_t pin, uint8_t brake_on);
 
 #endif //__DRIVERS_H__

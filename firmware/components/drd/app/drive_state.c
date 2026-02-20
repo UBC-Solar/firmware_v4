@@ -143,7 +143,6 @@ DriveStateMotorControl GetMotorCommand(uint16_t accel_DAC, uint16_t regen_DAC)
 /* DRIVE STATE DATA COLLECTION */
 void UpdateBrakePedalFlags(void)
 {
-
     g_drive_flags.brake_on = ReadBrakePin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN);
     SetBrakeLedPin(BRAKE_LED_PORT, BRAKE_LED_PIN, g_drive_flags.brake_on);
 

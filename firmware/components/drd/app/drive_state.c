@@ -15,6 +15,7 @@
 #include "can_driver.h"
 #include "debug_io.h"
 #include "drive_state.h"
+#include "cyclic_data_handler.h"
 #include "gpio_driver.h"
 
 /* GLOBAL VARIABLES */
@@ -55,7 +56,7 @@ void DriveStateFsmHandler()
     DriveStateMotorControl motor_command = ComputeNextCommand(model);
     ComputeNextState(model);
 
-    // TODO: set_cyclic_drive_state(model->state);
+    CyclicDataSetDriveState(model->state);
 
     MotorCommandPackAndSend(&motor_command, false);
 
@@ -215,6 +216,7 @@ void VelocityCanMsgHandler(uint8_t* data)
     uint32_t rpm = (data[4] >> 3) | ((data[5] & 0x7f) << 5);
     float velocity = (WHEEL_RADIUS * 2.0f * M_PI * rpm) / 60.0f;
     g_drive_state_model.velocity_kmh = (uint32_t)(velocity * 3.6f);
+    CyclicDataSetSpeed(g_drive_state_model.velocity_kmh);
 
     if (velocity < VELOCITY_THRESHOLD)
     {

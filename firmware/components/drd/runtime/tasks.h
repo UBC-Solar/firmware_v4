@@ -4,6 +4,7 @@
 /* INCLUDES */
 #include "cmsis_os2.h"
 #include "drive_state.h"
+#include "lcd_app.h"
 #include "soc.h"
 
 /* DEFINES */

@@ -17,7 +17,9 @@
 #include "tasks.h"
 #include "cmsis_os2.h"
 #include "debug_io.h"
+#include "cyclic_data_handler.h"
 #include "gpio_driver.h"
+#include "spi.h"
 
 /* DRIVE STATE TASK */
 void TasksDriveState(void* argument)
@@ -62,7 +64,7 @@ void TasksCalculateSoc(void *argument)
 
         SocPredictThenUpdate(g_total_pack_voltage_soc, g_pack_current_soc, SOC_TIME_STEP);
         uint8_t soc = (uint8_t)(SocGetSoc() * 100);
-        // set_cyclic_soc(soc); TODO: Cyclic Data
+        CyclicDataSetSoc(soc);
 
         osEventFlagsClear(calculate_soc_flagHandle, SOC_CALCULATE_ON);
 

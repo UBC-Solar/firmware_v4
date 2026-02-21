@@ -33,13 +33,6 @@ const CAN_TxHeaderTypeDef mdu_request_header = {.StdId = 0,
                                                 .RTR = CAN_RTR_DATA,
                                                 .DLC = MDU_REQUEST_SIZE};
 
-/**
- * @brief Initializes CAN hardware filters for message acceptance.
- *
- * CAN filters are configured to accept or reject specific CAN message IDs, improving bus efficiency and ensuring only relevant messages are processed. Filter banks and mask settings determine which messages are received by the controller.
- *
- * @param can_filter Pointer to CAN filter configuration structure.
- */
 void CanFilterInit(CAN_FilterTypeDef* can_filter) {
     CAN_FilterTypeDef can_filter1;
     CAN_FilterTypeDef can_filter2;

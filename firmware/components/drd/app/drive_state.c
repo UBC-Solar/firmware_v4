@@ -59,7 +59,7 @@ uint8_t UpdateMotorCommandFlags(DriveStateModel *model);
  * @brief Updates the brake pedal status flags in the drive state model.
  * @param model Pointer to the drive state model.
  */
-void UpdateBrakePedalFlags(DriveStateModel *model);
+void UpdatePedalFlags(DriveStateModel *model);
 /**
  * @brief Clears all drive state flags in the model.
  * @param model Pointer to the drive state model.
@@ -187,7 +187,7 @@ DriveStateMotorControl GetMotorCommand(DriveStateModel *model, uint16_t accel_DA
 }
 
 /* DRIVE STATE DATA COLLECTION */
-void UpdateBrakePedalFlags(DriveStateModel *model)
+void UpdatePedalFlags(DriveStateModel *model)
 {
     model->flags.brake_on = ReadBrakePin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN);
     SetBrakeLedPin(BRAKE_LED_PORT, BRAKE_LED_PIN, model->flags.brake_on);

@@ -18,7 +18,7 @@
 #include "gpio_driver.h"
 
 /* GLOBAL VARIABLES */
-volatile DriveStateModel g_drive_model = {
+volatile DriveStateModel g_drive_state_model = {
     .state = PARK,
     .flags = {
         .brake_on = false,
@@ -172,7 +172,7 @@ uint8_t UpdateMotorCommandFlags(DriveStateModel *model)
 /* SETS DRIVE STATE FLAGS */
 void DriveStateInterruptHandler(uint16_t toggle)
 {
-    volatile DriveStateModel *model = &g_drive_model;
+    volatile DriveStateModel *model = &g_drive_state_model;
 
     ToggleLedPin(DEBUG_LED0_PORT, DEBUG_LED0_PIN);
 

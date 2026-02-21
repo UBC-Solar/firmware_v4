@@ -97,7 +97,7 @@ void DriveStateFsmHandler()
     volatile DriveStateModel *v_model = &g_drive_state_model;
     DriveStateModel *model = (DriveStateModel *)v_model;
 
-    UpdateBrakePedalFlags(model);
+    UpdatePedalFlags(model);
     DriveStateMotorControl motor_command = ComputeNextCommand(model);
     ComputeNextState(model);
 

@@ -1,0 +1,27 @@
+/*
+ * external_lights.h
+ *
+ *  Created on: Feb 12, 2026
+ *      Author: Martin Wu
+ */
+
+#ifndef INC_EXTERNAL_LIGHTS_H_
+#define INC_EXTERNAL_LIGHTS_H_
+
+/*	Includes	*/
+#include "CAN_comms.h"
+#include "main.h"
+
+
+/*	Symbolic Constants	*/
+#define LIGHTS_STATE_MACHINE_DELAY 50
+#define LIGHTS_STATE_PERIOD 650 // period of signal (on -> off -> on)
+#define LIGHTS_FLIP_COUNT (LIGHTS_STATE_PERIOD) / (LIGHTS_STATE_MACHINE_DELAY)
+
+/*	Typedefs 	*/
+
+/*	Function Prototypes	*/
+void ExternalLights_state_machine();
+void External_Lights_CAN_rx_handle(uint32_t can_id, uint8_t* data);
+
+#endif /* INC_EXTERNAL_LIGHTS_H_ */

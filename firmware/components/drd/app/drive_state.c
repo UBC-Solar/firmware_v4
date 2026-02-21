@@ -53,7 +53,8 @@ void MotorControlQueryData(void);
 /* DRIVE STATE FINITE STATE MACHINE */
 void DriveStateFsmHandler()
 {
-    volatile DriveStateModel *model = &g_drive_state_model;
+    volatile DriveStateModel *v_model = &g_drive_state_model;
+    DriveStateModel *model = (DriveStateModel *)v_model;
 
     UpdateBrakePedalFlags(model);
     DriveStateMotorControl motor_command = ComputeNextCommand(model);
@@ -172,7 +173,8 @@ uint8_t UpdateMotorCommandFlags(DriveStateModel *model)
 /* SETS DRIVE STATE FLAGS */
 void DriveStateInterruptHandler(uint16_t toggle)
 {
-    volatile DriveStateModel *model = &g_drive_state_model;
+    volatile DriveStateModel *v_model = &g_drive_state_model;
+    DriveStateModel *model = (DriveStateModel *)v_model;
 
     ToggleLedPin(DEBUG_LED0_PORT, DEBUG_LED0_PIN);
 

@@ -52,10 +52,15 @@ typedef enum
     // CRUISE = (uint8_t) 0x04
 } DriveStateStates;
 
+typedef struct {
+    DriveStateStates state;
+    DriveStateFlags flags;
+    uint32_t velocity_kmh;
+    uint16_t throttle_dac;
+} DriveStateModel;
+
 /* GLOBAL VARIABLES */
-extern volatile DriveStateStates g_drive_state;
-extern volatile DriveStateFlags g_drive_flags;
-extern volatile uint32_t g_velocity_kmh;
+extern volatile DriveStateModel g_drive_state_model;
 
 /* FUNCTION PROTOTYPES */
 void DriveStateFsmHandler(void);

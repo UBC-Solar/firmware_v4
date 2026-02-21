@@ -18,32 +18,34 @@
 #include "gpio_driver.h"
 
 /* GLOBAL VARIABLES */
-volatile DriveStateStates g_drive_state = PARK;
-volatile DriveStateFlags g_drive_flags = {
-    .brake_on = false,
-    .regen_on = false,
-    .cruise_on = false,
-    .velocity_under_threshold = true, // placeholder until MDI testing
-    .next_state_request = false,
-    .prev_state_request = false,
-    .eco_mode_on = false,
+volatile DriveStateModel g_drive_model = {
+    .state = PARK,
+    .flags = {
+        .brake_on = false,
+        .regen_on = false,
+        .cruise_on = false,
+        .velocity_under_threshold = true, // placeholder until MDI testing
+        .next_state_request = false,
+        .prev_state_request = false,
+        .eco_mode_on = false,
+    },
+    .velocity_kmh = 0,
+    .throttle_dac = 0,
 };
-volatile uint32_t g_velocity_kmh = 0;
-volatile uint16_t g_throttle_dac = 0;
 
 /* FUNCTION DECLARATIONS */
-DriveStateMotorControl ComputeNextCommand(void);
-DriveStateMotorControl GetMotorCommand(uint16_t accel_DAC, uint16_t regen_DAC);
-uint8_t UpdateMotorCommandFlags(void);
-void UpdateBrakePedalFlags(void);
-void ClearDriveStateFlags(void);
-void ComputeNextState(void);
-void BreakOnHandler(void);
-void EcoPowerHandler(void);
-void VelocityHandler(uint8_t* data);
-void SteeringCanMsgHandler(uint8_t* data);
+DriveStateMotorControl ComputeNextCommand(DriveStateModel *model);
+DriveStateMotorControl GetMotorCommand(DriveStateModel *model, uint16_t accel_DAC, uint16_t regen_DAC);
+uint8_t UpdateMotorCommandFlags(DriveStateModel *model);
+void UpdateBrakePedalFlags(DriveStateModel *model);
+void ClearDriveStateFlags(DriveStateModel *model);
+void ComputeNextState(DriveStateModel *model);
+void BreakOnHandler(DriveStateModel *model);
+void EcoPowerHandler(DriveStateModel *model);
+void VelocityHandler(DriveStateModel *model, uint8_t* data);
+void SteeringCanMsgHandler(DriveStateModel *model, uint8_t* data);
 #ifdef DEBUG
-void StateRequestCanMsgHandler(uint8_t* data);
+void StateRequestCanMsgHandler(DriveStateModel *model, uint8_t* data);
 #endif
 void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr);
 void MotorControlQueryData(void);
@@ -51,199 +53,203 @@ void MotorControlQueryData(void);
 /* DRIVE STATE FINITE STATE MACHINE */
 void DriveStateFsmHandler()
 {
-    UpdateBrakePedalFlags();
-    DriveStateMotorControl motor_command = ComputeNextCommand();
-    ComputeNextState();
+    DriveStateModel *model = &g_drive_state_model;
 
-    // TODO: set_cyclic_drive_state(g_drive_state);
+    UpdateBrakePedalFlags(model);
+    DriveStateMotorControl motor_command = ComputeNextCommand(model);
+    ComputeNextState(model);
+
+    // TODO: set_cyclic_drive_state(model->state);
 
     MotorCommandPackAndSend(&motor_command, false);
 
     // Prints current state
-    DEBUG_IO_PRINT("DriveState=%u\r\n", g_drive_state);
+    DEBUG_IO_PRINT("DriveState=%u\r\n", model->state);
 
     // Prints requested flags
-    DEBUG_IO_PRINT("NextStateRequested=%u\r\n", g_drive_flags.next_state_request);
-    DEBUG_IO_PRINT("PrevStateRequested=%u\r\n", g_drive_flags.prev_state_request);
-    DEBUG_IO_PRINT("BrakeEnabled=%u\r\n", g_drive_flags.brake_on);
-    DEBUG_IO_PRINT("EcoModeEnabled=%u\r\n", g_drive_flags.eco_mode_on);
+    DEBUG_IO_PRINT("NextStateRequested=%u\r\n", model->next_state_request);
+    DEBUG_IO_PRINT("PrevStateRequested=%u\r\n", model->flags.prev_state_request);
+    DEBUG_IO_PRINT("BrakeEnabled=%u\r\n", model->flags.brake_on);
+    DEBUG_IO_PRINT("EcoModeEnabled=%u\r\n", model->flags.eco_mode_on);
 
-    ClearDriveStateFlags();
+    ClearDriveStateFlags(model);
 }
 
-void ComputeNextState(void)
+void ComputeNextState(DriveStateModel *model)
 {
 
     bool valid_state_change =
-        !(g_drive_flags.next_state_request && g_drive_flags.prev_state_request);
+        !(model->flags.next_state_request && model->flags.prev_state_request);
 
-    bool valid_drive_state = g_drive_flags.velocity_under_threshold && valid_state_change;
+    bool valid_drive_state = model->flags.velocity_under_threshold && valid_state_change;
 
     if (!valid_drive_state)
     {
         return;
     }
 
-    switch (g_drive_state)
+    switch (model->state)
     {
     case PARK:
-        if (g_drive_flags.next_state_request)
+        if (model->flags.next_state_request)
         {
-            g_drive_state = REVERSE;
+            model->state = REVERSE;
         }
 
-        else if (g_drive_flags.prev_state_request)
+        else if (model->flags.prev_state_request)
         {
-            g_drive_state = FORWARD;
+            model->state = FORWARD;
         }
         break;
     case FORWARD:
-        if (g_drive_flags.next_state_request)
+        if (model->flags.next_state_request)
         {
-            g_drive_state = PARK;
+            model->state = PARK;
         }
         break;
     case REVERSE:
-        if (g_drive_flags.prev_state_request)
+        if (model->flags.prev_state_request)
         {
-            g_drive_state = PARK;
+            model->state = PARK;
         }
         break;
     default:
-        g_drive_state = PARK;
+        model->state = PARK;
         break;
     }
 }
 
-DriveStateMotorControl ComputeNextCommand(void)
+DriveStateMotorControl ComputeNextCommand(DriveStateModel *model)
 {
-    if (g_drive_flags.brake_on || (g_drive_state == PARK))
+    if (model->flags.brake_on || (model->state == PARK))
     {
-        return GetMotorCommand(ACCEL_DAC_OFF, REGEN_DAC_OFF);
+        return GetMotorCommand(model, ACCEL_DAC_OFF, REGEN_DAC_OFF);
     }
 
-    if (g_drive_state == REVERSE)
+    if (model->state == REVERSE)
     {
-        return GetMotorCommand(g_throttle_dac, REGEN_DAC_OFF);
+        return GetMotorCommand(model, model->throttle_dac, REGEN_DAC_OFF);
     }
 
-    return GetMotorCommand(g_throttle_dac, g_drive_flags.regen_on ? REGEN_DAC_ON : REGEN_DAC_OFF);
+    return GetMotorCommand(model, model->throttle_dac, model->flags.regen_on ? REGEN_DAC_ON : REGEN_DAC_OFF);
 }
 
-DriveStateMotorControl GetMotorCommand(uint16_t accel_DAC, uint16_t regen_DAC)
+DriveStateMotorControl GetMotorCommand(DriveStateModel *model, uint16_t accel_DAC, uint16_t regen_DAC)
 {
     DriveStateMotorControl motor_command;
     motor_command.accel_DAC_value = accel_DAC;
     motor_command.regen_DAC_value = regen_DAC;
-    motor_command.motor_control_flags = UpdateMotorCommandFlags();
+    motor_command.motor_control_flags = UpdateMotorCommandFlags(model);
 
     return motor_command;
 }
 
 /* DRIVE STATE DATA COLLECTION */
-void UpdateBrakePedalFlags(void)
+void UpdateBrakePedalFlags(DriveStateModel *model)
 {
-    g_drive_flags.brake_on = ReadBrakePin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN);
-    SetBrakeLedPin(BRAKE_LED_PORT, BRAKE_LED_PIN, g_drive_flags.brake_on);
+    model->flags.brake_on = ReadBrakePin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN);
+    SetBrakeLedPin(BRAKE_LED_PORT, BRAKE_LED_PIN, model->flags.brake_on);
 
-    g_throttle_dac = AcceleratorDriverReadThrottle();
+    model->throttle_dac = AcceleratorDriverReadThrottle();
 
-    EcoPowerHandler();
+    EcoPowerHandler(model);
 }
 
-void ClearDriveStateFlags(void)
+void ClearDriveStateFlags(DriveStateModel *model)
 {
-    g_drive_flags.next_state_request = false;
-    g_drive_flags.prev_state_request = false;
+    model->flags.next_state_request = false;
+    model->flags.prev_state_request = false;
 }
 
-uint8_t UpdateMotorCommandFlags(void)
+uint8_t UpdateMotorCommandFlags(DriveStateModel *model)
 {
     uint8_t flags = 0;
-    flags |= ((g_drive_state == REVERSE) ? 0 : 1); // Direction Bit: 0 (REVERSE), 1 (FORWARD/PARK)
-    flags |= (g_drive_flags.eco_mode_on ? 1 << 1 : 0);
+    flags |= ((model->state == REVERSE) ? 0 : 1); // Direction Bit: 0 (REVERSE), 1 (FORWARD/PARK)
+    flags |= (model->flags.eco_mode_on ? 1 << 1 : 0);
     return flags;
 }
 
 /* SETS DRIVE STATE FLAGS */
 void DriveStateInterruptHandler(uint16_t toggle)
 {
+    DriveStateModel *model = &g_drive_model;
+
     ToggleLedPin(DEBUG_LED0_PORT, DEBUG_LED0_PIN);
 
     switch (toggle)
     {
     case BRAKE_INPUT_PIN:
-        BreakOnHandler();
+        BreakOnHandler(model);
         break;
 
     case DRIVE_NEXT_PIN:
-        g_drive_flags.next_state_request = true;
+        model->flags.next_state_request = true;
         break;
 
     case DRIVE_PREV_PIN:
-        g_drive_flags.prev_state_request = true;
+        model->flags.prev_state_request = true;
         break;
     }
 }
 
-void BreakOnHandler(void)
+void BreakOnHandler(DriveStateModel *model)
 {
-    g_drive_flags.brake_on = true;
-    DriveStateMotorControl motor_command = GetMotorCommand(ACCEL_DAC_OFF, REGEN_DAC_OFF);
+    model->flags.brake_on = true;
+    DriveStateMotorControl motor_command = GetMotorCommand(model, ACCEL_DAC_OFF, REGEN_DAC_OFF);
     MotorCommandPackAndSend(&motor_command, true);
     SetBrakeLedPin(BRAKE_LED_PORT, BRAKE_LED_PIN, 1);
 }
 
-void EcoPowerHandler(void)
+void EcoPowerHandler(DriveStateModel *model)
 {
     if (!ReadEcoPowerPin(ECO_POWER_PORT, ECO_POWER_PIN))
     {
-        g_drive_flags.eco_mode_on = false;
+        model->flags.eco_mode_on = false;
     }
     else
     {
-        g_drive_flags.eco_mode_on = true;
+        model->flags.eco_mode_on = true;
     }
 }
 
 /* CAN MESSAGE RX HANDLERS */
-void VelocityHandler(uint8_t* data)
+void VelocityHandler(DriveStateModel *model, uint8_t* data)
 {
     uint32_t rpm = (data[4] >> 3) | ((data[5] & 0x7f) << 5);
     float velocity = (WHEEL_RADIUS * 2.0f * M_PI * rpm) / 60.0f;
-    g_velocity_kmh = velocity * 3.6f;
+    model->velocity_kmh = (uint32_t)(velocity * 3.6f);
 
     if (velocity < VELOCITY_THRESHOLD)
     {
-        g_drive_flags.velocity_under_threshold = true;
+        model->flags.velocity_under_threshold = true;
     }
     else
     {
-        g_drive_flags.velocity_under_threshold = false;
+        model->flags.velocity_under_threshold = false;
     }
 }
 
-void SteeringCanMsgHandler(uint8_t* data)
+void SteeringCanMsgHandler(DriveStateModel *model, uint8_t* data)
 { // not configured on STR yet regen is for bit 0 and cruise for bit 1
 
-    g_drive_flags.regen_on = ((data[0] >> 0) & 0x01);
-    g_drive_flags.cruise_on = ((data[0] >> 1) & 0x01);
+    model->flags.regen_on = ((data[0] >> 0) & 0x01);
+    model->flags.cruise_on = ((data[0] >> 1) & 0x01);
 }
 
 #ifdef DEBUG
-void StateRequestCanMsgHandler(uint8_t* data)
+void StateRequestCanMsgHandler(DriveStateModel *model, uint8_t* data)
 {
     int value = data[0];
 
     switch (value)
     {
     case 0:
-        g_drive_flags.next_state_request = true;
-        g_drive_flags.prev_state_request = false;
+        model->flags.next_state_request = true;
+        model->flags.prev_state_request = false;
         break;
     case 1:
-        g_drive_flags.prev_state_request = true;
-        g_drive_flags.next_state_request = false;
+        model->flags.prev_state_request = true;
+        model->flags.next_state_request = false;
         break;
     }
 }

@@ -1,8 +1,9 @@
 #include "tasks.h"
 #include "cmsis_os2.h"
-#include "cyclic_data_handler.h"
+#include "iwdg_app.h"
 #include "lcd_app.h"
 #include "spi.h"
+#include "diagnostic.h"
 
 /* DRIVE STATE TASK */
 void TasksDriveState(void)
@@ -33,4 +34,24 @@ void TasksLcdUpdate(void *argument)
         LcdAppPageController();
     }
     osDelay(LCD_APP_UPDATE_DELAY);
+}
+
+void TasksDiagnostic(void *argument)
+{
+    for (;;)
+    {
+        IwdgAppRefresh(&hiwdg);
+        DiagnosticTransmit(&g_diagnostics, false);
+        osDelay(DEFAULT_TASK_DELAY);
+    }
+}
+
+void TasksTimeSinceStartup(void *argument)
+{
+    for (;;)
+    {
+        g_time_since_bootup++;
+        DiagnosticTimeSinceBootup();
+        osDelay(TIME_SINCE_STARTUP_TASK_DELAY);
+    }
 }

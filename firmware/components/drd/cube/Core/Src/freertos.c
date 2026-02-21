@@ -26,6 +26,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "tasks.h"
+#include "can_driver.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -73,6 +74,21 @@ const osThreadAttr_t TasksDriveState_attributes = {
   .stack_size = sizeof(TasksDriveStateBuffer),
   .priority = (osPriority_t) osPriorityLow,
 };
+
+/* Definitions for TasksDiagnostic */
+osThreadId_t TasksDiagnosticHandle;
+uint32_t TasksDiagnosticBuffer[256];
+osStaticThreadDef_t TasksDiagnosticControlBlock;
+
+const osThreadAttr_t TasksDiagnostic_attributes = {
+  .name = "TasksDiagnostic",
+  .cb_mem = &TasksDiagnosticControlBlock,
+  .cb_size = sizeof(TasksDiagnosticControlBlock),
+  .stack_mem = &TasksDiagnosticBuffer[0],
+  .stack_size = sizeof(TasksDiagnosticBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
+
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -98,7 +114,7 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
   */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
-
+  CAN_tasks_init();
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -124,6 +140,7 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_THREADS */
   /* creation of TasksLcdUpdate */
   TasksLcdUpdateHandle = osThreadNew(TasksLcdUpdate, NULL, &TasksLcdUpdate_attributes);
+  TasksDiagnosticHandle = osThreadNew(TasksDiagnostic, NULL, &TasksDiagnostic_attributes);
     //TasksDriveStateHandle = osThreadNew(TasksDriveState, NULL, &TasksDriveState_attributes);
   /* USER CODE END RTOS_THREADS */
 

@@ -5,6 +5,7 @@
 // #include "fault_lights.h"
 #include "lcd_driver.h"
 #include <stdio.h>
+#include "can_driver.h"
 // #include "soc.h"
 
 /*--------------------------------------------------------------------------
@@ -1123,30 +1124,24 @@ void LcdAppCanRxHandle(uint32_t msg_id, uint8_t* data)
     //     osEventFlagsSet(calculate_soc_flagHandle, SOC_CALCULATE_ON);
     // }
 
-    // if (msg_id == STR_CAN_MSG_ID)
-    // {
-    //     uint8_t next_page = (data[0] & 1);
+    if (msg_id == STR_CAN_MSG_ID)
+    {
+        uint8_t next_page = (data[0] & 1);
 
-    //     if (next_page)
-    //     {
-    //         if (g_LCD_page < LCD_APP_MAXPAGES)
-    //         {
-    //             g_LCD_page_change = 1;
-    //             g_LCD_page++;
-    //         }
-    //         else
-    //         {
-    //             g_LCD_page_change = 1;
-    //             g_LCD_page = 1;
-    //         }
-    //     }
-    //     //    	else if(previous_page){
-    //     //    		if(g_LCD_page > 1){
-    //     //    			g_LCD_page_change = 1;
-    //     //    			g_LCD_page--;
-    //     //			}
-    //     //    	}
-    // }
+        if (next_page)
+        {
+            if (g_lcd_page < LCD_APP_MAXPAGES)
+            {
+                g_lcd_page_change = 1;
+                g_lcd_page++;
+            }
+            else
+            {
+                g_lcd_page_change = 1;
+                g_lcd_page = 1;
+            }
+        }
+    }
 
     // if (msg_id == CAN_ID_MDI_TEMP)
     // {

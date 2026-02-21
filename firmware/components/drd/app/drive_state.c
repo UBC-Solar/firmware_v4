@@ -53,7 +53,7 @@ void MotorControlQueryData(void);
 /* DRIVE STATE FINITE STATE MACHINE */
 void DriveStateFsmHandler()
 {
-    DriveStateModel *model = &g_drive_state_model;
+    volatile DriveStateModel *model = &g_drive_state_model;
 
     UpdateBrakePedalFlags(model);
     DriveStateMotorControl motor_command = ComputeNextCommand(model);
@@ -67,7 +67,7 @@ void DriveStateFsmHandler()
     DEBUG_IO_PRINT("DriveState=%u\r\n", model->state);
 
     // Prints requested flags
-    DEBUG_IO_PRINT("NextStateRequested=%u\r\n", model->next_state_request);
+    DEBUG_IO_PRINT("NextStateRequested=%u\r\n", model->flags.next_state_request);
     DEBUG_IO_PRINT("PrevStateRequested=%u\r\n", model->flags.prev_state_request);
     DEBUG_IO_PRINT("BrakeEnabled=%u\r\n", model->flags.brake_on);
     DEBUG_IO_PRINT("EcoModeEnabled=%u\r\n", model->flags.eco_mode_on);
@@ -172,7 +172,7 @@ uint8_t UpdateMotorCommandFlags(DriveStateModel *model)
 /* SETS DRIVE STATE FLAGS */
 void DriveStateInterruptHandler(uint16_t toggle)
 {
-    DriveStateModel *model = &g_drive_model;
+    volatile DriveStateModel *model = &g_drive_model;
 
     ToggleLedPin(DEBUG_LED0_PORT, DEBUG_LED0_PIN);
 

@@ -3,6 +3,14 @@
 
 /* INCLUDES */
 #include "drive_state.h"
+#include "soc.h"
+
+/* DEFINES */
+#define SOC_CALCULATE_ON        (0xFF)
+#define SOC_CALCULATE_OFF       (0x00)
+#define CALCULATE_SOC_DELAY     (50)
+
+extern osEventFlagsId_t calculate_soc_flagHandle;
 
 /* TASK FUNCTION PROTOTYPES */
 

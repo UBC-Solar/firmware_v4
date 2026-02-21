@@ -234,7 +234,7 @@ void SteeringCanMsgHandler(uint8_t* data)
 }
 
 #ifdef DEBUG
-void StateRequestCanMsgHandler(DriveStateModel *model, uint8_t* data)
+void StateRequestCanMsgHandler(uint8_t* data)
 {
     int value = data[0];
 

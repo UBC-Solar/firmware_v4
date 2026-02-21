@@ -69,7 +69,7 @@ void DriveStateInterruptHandler(uint16_t toggle);
 void VelocityCanMsgHandler(uint8_t* data);
 void SteeringCanMsgHandler(uint8_t* data);
 #ifdef DEBUG
-void StateRequestCanMsgHandler(DriveStateModel *model, uint8_t* data);
+void StateRequestCanMsgHandler(uint8_t* data);
 #endif
 
 #endif /* __DRIVE_STATE_H_ */

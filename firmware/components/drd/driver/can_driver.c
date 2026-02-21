@@ -1,6 +1,7 @@
 #include "can_driver.h"
 #include "CAN_comms.h"
 #include "can.h"
+#include "drive_state.h" // for now MMR change later
 
 /* FUNCTION PROTOTYPES */
 void VechicleStateCANRxHandler(uint32_t msg_id, uint8_t* data);
@@ -114,7 +115,7 @@ void VechicleStateCANRxHandler(uint32_t msg_id, uint8_t* data)
     switch (msg_id)
     {
     case FRAME0:
-        VelocityHandler(data);
+        VelocityCanMsgHandler(data);
         break;
     case STR_CAN_MSG_ID:
         SteeringCanMsgHandler(data);

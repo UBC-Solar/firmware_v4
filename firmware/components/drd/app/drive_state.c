@@ -42,11 +42,6 @@ void ClearDriveStateFlags(DriveStateModel *model);
 void ComputeNextState(DriveStateModel *model);
 void BreakOnHandler(DriveStateModel *model);
 void EcoPowerHandler(DriveStateModel *model);
-void VelocityHandler(DriveStateModel *model, uint8_t* data);
-void SteeringCanMsgHandler(DriveStateModel *model, uint8_t* data);
-#ifdef DEBUG
-void StateRequestCanMsgHandler(DriveStateModel *model, uint8_t* data);
-#endif
 void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr);
 void MotorControlQueryData(void);
 
@@ -215,27 +210,27 @@ void EcoPowerHandler(DriveStateModel *model)
 }
 
 /* CAN MESSAGE RX HANDLERS */
-void VelocityHandler(DriveStateModel *model, uint8_t* data)
+void VelocityCanMsgHandler(uint8_t* data)
 {
     uint32_t rpm = (data[4] >> 3) | ((data[5] & 0x7f) << 5);
     float velocity = (WHEEL_RADIUS * 2.0f * M_PI * rpm) / 60.0f;
-    model->velocity_kmh = (uint32_t)(velocity * 3.6f);
+    g_drive_state_model.velocity_kmh = (uint32_t)(velocity * 3.6f);
 
     if (velocity < VELOCITY_THRESHOLD)
     {
-        model->flags.velocity_under_threshold = true;
+        g_drive_state_model.flags.velocity_under_threshold = true;
     }
     else
     {
-        model->flags.velocity_under_threshold = false;
+        g_drive_state_model.flags.velocity_under_threshold = false;
     }
 }
 
-void SteeringCanMsgHandler(DriveStateModel *model, uint8_t* data)
+void SteeringCanMsgHandler(uint8_t* data)
 { // not configured on STR yet regen is for bit 0 and cruise for bit 1
 
-    model->flags.regen_on = ((data[0] >> 0) & 0x01);
-    model->flags.cruise_on = ((data[0] >> 1) & 0x01);
+    g_drive_state_model.flags.regen_on = ((data[0] >> 0) & 0x01);
+    g_drive_state_model.flags.cruise_on = ((data[0] >> 1) & 0x01);
 }
 
 #ifdef DEBUG
@@ -246,18 +241,18 @@ void StateRequestCanMsgHandler(DriveStateModel *model, uint8_t* data)
     switch (value)
     {
     case 0:
-        model->flags.next_state_request = true;
-        model->flags.prev_state_request = false;
+        g_drive_state_model.flags.next_state_request = true;
+        g_drive_state_model.flags.prev_state_request = false;
         break;
     case 1:
-        model->flags.prev_state_request = true;
-        model->flags.next_state_request = false;
+        g_drive_state_model.flags.prev_state_request = true;
+        g_drive_state_model.flags.next_state_request = false;
         break;
     }
 }
 #endif
 
-/* CAN DATA TX*/
+/* CAN DATA TX HANDLERS */
 void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr)
 {
     CAN_comms_Tx_msg_t msg;

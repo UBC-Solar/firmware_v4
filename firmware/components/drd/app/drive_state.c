@@ -56,7 +56,7 @@ void DriveStateFsmHandler()
     DriveStateMotorControl motor_command = ComputeNextCommand(model);
     ComputeNextState(model);
 
-    CyclicDataSetDriveState(model->state);
+    CyclicDataSetDriveState(g_drive_state_model.state);
 
     MotorCommandPackAndSend(&motor_command, false);
 

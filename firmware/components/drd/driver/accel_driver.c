@@ -6,8 +6,25 @@
 static AdcError g_last_error = ADC_FAULT_NONE;
 
 /* PRIVATE FUNCTION DECLARATIONS */
+/**
+ * @brief Reads a value from the specified ADC peripheral.
+ * @param hadc Pointer to the ADC handle structure.
+ * @return The ADC conversion result as a 16-bit unsigned integer.
+ */
 static uint16_t ReadAdc(ADC_HandleTypeDef* hadc);
+/**
+ * @brief Validates the raw ADC readings from both accelerator channels.
+ * @param adc1 First ADC channel value.
+ * @param adc2 Second ADC channel value.
+ * @return True if readings are valid, false otherwise.
+ */
 static bool ValidateAdcReadings(uint16_t adc1, uint16_t adc2);
+/**
+ * @brief Normalizes the ADC readings to a DAC value for throttle output.
+ * @param adc1 First ADC channel value.
+ * @param adc2 Second ADC channel value.
+ * @return Normalized DAC value as a 16-bit unsigned integer.
+ */
 static uint16_t NormalizeToDac(uint16_t adc1, uint16_t adc2);
 
 /* ADC DRIVER FUNCTIONALITY */

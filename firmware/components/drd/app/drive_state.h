@@ -63,12 +63,31 @@ typedef struct {
 extern volatile DriveStateModel g_drive_state_model;
 
 /* FUNCTION PROTOTYPES */
+/**
+ * @brief Main handler for the drive state finite state machine.
+ */
 void DriveStateFsmHandler(void);
+/**
+ * @brief Handles drive state changes triggered by interrupts.
+ * @param toggle Interrupt toggle value.
+ */
 void DriveStateInterruptHandler(uint16_t toggle);
 
+/**
+ * @brief Handles incoming CAN messages related to vehicle velocity.
+ * @param data Pointer to CAN message data.
+ */
 void VelocityCanMsgHandler(uint8_t* data);
+/**
+ * @brief Handles incoming CAN messages related to steering.
+ * @param data Pointer to CAN message data.
+ */
 void SteeringCanMsgHandler(uint8_t* data);
 #ifdef DEBUG
+/**
+ * @brief Handles CAN messages requesting a state change.
+ * @param data Pointer to CAN message data.
+ */
 void StateRequestCanMsgHandler(uint8_t* data);
 #endif
 

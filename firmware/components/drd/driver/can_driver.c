@@ -4,8 +4,19 @@
 #include "drive_state.h" // for now MMR change later
 
 /* FUNCTION PROTOTYPES */
-void VechicleStateCANRxHandler(uint32_t msg_id, uint8_t* data);
-void CAN_filter_init(CAN_FilterTypeDef* can_filter);
+/**
+ * @brief Handles received CAN messages for vehicle state and dispatches to appropriate handlers.
+ *
+ * @param msg_id The CAN message ID.
+ * @param data Pointer to the received CAN message data.
+ */
+void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data);
+/**
+ * @brief Initializes CAN hardware filters for message acceptance.
+ *
+ * @param can_filter Pointer to CAN filter configuration structure.
+ */
+void CanFilterInit(CAN_FilterTypeDef* can_filter);
 
 /**
  *  CAN Message Header for drive control
@@ -22,7 +33,14 @@ const CAN_TxHeaderTypeDef mdu_request_header = {.StdId = 0,
                                                 .RTR = CAN_RTR_DATA,
                                                 .DLC = MDU_REQUEST_SIZE};
 
-void CAN_filter_init(CAN_FilterTypeDef* can_filter) {
+/**
+ * @brief Initializes CAN hardware filters for message acceptance.
+ *
+ * CAN filters are configured to accept or reject specific CAN message IDs, improving bus efficiency and ensuring only relevant messages are processed. Filter banks and mask settings determine which messages are received by the controller.
+ *
+ * @param can_filter Pointer to CAN filter configuration structure.
+ */
+void CanFilterInit(CAN_FilterTypeDef* can_filter) {
     CAN_FilterTypeDef can_filter1;
     CAN_FilterTypeDef can_filter2;
 
@@ -65,27 +83,21 @@ void CAN_filter_init(CAN_FilterTypeDef* can_filter) {
     HAL_CAN_ConfigFilter(&hcan, &can_filter2);
 }
 
-/**
- * @brief Initializes the CAN filter and CAN Rx callback function as CAN_comms_Rx_callback().
- *
- * Note: This uses the CAN_comms abstraction layer which will initialize two freeRTOS tasks. As a result it is recommended to
- * Call this function inside the MX_FREERTOS_Init() function in freertos.c
- */
-void CAN_tasks_init()
+void CanTasksInit()
 {
     CAN_comms_config_t CAN_comms_config_drd = {0};
     CAN_FilterTypeDef can_filter = {0};
-    CAN_filter_init(&can_filter);
+    CanFilterInit(&can_filter);
 
     CAN_comms_config_drd.hcan = &hcan;
     CAN_comms_config_drd.CAN_Filter = can_filter;
-    CAN_comms_config_drd.CAN_comms_Rx_callback = CAN_comms_Rx_callback;
+    CAN_comms_config_drd.CAN_comms_Rx_callback = CanCommsRxCallback;
 
     CAN_comms_init(&CAN_comms_config_drd);
 }
 
 
-void CAN_comms_Rx_callback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
+void CanCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 {
 	uint32_t CAN_ID = 0;
 	/*
@@ -105,11 +117,11 @@ void CAN_comms_Rx_callback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 		CAN_ID = CAN_comms_Rx_msg->header.StdId; // Get CAN ID
 	}
 
-	VechicleStateCANRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
+    VehicleStateCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
 }
 
 /* CAN RX */
-void VechicleStateCANRxHandler(uint32_t msg_id, uint8_t* data)
+void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data)
 {
 
     switch (msg_id)

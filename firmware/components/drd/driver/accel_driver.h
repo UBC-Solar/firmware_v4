@@ -32,10 +32,24 @@ typedef enum
 
 /* FUNCTION PROTOTYPES */
 
+/**
+ * @brief Reads and returns the current throttle value from the accelerator.
+ * @return Throttle value as a 16-bit unsigned integer.
+ */
 uint16_t AcceleratorDriverReadThrottle(void);
 
+/**
+ * @brief Returns the last ADC error encountered by the accelerator driver.
+ * @return The last ADC error.
+ */
 AdcError AdcDriverGetError(void);
 
+/**
+ * @brief Reads raw ADC values for both accelerator channels.
+ * @param adc1 Pointer to store the first ADC value.
+ * @param adc2 Pointer to store the second ADC value.
+ * @return True if read was successful, false otherwise.
+ */
 bool AdcDriverReadRaw(uint16_t* adc1, uint16_t* adc2);
 
 #endif /* __ACCEL_DRIVER_H__ */

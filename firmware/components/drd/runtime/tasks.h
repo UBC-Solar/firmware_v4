@@ -26,4 +26,12 @@ void TasksCalculateSoc(void* argument);
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 
+/**
+ * @brief LCD update task main loop
+ *
+ * Initialilzes the LCD Driver and manages the LCD pages switch logic
+ * Executes with at a 1ms period. Task runs indefinitely until system shutdown.
+ */
+void TasksLcdUpdate(void *argument);
+
 #endif //__TASKS_H__

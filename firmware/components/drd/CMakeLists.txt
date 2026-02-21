@@ -59,6 +59,10 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/evan_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/gpio_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/can_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/lcd_app.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/lcd_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/font_verdana.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/cyclic_data_handler.c
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/tasks.c
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/interrupts.c
     ${COMMON_SOURCES}
@@ -69,6 +73,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     ${CMAKE_CURRENT_SOURCE_DIR}/app
     ${CMAKE_CURRENT_SOURCE_DIR}/driver
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/cyclic_data/
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/debug_io
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/CAN_comms

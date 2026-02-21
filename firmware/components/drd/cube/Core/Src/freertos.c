@@ -48,6 +48,20 @@ typedef StaticEventGroup_t osStaticEventGroupDef_t;
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 
+/* Definitions for TasksLcdUpdate */
+osThreadId_t TasksLcdUpdateHandle;
+uint32_t TasksLcdUpdateBuffer[256];
+osStaticThreadDef_t TasksLcdUpdateControlBlock;
+
+const osThreadAttr_t TasksLcdUpdate_attributes = {
+  .name = "TasksLcdUpdate",
+  .cb_mem = &TasksLcdUpdateControlBlock,
+  .cb_size = sizeof(TasksLcdUpdateControlBlock),
+  .stack_mem = &TasksLcdUpdateBuffer[0],
+  .stack_size = sizeof(TasksLcdUpdateBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
+
 /* Definitions for TasksDriveState */
 osThreadId_t TasksDriveStateHandle;
 uint32_t TasksDriveStateBuffer[256];
@@ -138,6 +152,9 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of TasksCalculateSoc */
   TasksCalculateSocHandle = osThreadNew(TasksCalculateSoc, NULL, &TasksCalculateSoc_attributes);
+  /* creation of TasksLcdUpdate */
+  TasksLcdUpdateHandle = osThreadNew(TasksLcdUpdate, NULL, &TasksLcdUpdate_attributes);
+    //TasksDriveStateHandle = osThreadNew(TasksDriveState, NULL, &TasksDriveState_attributes);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */

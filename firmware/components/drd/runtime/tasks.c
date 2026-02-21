@@ -69,3 +69,25 @@ void TasksCalculateSoc(void *argument)
         osDelay(CALCULATE_SOC_DELAY);
     }
 }
+
+/* LCD UPDATE TASK */
+void TasksLcdUpdate(void *argument)
+{
+    LcdAppInit(&hspi1);
+
+    // KPH or MPH
+    g_lcd_data.speed_units = LCD_APP_MPH;
+
+    for (;;)
+    {
+        // Handles clearing the screen
+        if (g_lcd_page_change == 1)
+        {
+            LcdAppChangeScreen();
+            g_lcd_page_change = 0;
+        }
+        LcdAppPageController();
+
+    }
+    osDelay(LCD_APP_UPDATE_DELAY);
+}

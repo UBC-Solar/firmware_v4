@@ -44,6 +44,20 @@
           "imageFileName": "${command:cmake.launchTargetPath}",
         }
       ]
+    },
+    {
+      "name": "J-LINK NO SWO (active ELF path)",
+      "type": "jlinkgdbtarget",
+      "request": "launch",
+      "deviceName": "STM32F103RCT6",
+      "deviceCore": "Cortex-M3",
+      "cwd": "${workspaceFolder}",
+      "runEntry": "main",
+      "imagesAndSymbols": [
+        {
+          "imageFileName": "${command:cmake.launchTargetPath}",
+        }
+      ]
     }
   ]
 }

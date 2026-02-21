@@ -100,7 +100,7 @@ static float last_predicted_V = 0.0f;
 // Coefficients based on fitting in STG's Physics repo battery_config.py
 // U_oc_coeffs = [  2964.5351135  -11872.69601585  19108.58449175 -15842.2151069
 // 7225.59336211  -1800.93776157    254.87051039     94.15508448]
-static float getUoc(float x)
+static float GetUoc(float x)
 {
     return 94.15508448 + 254.87051039 * x + (-1800.93776157) * x * x + 7225.59336211 * x * x * x +
            (-15842.2151069) * x * x * x * x + 19108.58449175 * x * x * x * x * x +
@@ -109,7 +109,7 @@ static float getUoc(float x)
 
 // R_0_coeffs = [-1.54613590e+02,  5.52593795e+02, -7.94776446e+02,  5.92975205e+02,
 //               -2.47297657e+02,  5.80013511e+01, -7.19686618e+00,  4.92268729e-01]
-static float getR0(float x)
+static float GetR0(float x)
 {
     return 0.492268729 + (-7.19686618) * x + 58.0013511 * x * x + (-247.297657) * x * x * x +
            592.975205 * x * x * x * x + (-794.776446) * x * x * x * x * x +
@@ -118,7 +118,7 @@ static float getR0(float x)
 
 // R_P_coeffs = [ 1.08804893e+02, -3.95266369e+02,  5.53572478e+02, -3.69442515e+02,
 //                1.13424395e+02, -9.44642125e+00, -1.96878597e+00,  3.64862429e-01]
-static float getRp(float x)
+static float GetRp(float x)
 {
     return 0.364862429 + (-1.96878597) * x + (-9.44642125) * x * x + 113.424395 * x * x * x +
            (-369.442515) * x * x * x * x + 553.572478 * x * x * x * x * x +
@@ -127,7 +127,7 @@ static float getRp(float x)
 
 // C_P_coeffs = [ 2.59785258e+06, -7.85129803e+06,  9.21590368e+06, -5.19565604e+06,
 //                1.38788088e+06, -1.46480151e+05,  6.37015318e+03,  2.60647678e+02]
-static float getCp(float x)
+static float GetCp(float x)
 {
     return 260.647678 + 6370.15318 * x + (-146480.151) * x * x + 1387880.88 * x * x * x +
            (-5195656.04) * x * x * x * x + 9215903.68 * x * x * x * x * x +
@@ -139,7 +139,7 @@ static float getCp(float x)
 //-----------------------------
 
 // 2×2 matrix multiply: C = A·B
-static void mat2Mul(const float A[2][2], const float B[2][2], float C[2][2])
+static void Mat2Mul(const float A[2][2], const float B[2][2], float C[2][2])
 {
     C[0][0] = A[0][0] * B[0][0] + A[0][1] * B[1][0];
     C[0][1] = A[0][0] * B[0][1] + A[0][1] * B[1][1];
@@ -148,7 +148,7 @@ static void mat2Mul(const float A[2][2], const float B[2][2], float C[2][2])
 }
 
 // C = A + B
-static void mat2Add(const float A[2][2], const float B[2][2], float C[2][2])
+static void Mat2Add(const float A[2][2], const float B[2][2], float C[2][2])
 {
     C[0][0] = A[0][0] + B[0][0];
     C[0][1] = A[0][1] + B[0][1];
@@ -157,7 +157,7 @@ static void mat2Add(const float A[2][2], const float B[2][2], float C[2][2])
 }
 
 // Central‐difference derivative of f at v
-static float centralDiff(float (*f)(float), float v)
+static float CentralDiff(float (*f)(float), float v)
 {
     const float h = 1e-6f;
     float v0 = v - h, v1 = v + h;
@@ -171,12 +171,12 @@ static float centralDiff(float (*f)(float), float v)
 //-----------------------------
 
 // Predict only (updates state[] and P[][])
-static void predictState(float current, float dt)
+static void PredictState(float current, float dt)
 {
     // B matrix
     float B0 = -dt / Q_total;
-    float Rp = getRp(state[SOC]);
-    float tau = Rp * getCp(state[SOC]);
+    float Rp = GetRp(state[SOC]);
+    float tau = Rp * GetCp(state[SOC]);
     float B1 = Rp * (1.0f - expf(-dt / tau));
 
     // F = [[1,0];[0, exp(-dt/tau)]]
@@ -191,20 +191,20 @@ static void predictState(float current, float dt)
     // P = F·P·Fᵀ + Q_proc
     float Ft[2][2] = {{F[0][0], F[1][0]}, {F[0][1], F[1][1]}};
     float FP[2][2];
-    mat2Mul(F, P, FP);
-    mat2Mul(FP, Ft, P);
-    mat2Add(P, Q_proc, P);
+    Mat2Mul(F, P, FP);
+    Mat2Mul(FP, Ft, P);
+    Mat2Add(P, Q_proc, P);
 }
 
 // Update only (refines state[] and P[][])
-static void updateFilter(float measured_V, float current)
+static void UpdateFilter(float measured_V, float current)
 {
     // low-pass filter current
     filtered_I = alpha * filtered_I + (1.0f - alpha) * current;
 
     // H = [dUoc/dSOC - dR0/dSOC·I,  -1]
-    float dU = centralDiff(getUoc, fmin(1.0f, state[SOC]));
-    float dR = centralDiff(getR0, fmin(1.0f, state[SOC]));
+    float dU = CentralDiff(GetUoc, fmin(1.0f, state[SOC]));
+    float dR = CentralDiff(GetR0, fmin(1.0f, state[SOC]));
     float H0 = dU - dR * filtered_I;
     float H1 = -1.0f;
 
@@ -218,8 +218,8 @@ static void updateFilter(float measured_V, float current)
     float K1 = PHt1 / S;
 
     // Measurement Function hx = Uoc - Uc - R0·I
-    float Uoc = getUoc(state[SOC]);
-    float R0 = getR0(state[SOC]);
+    float Uoc = GetUoc(state[SOC]);
+    float R0 = GetR0(state[SOC]);
     float hx = Uoc - state[UC] - R0 * filtered_I;
     last_predicted_V = hx;
 
@@ -232,8 +232,8 @@ static void updateFilter(float measured_V, float current)
     float IKH[2][2] = {{1.0f - K0 * H0, -K0 * H1}, {-K1 * H0, 1.0f - K1 * H1}};
     float IKHT[2][2] = {{IKH[0][0], IKH[1][0]}, {IKH[0][1], IKH[1][1]}};
     float tmp1[2][2];
-    mat2Mul(IKH, P, tmp1);
-    mat2Mul(tmp1, IKHT, P); // TODO: Check this line to see if IKHT is needed or just regular IKH
+    Mat2Mul(IKH, P, tmp1);
+    Mat2Mul(tmp1, IKHT, P); // TODO: Check this line to see if IKHT is needed or just regular IKH
     // add K*R*Kᵀ. KRKT is a 2x2 because K = 2 x 1.
     P[0][0] += K0 * K0 * R_meas;
     P[0][1] += K0 * K1 * R_meas;
@@ -247,7 +247,7 @@ static void updateFilter(float measured_V, float current)
         state[SOC] = 1.1f;
 }
 
-static float getSocFromVoltage(int voltage)
+static float GetSocFromVoltage(int voltage)
 {
     if (voltage < VOLTAGE_MAP_MIN)
     {
@@ -272,7 +272,7 @@ static uint32_t soc_time_start;
 static uint32_t soc_time_diff;
 #endif // DEBUG
 
-void socPredictThenUpdate(float g_total_pack_voltage_soc,
+void SocPredictThenUpdate(float g_total_pack_voltage_soc,
                           float g_pack_current_soc,
                           float time_step)
 {
@@ -281,8 +281,8 @@ void socPredictThenUpdate(float g_total_pack_voltage_soc,
     soc_time_start = HAL_GetTick();
 #endif // DEBUG
 
-    predictState(g_pack_current_soc, time_step);
-    updateFilter(g_total_pack_voltage_soc, g_pack_current_soc);
+    PredictState(g_pack_current_soc, time_step);
+    UpdateFilter(g_total_pack_voltage_soc, g_pack_current_soc);
 
 #ifdef DEBUG
     soc_time_diff = HAL_GetTick() - soc_time_start;
@@ -290,10 +290,10 @@ void socPredictThenUpdate(float g_total_pack_voltage_soc,
 #endif // DEBUG
 }
 
-float socGetSoc() { return (state[SOC]); }
+float SocGetSoc() { return (state[SOC]); }
 
-float socGetVoltage() { return last_predicted_V; }
+float SocGetVoltage() { return last_predicted_V; }
 
-float socGetUc() { return (state[UC]); }
+float SocGetUc() { return (state[UC]); }
 
-void socInitSoc(int voltage) { state[SOC] = getSocFromVoltage(voltage); }
+void SocInitSoc(int voltage) { state[SOC] = GetSocFromVoltage(voltage); }

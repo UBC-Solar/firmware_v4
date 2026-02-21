@@ -40,7 +40,7 @@ typedef struct
  * @brief CAN communications Tx message struct 
  * This struct contains the CAN message header and data.
  * 
- * @param header: CAN Tx header structCAN_comms_Tx_msg_t
+ * @param header: CAN Tx header struct
  * @param data: Array of data bytes
  */
 typedef struct {

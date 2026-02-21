@@ -183,14 +183,10 @@ void DriveStateInterruptHandler(uint16_t toggle)
     case DRIVE_PREV_PIN:
         g_drive_flags.prev_state_request = true;
         break;
-
-        // case ECO_POWER_PIN:
-        //     g_drive_flags.eco_mode_on = true;
-        //     break;
     }
 }
 
-void BreakOnHandler()
+void BreakOnHandler(void)
 {
     g_drive_flags.brake_on = true;
     DriveStateMotorControl motor_command = GetMotorCommand(ACCEL_DAC_OFF, REGEN_DAC_OFF);

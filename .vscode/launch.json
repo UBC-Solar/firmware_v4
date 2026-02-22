@@ -11,6 +11,10 @@
       "device": "STM32F103RC",
       "interface": "swd",
       "runToEntryPoint": "main",
+      "liveWatch": {
+        "enabled": true,
+        "samplesPerSecond": 20
+      },
       "swoConfig": {
         "enabled": true,
         "source": "probe",

@@ -16,7 +16,7 @@
 
 /*	GLOBAL VARIABLES	*/
 volatile uint32_t g_time_since_bootup = 0;
-DRD_diagnostic_t g_diagnostics = {0};
+DiagnosticDrd g_diagnostics = {0};
 
 /**
  * @brief  Sends the time since bootup via CAN
@@ -38,7 +38,7 @@ void DiagnosticTimeSinceBootup()
 /*	@brief Transmits DRD Diagnostic Messages over CAN
  *
  */
-void DiagnosticTransmit(DRD_diagnostic_t* diagnostics, bool from_ISR)
+void DiagnosticTransmit(DiagnosticDrd* diagnostics, bool from_ISR)
 {
     CAN_comms_Tx_msg_t msg;
     msg.header = drd_diagnostic_header;

@@ -71,6 +71,8 @@ void Error_Handler(void);
 #define DISPLAY_RESET_GPIO_Port GPIOB
 #define RTS_OUT_Pin GPIO_PIN_12
 #define RTS_OUT_GPIO_Port GPIOB
+#define BRK_OUT_Pin GPIO_PIN_13
+#define BRK_OUT_GPIO_Port GPIOB
 #define ESTOP_Pin GPIO_PIN_14
 #define ESTOP_GPIO_Port GPIOB
 #define BL_LIGHTS_Pin GPIO_PIN_15
@@ -94,6 +96,7 @@ void Error_Handler(void);
 #define HAZARD_GPIO_Port GPIOB
 #define ECO_POWER_Pin GPIO_PIN_7
 #define ECO_POWER_GPIO_Port GPIOB
+#define ECO_POWER_EXTI_IRQn EXTI9_5_IRQn
 
 /* USER CODE BEGIN Private defines */
 

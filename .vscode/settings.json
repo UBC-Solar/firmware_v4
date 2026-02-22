@@ -2,7 +2,8 @@
   "cmake.sourceDirectory": [
     "${workspaceFolder}/firmware/components/tel",
     "${workspaceFolder}/firmware/components/mdi",
-    "${workspaceFolder}/firmware/components/drd"
+    "${workspaceFolder}/firmware/components/drd",
+    "${workspaceFolder}/firmware/components/hvc",
   ],
   "cmake.buildDirectory": "${sourceDirectory}/build",
   "cmake.cmakePath": "cube-cmake",

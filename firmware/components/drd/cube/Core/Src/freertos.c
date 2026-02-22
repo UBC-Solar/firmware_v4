@@ -32,6 +32,7 @@
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 typedef StaticTask_t osStaticThreadDef_t;
+typedef StaticEventGroup_t osStaticEventGroupDef_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -89,6 +90,28 @@ const osThreadAttr_t TasksDiagnostic_attributes = {
   .priority = (osPriority_t) osPriorityLow,
 };
 
+/* Definitions for TasksCalculateSoc */
+osThreadId_t TasksCalculateSocHandle;
+uint32_t TasksCalculateSocBuffer[512];
+osStaticThreadDef_t TasksCalculateSocControlBlock;
+
+const osThreadAttr_t TasksCalculateSoc_attributes = {
+  .name = "TasksCalculateSoc",
+  .cb_mem = &TasksCalculateSocControlBlock,
+  .cb_size = sizeof(TasksCalculateSocControlBlock),
+  .stack_mem = &TasksCalculateSocBuffer[0],
+  .stack_size = sizeof(TasksCalculateSocBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
+
+osEventFlagsId_t calculate_soc_flagHandle;
+osStaticEventGroupDef_t calculate_soc_flagControlBlock;
+const osEventFlagsAttr_t calculate_soc_flag_attributes = {
+  .name = "calculate_soc_flag",
+  .cb_mem = &calculate_soc_flagControlBlock,
+  .cb_size = sizeof(calculate_soc_flagControlBlock),
+};
+
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -138,6 +161,11 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
+  /* creation of TasksDriveState */
+  TasksDriveStateHandle = osThreadNew(TasksDriveState, NULL, &TasksDriveState_attributes);
+
+  /* creation of TasksCalculateSoc */
+  TasksCalculateSocHandle = osThreadNew(TasksCalculateSoc, NULL, &TasksCalculateSoc_attributes);
   /* creation of TasksLcdUpdate */
   TasksLcdUpdateHandle = osThreadNew(TasksLcdUpdate, NULL, &TasksLcdUpdate_attributes);
   TasksDiagnosticHandle = osThreadNew(TasksDiagnostic, NULL, &TasksDiagnostic_attributes);

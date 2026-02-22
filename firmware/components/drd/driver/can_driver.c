@@ -10,6 +10,8 @@
  */
 
 /* INCLUDES */
+#include <string.h>
+
 #include "can_driver.h"
 #include "CAN_comms.h"
 #include "can.h"
@@ -118,7 +120,7 @@ void CanCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
     if (CAN_comms_Rx_msg->header.IDE == CAN_ID_EXT)
         frame.id = CAN_comms_Rx_msg->header.ExtId;
     else
-        frame.id = CAN_comms_Rx_msg->StdId;
+        frame.id = CAN_comms_Rx_msg->header.StdId;
 
     memcpy(frame.data, CAN_comms_Rx_msg->data, 8);
 

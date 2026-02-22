@@ -314,7 +314,7 @@ void VehicleStateCanRxHandler(void)
                 break;
     #ifdef DEBUG
             case 0x500:
-                StateRequestCanMsgHandler(f.data);
+                StateRequestCanMsgHandler(frame.data);
                 break;
     #endif
             default:

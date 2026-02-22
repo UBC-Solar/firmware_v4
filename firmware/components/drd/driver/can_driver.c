@@ -1,3 +1,15 @@
+/**
+ * @file    can_driver.c
+ * @brief   CAN bus driver implementation for UBC Solar DRD board
+ *
+ * This file contains the implementation of CAN bus communication functions for the DRD board.
+ * It handles CAN message transmission, reception, and filter configuration for vehicle state and control.
+ *
+ * @author  UBC Solar
+ * @date    Feb 4 2026
+ */
+
+/* INCLUDES */
 #include "can_driver.h"
 #include "CAN_comms.h"
 #include "can.h"
@@ -50,33 +62,33 @@ void CanFilterInit(CAN_FilterTypeDef* can_filter) {
     // HAL_CAN_ConfigFilter(&hcan, can_filter);
 
     // ---- Filter Bank 4 ----
-    can_filter1.FilterIdHigh = (STR_CAN_MSG_ID << 5);
+    can_filter1.FilterIdHigh = (STR_CAN_MSG_ID << 5); // Set up filter for steering CAN messages
     can_filter1.FilterMaskIdHigh = (STR_CAN_MSG_ID << 5);
     can_filter1.FilterIdLow = (STR_CAN_MSG_ID << 5);
     can_filter1.FilterMaskIdLow = (STR_CAN_MSG_ID << 5);
-    can_filter1.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+    can_filter1.FilterFIFOAssignment = CAN_FILTER_FIFO0; // Route accepted messages to FIFO0
     can_filter1.FilterBank = 4;
-    can_filter1.FilterMode = CAN_FILTERMODE_IDLIST;
+    can_filter1.FilterMode = CAN_FILTERMODE_IDLIST; // Use identifier list mode (not mask)
     can_filter1.FilterScale = CAN_FILTERSCALE_16BIT;
     can_filter1.FilterActivation = ENABLE;
-    HAL_CAN_ConfigFilter(&hcan, &can_filter1);
+    HAL_CAN_ConfigFilter(&hcan, &can_filter1); // Register filter with hardware
 
     // ---- Filter Bank 2 ----
     uint32_t extId1 = CAN_ID_MTR_FAULTS;
     uint32_t extId2 = FRAME0;
-    can_filter2.FilterIdHigh = (extId1 << 3) >> 16;
+    can_filter2.FilterIdHigh = (extId1 << 3) >> 16; // Set up filter for motor fault messages
     can_filter2.FilterIdLow  = ((extId1 << 3) & 0xFFFF) | 0x0004;
-    can_filter2.FilterMaskIdHigh = (extId2 << 3) >> 16;
+    can_filter2.FilterMaskIdHigh = (extId2 << 3) >> 16; // Accept only specific extended IDs (ensures only target messages pass)
     can_filter2.FilterMaskIdLow  = ((extId2 << 3) & 0xFFFF) | 0x0004;
-    can_filter2.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+    can_filter2.FilterFIFOAssignment = CAN_FILTER_FIFO0; // Route accepted messages to FIFO0
     can_filter2.FilterBank = 5;
-    can_filter2.FilterMode = CAN_FILTERMODE_IDLIST;
+    can_filter2.FilterMode = CAN_FILTERMODE_IDLIST; // Use identifier list mode (not mask)
     can_filter2.FilterScale = CAN_FILTERSCALE_32BIT;
     can_filter2.FilterActivation = ENABLE;
-    HAL_CAN_ConfigFilter(&hcan, &can_filter2);
+    HAL_CAN_ConfigFilter(&hcan, &can_filter2); // Register filter with hardware
 }
 
-void CanTasksInit()
+void CanTasksInit(void)
 {
     CAN_comms_config_t CAN_comms_config_drd = {0};
     CAN_FilterTypeDef can_filter = {0};
@@ -88,7 +100,6 @@ void CanTasksInit()
 
     CAN_comms_init(&CAN_comms_config_drd);
 }
-
 
 void CanCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 {

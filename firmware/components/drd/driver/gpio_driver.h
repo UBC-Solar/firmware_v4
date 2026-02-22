@@ -1,9 +1,20 @@
+/**
+ * @file    gpio_driver.h
+ * @brief   Hardware driver declarations for DRD board peripherals
+ *
+ * This header declares the interface for hardware drivers for this board component of UBC
+ * Solar firmware. Drivers provide abstraction layers between high-level application code and
+ * low-level hardware peripherals, enabling consistent interfaces and easier code maintenance.
+ *
+ * @author  UBC Solar
+ * @date    Feb 7 2026
+ */
+
 #ifndef __DRIVERS_H__
 #define __DRIVERS_H__
 
 /* INCLUDES */
 #include <stdlib.h>
-
 #include "adc.h"
 
 /* DEFINES */

@@ -1,3 +1,21 @@
+/**
+ * @file    tasks.h
+ * @brief   FreeRTOS task declarations for DRD board application logic
+ *
+ * This header declares all FreeRTOS task prototypes for this board component of UBC Solar
+ * firmware. Each task represents a concurrent execution thread that runs indefinitely within the
+ * real-time operating system.
+ *
+ * Tasks defined here include the following boards and respective task:
+ * - DRD
+ *  - TasksDriveState
+ *  - TasksCalculateSoc
+ *  - TasksLcdUpdate
+ *
+ * @author  UBC Solar
+ * @date    Feb 4 2026
+ */
+
 #ifndef __TASKS_H__
 #define __TASKS_H__
 
@@ -20,19 +38,36 @@ extern osEventFlagsId_t calculate_soc_flagHandle;
  * @brief Drive state task main loop.
  *
  * Manages the drive system state machine and control logic.
- * Executes with at a 1ms period. Task runs indefinitely until system shutdown.
+ * Executes at a 25ms period. Task runs indefinitely until system shutdown.
+ * @param argument Pointer to task-specific arguments (unused).
  */
 void TasksDriveState(void* argument);
-void TasksCalculateSoc(void* argument);
-
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 
 /**
- * @brief LCD update task main loop
+ * @brief State-of-charge calculation task main loop.
  *
- * Initialilzes the LCD Driver and manages the LCD pages switch logic
- * Executes with at a 1ms period. Task runs indefinitely until system shutdown.
+ * Calculates battery state-of-charge at a fixed interval.
+ * Executes at a 50ms period dependent on task flag. Task runs 
+ * indefinitely until system shutdown.
+ * @param argument Pointer to task-specific arguments (unused).
+ */
+void TasksCalculateSoc(void* argument);
+
+/**
+ * @brief LCD update task main loop.
+ *
+ * Initializes the LCD Driver and manages the LCD page switching logic.
+ * Executes indefinitely until system shutdown.
+ * @param argument Pointer to task-specific arguments (unused).
  */
 void TasksLcdUpdate(void *argument);
+
+/**
+ * @brief GPIO external interrupt callback handler.
+ *
+ * Handles external GPIO interrupts and dispatches to appropriate handlers.
+ * @param GPIO_Pin The pin number that triggered the interrupt.
+ */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 
 #endif //__TASKS_H__

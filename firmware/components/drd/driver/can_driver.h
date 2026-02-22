@@ -1,3 +1,14 @@
+/**
+ * @file    can_driver.h
+ * @brief   CAN bus driver declarations for UBC Solar DRD board
+ *
+ * This header declares CAN bus communication functions and constants for the DRD board.
+ * It provides prototypes for CAN message handling, filter configuration, and defines CAN message IDs and sizes.
+ *
+ * @author  UBC Solar
+ * @date    Feb 4 2026
+ */
+
 #ifndef __CAN_DRIVER_H___
 #define __CAN_DRIVER_H___
 
@@ -14,6 +25,7 @@
 #define FRAME0 0x08850225
 #define STR_CAN_MSG_ID 0x580
 
+/* CAN HEADERS */
 extern const CAN_TxHeaderTypeDef drive_control_header;
 extern const CAN_TxHeaderTypeDef mdu_request_header;
 

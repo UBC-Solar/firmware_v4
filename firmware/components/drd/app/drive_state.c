@@ -1,10 +1,13 @@
 /**
- *  @file  drive_state.c
- *  @brief Handles the drive state for the car. Takes ADC, GPIO and CAN inputs and
- *         outputs DAC values, MDI flags, and CAN data messages
+ * @file    drive_state.c
+ * @brief   Drive state management implementation for UBC Solar DRD board
  *
- *  @author Tony Chen
- *  @date Jan 28, 2026
+ * This file implements the drive state logic for the car, handling ADC, GPIO, and CAN inputs,
+ * and producing DAC values, MDI flags, and CAN data messages. It manages the drive state finite
+ * state machine (FSM), state transitions, and related control logic.
+ *
+ * @author  Tony Chen
+ * @date    Jan 28, 2026
  */
 
 /* INCLUDES */
@@ -186,7 +189,7 @@ DriveStateMotorControl GetMotorCommand(DriveStateModel *model, uint16_t accel_DA
     return motor_command;
 }
 
-/* DRIVE STATE DATA COLLECTION */
+/* SETS DRIVE STATE FLAGS */
 void UpdatePedalFlags(DriveStateModel *model)
 {
     model->flags.brake_on = ReadBrakePin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN);
@@ -211,7 +214,6 @@ uint8_t UpdateMotorCommandFlags(DriveStateModel *model)
     return flags;
 }
 
-/* SETS DRIVE STATE FLAGS */
 void DriveStateInterruptHandler(uint16_t toggle)
 {
     volatile DriveStateModel *v_model = &g_drive_state_model;

@@ -7,6 +7,7 @@
 
 // #include "drive_state.h"
 #include "font_verdana.h"
+#include "drive_state.h"
 #include "stdbool.h"
 #include "stdint.h"
 #include <main.h>
@@ -54,9 +55,9 @@
 #define LCD_APP_STATE_FONT (Verdana16)
 #define LCD_APP_FORWARD_STATE 0x01
 #define LCD_APP_FORWARD_SYMBOL 'D'
-#define LCD_APP_PARK_STATE 0x03
+#define LCD_APP_PARK_STATE 0x02
 #define LCD_APP_PARK_SYMBOL 'P'
-#define LCD_APP_REVERSE_STATE 0x04
+#define LCD_APP_REVERSE_STATE 0x03
 #define LCD_APP_REVERSE_SYMBOL 'R'
 #define LCD_APP_ERROR_SYMBOL 'X'
 #define LCD_APP_STATE_SPACING 1
@@ -298,15 +299,6 @@ typedef enum
     MOTOR_THERM = (uint8_t)0x07
 } LcdAppTemperatureLabel;
 
-typedef enum
-{
-    INVALID = (uint8_t)0x00,
-    FORWARD = (uint8_t)0x01,
-    CRUISE = (uint8_t)0x02,
-    PARK = (uint8_t)0x03,
-    REVERSE = (uint8_t)0x04
-} drive_state_t;
-
 typedef struct
 {
     volatile bool battery_fault;
@@ -409,7 +401,7 @@ void LcdAppDisplaySpeedDrivePage(volatile uint32_t* speed, volatile uint8_t unit
  *
  * @param state The drive state (e.g., FORWARD_STATE, PARK_STATE, REVERSE_STATE).
  */
-void LcdAppDisplayDriveStateDrivePage(volatile drive_state_t* state);
+void LcdAppDisplayDriveStateDrivePage(volatile DriveStateStates* state);
 
 /**
  * @brief Displays the state of charge (SOC) on the LCD.
@@ -497,7 +489,7 @@ void LcdAppDisplaySocDebugPage(volatile uint32_t* soc);
  *
  * @param state The drive state (e.g., FORWARD_STATE, PARK_STATE, REVERSE_STATE).
  */
-void LcdAppDisplayDriveStateDebugPage(volatile drive_state_t* state);
+void LcdAppDisplayDriveStateDebugPage(volatile DriveStateStates* state);
 
 /**
  * @brief Changes the screen

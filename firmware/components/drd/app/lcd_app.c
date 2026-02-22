@@ -375,7 +375,7 @@ void LcdAppDisplayDriveModeDrivePage(volatile uint8_t drive_mode)
  *
  * @param state The drive state (e.g., FORWARD_STATE, PARK_STATE, REVERSE_STATE).
  */
-void LcdAppDisplayDriveStateDrivePage(volatile drive_state_t* state)
+void LcdAppDisplayDriveStateDrivePage(volatile DriveStateStates* state)
 {
     char state_str[2] = {LCD_APP_ERROR_SYMBOL, '\0'}; // Default to error symbol.
 
@@ -1029,7 +1029,7 @@ void LcdAppDisplaySocDebugPage(volatile uint32_t* soc)
  *
  * @param state The drive state (e.g., FORWARD_STATE, PARK_STATE, REVERSE_STATE).
  */
-void LcdAppDisplayDriveStateDebugPage(volatile drive_state_t* state)
+void LcdAppDisplayDriveStateDebugPage(volatile DriveStateStates* state)
 {
     char state_str[2] = {LCD_APP_ERROR_SYMBOL, '\0'}; // Default to error symbol.
 
@@ -1200,7 +1200,7 @@ void LcdAppCanRxHandle(uint32_t msg_id, uint8_t* data)
 
         LcdAppDisplaySpeedDrivePage(g_lcd_data.speed, g_lcd_data.speed_units);
         LcdAppDisplaySocDrivePage((volatile uint32_t*)g_lcd_data.soc);
-        LcdAppDisplayDriveStateDrivePage((volatile drive_state_t*) g_lcd_data.drive_state);
+        LcdAppDisplayDriveStateDrivePage((volatile DriveStateStates*) g_lcd_data.drive_state);
         LcdAppDisplayFaultIndicator(&g_lcd_batt_faults, &g_lcd_motor_faults);
         LcdAppDisplayWarningIndicator(&g_lcd_warnings);
         break;
@@ -1237,7 +1237,7 @@ void LcdAppCanRxHandle(uint32_t msg_id, uint8_t* data)
         g_lcd_data.pack_voltage = CyclicDataGetPackVoltage();
 
         LcdAppDisplaySpeedDebugPage(g_lcd_data.speed, g_lcd_data.speed_units);
-        LcdAppDisplayDriveStateDebugPage((volatile drive_state_t*) g_lcd_data.drive_state);
+        LcdAppDisplayDriveStateDebugPage((volatile DriveStateStates*) g_lcd_data.drive_state);
         LcdAppDisplaySocDebugPage((volatile uint32_t*)g_lcd_data.soc);
         LcdAppDisplayPowerBar(g_lcd_data.pack_current, g_lcd_data.pack_voltage);
         break;

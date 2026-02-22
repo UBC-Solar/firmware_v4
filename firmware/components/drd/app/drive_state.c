@@ -301,6 +301,28 @@ void StateRequestCanMsgHandler(uint8_t* data)
 }
 #endif
 
+void VehicleStateCanRxHandler(void)
+{
+    CanFrame frame;
+    while (CanReadFrame(&frame, 0)) {
+        switch (frame.id) {
+            case FRAME0:
+                VelocityCanMsgHandler(frame.data);
+                break;
+            case STR_CAN_MSG_ID:
+                SteeringCanMsgHandler(frame.data);
+                break;
+    #ifdef DEBUG
+            case 0x500:
+                StateRequestCanMsgHandler(f.data);
+                break;
+    #endif
+            default:
+                break;
+        }
+    }
+}
+
 /* CAN DATA TX HANDLERS */
 void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr)
 {

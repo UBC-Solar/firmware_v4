@@ -31,8 +31,9 @@ void TasksDriveState(void* argument)
 
     for (;;)
     {
-        osDelay(DRIVE_STATE_FSM_DELAY);
+        VehicleStateCanRxHandler();
         DriveStateFsmHandler();
+        osDelay(DRIVE_STATE_FSM_DELAY);
     }
 }
 

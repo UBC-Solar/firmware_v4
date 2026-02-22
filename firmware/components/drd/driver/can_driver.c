@@ -13,7 +13,11 @@
 #include "can_driver.h"
 #include "CAN_comms.h"
 #include "can.h"
-#include "drive_state.h" // for now MMR change later
+
+/* DEFINES */
+#define DRIVER_RX_QUEUE_SIZE 64
+
+static osMessageQueueId_t s_driver_rx_queue = NULL;
 
 /* FUNCTION PROTOTYPES */
 /**
@@ -90,6 +94,8 @@ void CanFilterInit(CAN_FilterTypeDef* can_filter) {
 
 void CanTasksInit(void)
 {
+    s_driver_rx_queue = osMessageQueueNew(DRIVER_RX_QUEUE_SIZE, sizeof(CanFrame), NULL);
+
     CAN_comms_config_t CAN_comms_config_drd = {0};
     CAN_FilterTypeDef can_filter = {0};
     CanFilterInit(&can_filter);
@@ -103,46 +109,24 @@ void CanTasksInit(void)
 
 void CanCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 {
-	uint32_t CAN_ID = 0;
-	/*
-	 *	handle parsing rx messages
-	 */
-	if (CAN_comms_Rx_msg == NULL)
-	{
-			return;
-	}
+	if (!CAN_comms_Rx_msg || !s_driver_rx_queue) return;
 
-	if(CAN_comms_Rx_msg->header.IDE == CAN_ID_EXT)
-	{
-		CAN_ID = CAN_comms_Rx_msg->header.ExtId; // Get CAN ID
-	}
-	else
-	{
-		CAN_ID = CAN_comms_Rx_msg->header.StdId; // Get CAN ID
-	}
+    CanFrame frame;
+    frame.ide = CAN_comms_Rx_msg->header.IDE;
+    frame.dlc = CAN_comms_Rx_msg->header.DLC;
 
-    VehicleStateCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
+    if (CAN_comms_Rx_msg->header.IDE == CAN_ID_EXT)
+        frame.id = CAN_comms_Rx_msg->header.ExtId;
+    else
+        frame.id = CAN_comms_Rx_msg->StdId;
+
+    memcpy(frame.data, CAN_comms_Rx_msg->data, 8);
+
+    osMessageQueuePut(s_driver_rx_queue, &frame, 0, 0);
 }
 
-/* CAN RX */
-void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data)
+bool CanReadFrame(CanFrame *out, uint32_t timeout)
 {
-
-    switch (msg_id)
-    {
-    case FRAME0:
-        VelocityCanMsgHandler(data);
-        break;
-    case STR_CAN_MSG_ID:
-        SteeringCanMsgHandler(data);
-        break;
-
-#ifdef DEBUG
-    case 0x500:
-        StateRequestCanMsgHandler(data);
-        break;
-#endif
-    }
+    if (!out || !s_driver_rx_queue) return false;
+    return (osOK == osMessageQueueGet(s_driver_rx_queue, out, NULL, timeout));
 }
-
-/* CAN TX */

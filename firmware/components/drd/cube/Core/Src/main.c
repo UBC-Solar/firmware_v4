@@ -28,7 +28,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "iwdg_app.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -72,7 +72,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -100,6 +100,7 @@ int main(void)
   MX_UART4_Init();
   MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
+  IwdgAppResetHandle();
 
   /* USER CODE END 2 */
 

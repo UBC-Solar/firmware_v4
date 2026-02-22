@@ -1,9 +1,9 @@
 /*
- * diagnostic.c
- *
- *  Created on: Mar 27, 2025
- *      Author: Evan Owens
- */
+* diagnostic.c v2
+*
+*  Created on: Feb 17 2026
+*      Author: Gregory Bian
+*/
 
 /*	INCLUDES	*/
 #include "CAN_comms.h"

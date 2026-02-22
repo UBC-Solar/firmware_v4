@@ -19,6 +19,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
+#include "cmsis_os2.h"
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
@@ -59,7 +60,7 @@ const osThreadAttr_t TasksLcdUpdate_attributes = {
   .cb_size = sizeof(TasksLcdUpdateControlBlock),
   .stack_mem = &TasksLcdUpdateBuffer[0],
   .stack_size = sizeof(TasksLcdUpdateBuffer),
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 
 /* Definitions for TasksDriveState */
@@ -78,7 +79,7 @@ const osThreadAttr_t TasksDriveState_attributes = {
 
 /* Definitions for TasksDiagnostic */
 osThreadId_t TasksDiagnosticHandle;
-uint32_t TasksDiagnosticBuffer[256];
+uint32_t TasksDiagnosticBuffer[128];
 osStaticThreadDef_t TasksDiagnosticControlBlock;
 
 const osThreadAttr_t TasksDiagnostic_attributes = {
@@ -87,7 +88,21 @@ const osThreadAttr_t TasksDiagnostic_attributes = {
   .cb_size = sizeof(TasksDiagnosticControlBlock),
   .stack_mem = &TasksDiagnosticBuffer[0],
   .stack_size = sizeof(TasksDiagnosticBuffer),
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+
+/* Definitions for TasksTimeSinceStartup */
+osThreadId_t TasksTimeSinceStartupHandle;
+uint32_t TasksTimeSinceStartupBuffer[128];
+osStaticThreadDef_t TasksTimeSinceStartupControlBlock;
+
+const osThreadAttr_t TasksTimeSinceStartup_attributes = {
+  .name = "TasksTimeSinceStartup",
+  .cb_mem = &TasksTimeSinceStartupControlBlock,
+  .cb_size = sizeof(TasksTimeSinceStartupControlBlock),
+  .stack_mem = &TasksTimeSinceStartupBuffer[0],
+  .stack_size = sizeof(TasksTimeSinceStartupBuffer),
+  .priority = (osPriority_t) osPriorityNormal,
 };
 
 /* Definitions for TasksCalculateSoc */
@@ -168,7 +183,11 @@ void MX_FREERTOS_Init(void) {
   TasksCalculateSocHandle = osThreadNew(TasksCalculateSoc, NULL, &TasksCalculateSoc_attributes);
   /* creation of TasksLcdUpdate */
   TasksLcdUpdateHandle = osThreadNew(TasksLcdUpdate, NULL, &TasksLcdUpdate_attributes);
+  /* creation of TasksDiagnostic */
   TasksDiagnosticHandle = osThreadNew(TasksDiagnostic, NULL, &TasksDiagnostic_attributes);
+  /* creation of TasksTimeSinceStartup */
+  TasksTimeSinceStartupHandle = osThreadNew(TasksTimeSinceStartup, NULL, &TasksTimeSinceStartup_attributes);
+
     //TasksDriveStateHandle = osThreadNew(TasksDriveState, NULL, &TasksDriveState_attributes);
   /* USER CODE END RTOS_THREADS */
 

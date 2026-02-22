@@ -96,23 +96,28 @@ void TasksLcdUpdate(void *argument)
     osDelay(LCD_APP_UPDATE_DELAY);
 }
 
-void TasksDiagnostic(void *argument)
-{
-    for (;;)
-    {
-        // Refresh the watchdog timer to prevent reset and transmit diagnostics over CAN
-        IwdgAppRefresh(&hiwdg);
-        DiagnosticTransmit(&g_diagnostics, false);
-        osDelay(DEFAULT_TASK_DELAY);
-    }
-}
-
 void TasksTimeSinceStartup(void *argument)
 {
     for (;;)
     {
+        // Increment the time since bootup and transmit it over CAN every second
         g_time_since_bootup++;
         DiagnosticTimeSinceBootup();
         osDelay(TIME_SINCE_STARTUP_TASK_DELAY);
     }
 }
+
+void TasksDiagnostic(void *argument)
+{
+    IwdgAppResetHandle();
+
+    for (;;)
+    {
+        // Refresh the watchdog timer to prevent reset and transmit diagnostics over CAN
+        IwdgAppRefresh(&hiwdg);
+        DiagnosticTransmit(&g_diagnostics, false);
+        g_diagnostics.raw_adc1++;
+        osDelay(DEFAULT_TASK_DELAY);
+    }
+}
+

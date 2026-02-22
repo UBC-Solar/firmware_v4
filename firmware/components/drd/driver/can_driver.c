@@ -32,7 +32,7 @@ const CAN_TxHeaderTypeDef drd_diagnostic_header = {
 };
 
 const CAN_TxHeaderTypeDef time_since_bootup_can_header = {
-   .StdId = STR_CAN_MSG_ID,
+   .StdId = TIME_SINCE_BOOTUP_CAN_ID,
    .ExtId = 0x0000,
    .IDE = CAN_ID_STD,
    .RTR = CAN_RTR_DATA,

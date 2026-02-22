@@ -18,6 +18,7 @@
 #define STR_CAN_MSG_ID 0x580
 
 
+
 #define DRD_DIAGNOSTIC_SIZE					8
 #define TIME_SINCE_BOOTUP_CAN_DATA_LENGTH	4
 

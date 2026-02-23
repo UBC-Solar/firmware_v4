@@ -1,8 +1,19 @@
+/**
+ * @file    lcd_app.c
+ * @brief   LCD application logic for the UBC Solar DRD board
+ *
+ * This file contains the implementation of the LCD application logic for the 5 current pages
+ * of the DRD board. It handles updating the LCD display with vehicle state information, faults,
+ * warnings, and other relevant data. It also manages page changes and the formatting of displayed
+ * text fields.
+ *
+ * @author  Gregory Bian
+ * @date    Feb 4 2026
+ */
+
 #include "lcd_app.h"
 #include "cyclic_data_handler.h"
-// #include "diagnostic.h"
-// #include "drd_freertos.h"
-// #include "fault_lights.h"
+#include "diagnostic.h"
 #include "lcd_driver.h"
 #include <stdio.h>
 #include "can_driver.h"
@@ -810,8 +821,8 @@ void LcdAppDisplayPowerBar(volatile int16_t* pack_current, volatile uint16_t* pa
     LcdDriverDrawRectangle(
         LCD_APP_BAR_LEFT, LCD_APP_BAR_TOP, LCD_APP_BAR_RIGHT, LCD_APP_BAR_BOTTOM, 1);
 
-    // g_diagnostics.cyclic_flags.current_timeout = (pack_current == NULL) ? true : false;
-    // g_diagnostics.cyclic_flags.voltage_timeout = (pack_voltage == NULL) ? true : false;
+    g_diagnostics.cyclic_flags.current_timeout = (pack_current == NULL) ? true : false;
+    g_diagnostics.cyclic_flags.voltage_timeout = (pack_voltage == NULL) ? true : false;
 
     /* If either of voltage or current equals NULL, we display a cross over the bar*/
     if (pack_current == NULL || pack_voltage == NULL)

@@ -1,3 +1,15 @@
+/**
+ * @file    lcd_app.h
+ * @brief   LCD application header file for UBC Solar DRD board
+ *
+ * This header declares the data structures, constants, and function prototypes for the LCD application. 
+ * The module implements a controller to handle what is displayed on each page and handles the page transitions.
+ *
+ * @author  Tony Chen
+ * @date    Jan 28, 2026
+ */
+
+
 #ifndef __LCD_APP_H
 #define __LCD_APP_H
 

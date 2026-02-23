@@ -1,3 +1,14 @@
+/**
+ * @file    font_verdana.h
+ * @brief   Font data for Verdana font used in the LCD display of the UBC Solar DRD board
+ *
+ * This header file declares the external font data arrays for various sizes of the Verdana font, as well as
+ * some additional fonts like Webdings and Wingdings. These fonts are used for rendering text on the LCD display.
+ *
+ * @author  Gregory Bian
+ * @date    Feb 4 2026
+ */
+
 #ifndef _VERDANA_H_
 #define _VERDANA_H_
 

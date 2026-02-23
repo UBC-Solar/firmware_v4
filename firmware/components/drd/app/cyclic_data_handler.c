@@ -1,3 +1,14 @@
+/**
+ * @file    cyclic_data_handler.c
+ * @brief   Cyclic Date Hnadler for the DRD Module
+ *
+ * This file declares cyclic data for revlevant data relating to the DRD. It defines getter and 
+ * setter functions for each datatype for easy handling and processing. 
+ *
+ * @author  Gregory Bian
+ * @date    Feb 4 2026
+ */
+
 #include "cyclic_data_handler.h"
 #include "cyclic_data.h"
 #include <stdint.h>

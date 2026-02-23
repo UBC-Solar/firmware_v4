@@ -1,9 +1,13 @@
-/*
-* diagnostic.c v2
-*
-*  Created on: Feb 17 2026
-*      Author: Gregory Bian
-*/
+/**
+ * @file    diagnostic.c
+ * @brief   Diagnostic data management for UBC Solar's DRD Module
+ *
+ * This file is used to declare and send CAN messages for diagnostic and heartbeat data for the DRD Module.
+ *
+ * @author  Gregory Bian
+ * @date    Feb 4 2026
+ */
+
 
 /*	INCLUDES	*/
 #include "CAN_comms.h"

@@ -1,9 +1,13 @@
-/*
-* diagnostic.h v2
-*
-*  Created on: Feb 17 2026
-*      Author: Gregory Bian
-*/
+/**
+ * @file    diagnostic.h
+ * @brief   Diagnostic header file for UBC Solar's DRD Module
+ *
+ * This file is used to declare datatypes for the diagnostic data and function prototypes for UBC Solar's
+ * DRD so that it can be sent over CAN for other boards to process. 
+ *
+ * @author  Gregory Bian
+ * @date    Feb 4 2026
+ */
 
 #ifndef INC_DIAGNOSTIC_H_
 #define INC_DIAGNOSTIC_H_

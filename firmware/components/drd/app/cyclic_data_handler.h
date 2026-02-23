@@ -1,6 +1,6 @@
 /**
  * @file    cyclic_data_handler.h
- * @brief   Cyclic Date Hnadler for the DRD Module
+ * @brief   Cyclic Data Handler for the DRD Module
  *
  * This header file declares the function prototypes for the getters and setter of the Cyclic datatypes. 
  *

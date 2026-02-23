@@ -14,13 +14,13 @@
 #include "can_driver.h"
 #include "diagnostic.h"
 #include "iwdg_driver.h"
-
-//#include "drive_state.h"
-//#include "soc.h"
+#include "lcd_app.h"
+#include "drive_state.h"
+#include "soc.h"
 
 /*	GLOBAL VARIABLES	*/
 volatile uint32_t g_time_since_bootup = 0;
-DiagnosticDrd g_diagnostics = {0};
+DiagnosticDRD g_diagnostics = {0};
 
 /**
  * @brief  Sends the time since bootup via CAN
@@ -35,14 +35,13 @@ void DiagnosticTimeSinceBootup()
         .data[3] = (g_time_since_bootup & 0xFF000000U) >> 24,
         .header = time_since_bootup_can_header,
     };
-
     CAN_comms_Add_Tx_message(&time_since_bootup_can_tx);
 }
 
 /*	@brief Transmits DRD Diagnostic Messages over CAN
  *
  */
-void DiagnosticTransmit(DiagnosticDrd* diagnostics, bool from_ISR)
+void DiagnosticTransmit(DiagnosticDRD* diagnostics, bool from_ISR)
 {
     CAN_comms_Tx_msg_t msg;
     msg.header = drd_diagnostic_header;
@@ -54,9 +53,9 @@ void DiagnosticTransmit(DiagnosticDrd* diagnostics, bool from_ISR)
     msg.data[2] = (diagnostics->raw_adc2 & 0xFF);
     msg.data[3] = (diagnostics->raw_adc2 >> 8);
     msg.data[4] = diagnostics->flags.all_flags;
-    msg.data[5] = 0; //g_drive_state;
+    msg.data[5] = g_drive_state_model.state & 0xFF;
     msg.data[6] = diagnostics->cyclic_flags.cyclic_data_all_flags;
-    msg.data[7] = 0; //(uint8_t)(SOC_get_soc() * 100.0f);
+    msg.data[7] = (uint8_t)(SocGetSoc() * 100.0f);
 
     if (from_ISR)
     {

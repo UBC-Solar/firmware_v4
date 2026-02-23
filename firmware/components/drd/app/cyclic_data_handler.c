@@ -1,6 +1,6 @@
 /**
  * @file    cyclic_data_handler.c
- * @brief   Cyclic Date Hnadler for the DRD Module
+ * @brief   Cyclic Data Handler for the DRD Module
  *
  * This file declares cyclic data for revlevant data relating to the DRD. It defines getter and 
  * setter functions for each datatype for easy handling and processing. 

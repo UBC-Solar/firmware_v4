@@ -27,7 +27,7 @@ typedef union {
 		volatile bool motor_comm_fault 			: 1;
 	};
 	uint8_t all_flags;
-} DiagnosticDrdAllFlags;
+} DiagnosticDRDAllFlags;
 
 // TODO : Add more flags as needed (TEMPERATURE, FAULTS, WARNINGS, etc.)
 typedef union {
@@ -44,20 +44,20 @@ typedef union {
 typedef struct {
 	volatile uint16_t raw_adc1;
 	volatile uint16_t raw_adc2;
-	DiagnosticDrdAllFlags flags;
+	DiagnosticDRDAllFlags flags;
 	DiagnosticCyclicDataFlags cyclic_flags;
-} DiagnosticDrd;
+} DiagnosticDRD;
 
 
 
 /*	GLOBAL VARIABLES	*/
 extern volatile uint32_t g_time_since_bootup;
-extern DiagnosticDrd g_diagnostics;
+extern DiagnosticDRD g_diagnostics;
 
 
 /*	Function Prototypes	*/
 void DiagnosticTimeSinceBootup();
-void DiagnosticTransmit(DiagnosticDrd* diagnostics, bool from_ISR);
+void DiagnosticTransmit(DiagnosticDRD* diagnostics, bool from_ISR);
 
 
 

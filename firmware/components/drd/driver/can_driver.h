@@ -19,7 +19,9 @@
 #define DRIVE_COMMAND_SIZE 5
 
 #define DRD_DIAGNOSTIC_MESSAGE				0x403
+#define DRD_DIAGNOSTIC_SIZE					8
 #define TIME_SINCE_BOOTUP_CAN_ID			0x404
+#define TIME_SINCE_BOOTUP_CAN_DATA_LENGTH	4
 
 #define CAN_ID_MTR_FAULTS 0x08A50225
 #define MDU_REQUEST_COMMAND_ID 0x08F89540
@@ -27,6 +29,8 @@
 #define MDU_REQUEST_FRAME 0b111
 #define FRAME0 0x08850225
 #define STR_CAN_MSG_ID 0x580
+
+
 
 /* CAN HEADERS */
 extern const CAN_TxHeaderTypeDef drive_control_header;

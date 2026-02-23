@@ -130,28 +130,6 @@ const osThreadAttr_t TasksTimeSinceStartup_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
 };
 
-/* Definitions for TasksCalculateSoc */
-osThreadId_t TasksCalculateSocHandle;
-uint32_t TasksCalculateSocBuffer[512];
-osStaticThreadDef_t TasksCalculateSocControlBlock;
-
-const osThreadAttr_t TasksCalculateSoc_attributes = {
-  .name = "TasksCalculateSoc",
-  .cb_mem = &TasksCalculateSocControlBlock,
-  .cb_size = sizeof(TasksCalculateSocControlBlock),
-  .stack_mem = &TasksCalculateSocBuffer[0],
-  .stack_size = sizeof(TasksCalculateSocBuffer),
-  .priority = (osPriority_t) osPriorityLow,
-};
-
-osEventFlagsId_t calculate_soc_flagHandle;
-osStaticEventGroupDef_t calculate_soc_flagControlBlock;
-const osEventFlagsAttr_t calculate_soc_flag_attributes = {
-  .name = "calculate_soc_flag",
-  .cb_mem = &calculate_soc_flagControlBlock,
-  .cb_size = sizeof(calculate_soc_flagControlBlock),
-};
-
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -177,7 +155,7 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
   */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
-  CanTasksInit();  CAN_tasks_init();
+  CanTasksInit();
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */

@@ -23,19 +23,20 @@ typedef union {
 		volatile bool regen_enabled 			: 1;
 		volatile bool throttle_ADC_out_of_range : 1;
 		volatile bool throttle_ADC_mismatch 	: 1;
-		volatile bool watchdog_reset 			: 1;
+		volatile bool watchdog_reset 			: 1; //done
 		volatile bool motor_comm_fault 			: 1;
 	};
 	uint8_t all_flags;
 } DiagnosticDrdAllFlags;
 
+// TODO : Add more flags as needed (TEMPERATURE, FAULTS, WARNINGS, etc.)
 typedef union {
 	struct {
-		volatile bool speed_timeout 		: 1;
-		volatile bool drive_state_timeout 	: 1;
-		volatile bool soc_timeout 			: 1;
-		volatile bool voltage_timeout 		: 1;
-		volatile bool current_timeout 		: 1;
+		volatile bool speed_timeout 		: 1; //done
+		volatile bool drive_state_timeout 	: 1; //done
+		volatile bool soc_timeout 			: 1; //done
+		volatile bool voltage_timeout 		: 1; //done
+		volatile bool current_timeout 		: 1; //done
 	};
 	uint8_t cyclic_data_all_flags;
 } DiagnosticCyclicDataFlags;

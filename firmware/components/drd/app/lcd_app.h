@@ -5,8 +5,8 @@
  * This header declares the data structures, constants, and function prototypes for the LCD application. 
  * The module implements a controller to handle what is displayed on each page and handles the page transitions.
  *
- * @author  Tony Chen
- * @date    Jan 28, 2026
+ * @author  Gregory Bian
+ * @date    Feb 4 2026
  */
 
 
@@ -384,11 +384,11 @@ typedef enum {
 
 typedef enum
 {
-    DRIVE_PAGE = 0x00,
-    FAULTS_PAGE = 0x01,
-    WARNINGS_PAGE = 0x02,
-    TEMPERATURE_PAGE = 0x03,
-    DEBUG_PAGE = 0x04
+    DRIVE_PAGE = 0x01,
+    FAULTS_PAGE = 0x02,
+    WARNINGS_PAGE = 0x03,
+    TEMPERATURE_PAGE = 0x04,
+    DEBUG_PAGE = 0x05
 } LcdAppScreens;
 
 /*	User Variables	*/

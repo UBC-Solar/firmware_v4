@@ -41,12 +41,12 @@ LcdAppMotorFaults g_lcd_motor_faults = {0};
 LcdAppWarnings g_lcd_warnings = {0};
 LcdAppTemperature g_lcd_temperatures[8] = {0};
 
-uint8_t g_lcd_page = 0;
+uint8_t g_lcd_page = 1;
 uint8_t g_lcd_page_change = 0;
 
 // Helper Function declarations
-uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults);
-uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings);
+static uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults);
+static uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings);
 
 /*--------------------------------------------------------------------------
   HELPER FUNCTIONS
@@ -59,7 +59,7 @@ uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings);
  * @param motor_faults A struct containing the motor faults.
  * @return The count of faults.
  */
-uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults)
+static uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults)
 {
     uint8_t fault_count = 0;
 
@@ -164,7 +164,7 @@ uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* moto
  *
  * @return The count of warnings.
  */
-uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings)
+static uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings)
 {
     uint8_t warning_count = 0;
 
@@ -1048,7 +1048,6 @@ void LcdAppDisplayDriveStateDebugPage(volatile DriveStateStates* state)
     if (state == NULL)
     { // Stale data for drive state
         sprintf(state_str, "-");
-        // g_diagnostics.cyclic_flags.drive_state_timeout = true;
     }
     else
     {
@@ -1067,7 +1066,6 @@ void LcdAppDisplayDriveStateDebugPage(volatile DriveStateStates* state)
             state_str[0] = LCD_APP_ERROR_SYMBOL;
             break;
         }
-        // g_diagnostics.cyclic_flags.drive_state_timeout = false;
     }
 
     LcdDriverClearBoundingBox(
@@ -1196,14 +1194,29 @@ void LcdAppCanRxHandle(uint32_t msg_id, uint8_t* data)
     g_lcd_warnings.no_ecu_message = false;
     g_lcd_warnings.pack_overcharge = false;
     g_lcd_warnings.pack_overdischarge = false;
+
+    // Constantly get drive data
+    g_lcd_data.speed = CyclicDataGetSpeed();
+    g_lcd_data.drive_state = CyclicDataGetDriveState();
+    g_lcd_data.soc = CyclicDataGetSoc();
+    g_lcd_data.pack_current = CyclicDataGetPackCurrent();
+    g_lcd_data.pack_voltage = CyclicDataGetPackVoltage();
+
+    // Set Diagnostics Flags if NULL values
+    g_diagnostics.cyclic_flags.speed_timeout = g_lcd_data.speed == NULL ? true : false;
+    g_diagnostics.cyclic_flags.drive_state_timeout = g_lcd_data.drive_state == NULL ? true : false;
+    g_diagnostics.cyclic_flags.soc_timeout = g_lcd_data.soc == NULL ? true : false;
+    g_diagnostics.cyclic_flags.current_timeout = g_lcd_data.pack_current == NULL ? true : false;
+    g_diagnostics.cyclic_flags.voltage_timeout = g_lcd_data.pack_voltage == NULL ? true : false;
+
+    // Changes pages if fault flag is set
+    if(LcdAppCheckFaults(&g_lcd_batt_faults, &g_lcd_motor_faults))
+        g_lcd_page = FAULTS_PAGE;
+
     // Handles what is displayed
     switch (g_lcd_page)
     {
     case DRIVE_PAGE:
-        g_lcd_data.speed = CyclicDataGetSpeed();
-        g_lcd_data.drive_state = CyclicDataGetDriveState();
-        g_lcd_data.soc = CyclicDataGetSoc();
-
         LcdAppDisplaySpeedDrivePage(g_lcd_data.speed, g_lcd_data.speed_units);
         LcdAppDisplaySocDrivePage((volatile uint32_t*)g_lcd_data.soc);
         LcdAppDisplayDriveStateDrivePage((volatile DriveStateStates*) g_lcd_data.drive_state);
@@ -1236,11 +1249,7 @@ void LcdAppCanRxHandle(uint32_t msg_id, uint8_t* data)
         LcdAppDisplayTemperature(g_lcd_temperatures[MOTOR_THERM]);
         break;
     case DEBUG_PAGE:
-        g_lcd_data.speed = CyclicDataGetSpeed();
-        g_lcd_data.drive_state = CyclicDataGetDriveState();
-        g_lcd_data.soc = CyclicDataGetSoc();
-        g_lcd_data.pack_current = CyclicDataGetPackCurrent();
-        g_lcd_data.pack_voltage = CyclicDataGetPackVoltage();
+        
 
         LcdAppDisplaySpeedDebugPage(g_lcd_data.speed, g_lcd_data.speed_units);
         LcdAppDisplayDriveStateDebugPage((volatile DriveStateStates*) g_lcd_data.drive_state);

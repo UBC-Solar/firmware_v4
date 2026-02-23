@@ -1,3 +1,14 @@
+/**
+ * @file    can_driver.h
+ * @brief   CAN bus driver declarations for UBC Solar DRD board
+ *
+ * This header declares CAN bus communication functions and constants for the DRD board.
+ * It provides prototypes for CAN message handling, filter configuration, and defines CAN message IDs and sizes.
+ *
+ * @author  UBC Solar
+ * @date    Feb 4 2026
+ */
+
 #ifndef __CAN_DRIVER_H___
 #define __CAN_DRIVER_H___
 
@@ -17,17 +28,20 @@
 #define FRAME0 0x08850225
 #define STR_CAN_MSG_ID 0x580
 
-
-
-#define DRD_DIAGNOSTIC_SIZE					8
-#define TIME_SINCE_BOOTUP_CAN_DATA_LENGTH	4
-
+/* CAN HEADERS */
 extern const CAN_TxHeaderTypeDef drive_control_header;
 extern const CAN_TxHeaderTypeDef mdu_request_header;
 extern const CAN_TxHeaderTypeDef drd_diagnostic_header;
 extern const CAN_TxHeaderTypeDef time_since_bootup_can_header;
 
-void CAN_comms_Rx_callback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg);
-void CAN_tasks_init();
+/**
+ * @brief Callback for processing received CAN messages.
+ * @param CAN_comms_Rx_msg Pointer to the received CAN message structure.
+ */
+void CanCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg);
+/**
+ * @brief Initializes CAN communication tasks.
+ */
+void CanTasksInit();
 
 #endif /* __CAN_DRIVER_H___ */

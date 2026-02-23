@@ -1,12 +1,34 @@
+/**
+ * @file    can_driver.c
+ * @brief   CAN bus driver implementation for UBC Solar DRD board
+ *
+ * This file contains the implementation of CAN bus communication functions for the DRD board.
+ * It handles CAN message transmission, reception, and filter configuration for vehicle state and control.
+ *
+ * @author  UBC Solar
+ * @date    Feb 4 2026
+ */
+
+/* INCLUDES */
 #include "can_driver.h"
 #include "CAN_comms.h"
 #include "can.h"
 #include "drive_state.h" // for now MMR change later
-#include "lcd_app.h"
 
 /* FUNCTION PROTOTYPES */
-void VechicleStateCANRxHandler(uint32_t msg_id, uint8_t* data);
-void CAN_filter_init(CAN_FilterTypeDef* can_filter);
+/**
+ * @brief Handles received CAN messages for vehicle state and dispatches to appropriate handlers.
+ *
+ * @param msg_id The CAN message ID.
+ * @param data Pointer to the received CAN message data.
+ */
+void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data);
+/**
+ * @brief Initializes CAN hardware filters for message acceptance.
+ *
+ * @param can_filter Pointer to CAN filter configuration structure.
+ */
+void CanFilterInit(CAN_FilterTypeDef* can_filter);
 
 /**
  *  CAN Message Header for drive control
@@ -38,7 +60,7 @@ const CAN_TxHeaderTypeDef time_since_bootup_can_header = {
    .RTR = CAN_RTR_DATA,
    .DLC = TIME_SINCE_BOOTUP_CAN_DATA_LENGTH};
 
-void CAN_filter_init(CAN_FilterTypeDef* can_filter) {
+void CanFilterInit(CAN_FilterTypeDef* can_filter) {
     CAN_FilterTypeDef can_filter1;
     CAN_FilterTypeDef can_filter2;
 
@@ -55,53 +77,46 @@ void CAN_filter_init(CAN_FilterTypeDef* can_filter) {
     // HAL_CAN_ConfigFilter(&hcan, can_filter);
 
     // ---- Filter Bank 4 ----
-    can_filter1.FilterIdHigh = (STR_CAN_MSG_ID << 5);
+    can_filter1.FilterIdHigh = (STR_CAN_MSG_ID << 5); // Set up filter for steering CAN messages
     can_filter1.FilterMaskIdHigh = (STR_CAN_MSG_ID << 5);
     can_filter1.FilterIdLow = (STR_CAN_MSG_ID << 5);
     can_filter1.FilterMaskIdLow = (STR_CAN_MSG_ID << 5);
-    can_filter1.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+    can_filter1.FilterFIFOAssignment = CAN_FILTER_FIFO0; // Route accepted messages to FIFO0
     can_filter1.FilterBank = 4;
-    can_filter1.FilterMode = CAN_FILTERMODE_IDLIST;
+    can_filter1.FilterMode = CAN_FILTERMODE_IDLIST; // Use identifier list mode (not mask)
     can_filter1.FilterScale = CAN_FILTERSCALE_16BIT;
     can_filter1.FilterActivation = ENABLE;
-    HAL_CAN_ConfigFilter(&hcan, &can_filter1);
+    HAL_CAN_ConfigFilter(&hcan, &can_filter1); // Register filter with hardware
 
     // ---- Filter Bank 2 ----
     uint32_t extId1 = CAN_ID_MTR_FAULTS;
     uint32_t extId2 = FRAME0;
-    can_filter2.FilterIdHigh = (extId1 << 3) >> 16;
+    can_filter2.FilterIdHigh = (extId1 << 3) >> 16; // Set up filter for motor fault messages
     can_filter2.FilterIdLow  = ((extId1 << 3) & 0xFFFF) | 0x0004;
-    can_filter2.FilterMaskIdHigh = (extId2 << 3) >> 16;
+    can_filter2.FilterMaskIdHigh = (extId2 << 3) >> 16; // Accept only specific extended IDs (ensures only target messages pass)
     can_filter2.FilterMaskIdLow  = ((extId2 << 3) & 0xFFFF) | 0x0004;
-    can_filter2.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+    can_filter2.FilterFIFOAssignment = CAN_FILTER_FIFO0; // Route accepted messages to FIFO0
     can_filter2.FilterBank = 5;
-    can_filter2.FilterMode = CAN_FILTERMODE_IDLIST;
+    can_filter2.FilterMode = CAN_FILTERMODE_IDLIST; // Use identifier list mode (not mask)
     can_filter2.FilterScale = CAN_FILTERSCALE_32BIT;
     can_filter2.FilterActivation = ENABLE;
-    HAL_CAN_ConfigFilter(&hcan, &can_filter2);
+    HAL_CAN_ConfigFilter(&hcan, &can_filter2); // Register filter with hardware
 }
 
-/**
- * @brief Initializes the CAN filter and CAN Rx callback function as CAN_comms_Rx_callback().
- *
- * Note: This uses the CAN_comms abstraction layer which will initialize two freeRTOS tasks. As a result it is recommended to
- * Call this function inside the MX_FREERTOS_Init() function in freertos.c
- */
-void CAN_tasks_init()
+void CanTasksInit(void)
 {
     CAN_comms_config_t CAN_comms_config_drd = {0};
     CAN_FilterTypeDef can_filter = {0};
-    CAN_filter_init(&can_filter);
+    CanFilterInit(&can_filter);
 
     CAN_comms_config_drd.hcan = &hcan;
     CAN_comms_config_drd.CAN_Filter = can_filter;
-    CAN_comms_config_drd.CAN_comms_Rx_callback = CAN_comms_Rx_callback;
+    CAN_comms_config_drd.CAN_comms_Rx_callback = CanCommsRxCallback;
 
     CAN_comms_init(&CAN_comms_config_drd);
 }
 
-
-void CAN_comms_Rx_callback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
+void CanCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 {
 	uint32_t CAN_ID = 0;
 	/*
@@ -121,12 +136,11 @@ void CAN_comms_Rx_callback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 		CAN_ID = CAN_comms_Rx_msg->header.StdId; // Get CAN ID
 	}
 
-	VechicleStateCANRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
-    LcdAppPageController();
+    VehicleStateCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
 }
 
 /* CAN RX */
-void VechicleStateCANRxHandler(uint32_t msg_id, uint8_t* data)
+void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data)
 {
 
     switch (msg_id)

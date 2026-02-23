@@ -28,11 +28,13 @@
 /* USER CODE BEGIN Includes */
 #include "tasks.h"
 #include "can_driver.h"
+#include "can_driver.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 typedef StaticTask_t osStaticThreadDef_t;
+typedef StaticEventGroup_t osStaticEventGroupDef_t;
 typedef StaticEventGroup_t osStaticEventGroupDef_t;
 /* USER CODE END PTD */
 
@@ -76,6 +78,29 @@ const osThreadAttr_t TasksDriveState_attributes = {
   .stack_size = sizeof(TasksDriveStateBuffer),
   .priority = (osPriority_t) osPriorityLow,
 };
+
+/* Definitions for TasksCalculateSoc */
+osThreadId_t TasksCalculateSocHandle;
+uint32_t TasksCalculateSocBuffer[512];
+osStaticThreadDef_t TasksCalculateSocControlBlock;
+
+const osThreadAttr_t TasksCalculateSoc_attributes = {
+  .name = "TasksCalculateSoc",
+  .cb_mem = &TasksCalculateSocControlBlock,
+  .cb_size = sizeof(TasksCalculateSocControlBlock),
+  .stack_mem = &TasksCalculateSocBuffer[0],
+  .stack_size = sizeof(TasksCalculateSocBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
+
+osEventFlagsId_t calculate_soc_flagHandle;
+osStaticEventGroupDef_t calculate_soc_flagControlBlock;
+const osEventFlagsAttr_t calculate_soc_flag_attributes = {
+  .name = "calculate_soc_flag",
+  .cb_mem = &calculate_soc_flagControlBlock,
+  .cb_size = sizeof(calculate_soc_flagControlBlock),
+};
+
 
 /* Definitions for TasksDiagnostic */
 osThreadId_t TasksDiagnosticHandle;
@@ -152,7 +177,7 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
   */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
-  CAN_tasks_init();
+  CanTasksInit();  CAN_tasks_init();
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -176,6 +201,11 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
+  /* creation of TasksDriveState */
+  TasksDriveStateHandle = osThreadNew(TasksDriveState, NULL, &TasksDriveState_attributes);
+
+  /* creation of TasksCalculateSoc */
+  TasksCalculateSocHandle = osThreadNew(TasksCalculateSoc, NULL, &TasksCalculateSoc_attributes);
   /* creation of TasksDriveState */
   TasksDriveStateHandle = osThreadNew(TasksDriveState, NULL, &TasksDriveState_attributes);
 

@@ -1,10 +1,13 @@
 /**
- *  @file  drive_state.c
- *  @brief Handles the drive state for the car. Takes ADC, GPIO and CAN inputs and
- *         outputs DAC values, MDI flags, and CAN data messages
+ * @file    drive_state.c
+ * @brief   Drive state management implementation for UBC Solar DRD board
  *
- *  @author Tony Chen
- *  @date Jan 28, 2026
+ * This file implements the drive state logic for the car, handling ADC, GPIO, and CAN inputs,
+ * and producing DAC values, MDI flags, and CAN data messages. It manages the drive state finite
+ * state machine (FSM), state transitions, and related control logic.
+ *
+ * @author  Tony Chen
+ * @date    Jan 28, 2026
  */
 
 /* INCLUDES */
@@ -35,15 +38,60 @@ volatile DriveStateModel g_drive_state_model = {
 };
 
 /* FUNCTION DECLARATIONS */
+/**
+ * @brief Computes the next motor control command based on the current drive state model.
+ * @param model Pointer to the drive state model.
+ * @return The computed motor control command.
+ */
 DriveStateMotorControl ComputeNextCommand(DriveStateModel *model);
+/**
+ * @brief Returns a motor command using the drive state model and DAC values for acceleration and regeneration.
+ * @param model Pointer to the drive state model.
+ * @param accel_DAC DAC value for acceleration.
+ * @param regen_DAC DAC value for regeneration.
+ * @return The motor control command.
+ */
 DriveStateMotorControl GetMotorCommand(DriveStateModel *model, uint16_t accel_DAC, uint16_t regen_DAC);
+/**
+ * @brief Updates and returns the status flags for the motor command.
+ * @param model Pointer to the drive state model.
+ * @return Updated status flags.
+ */
 uint8_t UpdateMotorCommandFlags(DriveStateModel *model);
-void UpdateBrakePedalFlags(DriveStateModel *model);
+/**
+ * @brief Updates the brake pedal status flags in the drive state model.
+ * @param model Pointer to the drive state model.
+ */
+void UpdatePedalFlags(DriveStateModel *model);
+/**
+ * @brief Clears all drive state flags in the model.
+ * @param model Pointer to the drive state model.
+ */
 void ClearDriveStateFlags(DriveStateModel *model);
+/**
+ * @brief Computes the next state for the drive state machine.
+ * @param model Pointer to the drive state model.
+ */
 void ComputeNextState(DriveStateModel *model);
+/**
+ * @brief Handles logic when the brake is engaged.
+ * @param model Pointer to the drive state model.
+ */
 void BreakOnHandler(DriveStateModel *model);
+/**
+ * @brief Handles logic for eco power mode.
+ * @param model Pointer to the drive state model.
+ */
 void EcoPowerHandler(DriveStateModel *model);
+/**
+ * @brief Packs and sends the motor command, optionally from an interrupt service routine.
+ * @param motor_command Pointer to the motor control command.
+ * @param isr True if called from ISR, false otherwise.
+ */
 void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr);
+/**
+ * @brief Queries and processes data related to motor control.
+ */
 void MotorControlQueryData(void);
 
 /* DRIVE STATE FINITE STATE MACHINE */
@@ -52,7 +100,7 @@ void DriveStateFsmHandler()
     volatile DriveStateModel *v_model = &g_drive_state_model;
     DriveStateModel *model = (DriveStateModel *)v_model;
 
-    UpdateBrakePedalFlags(model);
+    UpdatePedalFlags(model);
     DriveStateMotorControl motor_command = ComputeNextCommand(model);
     ComputeNextState(model);
 
@@ -141,8 +189,8 @@ DriveStateMotorControl GetMotorCommand(DriveStateModel *model, uint16_t accel_DA
     return motor_command;
 }
 
-/* DRIVE STATE DATA COLLECTION */
-void UpdateBrakePedalFlags(DriveStateModel *model)
+/* SETS DRIVE STATE FLAGS */
+void UpdatePedalFlags(DriveStateModel *model)
 {
     model->flags.brake_on = ReadBrakePin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN);
     SetBrakeLedPin(BRAKE_LED_PORT, BRAKE_LED_PIN, model->flags.brake_on);
@@ -166,7 +214,6 @@ uint8_t UpdateMotorCommandFlags(DriveStateModel *model)
     return flags;
 }
 
-/* SETS DRIVE STATE FLAGS */
 void DriveStateInterruptHandler(uint16_t toggle)
 {
     volatile DriveStateModel *v_model = &g_drive_state_model;

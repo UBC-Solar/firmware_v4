@@ -11,6 +11,10 @@
       "device": "STM32F103RC",
       "interface": "swd",
       "runToEntryPoint": "main",
+      "liveWatch": {
+        "enabled": true,
+        "samplesPerSecond": 20
+      },
       "swoConfig": {
         "enabled": true,
         "source": "probe",
@@ -30,6 +34,20 @@
     {
       "name": "ST-LINK (active ELF path)",
       "type": "stlinkgdbtarget",
+      "request": "launch",
+      "deviceName": "STM32F103RCT6",
+      "deviceCore": "Cortex-M3",
+      "cwd": "${workspaceFolder}",
+      "runEntry": "main",
+      "imagesAndSymbols": [
+        {
+          "imageFileName": "${command:cmake.launchTargetPath}",
+        }
+      ]
+    },
+    {
+      "name": "J-LINK NO SWO (active ELF path)",
+      "type": "jlinkgdbtarget",
       "request": "launch",
       "deviceName": "STM32F103RCT6",
       "deviceCore": "Cortex-M3",

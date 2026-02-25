@@ -26,12 +26,13 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "tasks.h"
+#include "can_driver.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
-
 /* USER CODE BEGIN PTD */
 typedef StaticTask_t osStaticThreadDef_t;
+typedef StaticEventGroup_t osStaticEventGroupDef_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -47,6 +48,20 @@ typedef StaticTask_t osStaticThreadDef_t;
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 
+/* Definitions for TasksLcdUpdate */
+osThreadId_t TasksLcdUpdateHandle;
+uint32_t TasksLcdUpdateBuffer[256];
+osStaticThreadDef_t TasksLcdUpdateControlBlock;
+
+const osThreadAttr_t TasksLcdUpdate_attributes = {
+  .name = "TasksLcdUpdate",
+  .cb_mem = &TasksLcdUpdateControlBlock,
+  .cb_size = sizeof(TasksLcdUpdateControlBlock),
+  .stack_mem = &TasksLcdUpdateBuffer[0],
+  .stack_size = sizeof(TasksLcdUpdateBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
+
 /* Definitions for TasksDriveState */
 osThreadId_t TasksDriveStateHandle;
 uint32_t TasksDriveStateBuffer[256];
@@ -60,6 +75,29 @@ const osThreadAttr_t TasksDriveState_attributes = {
   .stack_size = sizeof(TasksDriveStateBuffer),
   .priority = (osPriority_t) osPriorityLow,
 };
+
+/* Definitions for TasksCalculateSoc */
+osThreadId_t TasksCalculateSocHandle;
+uint32_t TasksCalculateSocBuffer[512];
+osStaticThreadDef_t TasksCalculateSocControlBlock;
+
+const osThreadAttr_t TasksCalculateSoc_attributes = {
+  .name = "TasksCalculateSoc",
+  .cb_mem = &TasksCalculateSocControlBlock,
+  .cb_size = sizeof(TasksCalculateSocControlBlock),
+  .stack_mem = &TasksCalculateSocBuffer[0],
+  .stack_size = sizeof(TasksCalculateSocBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
+
+osEventFlagsId_t calculate_soc_flagHandle;
+osStaticEventGroupDef_t calculate_soc_flagControlBlock;
+const osEventFlagsAttr_t calculate_soc_flag_attributes = {
+  .name = "calculate_soc_flag",
+  .cb_mem = &calculate_soc_flagControlBlock,
+  .cb_size = sizeof(calculate_soc_flagControlBlock),
+};
+
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -85,7 +123,7 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
   */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
-
+  CanTasksInit();
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -111,6 +149,12 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_THREADS */
   /* creation of TasksDriveState */
   TasksDriveStateHandle = osThreadNew(TasksDriveState, NULL, &TasksDriveState_attributes);
+
+  /* creation of TasksCalculateSoc */
+  TasksCalculateSocHandle = osThreadNew(TasksCalculateSoc, NULL, &TasksCalculateSoc_attributes);
+  /* creation of TasksLcdUpdate */
+  TasksLcdUpdateHandle = osThreadNew(TasksLcdUpdate, NULL, &TasksLcdUpdate_attributes);
+    //TasksDriveStateHandle = osThreadNew(TasksDriveState, NULL, &TasksDriveState_attributes);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */

@@ -11,6 +11,7 @@
  *  - TasksDriveState
  *  - TasksCalculateSoc
  *  - TasksLcdUpdate
+ *  - TasksExternalLights
  *
  * @author  UBC Solar
  * @date    Feb 4 2026
@@ -61,6 +62,15 @@ void TasksCalculateSoc(void* argument);
  * @param argument Pointer to task-specific arguments (unused).
  */
 void TasksLcdUpdate(void *argument);
+
+/**
+ * @brief External lights task main loop.
+ *
+ * Runs the external lights state machine to control turn signals and brake lights.
+ * Executes at a 50ms period. Task runs indefinitely until system shutdown.
+ * @param argument Pointer to task-specific arguments (unused).
+ */
+void TasksExternalLights(void* argument);
 
 /**
  * @brief GPIO external interrupt callback handler.

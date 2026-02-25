@@ -27,6 +27,7 @@
 /* USER CODE BEGIN Includes */
 #include "tasks.h"
 #include "can_driver.h"
+#include "external_lights.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -87,6 +88,20 @@ const osThreadAttr_t TasksCalculateSoc_attributes = {
   .cb_size = sizeof(TasksCalculateSocControlBlock),
   .stack_mem = &TasksCalculateSocBuffer[0],
   .stack_size = sizeof(TasksCalculateSocBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
+
+/* Definitions for TasksExternalLights */
+osThreadId_t TasksExternalLightsHandle;
+uint32_t TasksExternalLightsBuffer[256];
+osStaticThreadDef_t TasksExternalLightsControlBlock;
+
+const osThreadAttr_t TasksExternalLights_attributes = {
+  .name = "TasksExtLights",
+  .cb_mem = &TasksExternalLightsControlBlock,
+  .cb_size = sizeof(TasksExternalLightsControlBlock),
+  .stack_mem = &TasksExternalLightsBuffer[0],
+  .stack_size = sizeof(TasksExternalLightsBuffer),
   .priority = (osPriority_t) osPriorityLow,
 };
 
@@ -155,6 +170,10 @@ void MX_FREERTOS_Init(void) {
   /* creation of TasksLcdUpdate */
   TasksLcdUpdateHandle = osThreadNew(TasksLcdUpdate, NULL, &TasksLcdUpdate_attributes);
     //TasksDriveStateHandle = osThreadNew(TasksDriveState, NULL, &TasksDriveState_attributes);
+  
+  /* creation of TasksExternalLights */
+  TasksExternalLightsHandle = osThreadNew(TasksExternalLights, NULL, &TasksExternalLights_attributes);
+    
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */

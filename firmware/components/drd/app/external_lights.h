@@ -10,6 +10,7 @@
 
 /*	Includes	*/
 #include "CAN_comms.h"
+#include "can_driver.h"
 #include "main.h"
 
 

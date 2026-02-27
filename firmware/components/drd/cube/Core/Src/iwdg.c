@@ -23,7 +23,7 @@
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
-  
+
 IWDG_HandleTypeDef hiwdg;
 
 /* IWDG init function */
@@ -31,7 +31,9 @@ void MX_IWDG_Init(void)
 {
 
   /* USER CODE BEGIN IWDG_Init 0 */
-
+  #ifdef DEBUG
+    return;
+  #endif
   /* USER CODE END IWDG_Init 0 */
 
   /* USER CODE BEGIN IWDG_Init 1 */

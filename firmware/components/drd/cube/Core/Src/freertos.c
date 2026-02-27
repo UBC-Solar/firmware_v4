@@ -19,7 +19,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
-#include "cmsis_os2.h"
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
@@ -32,6 +31,7 @@
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
+typedef StaticTask_t osStaticThreadDef_t;
 /* USER CODE BEGIN PTD */
 typedef StaticTask_t osStaticThreadDef_t;
 typedef StaticEventGroup_t osStaticEventGroupDef_t;
@@ -127,15 +127,20 @@ const osThreadAttr_t TasksTimeSinceStartup_attributes = {
   .cb_size = sizeof(TasksTimeSinceStartupControlBlock),
   .stack_mem = &TasksTimeSinceStartupBuffer[0],
   .stack_size = sizeof(TasksTimeSinceStartupBuffer),
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityLow,
 };
 
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
+uint32_t defaultTaskBuffer[ 128 ];
+osStaticThreadDef_t defaultTaskControlBlock;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 128 * 4,
+  .cb_mem = &defaultTaskControlBlock,
+  .cb_size = sizeof(defaultTaskControlBlock),
+  .stack_mem = &defaultTaskBuffer[0],
+  .stack_size = sizeof(defaultTaskBuffer),
   .priority = (osPriority_t) osPriorityNormal,
 };
 
@@ -179,16 +184,12 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  /* creation of TasksDriveState */
-  TasksDriveStateHandle = osThreadNew(TasksDriveState, NULL, &TasksDriveState_attributes);
 
   /* creation of TasksCalculateSoc */
   TasksCalculateSocHandle = osThreadNew(TasksCalculateSoc, NULL, &TasksCalculateSoc_attributes);
   /* creation of TasksDriveState */
   TasksDriveStateHandle = osThreadNew(TasksDriveState, NULL, &TasksDriveState_attributes);
 
-  /* creation of TasksCalculateSoc */
-  TasksCalculateSocHandle = osThreadNew(TasksCalculateSoc, NULL, &TasksCalculateSoc_attributes);
   /* creation of TasksLcdUpdate */
   TasksLcdUpdateHandle = osThreadNew(TasksLcdUpdate, NULL, &TasksLcdUpdate_attributes);
   /* creation of TasksDiagnostic */
@@ -219,7 +220,7 @@ void StartDefaultTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    osDelay(100);
   }
   /* USER CODE END StartDefaultTask */
 }

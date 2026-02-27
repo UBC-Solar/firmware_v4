@@ -51,7 +51,6 @@ typedef struct {
 
 
 /*	GLOBAL VARIABLES	*/
-extern volatile uint32_t g_time_since_bootup;
 extern DiagnosticDRD g_diagnostics;
 
 

@@ -95,16 +95,15 @@ void TasksLcdUpdate(void *argument)
             g_lcd_page_change = 0;
         }
         LcdAppPageController();
+        osDelay(LCD_APP_UPDATE_DELAY);
     }
-    osDelay(LCD_APP_UPDATE_DELAY);
 }
 
 void TasksTimeSinceStartup(void *argument)
 {
     for (;;)
     {
-        // Increment the time since bootup and transmit it over CAN every second
-        g_time_since_bootup++;
+        // Transmit DRD heartbeat over CAN
         DiagnosticTimeSinceBootup();
         osDelay(TIME_SINCE_STARTUP_TASK_DELAY);
     }
@@ -119,7 +118,6 @@ void TasksDiagnostic(void *argument)
         // Refresh the watchdog timer to prevent reset and transmit diagnostics over CAN
         IwdgAppRefresh(&hiwdg);
         DiagnosticTransmit(&g_diagnostics, false);
-        g_diagnostics.raw_adc1++;
         osDelay(DEFAULT_TASK_DELAY);
     }
 }

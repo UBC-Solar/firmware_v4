@@ -13,6 +13,7 @@
 #include "cyclic_data.h"
 #include <stdint.h>
 #include <stdbool.h>
+#include "diagnostic.h"
 #include "lcd_app.h"
 
 // #include "drive_state.h"
@@ -53,10 +54,20 @@ void CyclicDataSetMtrThermTemperature(uint8_t temperature) { CYCLIC_DATA_SET(cyc
 
 
 // Create functions that get the cyclic_data
-uint32_t* CyclicDataGetSpeed(void) { return CYCLIC_DATA_GET(cyclic_speed); }
-int16_t* CyclicDataGetPackCurrent(void) { return CYCLIC_DATA_GET(cyclic_pack_current); }
-uint16_t* CyclicDataGetPackVoltage(void) { return CYCLIC_DATA_GET(cyclic_pack_voltage); }
-uint8_t* CyclicDataGetMpptATemperature(void) { return CYCLIC_DATA_GET(cyclic_mppta_temperature); }
+uint32_t* CyclicDataGetSpeed(void) { 
+    g_diagnostics.cyclic_flags.speed_timeout = CYCLIC_DATA_GET(cyclic_speed) == NULL ? true : false;
+    return CYCLIC_DATA_GET(cyclic_speed); 
+} 
+int16_t* CyclicDataGetPackCurrent(void) { 
+    g_diagnostics.cyclic_flags.current_timeout = CYCLIC_DATA_GET(cyclic_pack_current) == NULL ? true : false;
+    return CYCLIC_DATA_GET(cyclic_pack_current); 
+}
+uint16_t* CyclicDataGetPackVoltage(void) { 
+    g_diagnostics.cyclic_flags.voltage_timeout = CYCLIC_DATA_GET(cyclic_pack_voltage) == NULL ? true : false;
+    return CYCLIC_DATA_GET(cyclic_pack_voltage); 
+}
+uint8_t* CyclicDataGetMpptATemperature(void) { 
+    return CYCLIC_DATA_GET(cyclic_mppta_temperature); }
 uint8_t* CyclicDataGetMpptBTemperature(void) { return CYCLIC_DATA_GET(cyclic_mpptb_temperature); }
 uint8_t* CyclicDataGetMpptCTemperature(void) { return CYCLIC_DATA_GET(cyclic_mpptc_temperature); }
 uint8_t* CyclicDataGetMpptDTemperature(void) { return CYCLIC_DATA_GET(cyclic_mpptd_temperature); }
@@ -68,10 +79,12 @@ uint8_t* CyclicDataGetDriveState(void)
 {
     if (CyclicDataGetSpeed() == NULL)
     {
+        g_diagnostics.cyclic_flags.drive_state_timeout = true;
         return NULL; // Stale data for drive state
     }
     else
     {
+        g_diagnostics.cyclic_flags.drive_state_timeout = CYCLIC_DATA_GET(cyclic_drive_state) == NULL ? true : false;
         return CYCLIC_DATA_GET(cyclic_drive_state);
     }
 }
@@ -79,10 +92,12 @@ uint8_t* CyclicDataGetSoc(void)
 {
     if ((CyclicDataGetPackVoltage() == NULL) || (CyclicDataGetPackCurrent() == NULL))
     {
+        g_diagnostics.cyclic_flags.soc_timeout = true;
         return NULL;
     }
     else
     {
+        g_diagnostics.cyclic_flags.soc_timeout = CYCLIC_DATA_GET(cyclic_soc) == NULL ? true : false;
         return CYCLIC_DATA_GET(cyclic_soc);
     }
 }

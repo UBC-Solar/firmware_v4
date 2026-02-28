@@ -19,6 +19,7 @@
 #include "debug_io.h"
 #include "drive_state.h"
 #include "cyclic_data_handler.h"
+#include "diagnostic.h"
 #include "gpio_driver.h"
 
 /* GLOBAL VARIABLES */
@@ -194,6 +195,7 @@ void UpdatePedalFlags(DriveStateModel *model)
 {
     model->flags.brake_on = ReadBrakePin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN);
     SetBrakeLedPin(BRAKE_LED_PORT, BRAKE_LED_PIN, model->flags.brake_on);
+    DiagnosticSetMechBrakePressed(model->flags.brake_on);
 
     model->throttle_dac = AcceleratorDriverReadThrottle();
 
@@ -279,6 +281,7 @@ void SteeringCanMsgHandler(uint8_t* data)
 { // not configured on STR yet regen is for bit 0 and cruise for bit 1
 
     g_drive_state_model.flags.regen_on = ((data[0] >> 0) & 0x01);
+    DiagnosticSetRegenEnabled(g_drive_state_model.flags.regen_on);
     g_drive_state_model.flags.cruise_on = ((data[0] >> 1) & 0x01);
 }
 

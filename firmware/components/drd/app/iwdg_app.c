@@ -29,7 +29,7 @@ void IwdgAppResetHandle(){
     if (IwdgDriverIsReset())
 	{
 		// Set diagnostic flag to indicate that a watchdog reset occurred
-		g_diagnostics.flags.watchdog_reset = true;
+		DiagnosticSetWatchdogReset(true);
 
         // Refresh the watchdog and flash the LED a few times to indicate that a reset occurred
 		for (int i = 0; i < 10; i++)

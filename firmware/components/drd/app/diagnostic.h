@@ -19,8 +19,8 @@
 /*	DATA TYPES 	*/
 typedef union {
 	struct {
-		volatile bool mech_brake_pressed 		: 1;
-		volatile bool regen_enabled 			: 1;
+		volatile bool mech_brake_pressed 		: 1; // done
+		volatile bool regen_enabled 			: 1; // done
 		volatile bool throttle_ADC_out_of_range : 1;
 		volatile bool throttle_ADC_mismatch 	: 1;
 		volatile bool watchdog_reset 			: 1; //done
@@ -42,22 +42,44 @@ typedef union {
 } DiagnosticCyclicDataFlags;
 
 typedef struct {
-	volatile uint16_t raw_adc1;
-	volatile uint16_t raw_adc2;
+	volatile uint16_t raw_adc1; // done
+	volatile uint16_t raw_adc2; // done
 	DiagnosticDRDAllFlags flags;
 	DiagnosticCyclicDataFlags cyclic_flags;
 } DiagnosticDRD;
 
 
-
-/*	GLOBAL VARIABLES	*/
-extern DiagnosticDRD g_diagnostics;
-
-
 /*	Function Prototypes	*/
 void DiagnosticTimeSinceBootup();
-void DiagnosticTransmit(DiagnosticDRD* diagnostics, bool from_ISR);
+void DiagnosticTransmit(bool from_ISR);
 
+void DiagnosticSetRawADC1(uint16_t raw_adc1);
+void DiagnosticSetRawADC2(uint16_t raw_adc2);
+void DiagnosticSetMechBrakePressed(bool pressed);
+void DiagnosticSetRegenEnabled(bool enabled);
+void DiagnosticSetThrottleADCOutOfRange(bool out_of_range);
+void DiagnosticSetThrottleADCMismatch(bool mismatch);
+void DiagnosticSetWatchdogReset(bool reset);
+void DiagnosticSetMotorCommFault(bool fault);   
+void DiagnosticSetSpeedTimeout(bool timeout);
+void DiagnosticSetDriveStateTimeout(bool timeout);
+void DiagnosticSetSocTimeout(bool timeout);
+void DiagnosticSetVoltageTimeout(bool timeout);
+void DiagnosticSetCurrentTimeout(bool timeout);
+
+uint16_t DiagnosticGetRawADC1();
+uint16_t DiagnosticGetRawADC2();
+bool DiagnosticGetMechBrakePressed();
+bool DiagnosticGetRegenEnabled();
+bool DiagnosticGetThrottleADCOutOfRange();
+bool DiagnosticGetThrottleADCMismatch();
+bool DiagnosticGetMotorCommFault();
+bool DiagnosticGetSpeedTimeout();
+bool DiagnosticGetDriveStateTimeout();
+bool DiagnosticGetSocTimeout();
+bool DiagnosticGetVoltageTimeout();
+bool DiagnosticGetCurrentTimeout();
+DiagnosticDRD DiagnosticGetAllDiagnostics();
 
 
 #endif /* INC_DIAGNOSTIC_H_ */

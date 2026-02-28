@@ -117,7 +117,7 @@ void TasksDiagnostic(void *argument)
     {
         // Refresh the watchdog timer to prevent reset and transmit diagnostics over CAN
         IwdgAppRefresh(&hiwdg);
-        DiagnosticTransmit(&g_diagnostics, false);
+        DiagnosticTransmit(false);
         osDelay(DEFAULT_TASK_DELAY);
     }
 }

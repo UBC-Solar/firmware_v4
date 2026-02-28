@@ -1,7 +1,7 @@
 /*
  * external_lights.c
  *
- *	@brief   Contains functions to handle front/rear turn signals and brake state.
+ *	@brief   Contains functions to handle front/rear turn signals, hazard lights, and brake state.
  *
  *  Created on: Feb 12, 2025
  *      Author: Martin Wu
@@ -30,6 +30,9 @@ void ExternalLightsStateMachine()
     // Read brake state directly from GPIO pin on DRD
     g_external_lights_braking = (HAL_GPIO_ReadPin(BRK_IN_GPIO_Port, BRK_IN_Pin) == GPIO_PIN_SET);
 
+    // Read hazard switch directly from GPIO pin on DRD
+    bool hazard_on = (HAL_GPIO_ReadPin(HAZARD_GPIO_Port, HAZARD_Pin) == GPIO_PIN_SET);
+
     static ExternalLightsState_t prev_state =
         EXTERNAL_LIGHTS_IDLE_STATE; // keep track of previous state to reset flash counts
     static uint8_t flash_count = 0; // every xth count, the pin flips state, causing flash
@@ -38,7 +41,31 @@ void ExternalLightsStateMachine()
     static bool blts = false;       // back left turn signal
     static bool brts = false;       // back right turn signal
 
-    if (g_external_lights_left_turn_signal)
+    if (hazard_on)
+    {
+        if (prev_state != EXTERNAL_LIGHTS_HAZARD_STATE)
+        {
+            flash_count = 0;
+            flts = false;
+            frts = false;
+            blts = false;
+            brts = false;
+        }
+
+        flash_count++;
+
+        if (flash_count >= EXTERNAL_LIGHTS_FLIP_COUNT)
+        {
+            flts = !flts;
+            frts = !frts;
+            blts = !blts;
+            brts = !brts;
+            flash_count = 0;
+        }
+
+        prev_state = EXTERNAL_LIGHTS_HAZARD_STATE;
+    }
+    else if (g_external_lights_left_turn_signal)
     {
         if (prev_state != EXTERNAL_LIGHTS_LTS_STATE)
         {

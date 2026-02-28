@@ -62,10 +62,10 @@ typedef struct {
     DriveStateFlags flags;
     uint32_t velocity_kmh;
     uint16_t throttle_dac;
-} DriveStateModel;
+} DriveStateCtx;
 
 /* GLOBAL VARIABLES */
-extern volatile DriveStateModel g_drive_state_model;
+extern volatile DriveStateCtx g_drive_state_ctx;
 
 
 /* FUNCTION PROTOTYPES */

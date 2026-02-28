@@ -35,7 +35,7 @@ static uint16_t ReadAdc(ADC_HandleTypeDef* hadc)
     return HAL_ADC_GetValue(hadc);
 }
 
-uint16_t AcceleratorDriverReadThrottle(void)
+uint16_t AccelDriverReadThrottle(void)
 {
     g_last_error = ADC_FAULT_NONE;
 
@@ -51,7 +51,7 @@ uint16_t AcceleratorDriverReadThrottle(void)
 }
 
 /* VALIDATION AND ERROR HANDLING */
-AdcError AdcDriverGetError(void) { return g_last_error; }
+AdcError AccelDriverGetAdcError(void) { return g_last_error; }
 
 static bool ValidateAdcReadings(uint16_t adc1, uint16_t adc2)
 {

@@ -195,7 +195,7 @@ void UpdatePedalFlags(DriveStateModel *model)
     model->flags.brake_on = ReadBrakePin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN);
     SetBrakeLedPin(BRAKE_LED_PORT, BRAKE_LED_PIN, model->flags.brake_on);
 
-    model->throttle_dac = AcceleratorDriverReadThrottle();
+    model->throttle_dac = AccelDriverReadThrottle();
 
     EcoPowerHandler(model);
 }

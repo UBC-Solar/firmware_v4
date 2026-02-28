@@ -1,13 +1,15 @@
+#include "hvc_main.h"
 #include "debug_io.h"
-#include "stm32f1xx_hal.h"
-#include <stdint.h>
+#include "gpio_driver.h"
+#include "main.h"
+#include "stdio.h"
+#include "stm32f1xx_hal_gpio.h"
 
 void hvcMain(void)
 {
-    uint32_t sum = 1;
-    DEBUG_IO_PRINT("test,%d\n\r", sum);
-    DEBUG_IO_PRINT("Hello from hvcMain0!\r\n");
-    DEBUG_IO_PRINT("Hello from hvcMain2!\n\r");
-    uint32_t time = HAL_GetTick();
-    DEBUG_IO_PRINT("Current time: %d ms\n\r", time);
+    DEBUG_IO_PRINT("Hello from hvcMain!\n");
+    printf("Hello from printf!\n");
+
+    GPIO_Read(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin);
+    HAL_GPIO_ReadPin(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin);
 }

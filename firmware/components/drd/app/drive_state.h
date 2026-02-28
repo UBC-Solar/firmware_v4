@@ -64,10 +64,6 @@ typedef struct {
     uint16_t throttle_dac;
 } DriveStateCtx;
 
-/* GLOBAL VARIABLES */
-extern volatile DriveStateCtx g_drive_state_ctx;
-
-
 /* FUNCTION PROTOTYPES */
 
 /**

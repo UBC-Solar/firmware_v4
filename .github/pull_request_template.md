@@ -9,8 +9,9 @@
 - [ ] MDI
 - [ ] TEL
 - [ ] DRD
-- [ ] STR
 - [ ] HVC
+- [ ] MST
+- [ ] STR
 - [ ] CI/CD
 
 ## Testing

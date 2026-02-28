@@ -45,9 +45,11 @@ uint16_t AccelDriverReadThrottle(void);
 AdcError AccelDriverGetAdcError(void);
 
 /**
- * @brief Returns the last ADC error encountered by the accelerator driver.
- * @return The last ADC error.
+ * @brief Reads raw ADC values from both throttle sensors and validates them.
+ * @param adc1 Pointer to store the first ADC value.
+ * @param adc2 Pointer to store the second ADC value.
+ * @return True if read was successful, false otherwise.
  */
-AdcError AccelDriverGetAdcError(void);
+bool AccelDriverReadRaw(uint16_t* adc1, uint16_t* adc2);
 
 #endif /* __ACCEL_DRIVER_H__ */

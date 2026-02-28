@@ -84,7 +84,7 @@ void TasksExternalLights(void* argument)
     for (;;)
     {
         ExternalLightsStateMachine();
-        osDelay(EXTERNAL_LIGHTS_STATE_MACHINE_DELAY);
+        osDelay(EXTERNAL_LIGHTS_STATE_MACHINE_DELAY_MS);
     }
 }
 

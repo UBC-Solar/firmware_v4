@@ -15,14 +15,20 @@
 
 
 /*	Symbolic Constants	*/
-#define EXTERNAL_LIGHTS_STATE_MACHINE_DELAY 50
-#define EXTERNAL_LIGHTS_STATE_PERIOD        650  // period of signal (on -> off -> on)
-#define EXTERNAL_LIGHTS_FLIP_COUNT          ((EXTERNAL_LIGHTS_STATE_PERIOD) / (EXTERNAL_LIGHTS_STATE_MACHINE_DELAY))
+#define EXTERNAL_LIGHTS_STATE_MACHINE_DELAY_MS 50
+#define EXTERNAL_LIGHTS_STATE_PERIOD_MS        650  // period of signal (on -> off -> on)
+#define EXTERNAL_LIGHTS_FLIP_COUNT             ((EXTERNAL_LIGHTS_STATE_PERIOD_MS) / (EXTERNAL_LIGHTS_STATE_MACHINE_DELAY_MS))
 
 /*	Typedefs 	*/
+typedef enum {
+    EXTERNAL_LIGHTS_IDLE_STATE  = 0,
+    EXTERNAL_LIGHTS_LTS_STATE,
+    EXTERNAL_LIGHTS_RTS_STATE,
+    EXTERNAL_LIGHTS_BRAKE_STATE,
+} ExternalLightsState_t;
 
 /*	Function Prototypes	*/
 void ExternalLightsStateMachine();
-void ExternalLightsCANRxHandle(uint32_t can_id, uint8_t* data);
+void ExternalLightsCanRxHandle(uint32_t can_id, uint8_t* data);
 
 #endif /* INC_EXTERNAL_LIGHTS_H_ */

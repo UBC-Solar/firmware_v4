@@ -12,6 +12,7 @@
 
 /*	Includes	*/
 #include "main.h"
+#include <stdbool.h>
 #include <stdint.h>
 
 /*	Function Prototypes	*/
@@ -19,7 +20,7 @@
 /**
  * @brief Drives external light GPIO outputs.
  *
- * Each parameter should be 1 (active) or 0 (inactive).
+ * Each parameter should be true (active) or false (inactive).
  *
  * @param flts Front-left  turn signal (LTS_OUT)
  * @param frts Front-right turn signal (RTS_OUT)
@@ -27,6 +28,6 @@
  * @param brts Rear-right  turn signal (BR_LIGHTS)
  * @param brk  Brake output - active whenever braking (BRK_OUT)
  */
-void ExternalLightsDriverSet(uint8_t flts, uint8_t frts, uint8_t blts, uint8_t brts, uint8_t brk);
+void ExternalLightsDriverSet(bool flts, bool frts, bool blts, bool brts, bool brk);
 
 #endif /* INC_EXTERNAL_LIGHTS_DRIVER_H_ */

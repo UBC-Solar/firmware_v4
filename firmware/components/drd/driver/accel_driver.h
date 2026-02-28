@@ -9,7 +9,7 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 /* ADC CONFIGURATION DEFINES */
-#define ADC_LOWEST_VALID 800
+#define ADC_LOWEST_VALID 1000
 #define ADC_HIGHEST_VALID 1950
 #define ADC_LOWER_DEADZONE 10
 #define ADC_UPPER_DEADZONE 4000
@@ -18,7 +18,7 @@
 /* Throttle range (pedal position mapping) */
 #define ADC_NO_THROTTLE_MAX 630
 #define ADC_FULL_THROTTLE_MIN 1350
-#define MC_DAC_MAX 1023 // 433 for Cascadia
+#define MC_DAC_MAX 1023 // 433 for Cascadia - 1023
 #define MC_DAC_MIN 0
 
 /* ERROR FLAGS */

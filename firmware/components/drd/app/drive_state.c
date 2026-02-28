@@ -258,7 +258,7 @@ void EcoPowerHandler(DriveStateCtx *ctx)
 }
 
 /* CAN MESSAGE RX HANDLERS */
-void VelocityCanMsgHandler(uint8_t* data)
+void DriveStateVelocityCanMsgHandler(uint8_t* data)
 {
     uint32_t rpm = (data[4] >> 3) | ((data[5] & 0x7f) << 5);
     float velocity = (WHEEL_RADIUS * 2.0f * M_PI * rpm) / 60.0f;
@@ -275,7 +275,7 @@ void VelocityCanMsgHandler(uint8_t* data)
     }
 }
 
-void SteeringCanMsgHandler(uint8_t* data)
+void DriveStateSteeringCanMsgHandler(uint8_t* data)
 { // not configured on STR yet regen is for bit 0 and cruise for bit 1
 
     g_drive_state_ctx.flags.regen_on = ((data[0] >> 0) & 0x01);

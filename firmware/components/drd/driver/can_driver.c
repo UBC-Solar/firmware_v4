@@ -131,10 +131,10 @@ void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data)
     switch (msg_id)
     {
     case FRAME0:
-        VelocityCanMsgHandler(data);
+        DriveStateVelocityCanMsgHandler(data);
         break;
     case STR_CAN_MSG_ID:
-        SteeringCanMsgHandler(data);
+        DriveStateSteeringCanMsgHandler(data);
         break;
 
 #ifdef DEBUG

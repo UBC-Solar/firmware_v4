@@ -89,14 +89,14 @@ void DriveStateInterruptHandler(uint16_t toggle);
  *
  * @param data Pointer to CAN message data.
  */
-void VelocityCanMsgHandler(uint8_t* data);
+void DriveStateVelocityCanMsgHandler(uint8_t* data);
 
 /**
  * @brief Handles incoming CAN messages related to steering.
  *
  * @param data Pointer to CAN message data.
  */
-void SteeringCanMsgHandler(uint8_t* data);
+void DriveStateSteeringCanMsgHandler(uint8_t* data);
 
 #ifdef DEBUG
 /**

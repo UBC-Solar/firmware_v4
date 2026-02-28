@@ -29,6 +29,11 @@ void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data);
  * @param can_filter Pointer to CAN filter configuration structure.
  */
 void CanFilterInit(CAN_FilterTypeDef* can_filter);
+/**
+ * @brief Callback for processing received CAN messages.
+ * @param CAN_comms_Rx_msg Pointer to the received CAN message structure.
+ */
+void CanCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg);
 
 /**
  *  CAN Message Header for drive control

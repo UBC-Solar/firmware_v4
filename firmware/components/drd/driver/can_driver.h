@@ -30,11 +30,6 @@ extern const CAN_TxHeaderTypeDef drive_control_header;
 extern const CAN_TxHeaderTypeDef mdu_request_header;
 
 /**
- * @brief Callback for processing received CAN messages.
- * @param CAN_comms_Rx_msg Pointer to the received CAN message structure.
- */
-void CanCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg);
-/**
  * @brief Initializes CAN communication tasks.
  */
 void CanTasksInit();

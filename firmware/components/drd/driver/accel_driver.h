@@ -44,4 +44,10 @@ uint16_t AccelDriverReadThrottle(void);
  */
 AdcError AccelDriverGetAdcError(void);
 
+/**
+ * @brief Returns the last ADC error encountered by the accelerator driver.
+ * @return The last ADC error.
+ */
+AdcError AccelDriverGetAdcError(void);
+
 #endif /* __ACCEL_DRIVER_H__ */

@@ -59,7 +59,7 @@ void ADC1_ProcessReadings(int half) {
 }
 
 /**
- * @brief HAL invokes this callback when the first half of the DMA buffer is filled.
+ * @brief HAL invokes this callback invoked when the first half of the DMA buffer is filled.
  * @param hadc Pointer to the ADC handle that triggered the callback.
  */
 void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc) {

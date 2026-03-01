@@ -9,10 +9,6 @@
 #define ADC_RESOLUTION 4095
 #define ADC_VOLTAGE_REFERENCE 3300000 // in microvolts (3.3V)
 
-ADC_HandleTypeDef *hadc1;
-
-volatile uint16_t adc_buffer[ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT * 2];
-
 /**
  * @brief Raw 12-bit ADC readings, one per channel, in scan order.
  */
@@ -34,6 +30,8 @@ typedef struct {
     uint32_t supp_sense;     
     uint32_t lv_curr_sense;  
 } ADC_Voltages;
+
+extern volatile uint16_t adc_buffer[ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT * 2];
 
 extern ADC_Readings adc1_readings;
 extern ADC_Voltages adc1_voltages;

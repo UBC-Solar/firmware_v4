@@ -23,7 +23,7 @@ void GPIO_Write(GPIO_TypeDef *port, uint16_t pin, GPIO_PinState state) {
 
 /**
  * @brief HAL callback invoked on external interrupt line events.
- * @param GPIO_Pin Pin mask that triggered the EXTI interrupt.
+ * @param GPIO_Pin The pin number that triggered the interrupt (for example, GPIO_PIN_5).
  */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
     GPIO_PinState level;

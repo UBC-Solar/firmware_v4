@@ -388,7 +388,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, GPIO1_Pin|GPIO2_Pin|NEG_CTRL_Pin|ESTOP_LED_Pin
-                          |FAULT_LED_Pin|SUPP_LOW_LED_Pin, GPIO_PIN_RESET);
+                          |FAULT_LED_Pin|SUPP_LOW_LED_Pin|IMD_CTRL_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, POS_CTRL_Pin|LLIM_CTRL_Pin|MOTOR_PC_CTRL_Pin|HLIM_CTRL_Pin
@@ -398,9 +398,9 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOA, DEBUG_LED_Pin|MPPT_CTRL_Pin|DIST_CTRL_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : GPIO1_Pin GPIO2_Pin NEG_CTRL_Pin ESTOP_LED_Pin
-                           FAULT_LED_Pin SUPP_LOW_LED_Pin */
+                           FAULT_LED_Pin SUPP_LOW_LED_Pin IMD_CTRL_Pin */
   GPIO_InitStruct.Pin = GPIO1_Pin|GPIO2_Pin|NEG_CTRL_Pin|ESTOP_LED_Pin
-                          |FAULT_LED_Pin|SUPP_LOW_LED_Pin;
+                          |FAULT_LED_Pin|SUPP_LOW_LED_Pin|IMD_CTRL_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -408,21 +408,27 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pins : IMD_GPIO_IN_Pin ESTOP_Pin DCDC_ACTIVE_Pin HV_CURRENT_ALERT_Pin */
   GPIO_InitStruct.Pin = IMD_GPIO_IN_Pin|ESTOP_Pin|DCDC_ACTIVE_Pin|HV_CURRENT_ALERT_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : MASTERBOARD_FAULT_Pin */
   GPIO_InitStruct.Pin = MASTERBOARD_FAULT_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(MASTERBOARD_FAULT_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : SUPP_ACTIVE_Pin BOOT1_Pin */
-  GPIO_InitStruct.Pin = SUPP_ACTIVE_Pin|BOOT1_Pin;
+  /*Configure GPIO pin : SUPP_ACTIVE_Pin */
+  GPIO_InitStruct.Pin = SUPP_ACTIVE_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(SUPP_ACTIVE_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : BOOT1_Pin */
+  GPIO_InitStruct.Pin = BOOT1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  HAL_GPIO_Init(BOOT1_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : POS_CTRL_Pin LLIM_CTRL_Pin MOTOR_PC_CTRL_Pin HLIM_CTRL_Pin
                            MPPT_PC_CTRL_Pin DISCHARGE_TOGGLE_OFF_Pin FAN_CTRL_Pin */
@@ -440,11 +446,21 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : IMD_CTRL_Pin */
-  GPIO_InitStruct.Pin = IMD_CTRL_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(IMD_CTRL_GPIO_Port, &GPIO_InitStruct);
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 1, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI2_IRQn, 1, 0);
+  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 1, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 1, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 1, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 

@@ -1,8 +1,9 @@
 #include "adc_driver.h"
+#include "uart_driver.h"
 
 static ADC_HandleTypeDef *s_hadc1;
 
-volatile uint16_t adc_buffer[ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT * 2];
+volatile uint32_t adc_buffer[ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT * 2];
 
 ADC_Readings adc1_readings = {0};
 ADC_Voltages adc1_voltages = {0};
@@ -15,6 +16,8 @@ void ADC_Init(ADC_HandleTypeDef *_hadc1) {
     s_hadc1 = _hadc1;
 
     HAL_ADC_Start_DMA(s_hadc1, (uint32_t*)adc_buffer, ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT * 2);
+
+    UART_Printf("ADC Initialized with DMA buffer size: %d\n\r", ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT * 2);
 }
 
 /**
@@ -60,6 +63,8 @@ void ADC1_ProcessReadings(int half) {
             case 4: adc1_voltages.lv_curr_sense = voltage; break;
         }
     }
+
+    UART_Printf("Half: %d, Current Time: %d, Motor Precharge: %lu uV", half, HAL_GetTick(), adc1_voltages.motor_precharge);
 }
 
 /**
@@ -70,6 +75,7 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc) {
     if (hadc == s_hadc1) {
         ADC1_ProcessReadings(0);
     }
+    UART_Printf("Half 1");
 }
 
 /**
@@ -80,4 +86,5 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
     if (hadc == s_hadc1) {
         ADC1_ProcessReadings(1);
     }
+    UART_Printf("Half 2");
 }

@@ -31,7 +31,7 @@ typedef struct {
     uint32_t lv_curr_sense;  
 } ADC_Voltages;
 
-extern volatile uint16_t adc_buffer[ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT * 2];
+extern volatile uint32_t adc_buffer[ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT * 2];
 
 extern ADC_Readings adc1_readings;
 extern ADC_Voltages adc1_voltages;

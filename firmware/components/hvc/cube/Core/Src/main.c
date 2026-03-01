@@ -24,6 +24,7 @@
 
 #include "hvc_main.h"
 #include "uart_driver.h"
+#include "adc_driver.h"
 
 /* USER CODE END Includes */
 
@@ -117,6 +118,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   UART_Init(&huart2);
+  ADC_Init(&hadc1);
 
   // set fAULT led high
   HAL_GPIO_WritePin(FAULT_LED_GPIO_Port, FAULT_LED_Pin, GPIO_PIN_SET);
@@ -134,16 +136,16 @@ int main(void)
       hvcMain();
 
       // send message over UART
-      const char *message = "Hello from hvcMain1!\n";
-      UART_Transmit(message);
+      //const char *message = "Hello from hvcMain1!\n";
+      //UART_Transmit(message);
 
-      UART_Printf("Current time: %d ms\n", HAL_GetTick());
+      //UART_Printf("Current time: %d ms\n", HAL_GetTick());
 
       // pulse fault pin
-      HAL_GPIO_WritePin(FAULT_LED_GPIO_Port, FAULT_LED_Pin, GPIO_PIN_RESET);
-      HAL_Delay(1000);
-      HAL_GPIO_WritePin(FAULT_LED_GPIO_Port, FAULT_LED_Pin, GPIO_PIN_SET);
-      HAL_Delay(1000);
+      //HAL_GPIO_WritePin(FAULT_LED_GPIO_Port, FAULT_LED_Pin, GPIO_PIN_RESET);
+      //HAL_Delay(1000);
+      //HAL_GPIO_WritePin(FAULT_LED_GPIO_Port, FAULT_LED_Pin, GPIO_PIN_SET);
+      //HAL_Delay(1000);
     }
   /* USER CODE END 3 */
 }

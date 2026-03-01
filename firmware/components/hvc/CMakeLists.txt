@@ -48,6 +48,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/app/hvc_main.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/uart_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/debug_io/debug_io.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/adc_driver.c
 )
 
 # Add include paths

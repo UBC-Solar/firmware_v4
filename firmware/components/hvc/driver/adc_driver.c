@@ -1,5 +1,9 @@
 #include "adc_driver.h"
 
+static ADC_HandleTypeDef *s_hadc1;
+
+volatile uint16_t adc_buffer[ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT * 2];
+
 ADC_Readings adc1_readings = {0};
 ADC_Voltages adc1_voltages = {0};
 
@@ -8,9 +12,9 @@ ADC_Voltages adc1_voltages = {0};
  * @param _hadc1 Pointer to the ADC handle configured in CubeMX.
  */
 void ADC_Init(ADC_HandleTypeDef *_hadc1) {
-    hadc1 = _hadc1;
+    s_hadc1 = _hadc1;
 
-    HAL_ADC_Start_DMA(hadc1, (uint32_t*)adc_buffer, ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT * 2);
+    HAL_ADC_Start_DMA(s_hadc1, (uint32_t*)adc_buffer, ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT * 2);
 }
 
 /**
@@ -19,8 +23,8 @@ void ADC_Init(ADC_HandleTypeDef *_hadc1) {
  * @return None
  */
 void ADC1_ProcessReadings(int half) {
-    uint32_t sum[ADC1_NUM_CHANNELS];
-    uint16_t results[ADC1_NUM_CHANNELS];
+    uint32_t sum[ADC1_NUM_CHANNELS] = {0};
+    uint16_t results[ADC1_NUM_CHANNELS] = {0};
 
     // Sum readings
     for (int sample = 0; sample < ADC1_SAMPLE_COUNT; sample++) {
@@ -63,7 +67,7 @@ void ADC1_ProcessReadings(int half) {
  * @param hadc Pointer to the ADC handle that triggered the callback.
  */
 void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc) {
-    if (hadc == hadc1) {
+    if (hadc == s_hadc1) {
         ADC1_ProcessReadings(0);
     }
 }
@@ -73,7 +77,7 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc) {
  * @param hadc Pointer to the ADC handle that triggered the callback.
  */
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
-    if (hadc == hadc1) {
+    if (hadc == s_hadc1) {
         ADC1_ProcessReadings(1);
     }
 }

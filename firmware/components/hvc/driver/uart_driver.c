@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+UART_HandleTypeDef *huart;
+
 void UART_Init(UART_HandleTypeDef *_huart){
     huart = _huart;
 }

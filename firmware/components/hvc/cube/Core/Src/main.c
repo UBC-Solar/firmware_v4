@@ -128,10 +128,10 @@ int main(void)
       hvcMain();
 
       // send message over UART
-      const char *message = "Hello from hvcMain1!\n";
-      UART_Transmit(message);
+      //const char *message = "Hello from hvcMain1!\n";
+      //UART_Transmit(message);
 
-      UART_Printf("Current time: %d ms\n", HAL_GetTick());
+      //UART_Printf("Current time: %d ms\n", HAL_GetTick());
 
       // pulse fault pin
       HAL_GPIO_WritePin(FAULT_LED_GPIO_Port, FAULT_LED_Pin, GPIO_PIN_RESET);

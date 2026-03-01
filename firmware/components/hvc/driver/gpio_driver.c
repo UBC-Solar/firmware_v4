@@ -1,4 +1,5 @@
 #include "gpio_driver.h"
+#include "uart_driver.h"
 #include "main.h"
 
 /**
@@ -43,8 +44,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
         case IMD_GPIO_IN_Pin:
             level = HAL_GPIO_ReadPin(IMD_GPIO_IN_GPIO_Port, IMD_GPIO_IN_Pin);
             if (level == GPIO_PIN_SET) {
+                UART_Printf("High!\n\r");
                 // IMD_GPIO_IN is high
             } else {
+                UART_Printf("Low!\n\r");
                 // IMD_GPIO_IN is low
             }
             break;

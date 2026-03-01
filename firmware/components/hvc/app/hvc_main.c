@@ -7,8 +7,8 @@
 
 void hvcMain(void)
 {
-    DEBUG_IO_PRINT("Hello from hvcMain!\n");
-    printf("Hello from printf!\n");
+    //DEBUG_IO_PRINT("Hello from hvcMain!\n");
+    //printf("Hello from printf!\n");
 
     GPIO_Read(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin);
     HAL_GPIO_ReadPin(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin);

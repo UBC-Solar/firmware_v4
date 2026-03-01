@@ -31,6 +31,7 @@
 
 #include "hvc_main.h"
 #include "uart_driver.h"
+#include "uart_driver.h"
 
 /* USER CODE END Includes */
 
@@ -102,6 +103,11 @@ int main(void)
   MX_TIM4_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+
+  UART_Init(&huart2);
+
+  // set fAULT led high
+  HAL_GPIO_WritePin(FAULT_LED_GPIO_Port, FAULT_LED_Pin, GPIO_PIN_SET);
 
   UART_Init(&huart2);
 

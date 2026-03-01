@@ -1,3 +1,5 @@
+#pragma once
+
 #include "stm32f1xx_hal.h"
 #include "stm32f1xx_hal_adc.h"
 
@@ -32,6 +34,9 @@ typedef struct {
     uint32_t supp_sense;     
     uint32_t lv_curr_sense;  
 } ADC_Voltages;
+
+extern ADC_Readings adc1_readings;
+extern ADC_Voltages adc1_voltages;
 
 void ADC_Init(ADC_HandleTypeDef *_hadc1);
 

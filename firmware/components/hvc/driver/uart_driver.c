@@ -8,14 +8,15 @@ UART_HandleTypeDef *huart;
 
 volatile uint8_t uart_tx_buffer[256];
 
-void UART_Init(UART_HandleTypeDef *_huart){
+void UART_Init(UART_HandleTypeDef *_huart) {
     huart = _huart;
 }
 
-void UART_Transmit(const char *message){
-    while (HAL_UART_GetState(huart) != HAL_UART_STATE_READY) {
-        // Block until UART is ready
-    }
+void UART_Transmit(const char *message) {
+    if (HAL_UART_GetState(huart) != HAL_UART_STATE_READY)
+        HAL_Delay(1);
+    if (HAL_UART_GetState(huart) != HAL_UART_STATE_READY)
+        return;
 
     size_t len = strlen(message);
     if (len >= sizeof(uart_tx_buffer)) {
@@ -26,10 +27,11 @@ void UART_Transmit(const char *message){
     HAL_UART_Transmit_DMA(huart, (uint8_t *)uart_tx_buffer, len);
 }
 
-void UART_Printf(const char *fmt, ...){
-    while (HAL_UART_GetState(huart) != HAL_UART_STATE_READY) {
-        // Block until UART is ready
-    }
+void UART_Printf(const char *fmt, ...) {
+    if (HAL_UART_GetState(huart) != HAL_UART_STATE_READY)
+        HAL_Delay(1);
+    if (HAL_UART_GetState(huart) != HAL_UART_STATE_READY)
+        return;
 
     char message[256];
     va_list args;

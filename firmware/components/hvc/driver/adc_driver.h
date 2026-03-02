@@ -2,6 +2,7 @@
 
 #include "stm32f1xx_hal.h"
 #include "stm32f1xx_hal_adc.h"
+#include "stm32f1xx_hal_tim.h"
 
 #define ADC1_NUM_CHANNELS 5
 #define ADC1_SAMPLE_COUNT 100
@@ -36,6 +37,6 @@ extern volatile uint32_t adc_buffer[ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT * 2];
 extern ADC_Readings adc1_readings;
 extern ADC_Voltages adc1_voltages;
 
-void ADC_Init(ADC_HandleTypeDef *_hadc1);
+void ADC_Init(ADC_HandleTypeDef *_hadc1, TIM_HandleTypeDef *_htim3);
 
 void ADC1_ProcessReadings(int half);

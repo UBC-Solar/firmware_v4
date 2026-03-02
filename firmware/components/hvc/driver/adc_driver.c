@@ -1,18 +1,12 @@
 #include "adc_driver.h"
 #include "uart_driver.h"
 
-#include <string.h>
-#include <stdio.h>
-
 static ADC_HandleTypeDef *s_hadc1;
 
 volatile uint16_t adc_buffer[ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT * 2];
 
 ADC_Readings adc1_readings = {0};
 ADC_Voltages adc1_voltages = {0};
-
-int callback_count = 0;
-int last_half = 0;
 
 /**
  * @brief Initialize ADC driver and start DMA in circular mode.
@@ -51,7 +45,7 @@ void ADC1_ProcessReadings(int half) {
 
     // Store readings and voltages
     for (int channel = 0; channel < ADC1_NUM_CHANNELS; channel++) {
-        uint32_t voltage = (uint32_t)results[channel] * ADC_VOLTAGE_REFERENCE / ADC_RESOLUTION; // Convert to microvolts
+        uint16_t voltage = (uint32_t)results[channel] * ADC_VOLTAGE_REFERENCE / ADC_RESOLUTION; // Convert to millivolts
         switch (channel) {
             case 0:
                 adc1_readings.dcdc_thermistor = results[channel];
@@ -79,15 +73,6 @@ void ADC1_ProcessReadings(int half) {
             break;
         }
     }
-
-    //UART_Printf("Half: %d, Current Time: %d, Motor Precharge: %lu uV\n\r", half, HAL_GetTick(), adc1_voltages.motor_precharge);
-
-    // uart transmit over uart manually
-    //char message[128];
-    //snprintf(message, sizeof(message), "Half: %d, Current Time: %lu, Motor Precharge: %lu uV\n\r", 0, HAL_GetTick(), adc1_voltages.motor_precharge);
-    //UART_Transmit(message);
-
-    callback_count++;
 }
 
 /**
@@ -96,7 +81,6 @@ void ADC1_ProcessReadings(int half) {
  */
 void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc) {
     if (hadc == s_hadc1) {
-        last_half = 0;
         ADC1_ProcessReadings(0);
     }
 }
@@ -107,7 +91,6 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc) {
  */
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
     if (hadc == s_hadc1) {
-        last_half = 1;
         ADC1_ProcessReadings(1);
     }
 }

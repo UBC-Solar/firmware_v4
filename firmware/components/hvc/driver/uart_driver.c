@@ -13,10 +13,9 @@ void UART_Init(UART_HandleTypeDef *_huart) {
 }
 
 void UART_Transmit(const char *message) {
-    if (HAL_UART_GetState(huart) != HAL_UART_STATE_READY)
-        HAL_Delay(1);
-    if (HAL_UART_GetState(huart) != HAL_UART_STATE_READY)
-        return;
+    while (HAL_UART_GetState(huart) != HAL_UART_STATE_READY) {
+        // Block until UART is ready
+    }
 
     size_t len = strlen(message);
     if (len >= sizeof(uart_tx_buffer)) {
@@ -28,10 +27,9 @@ void UART_Transmit(const char *message) {
 }
 
 void UART_Printf(const char *fmt, ...) {
-    if (HAL_UART_GetState(huart) != HAL_UART_STATE_READY)
-        HAL_Delay(1);
-    if (HAL_UART_GetState(huart) != HAL_UART_STATE_READY)
-        return;
+    while (HAL_UART_GetState(huart) != HAL_UART_STATE_READY) {
+        // Block until UART is ready
+    }
 
     char message[256];
     va_list args;

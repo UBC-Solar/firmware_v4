@@ -12,8 +12,10 @@ ADC_Voltages adc1_voltages = {0};
  * @brief Initialize ADC driver and start DMA in circular mode.
  * @param _hadc1 Pointer to the ADC handle configured in CubeMX.
  */
-void ADC_Init(ADC_HandleTypeDef *_hadc1) {
+void ADC_Init(ADC_HandleTypeDef *_hadc1, TIM_HandleTypeDef *_htim3) {
     s_hadc1 = _hadc1;
+
+    HAL_TIM_Base_Start(_htim3); // TIM3 triggered ADC conversion
 
     HAL_ADC_Start_DMA(s_hadc1, (uint32_t*)adc_buffer, ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT * 2);
 
@@ -64,7 +66,7 @@ void ADC1_ProcessReadings(int half) {
         }
     }
 
-    UART_Printf("Half: %d, Current Time: %d, Motor Precharge: %lu uV", half, HAL_GetTick(), adc1_voltages.motor_precharge);
+    UART_Printf("Half: %d, Current Time: %d, Motor Precharge: %lu uV\n\r", half, HAL_GetTick(), adc1_voltages.motor_precharge);
 }
 
 /**
@@ -75,7 +77,7 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc) {
     if (hadc == s_hadc1) {
         ADC1_ProcessReadings(0);
     }
-    UART_Printf("Half 1");
+    UART_Printf("Half 1\n\r");
 }
 
 /**
@@ -86,5 +88,5 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
     if (hadc == s_hadc1) {
         ADC1_ProcessReadings(1);
     }
-    UART_Printf("Half 2");
+    UART_Printf("Half 2\n\r");
 }

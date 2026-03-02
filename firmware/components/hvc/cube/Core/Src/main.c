@@ -125,11 +125,6 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   UART_Init(&huart2);
-
-  // set fAULT led high
-  HAL_GPIO_WritePin(FAULT_LED_GPIO_Port, FAULT_LED_Pin, GPIO_PIN_SET);
-
-  UART_Init(&huart2);
   ADC_Init(&hadc1);
 
   // set fAULT led high

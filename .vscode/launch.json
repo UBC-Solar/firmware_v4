@@ -1,6 +1,7 @@
 {
   "version": "0.2.0",
   "configurations": [
+  
     {
       "name": "J-Link + SWO (active CMake target)",
       "type": "cortex-debug",

@@ -32,6 +32,8 @@
 #include "hvc_main.h"
 #include "uart_driver.h"
 #include "adc_driver.h"
+#include <string.h>
+#include <stdio.h>
 
 /* USER CODE END Includes */
 
@@ -120,11 +122,19 @@ int main(void)
 
       hvcMain();
 
+      //UART_Printf("Callback count: %d, current time: %lu, Motor Precharge: %lu uV\n\r", callback_count, HAL_GetTick(), adc1_voltages.motor_precharge);
+
+      // if half = 0, get the first 16 values of adc_buffer, if half = 1, get the 500 to 515 values of adc_buffer
+      uint16_t adc_buffer_values[16];
+      int half_offset = last_half * ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT;
+      memcpy(adc_buffer_values, &adc_buffer[half_offset], 16 * sizeof(uint16_t));
+      UART_Printf("Time: %lu, TIM3: %lu, Half: %d, First 16 ADC Buffer Values: %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu\n\r", HAL_GetTick(), __HAL_TIM_GET_COUNTER(&htim3), last_half, adc_buffer_values[0], adc_buffer_values[1], adc_buffer_values[2], adc_buffer_values[3], adc_buffer_values[4], adc_buffer_values[5], adc_buffer_values[6], adc_buffer_values[7], adc_buffer_values[8], adc_buffer_values[9], adc_buffer_values[10], adc_buffer_values[11], adc_buffer_values[12], adc_buffer_values[13], adc_buffer_values[14], adc_buffer_values[15]);
+
       // pulse fault pin
-      HAL_GPIO_WritePin(FAULT_LED_GPIO_Port, FAULT_LED_Pin, GPIO_PIN_RESET);
-      HAL_Delay(1000);
-      HAL_GPIO_WritePin(FAULT_LED_GPIO_Port, FAULT_LED_Pin, GPIO_PIN_SET);
-      HAL_Delay(1000);
+      //HAL_GPIO_WritePin(FAULT_LED_GPIO_Port, FAULT_LED_Pin, GPIO_PIN_RESET);
+      //HAL_Delay(1000);
+      //HAL_GPIO_WritePin(FAULT_LED_GPIO_Port, FAULT_LED_Pin, GPIO_PIN_SET);
+      //HAL_Delay(1000);
     }
   /* USER CODE END 3 */
 }

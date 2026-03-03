@@ -1,8 +1,17 @@
+/**
+ * @file    accel_driver.c
+ * @brief   Accelerator ADC driver implementation for UBC Solar DRD board.
+ *
+ * Reads accelerator ADC channels, validates pedal sensor data, and converts
+ * valid input into a throttle DAC command.
+ */
+
+/* INCLUDES */
 #include "accel_driver.h"
 #include "gpio_driver.h"
 #include <stdlib.h>
 
-/* PRIVATE VARIABLES */
+/* GLOBAL VARIABLES */
 static AdcError g_last_error = ADC_FAULT_NONE;
 
 /* PRIVATE FUNCTION DECLARATIONS */

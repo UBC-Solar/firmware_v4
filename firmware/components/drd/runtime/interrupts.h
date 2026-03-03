@@ -1,13 +1,9 @@
 /**
  * @file    interrupts.h
- * @brief   Interrupt Service Routine (ISR) declarations for DRD board hardware events
+ * @brief   Interrupt Service Routine (ISR) declarations for hardware events
  *
- * This header declares all hardware interrupt service routine prototypes for this board component
- * of UBC Solar firmware. ISRs provide immediate response to hardware events and peripherals that
- * require real-time handling with minimal latency.
- *
- * @author  UBC Solar
- * @date    Feb 4 2026
+ * This header declares all hardware interrupt service routine prototypes across
+ * all of UBC Solar's boards.
  */
 
 #ifndef __INTERRUPTS_H__

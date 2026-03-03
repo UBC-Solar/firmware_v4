@@ -11,9 +11,6 @@
  *  - TasksDriveState
  *  - TasksCalculateSoc
  *  - TasksLcdUpdate
- *
- * @author  UBC Solar
- * @date    Feb 4 2026
  */
 
 #ifndef __TASKS_H__

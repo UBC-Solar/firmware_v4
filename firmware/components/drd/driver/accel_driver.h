@@ -1,3 +1,11 @@
+/**
+ * @file    accel_driver.h
+ * @brief   Accelerator ADC driver interface for UBC Solar DRD board.
+ *
+ * Declares accelerator sensor limits, fault flags, and public APIs for
+ * throttle reading and ADC fault reporting.
+ */
+
 #ifndef __ACCEL_DRIVER_H__
 #define __ACCEL_DRIVER_H__
 

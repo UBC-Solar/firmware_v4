@@ -3,19 +3,17 @@
  * @brief   Hardware driver declarations for DRD board peripherals
  *
  * This header declares the interface for hardware drivers for this board component of UBC
- * Solar firmware. Drivers provide abstraction layers between high-level application code and
- * low-level hardware peripherals, enabling consistent interfaces and easier code maintenance.
- *
- * @author  UBC Solar
- * @date    Feb 7 2026
+ * Solar firmware.
  */
 
 #ifndef __DRIVERS_H__
 #define __DRIVERS_H__
 
 /* INCLUDES */
-#include <stdlib.h>
-#include "adc.h"
+#include <stdint.h>
+
+#include "main.h"
+#include "stm32f101x6.h"
 
 /* DEFINES */
 #define BRAKE_INPUT_PIN BRK_IN_Pin

@@ -3,11 +3,7 @@
  * @brief   Hardware driver implementations for DRD board peripherals
  *
  * This file contains the implementation of all hardware drivers for this board component of UBC
- * Solar firmware. Drivers provide abstraction layers between high-level application code and
- * low-level hardware peripherals, enabling consistent interfaces and easier code maintenance.
- *
- * @author  UBC Solar
- * @date    Feb 7 2026
+ * Solar firmware.
  */
 
 /* INCLUDES */

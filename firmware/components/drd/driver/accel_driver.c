@@ -111,6 +111,9 @@ static uint16_t ConvertToDac(uint16_t adc)
 
 static uint16_t NormalizeToDac(uint16_t adc1, uint16_t adc2)
 {
+    #if !ADC_2_ACTIVE
+    (void)adc2; // unused adc value
+    #endif
 
     if (adc1 <= ADC_LOWEST_VALID)
     {
@@ -121,20 +124,6 @@ static uint16_t NormalizeToDac(uint16_t adc1, uint16_t adc2)
     {
         return MC_DAC_MAX;
     }
-
-    #if ADC_2_ACTIVE
-    if (adc2 <= ADC_LOWEST_VALID)
-    {
-        return MC_DAC_MIN;
-    }
-
-    if (adc2 >= ADC_HIGHEST_VALID)
-    {
-        return MC_DAC_MAX;
-    }
-    #else
-    (void)adc2; // unused adc value
-    #endif
 
     // Linear interpolation from ADC range to DAC range
     uint32_t range = (uint32_t)(ADC_HIGHEST_VALID - ADC_LOWEST_VALID);

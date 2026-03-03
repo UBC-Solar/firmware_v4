@@ -16,7 +16,6 @@
 /* INCLUDES */
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdlib.h>
 
 /* DRIVE STATE DEFINES */
 #define MC_DAC_MAX 1023 // Note: This gets capped by MDI to 920 anyways for safety

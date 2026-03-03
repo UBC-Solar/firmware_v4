@@ -11,7 +11,6 @@
 
 /* INCLUDES */
 #include "can.h"
-#include "stm32f1xx_hal_can.h"
 
 /* DEFINES */
 #define MOTOR_DRIVE_CONTROL_ADDRESS 0x401

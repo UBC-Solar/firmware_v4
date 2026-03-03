@@ -9,6 +9,7 @@
 /* INCLUDES */
 #include "accel_driver.h"
 #include "gpio_driver.h"
+#include "adc.h"
 #include <stdlib.h>
 
 /* GLOBAL VARIABLES */

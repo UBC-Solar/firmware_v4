@@ -13,7 +13,6 @@
 #include <stdint.h>
 
 #include "main.h"
-#include "stm32f101x6.h"
 
 /* DEFINES */
 #define BRAKE_INPUT_PIN BRK_IN_Pin

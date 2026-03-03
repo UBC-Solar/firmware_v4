@@ -11,6 +11,9 @@
 #include "adc.h"
 #include <stdlib.h>
 
+/* DEFINES */
+#define ADC_2_ACTIVE 0 // activate if adc2 is used
+
 /* GLOBAL VARIABLES */
 static AdcError g_last_error = ADC_FAULT_NONE;
 
@@ -49,7 +52,11 @@ uint16_t AccelDriverReadThrottle(void)
     g_last_error = ADC_FAULT_NONE;
 
     uint16_t adc1 = ReadAdc(&hadc1);
-    uint16_t adc2 = ReadAdc(&hadc2);
+    uint16_t adc2 = 0;
+
+    #if ADC_2_ACTIVE
+    adc2 = ReadAdc(&hadc2);
+    #endif
 
     if (!ValidateAdcReadings(adc1, adc2))
     {
@@ -73,6 +80,7 @@ static bool ValidateAdcReadings(uint16_t adc1, uint16_t adc2)
         return false;
     }
 
+    #if ADC_2_ACTIVE
     // Check sensor 2 is in valid range
     if (adc2 < ADC_LOWER_DEADZONE || adc2 > ADC_UPPER_DEADZONE)
     {
@@ -86,6 +94,7 @@ static bool ValidateAdcReadings(uint16_t adc1, uint16_t adc2)
         g_last_error |= ADC_ERROR_DISAGREEMENT;
         return false;
     }
+    #endif
 
     return true;
 }
@@ -102,7 +111,6 @@ static uint16_t ConvertToDac(uint16_t adc)
 
 static uint16_t NormalizeToDac(uint16_t adc1, uint16_t adc2)
 {
-    (void)adc2; // unused adc value
 
     if (adc1 <= ADC_LOWEST_VALID)
     {
@@ -111,8 +119,22 @@ static uint16_t NormalizeToDac(uint16_t adc1, uint16_t adc2)
 
     if (adc1 >= ADC_HIGHEST_VALID)
     {
-        return MC_DAC_MAX; // do the same here use MC_DAC_MIN
+        return MC_DAC_MAX;
     }
+
+    #if ADC_2_ACTIVE
+    if (adc2 <= ADC_LOWEST_VALID)
+    {
+        return MC_DAC_MIN;
+    }
+
+    if (adc2 >= ADC_HIGHEST_VALID)
+    {
+        return MC_DAC_MAX;
+    }
+    #else
+    (void)adc2; // unused adc value
+    #endif
 
     // Linear interpolation from ADC range to DAC range
     uint32_t range = (uint32_t)(ADC_HIGHEST_VALID - ADC_LOWEST_VALID);

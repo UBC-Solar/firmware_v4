@@ -147,7 +147,7 @@ void DiagnosticTransmit(bool from_ISR)
     msg.data[2] = (diagnostics.raw_adc2 & 0xFF);
     msg.data[3] = (diagnostics.raw_adc2 >> 8);
     msg.data[4] = diagnostics.flags.all_flags;
-    msg.data[5] = g_drive_state_model.state & 0xFF;
+    msg.data[5] = DriveStateGetDriveState() & 0xFF;
     msg.data[6] = diagnostics.cyclic_flags.cyclic_data_all_flags;
     msg.data[7] = (uint8_t)(SocGetSoc() * 100.0f);
 

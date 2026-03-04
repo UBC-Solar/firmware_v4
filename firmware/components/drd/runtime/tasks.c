@@ -5,15 +5,6 @@
  * This file contains the implementation of all FreeRTOS tasks for this board component of UBC Solar
  * firmware. Each task represents a concurrent execution thread that runs indefinitely within the
  * real-time operating system.
- *
- * Tasks defined here include the following boards and respective task:
- * - DRD
- *  - TasksDriveState
- *  - TasksCalculateSoc
- *  - TasksLcdUpdate
- *
- * @author  UBC Solar
- * @date    Feb 4 2026
  */
 
 /* INCLUDES */
@@ -23,7 +14,6 @@
 #include "lcd_app.h"
 #include "debug_io.h"
 #include "cyclic_data_handler.h"
-#include "gpio_driver.h"
 #include "spi.h"
 #include "diagnostic.h"
 
@@ -122,3 +112,7 @@ void TasksDiagnostic(void *argument)
     }
 }
 
+/* CAN COMMUNICATIONS TASK */
+void TasksCanInit(void) {
+    CanTasksInit();
+}

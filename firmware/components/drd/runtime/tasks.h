@@ -5,15 +5,6 @@
  * This header declares all FreeRTOS task prototypes for this board component of UBC Solar
  * firmware. Each task represents a concurrent execution thread that runs indefinitely within the
  * real-time operating system.
- *
- * Tasks defined here include the following boards and respective task:
- * - DRD
- *  - TasksDriveState
- *  - TasksCalculateSoc
- *  - TasksLcdUpdate
- *
- * @author  UBC Solar
- * @date    Feb 4 2026
  */
 
 #ifndef __TASKS_H__
@@ -39,6 +30,7 @@ extern osEventFlagsId_t calculate_soc_flagHandle;
 #include "cmsis_os2.h"
 #include "drive_state.h"
 #include "lcd_app.h"
+#include "can_app.h"
 #include "soc.h"
 
 /* DEFINES */
@@ -83,11 +75,12 @@ void TasksDiagnostic(void *argument);
 void TasksTimeSinceStartup(void *argument);
 
 /**
- * @brief GPIO external interrupt callback handler.
+ * @brief Initializes DRD CAN communications.
  *
- * Handles external GPIO interrupts and dispatches to appropriate handlers.
- * @param GPIO_Pin The pin number that triggered the interrupt.
+ * Configures CAN filters and registers the RX callback path, then initializes
+ * the CAN communications layer so CAN RX/TX handling is ready before runtime
+ * tasks begin normal operation.
  */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
+void TasksCanInit(void);
 
 #endif //__TASKS_H__

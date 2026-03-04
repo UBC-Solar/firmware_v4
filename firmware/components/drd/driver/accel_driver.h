@@ -1,3 +1,11 @@
+/**
+ * @file    accel_driver.h
+ * @brief   Accelerator ADC driver interface for UBC Solar DRD board.
+ *
+ * Declares accelerator sensor limits, fault flags, and public APIs for
+ * throttle reading and ADC fault reporting.
+ */
+
 #ifndef __ACCEL_DRIVER_H__
 #define __ACCEL_DRIVER_H__
 
@@ -9,7 +17,7 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 /* ADC CONFIGURATION DEFINES */
-#define ADC_LOWEST_VALID 800
+#define ADC_LOWEST_VALID 1000
 #define ADC_HIGHEST_VALID 1950
 #define ADC_LOWER_DEADZONE 10
 #define ADC_UPPER_DEADZONE 4000
@@ -18,7 +26,7 @@
 /* Throttle range (pedal position mapping) */
 #define ADC_NO_THROTTLE_MAX 630
 #define ADC_FULL_THROTTLE_MIN 1350
-#define MC_DAC_MAX 1023 // 433 for Cascadia
+#define MC_DAC_MAX 1023 // 433 for Cascadia - 1023
 #define MC_DAC_MIN 0
 
 /* ERROR FLAGS */
@@ -36,20 +44,12 @@ typedef enum
  * @brief Reads and returns the current throttle value from the accelerator.
  * @return Throttle value as a 16-bit unsigned integer.
  */
-uint16_t AcceleratorDriverReadThrottle(void);
+uint16_t AccelDriverReadThrottle(void);
 
 /**
  * @brief Returns the last ADC error encountered by the accelerator driver.
  * @return The last ADC error.
  */
-AdcError AdcDriverGetError(void);
-
-/**
- * @brief Reads raw ADC values for both accelerator channels.
- * @param adc1 Pointer to store the first ADC value.
- * @param adc2 Pointer to store the second ADC value.
- * @return True if read was successful, false otherwise.
- */
-bool AdcDriverReadRaw(uint16_t* adc1, uint16_t* adc2);
+AdcError AccelDriverGetAdcError(void);
 
 #endif /* __ACCEL_DRIVER_H__ */

@@ -4,9 +4,6 @@
  *
  * This header declares the public API for the SOC estimation module, which uses an Extended Kalman Filter (EKF)
  * to estimate battery state-of-charge and related parameters based on voltage and current measurements.
- *
- * @author  UBC Solar
- * @date    Feb 4 2026
  */
 
 #ifndef __SOC_H__

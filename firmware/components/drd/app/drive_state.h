@@ -16,7 +16,6 @@
 /* INCLUDES */
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdlib.h>
 
 /* DRIVE STATE DEFINES */
 #define MC_DAC_MAX 1023 // Note: This gets capped by MDI to 920 anyways for safety
@@ -62,11 +61,7 @@ typedef struct {
     DriveStateFlags flags;
     uint32_t velocity_kmh;
     uint16_t throttle_dac;
-} DriveStateModel;
-
-/* GLOBAL VARIABLES */
-extern volatile DriveStateModel g_drive_state_model;
-
+} DriveStateCtx;
 
 /* FUNCTION PROTOTYPES */
 
@@ -89,14 +84,14 @@ void DriveStateInterruptHandler(uint16_t toggle);
  *
  * @param data Pointer to CAN message data.
  */
-void VelocityCanMsgHandler(uint8_t* data);
+void DriveStateVelocityCanMsgHandler(uint8_t* data);
 
 /**
  * @brief Handles incoming CAN messages related to steering.
  *
  * @param data Pointer to CAN message data.
  */
-void SteeringCanMsgHandler(uint8_t* data);
+void DriveStateSteeringCanMsgHandler(uint8_t* data);
 
 #ifdef DEBUG
 /**
@@ -105,6 +100,12 @@ void SteeringCanMsgHandler(uint8_t* data);
  * @param data Pointer to CAN message data.
  */
 void StateRequestCanMsgHandler(uint8_t* data);
+
+/**
+ * @brief Getter function for retrieving the current drive state.
+ * @return The current drive state.
+ */
+DriveStateStates DriveStateGetDriveState(void);
 #endif
 
 #endif /* __DRIVE_STATE_H_ */

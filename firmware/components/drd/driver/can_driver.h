@@ -4,17 +4,15 @@
  *
  * This header declares CAN bus communication functions and constants for the DRD board.
  * It provides prototypes for CAN message handling, filter configuration, and defines CAN message IDs and sizes.
- *
- * @author  UBC Solar
- * @date    Feb 4 2026
  */
 
 #ifndef __CAN_DRIVER_H___
 #define __CAN_DRIVER_H___
 
+/* INCLUDES */
 #include "can.h"
-#include "CAN_comms.h"
 
+/* DEFINES */
 #define MOTOR_DRIVE_CONTROL_ADDRESS 0x401
 #define DRIVE_COMMAND_SIZE 5
 
@@ -38,14 +36,12 @@ extern const CAN_TxHeaderTypeDef mdu_request_header;
 extern const CAN_TxHeaderTypeDef drd_diagnostic_header;
 extern const CAN_TxHeaderTypeDef time_since_bootup_can_header;
 
+/* FUNCTION PROTOTYPES */
 /**
- * @brief Callback for processing received CAN messages.
- * @param CAN_comms_Rx_msg Pointer to the received CAN message structure.
+ * @brief Initializes CAN hardware filters for message acceptance.
+ *
+ * @param can_filter Pointer to CAN filter configuration structure.
  */
-void CanCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg);
-/**
- * @brief Initializes CAN communication tasks.
- */
-void CanTasksInit();
+void CanFilterInit(CAN_FilterTypeDef* can_filter);
 
 #endif /* __CAN_DRIVER_H___ */

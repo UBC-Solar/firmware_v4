@@ -30,7 +30,6 @@
 /* USER CODE BEGIN Includes */
 
 #include "hvc_main.h"
-#include "uart_driver.h"
 
 /* USER CODE END Includes */
 
@@ -101,12 +100,10 @@ int main(void)
   MX_I2C1_Init();
   MX_TIM4_Init();
   MX_USART2_UART_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
-  UART_Init(&huart2);
-
-  // set fAULT led high
-  HAL_GPIO_WritePin(FAULT_LED_GPIO_Port, FAULT_LED_Pin, GPIO_PIN_SET);
+  HVC_Init(&huart2, &hadc1, &htim3);
 
   /* USER CODE END 2 */
 
@@ -118,24 +115,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-      hvcMain();
-
-      UART_Printf("Current time: %d ms\n\r", HAL_GetTick());
-      UART_Printf("Current time: %d ms\n\r", HAL_GetTick());
-      UART_Printf("Current time: %d ms\n\r", HAL_GetTick());
-      UART_Printf("Current time: %d ms\n\r", HAL_GetTick());
-      UART_Printf("Current time: %d ms\n\r", HAL_GetTick());
-      UART_Printf("Current time: %d ms\n\r", HAL_GetTick());
-      UART_Printf("Current time: %d ms\n\r", HAL_GetTick());
-      UART_Printf("Current time: %d ms\n\r", HAL_GetTick());
-      UART_Printf("Current time: %d ms\n\r", HAL_GetTick());
-      UART_Printf("Current time: %d ms\n\r", HAL_GetTick());
-
-      // pulse fault pin
-      HAL_GPIO_WritePin(FAULT_LED_GPIO_Port, FAULT_LED_Pin, GPIO_PIN_RESET);
-      HAL_Delay(1000);
-      HAL_GPIO_WritePin(FAULT_LED_GPIO_Port, FAULT_LED_Pin, GPIO_PIN_SET);
-      HAL_Delay(1000);
+      HVC_Main();
     }
   /* USER CODE END 3 */
 }

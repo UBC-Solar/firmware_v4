@@ -1,7 +1,19 @@
+/**
+ * @file    cyclic_data_handler.c
+ * @brief   Cyclic Data Handler for the DRD Module
+ *
+ * This file declares cyclic data for revlevant data relating to the DRD. It defines getter and 
+ * setter functions for each datatype for easy handling and processing. 
+ *
+ * @author  Gregory Bian
+ * @date    Feb 4 2026
+ */
+
 #include "cyclic_data_handler.h"
 #include "cyclic_data.h"
 #include <stdint.h>
 #include <stdbool.h>
+#include "diagnostic.h"
 #include "lcd_app.h"
 
 // #include "drive_state.h"
@@ -42,10 +54,21 @@ void CyclicDataSetMtrThermTemperature(uint8_t temperature) { CYCLIC_DATA_SET(cyc
 
 
 // Create functions that get the cyclic_data
-uint32_t* CyclicDataGetSpeed(void) { return CYCLIC_DATA_GET(cyclic_speed); }
-int16_t* CyclicDataGetPackCurrent(void) { return CYCLIC_DATA_GET(cyclic_pack_current); }
-uint16_t* CyclicDataGetPackVoltage(void) { return CYCLIC_DATA_GET(cyclic_pack_voltage); }
-uint8_t* CyclicDataGetMpptATemperature(void) { return CYCLIC_DATA_GET(cyclic_mppta_temperature); }
+uint32_t* CyclicDataGetSpeed(void) { 
+    DiagnosticSetSpeedTimeout(CYCLIC_DATA_GET(cyclic_speed) == NULL ? true : false);
+    return CYCLIC_DATA_GET(cyclic_speed); 
+} 
+int16_t* CyclicDataGetPackCurrent(void) { 
+    DiagnosticSetCurrentTimeout(CYCLIC_DATA_GET(cyclic_pack_current) == NULL ? true : false);
+    return CYCLIC_DATA_GET(cyclic_pack_current); 
+}
+uint16_t* CyclicDataGetPackVoltage(void) { 
+    DiagnosticSetVoltageTimeout(CYCLIC_DATA_GET(cyclic_pack_voltage) == NULL ? true : false);
+    return CYCLIC_DATA_GET(cyclic_pack_voltage); 
+}
+uint8_t* CyclicDataGetMpptATemperature(void) { 
+    return CYCLIC_DATA_GET(cyclic_mppta_temperature); 
+}
 uint8_t* CyclicDataGetMpptBTemperature(void) { return CYCLIC_DATA_GET(cyclic_mpptb_temperature); }
 uint8_t* CyclicDataGetMpptCTemperature(void) { return CYCLIC_DATA_GET(cyclic_mpptc_temperature); }
 uint8_t* CyclicDataGetMpptDTemperature(void) { return CYCLIC_DATA_GET(cyclic_mpptd_temperature); }
@@ -57,10 +80,12 @@ uint8_t* CyclicDataGetDriveState(void)
 {
     if (CyclicDataGetSpeed() == NULL)
     {
+        DiagnosticSetDriveStateTimeout(true);
         return NULL; // Stale data for drive state
     }
     else
     {
+        DiagnosticSetDriveStateTimeout(CYCLIC_DATA_GET(cyclic_drive_state) == NULL ? true : false);
         return CYCLIC_DATA_GET(cyclic_drive_state);
     }
 }
@@ -68,10 +93,12 @@ uint8_t* CyclicDataGetSoc(void)
 {
     if ((CyclicDataGetPackVoltage() == NULL) || (CyclicDataGetPackCurrent() == NULL))
     {
+        DiagnosticSetSocTimeout(true);
         return NULL;
     }
     else
     {
+        DiagnosticSetSocTimeout(CYCLIC_DATA_GET(cyclic_soc) == NULL ? true : false);
         return CYCLIC_DATA_GET(cyclic_soc);
     }
 }

@@ -1,3 +1,14 @@
+/**
+ * @file    lcd_driver.c
+ * @brief   LCD driver implementation for UBC Solar DRD board
+ *
+ * This file contains the implementation of the LCD driver for the ST7565-based LCD display used in the DRD board.
+ * It provides functions for initializing the display, setting pixels, drawing shapes and text, and refreshing the display.
+ *
+ * @author  Gregory Bian
+ * @date    Feb 4 2026
+ */
+
 #include "lcd_driver.h"
 
 /* Internal SPI handle for LCD communication */

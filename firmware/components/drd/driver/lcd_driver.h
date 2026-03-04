@@ -1,3 +1,15 @@
+/**
+ * @file    lcd_driver.h
+ * @brief   LCD driver header file for the UBC Solar DRD board
+ *
+ * This header file contains the function prototypes and constants for the LCD driver used in the DRD board.
+ * It defines the interface for initializing the LCD, drawing pixels, rectangles, and text, and refreshing
+ * the display. The driver is designed to work with the ST7565 LCD controller.
+ *
+ * @author  Gregory Bian
+ * @date    Feb 4 2026
+ */
+
 #ifndef __LCD_DRIVER_H__
 #define __LCD_DRIVER_H__
 

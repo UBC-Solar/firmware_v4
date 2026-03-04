@@ -25,6 +25,21 @@ const CAN_TxHeaderTypeDef mdu_request_header = {.StdId = 0,
                                                 .RTR = CAN_RTR_DATA,
                                                 .DLC = MDU_REQUEST_SIZE};
 
+const CAN_TxHeaderTypeDef drd_diagnostic_header = {
+    .StdId = DRD_DIAGNOSTIC_MESSAGE,
+    .ExtId = 0x0000,
+    .IDE = CAN_ID_STD,
+    .RTR = CAN_RTR_DATA,
+    .DLC = DRD_DIAGNOSTIC_SIZE
+};
+
+const CAN_TxHeaderTypeDef time_since_bootup_can_header = {
+   .StdId = TIME_SINCE_BOOTUP_CAN_ID,
+   .ExtId = 0x0000,
+   .IDE = CAN_ID_STD,
+   .RTR = CAN_RTR_DATA,
+   .DLC = TIME_SINCE_BOOTUP_CAN_DATA_LENGTH};
+
 void CanFilterInit(CAN_FilterTypeDef* can_filter) {
     CAN_FilterTypeDef can_filter1;
     CAN_FilterTypeDef can_filter2;

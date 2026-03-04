@@ -100,6 +100,12 @@ void DriveStateSteeringCanMsgHandler(uint8_t* data);
  * @param data Pointer to CAN message data.
  */
 void StateRequestCanMsgHandler(uint8_t* data);
+
+/**
+ * @brief Getter function for retrieving the current drive state.
+ * @return The current drive state.
+ */
+DriveStateStates DriveStateGetDriveState(void);
 #endif
 
 #endif /* __DRIVE_STATE_H_ */

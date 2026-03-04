@@ -50,6 +50,8 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add sources to executable
 file(GLOB_RECURSE COMMON_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../../common/*/*.c")
 
+file(GLOB_RECURSE COMMON_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../../common/*/*.c")
+
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     ${CMAKE_CURRENT_SOURCE_DIR}/app/drive_state.c
@@ -65,6 +67,11 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/tasks.c
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/interrupts.c
     ${COMMON_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/diagnostic.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/can_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/CAN_comms/CAN_comms.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/iwdg_app.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/iwdg_driver.c
 )
 
 # Add include paths

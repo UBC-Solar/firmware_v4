@@ -8,6 +8,7 @@
 
 /* INCLUDES */
 #include "accel_driver.h"
+#include "diagnostic.h"
 #include "adc.h"
 #include <stdlib.h>
 
@@ -52,10 +53,13 @@ uint16_t AccelDriverReadThrottle(void)
     g_last_error = ADC_FAULT_NONE;
 
     uint16_t adc1 = ReadAdc(&hadc1);
+    DiagnosticSetRawADC1(adc1);
+
     uint16_t adc2 = 0;
 
     #if ADC_2_ACTIVE
     adc2 = ReadAdc(&hadc2);
+    DiagnosticSetRawADC2(adc2);
     #endif
 
     if (!ValidateAdcReadings(adc1, adc2))

@@ -10,9 +10,12 @@
 /* INCLUDES */
 #include "tasks.h"
 #include "cmsis_os2.h"
+#include "iwdg_app.h"
+#include "lcd_app.h"
 #include "debug_io.h"
 #include "cyclic_data_handler.h"
 #include "spi.h"
+#include "diagnostic.h"
 
 /* DRIVE STATE TASK */
 void TasksDriveState(void* argument)
@@ -82,7 +85,29 @@ void TasksLcdUpdate(void *argument)
             g_lcd_page_change = 0;
         }
         LcdAppPageController();
-
+        osDelay(LCD_APP_UPDATE_DELAY);
     }
-    osDelay(LCD_APP_UPDATE_DELAY);
+}
+
+void TasksTimeSinceStartup(void *argument)
+{
+    for (;;)
+    {
+        // Transmit DRD heartbeat over CAN
+        DiagnosticTimeSinceBootup();
+        osDelay(TIME_SINCE_STARTUP_TASK_DELAY);
+    }
+}
+
+void TasksDiagnostic(void *argument)
+{
+    IwdgAppResetHandle();
+
+    for (;;)
+    {
+        // Refresh the watchdog timer to prevent reset and transmit diagnostics over CAN
+        IwdgAppRefresh(&hiwdg);
+        DiagnosticTransmit(false);
+        osDelay(DIAGNOSTIC_TASK_DELAY);
+    }
 }

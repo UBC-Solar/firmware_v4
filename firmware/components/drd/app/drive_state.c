@@ -19,6 +19,7 @@
 #include "debug_io.h"
 #include "drive_state.h"
 #include "cyclic_data_handler.h"
+#include "diagnostic.h"
 #include "gpio_driver.h"
 
 /* GLOBAL VARIABLES */
@@ -194,6 +195,7 @@ void UpdatePedalFlags(DriveStateCtx *ctx)
 {
     ctx->flags.brake_on = ReadBrakePin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN);
     SetBrakeLedPin(BRAKE_LED_PORT, BRAKE_LED_PIN, ctx->flags.brake_on);
+    DiagnosticSetMechBrakePressed(ctx->flags.brake_on);
 
     ctx->throttle_dac = AccelDriverReadThrottle();
 
@@ -280,6 +282,8 @@ void DriveStateSteeringCanMsgHandler(uint8_t* data)
 
     g_drive_state_ctx.flags.regen_on = ((data[0] >> 0) & 0x01);
     g_drive_state_ctx.flags.cruise_on = ((data[0] >> 1) & 0x01);
+    DiagnosticSetRegenEnabled(g_drive_state_ctx.flags.regen_on);
+
 }
 
 #ifdef DEBUG
@@ -339,4 +343,9 @@ void MotorControlQueryData(void)
     msg.header = mdu_request_header;
     msg.data[0] = MDU_REQUEST_FRAME;
     CAN_comms_Add_Tx_message(&msg);
+}
+
+DriveStateStates DriveStateGetDriveState()
+{
+    return g_drive_state_ctx.state;
 }

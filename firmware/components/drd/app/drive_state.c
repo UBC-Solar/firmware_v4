@@ -27,7 +27,7 @@ volatile DriveStateCtx g_drive_state_ctx = {
     .state = PARK,
     .flags = {
         .brake_on = false,
-        .regen_on = false,
+        .regen_on = true,
         .cruise_on = false,
         .velocity_under_threshold = true, // placeholder until MDI testing
         .next_state_request = false,
@@ -127,7 +127,7 @@ void ComputeNextState(DriveStateCtx *ctx)
     bool valid_state_change =
         !(ctx->flags.next_state_request && ctx->flags.prev_state_request);
 
-    bool valid_drive_state = ctx->flags.velocity_under_threshold && valid_state_change;
+    bool valid_drive_state = ctx->flags.velocity_under_threshold && ctx->flags.brake_on && valid_state_change;
 
     if (!valid_drive_state)
     {

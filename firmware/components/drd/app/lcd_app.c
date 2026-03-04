@@ -1084,61 +1084,6 @@ void LcdAppInit(SPI_HandleTypeDef* hspi)
  */
 void LcdAppChangeScreen() { LcdDriverChangeScreen(); }
 
-/*
- * @brief CAN rx function which parses message data needed by the LCD
- *
- * @param msg_id 	The id of the CAN message
- * @param data  	The data of the CAN message
- */
-void LcdAppCanRxHandle(uint32_t msg_id, uint8_t* data)
-{
-    // if (msg_id == CAN_ID_PACK_CURRENT)
-    // {
-    //     int16_t tmp_pack_current = (data[1] << 8) | (data[0]);
-    //     tmp_pack_current /= 65.535;
-    //     set_cyclic_pack_current(tmp_pack_current);
-
-    //     g_pack_current_soc = tmp_pack_current;
-    // }
-
-    // if (msg_id == CAN_ID_PACK_VOLTAGE)
-    // {
-    //     uint16_t tmp_pack_voltage = (data[1] << 8) | (data[0]);
-    //     tmp_pack_voltage /= PACK_VOLTAGE_DIVISOR;
-    //     set_cyclic_pack_voltage(tmp_pack_voltage);
-
-    //     g_total_pack_voltage_soc = tmp_pack_voltage;
-
-    //     osEventFlagsSet(calculate_soc_flagHandle, SOC_CALCULATE_ON);
-    // }
-
-    if (msg_id == STR_CAN_MSG_ID)
-    {
-        uint8_t next_page = (data[0] & 1);
-
-        if (next_page)
-        {
-            if (g_lcd_page < LCD_APP_MAXPAGES)
-            {
-                g_lcd_page_change = 1;
-                g_lcd_page++;
-            }
-            else
-            {
-                g_lcd_page_change = 1;
-                g_lcd_page = 1;
-            }
-        }
-    }
-
-    // if (msg_id == CAN_ID_MDI_TEMP)
-    // {
-    //     uint8_t temperature = data[0];
-    //     set_cyclic_temperature(temperature);
-    // }
-}
-
-
 /**
  * @brief Handles the screen logic for the LCD App, including page changes and updating displayed data.
  */

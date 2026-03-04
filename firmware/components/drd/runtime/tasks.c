@@ -86,8 +86,3 @@ void TasksLcdUpdate(void *argument)
     }
     osDelay(LCD_APP_UPDATE_DELAY);
 }
-
-/* CAN COMMUNICATIONS TASK */
-void TasksCanInit(void) {
-    CanTasksInit();
-}

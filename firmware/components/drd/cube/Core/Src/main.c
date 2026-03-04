@@ -27,7 +27,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "can_app.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -98,7 +98,7 @@ int main(void)
   MX_SPI1_Init();
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
-
+  CanTasksInit();
   /* USER CODE END 2 */
 
   /* Init scheduler */

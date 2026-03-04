@@ -54,13 +54,4 @@ void TasksCalculateSoc(void* argument);
  */
 void TasksLcdUpdate(void *argument);
 
-/**
- * @brief Initializes DRD CAN communications.
- *
- * Configures CAN filters and registers the RX callback path, then initializes
- * the CAN communications layer so CAN RX/TX handling is ready before runtime
- * tasks begin normal operation.
- */
-void TasksCanInit(void);
-
 #endif //__TASKS_H__

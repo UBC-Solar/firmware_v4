@@ -27,6 +27,10 @@ void UART_Transmit(const char *message) {
 }
 
 void UART_Printf(const char *fmt, ...) {
+#ifndef DEBUG
+    return;
+#endif
+
     while (HAL_UART_GetState(huart) != HAL_UART_STATE_READY) {
         // Block until UART is ready
     }

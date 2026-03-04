@@ -67,19 +67,4 @@ void DiagnosticSetSocTimeout(bool timeout);
 void DiagnosticSetVoltageTimeout(bool timeout);
 void DiagnosticSetCurrentTimeout(bool timeout);
 
-uint16_t DiagnosticGetRawADC1();
-uint16_t DiagnosticGetRawADC2();
-bool DiagnosticGetMechBrakePressed();
-bool DiagnosticGetRegenEnabled();
-bool DiagnosticGetThrottleADCOutOfRange();
-bool DiagnosticGetThrottleADCMismatch();
-bool DiagnosticGetMotorCommFault();
-bool DiagnosticGetSpeedTimeout();
-bool DiagnosticGetDriveStateTimeout();
-bool DiagnosticGetSocTimeout();
-bool DiagnosticGetVoltageTimeout();
-bool DiagnosticGetCurrentTimeout();
-DiagnosticDRD DiagnosticGetAllDiagnostics();
-
-
 #endif /* INC_DIAGNOSTIC_H_ */

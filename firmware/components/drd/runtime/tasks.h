@@ -10,7 +10,7 @@
 #ifndef __TASKS_H__
 #define __TASKS_H__
 
-#define DEFAULT_TASK_DELAY 			  100
+#define DIAGNOSTIC_TASK_DELAY 100
 #define TIME_SINCE_STARTUP_TASK_DELAY 1000
 
 /* INCLUDES */

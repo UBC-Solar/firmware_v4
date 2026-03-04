@@ -1,23 +1,24 @@
 #include "adc_driver.h"
-#include "uart_driver.h"
 
-static ADC_HandleTypeDef *s_hadc1;
+static void ADC1_ProcessReadings(int half);
 
-volatile uint16_t adc_buffer[ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT * 2];
+static ADC_HandleTypeDef *hadc1;
 
-ADC_Readings adc1_readings = {0};
-ADC_Voltages adc1_voltages = {0};
+static volatile uint16_t adc_buffer[ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT * 2];
+
+static ADC_Readings adc1_readings = {0};
+static ADC_Voltages adc1_voltages = {0};
 
 /**
  * @brief Initialize ADC driver and start DMA in circular mode.
  * @param _hadc1 Pointer to the ADC handle configured in CubeMX.
  */
 void ADC_Init(ADC_HandleTypeDef *_hadc1, TIM_HandleTypeDef *_htim3) {
-    s_hadc1 = _hadc1;
+    hadc1 = _hadc1;
 
     HAL_TIM_Base_Start(_htim3); // TIM3 triggered ADC conversion
 
-    HAL_ADC_Start_DMA(s_hadc1, (uint32_t*)adc_buffer, ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT * 2);
+    HAL_ADC_Start_DMA(hadc1, (uint32_t*)adc_buffer, ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT * 2);
 
     //UART_Printf("ADC Initialized with DMA buffer size: %d\n\r", ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT * 2);
 }
@@ -27,13 +28,13 @@ void ADC_Init(ADC_HandleTypeDef *_hadc1, TIM_HandleTypeDef *_htim3) {
  * @param half 0 for the first half, 1 for the second half.
  * @return None
  */
-void ADC1_ProcessReadings(int half) {
+static void ADC1_ProcessReadings(int half) {
     uint32_t sum[ADC1_NUM_CHANNELS] = {0};
     uint16_t results[ADC1_NUM_CHANNELS] = {0};
 
     // Sum readings
-    for (int sample = 0; sample < ADC1_SAMPLE_COUNT; sample++) {
-        for (int channel = 0; channel < ADC1_NUM_CHANNELS; channel++) {
+    for (uint8_t sample = 0; sample < ADC1_SAMPLE_COUNT; sample++) {
+        for (uint8_t channel = 0; channel < ADC1_NUM_CHANNELS; channel++) {
             sum[channel] += adc_buffer[half * ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT + sample * ADC1_NUM_CHANNELS + channel];
         }
     }
@@ -45,7 +46,7 @@ void ADC1_ProcessReadings(int half) {
 
     // Store readings and voltages
     for (int channel = 0; channel < ADC1_NUM_CHANNELS; channel++) {
-        uint16_t voltage = (uint32_t)results[channel] * ADC_VOLTAGE_REFERENCE / ADC_RESOLUTION; // Convert to millivolts
+        uint16_t voltage = (uint32_t)results[channel] * ADC_VOLTAGE_REFERENCE / ADC_RESOLUTION; // Convert to millivolts with uint32_t for no truncation
         switch (channel) {
             case 0:
                 adc1_readings.dcdc_thermistor = results[channel];
@@ -75,12 +76,20 @@ void ADC1_ProcessReadings(int half) {
     }
 }
 
+ADC_Readings ADC_GetReadings(void) {
+    return adc1_readings;
+}
+
+ADC_Voltages ADC_GetVoltages(void) {
+    return adc1_voltages;
+}
+
 /**
  * @brief HAL invokes this callback when the first half of the DMA buffer is filled.
  * @param hadc Pointer to the ADC handle that triggered the callback.
  */
 void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc) {
-    if (hadc == s_hadc1) {
+    if (hadc == hadc1) {
         ADC1_ProcessReadings(0);
     }
 }
@@ -90,7 +99,7 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc) {
  * @param hadc Pointer to the ADC handle that triggered the callback.
  */
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
-    if (hadc == s_hadc1) {
+    if (hadc == hadc1) {
         ADC1_ProcessReadings(1);
     }
 }

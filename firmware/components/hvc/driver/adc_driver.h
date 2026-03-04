@@ -22,7 +22,7 @@ typedef struct {
 } ADC_Readings;
 
 /**
- * @brief ADC values converted to microvolts (0–3,300,000 uV), precision is 800 uV.
+ * @brief ADC values converted to millivolts (0–3300 mV).
  */
 typedef struct {
     uint16_t dcdc_thermistor;     
@@ -32,11 +32,7 @@ typedef struct {
     uint16_t lv_curr_sense;  
 } ADC_Voltages;
 
-extern volatile uint16_t adc_buffer[ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT * 2];
-
-extern ADC_Readings adc1_readings;
-extern ADC_Voltages adc1_voltages;
-
 void ADC_Init(ADC_HandleTypeDef *_hadc1, TIM_HandleTypeDef *_htim3);
 
-void ADC1_ProcessReadings(int half);
+ADC_Readings ADC_GetReadings(void);
+ADC_Voltages ADC_GetVoltages(void);

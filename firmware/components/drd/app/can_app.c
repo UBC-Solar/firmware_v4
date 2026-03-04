@@ -26,7 +26,6 @@ void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data);
  */
 void VehicleDriveStateRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg);
 
-
 void CanTasksInit(void)
 {
     CAN_comms_config_t CAN_comms_config_drd = {0};

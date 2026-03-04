@@ -29,6 +29,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "iwdg_app.h"
+#include "can_app.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -102,6 +103,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   IwdgAppResetHandle();
 
+  CanTasksInit();
   /* USER CODE END 2 */
 
   /* Init scheduler */

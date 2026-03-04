@@ -111,8 +111,3 @@ void TasksDiagnostic(void *argument)
         osDelay(DIAGNOSTIC_TASK_DELAY);
     }
 }
-
-/* CAN COMMUNICATIONS TASK */
-void TasksCanInit(void) {
-    CanTasksInit();
-}

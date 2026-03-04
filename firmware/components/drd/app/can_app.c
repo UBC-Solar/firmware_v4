@@ -19,12 +19,7 @@
  * @param data Pointer to the received CAN message data.
  */
 void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data);
-/**
- * @brief Initializes CAN hardware filters for message acceptance.
- *
- * @param can_filter Pointer to CAN filter configuration structure.
- */
-void CanFilterInit(CAN_FilterTypeDef* can_filter);
+
 /**
  * @brief Callback for processing received CAN messages.
  * @param CAN_comms_Rx_msg Pointer to the received CAN message structure.

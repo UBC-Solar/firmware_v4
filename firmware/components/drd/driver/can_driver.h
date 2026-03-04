@@ -28,6 +28,11 @@ extern const CAN_TxHeaderTypeDef drive_control_header;
 extern const CAN_TxHeaderTypeDef mdu_request_header;
 
 /* FUNCTION PROTOTYPES */
+/**
+ * @brief Initializes CAN hardware filters for message acceptance.
+ *
+ * @param can_filter Pointer to CAN filter configuration structure.
+ */
 void CanFilterInit(CAN_FilterTypeDef* can_filter);
 
 #endif /* __CAN_DRIVER_H___ */

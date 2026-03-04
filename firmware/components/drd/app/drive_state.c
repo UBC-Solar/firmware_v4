@@ -313,10 +313,10 @@ void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr)
 
     uint8_t data[8] = {0};
 
-    uint8_t accel_first_byte = (uint8_t)(motor_command->accel_DAC_value & 0xFF);
-    uint8_t accel_second_byte = (uint8_t)(motor_command->accel_DAC_value >> 8);
-    uint8_t regen_first_byte = (uint8_t)(motor_command->regen_DAC_value & 0xFF);
-    uint8_t regen_second_byte = (uint8_t)(motor_command->regen_DAC_value >> 8);
+    uint8_t accel_first_byte = (motor_command->accel_DAC_value & 0xFF);
+    uint8_t accel_second_byte = ((motor_command->accel_DAC_value >> 8) & 0xFF);
+    uint8_t regen_first_byte = (motor_command->regen_DAC_value & 0xFF);
+    uint8_t regen_second_byte = ((motor_command->regen_DAC_value >> 8) & 0xFF);
 
     data[0] = accel_first_byte;
     data[1] = accel_second_byte;

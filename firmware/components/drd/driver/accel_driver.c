@@ -10,7 +10,6 @@
 #include "accel_driver.h"
 #include "diagnostic.h"
 #include "adc.h"
-#include <stdlib.h>
 
 /* DEFINES */
 #define ADC_2_ACTIVE 0 // activate if adc2 is used

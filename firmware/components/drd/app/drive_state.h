@@ -92,6 +92,11 @@ void DriveStateVelocityCanMsgHandler(uint8_t* data);
  */
 void DriveStateSteeringCanMsgHandler(uint8_t* data);
 
+/**
+ * @brief Returns the current drive state.
+ */
+DriveStateStates DriveStateGetDriveState(void);
+
 #ifdef DEBUG
 /**
  * @brief Handles CAN messages requesting a drive state change (debug only).

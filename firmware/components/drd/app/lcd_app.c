@@ -13,10 +13,8 @@
 
 #include "lcd_app.h"
 #include "cyclic_data_handler.h"
-#include "diagnostic.h"
 #include "lcd_driver.h"
 #include <stdio.h>
-#include "can_driver.h"
 // #include "soc.h"
 
 /*--------------------------------------------------------------------------
@@ -213,12 +211,6 @@ static uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings)
   PAGE 1 (DRIVE PAGE) FUNCTIONS
 --------------------------------------------------------------------------*/
 
-/**
- * @brief Displays the speed on the LCD drive page.
- *
- * @param speed The speed value to display.
- * @param units The speed units (LCD_SPEED_UNITS_MPH or LCD_SPEED_UNITS_KPH).
- */
 void LcdAppDisplaySpeedDrivePage(volatile uint32_t* speed, volatile uint8_t units)
 {
     char speed_str[12];
@@ -267,11 +259,6 @@ void LcdAppDisplaySpeedDrivePage(volatile uint32_t* speed, volatile uint8_t unit
     LcdDriverRefresh();
 }
 
-/**
- * @brief Displays the state of charge (SOC) on the LCD drive page.
- *
- * @param soc The state of charge (in percent).
- */
 void LcdAppDisplaySocDrivePage(volatile uint32_t* soc)
 {
     char soc_str[12];
@@ -306,11 +293,6 @@ void LcdAppDisplaySocDrivePage(volatile uint32_t* soc)
     LcdDriverRefresh();
 }
 
-/**
- * @brief Displays an E for ECO mode and P for POWER mode
- *
- * @param drive_mode The drive mode
- */
 void LcdAppDisplayDriveModeDrivePage(volatile uint8_t drive_mode)
 {
     LcdDriverClearBoundingBox(old_bb_drive_mode.x1,
@@ -335,11 +317,6 @@ void LcdAppDisplayDriveModeDrivePage(volatile uint8_t drive_mode)
     LcdDriverRefresh();
 }
 
-/**
- * @brief Displays the drive state on the LCD drive page.
- *
- * @param state The drive state (e.g., FORWARD_STATE, PARK_STATE, REVERSE_STATE).
- */
 void LcdAppDisplayDriveStateDrivePage(volatile DriveStateStates* state)
 {
     char state_str[2] = {LCD_APP_ERROR_SYMBOL, '\0'}; // Default to error symbol.
@@ -374,11 +351,6 @@ void LcdAppDisplayDriveStateDrivePage(volatile DriveStateStates* state)
     LcdDriverRefresh();
 }
 
-/**
- * @brief Displays a fault indicator on the LCD Drive Page
- *
- * @param fault_indicator A general indicator to signal a fault to prompt the driver to change pages
- */
 void LcdAppDisplayFaultIndicator(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults)
 {
     LcdDriverClearBoundingBox(old_bb_fault_indicator.x1,
@@ -396,12 +368,6 @@ void LcdAppDisplayFaultIndicator(LcdAppBattFaults* batt_faults, LcdAppMotorFault
     LcdDriverRefresh();
 }
 
-/**
- * @brief Displays a warning indicator on the LCD Drive Page
- *
- * @param warning_indicator A general indicator to signal a warning to prompt the driver to change
- * pages
- */
 void LcdAppDisplayWarningIndicator(LcdAppWarnings* warnings)
 {
     LcdDriverClearBoundingBox(old_bb_warning_indicator.x1,
@@ -423,12 +389,6 @@ void LcdAppDisplayWarningIndicator(LcdAppWarnings* warnings)
   PAGE 2 (FAULT PAGE) FUNCTIONS
 --------------------------------------------------------------------------*/
 
-/**
- * @brief Dynamically displays battery and motor faults on the LCD
- *
- * @param batt_faults The battery faults to be displayed on the LCD
- * @param motor_faults The motor faults to be displayed on the LCD
- */
 void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults)
 {
 
@@ -467,11 +427,6 @@ void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor
   PAGE 3 (WARNING PAGE) FUNCTIONS
 --------------------------------------------------------------------------*/
 
-/**
- * @brief Displays a motor faults on the LCD
- *
- * @param fault_indicator An indicator to see who
- */
 void LcdAppDisplayWarnings(LcdAppWarnings* warnings)
 {
     LcdDriverClearBoundingBox(
@@ -509,16 +464,8 @@ void LcdAppDisplayWarnings(LcdAppWarnings* warnings)
   PAGE 4 (TEMPERATURE PAGE) FUNCTIONS
 --------------------------------------------------------------------------*/
 
-/**
- * @brief Displays a Temperature on the LCD (0-255)
- *
- * @param temperature A struct containing the temperature and id of the temperature.
- */
 void LcdAppDisplayTemperature(LcdAppTemperature temperature_data)
 {
-
-    // TODO: When assigning with CAN ensure that the name is set too
-
     // Stores a Bounding Box used for changing temp symbol position
     LcdDriverBoundingBox bb = {0};
 
@@ -641,12 +588,6 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data)
   PAGE 5 (DEBUG PAGE) FUNCTIONS
 --------------------------------------------------------------------------*/
 
-/**
- * @brief Displays a battery power bar based on pack current and voltage.
- *
- * @param pack_current The battery pack current.
- * @param pack_voltage The battery pack voltage.
- */
 void LcdAppDisplayPowerBar(volatile int16_t* pack_current, volatile uint16_t* pack_voltage)
 {
     /* Clear the drawing area (including extra space for the center line) */
@@ -722,12 +663,6 @@ void LcdAppDisplayPowerBar(volatile int16_t* pack_current, volatile uint16_t* pa
     }
 }
 
-/**
- * @brief Displays the speed on the LCD debug page.
- *
- * @param speed The speed value to display.
- * @param units The speed units (LCD_SPEED_UNITS_MPH or LCD_SPEED_UNITS_KPH).
- */
 void LcdAppDisplaySpeedDebugPage(volatile uint32_t* speed, volatile uint8_t units)
 {
     char speed_str[12];
@@ -776,11 +711,6 @@ void LcdAppDisplaySpeedDebugPage(volatile uint32_t* speed, volatile uint8_t unit
     LcdDriverRefresh();
 }
 
-/**
- * @brief Displays the state of charge (SOC) on the LCD debug page.
- *
- * @param soc The state of charge (in percent).
- */
 void LcdAppDisplaySocDebugPage(volatile uint32_t* soc)
 {
     char soc_str[12];
@@ -814,11 +744,6 @@ void LcdAppDisplaySocDebugPage(volatile uint32_t* soc)
     LcdDriverRefresh();
 }
 
-/**
- * @brief Displays the drive state on the LCD debug page.
- *
- * @param state The drive state (e.g., FORWARD_STATE, PARK_STATE, REVERSE_STATE).
- */
 void LcdAppDisplayDriveStateDebugPage(volatile DriveStateStates* state)
 {
     char state_str[2] = {LCD_APP_ERROR_SYMBOL, '\0'}; // Default to error symbol.
@@ -853,11 +778,6 @@ void LcdAppDisplayDriveStateDebugPage(volatile DriveStateStates* state)
     LcdDriverRefresh();
 }
 
-/**
- * @brief Initializes the LCD App and SPI interface.
- *
- * @param hspi Pointer to the SPI handle.
- */
 void LcdAppInit(SPI_HandleTypeDef* hspi)
 {
     // Initialize the temperature labels for each temperature struct in the array
@@ -874,15 +794,9 @@ void LcdAppInit(SPI_HandleTypeDef* hspi)
     LcdDriverInit(hspi);
 }
 
-/**
- * @brief Changes the screen
- */
 void LcdAppChangeScreen() { LcdDriverChangeScreen(); }
 
-/**
- * @brief Handles the screen logic for the LCD App, including page changes and updating displayed data.
- */
- void LcdAppPageController(void)
+void LcdAppPageController(void)
 {
     // Temporary, will add cyclic data when CAN is implemented.
     // TODO: HANDLE WITH CYCLIC DATA
@@ -931,6 +845,7 @@ void LcdAppChangeScreen() { LcdDriverChangeScreen(); }
     case DRIVE_PAGE:
         LcdAppDisplaySpeedDrivePage(g_lcd_data.speed, g_lcd_data.speed_units);
         LcdAppDisplaySocDrivePage((volatile uint32_t*)g_lcd_data.soc);
+        LcdAppDisplayDriveModeDrivePage(g_lcd_data.drive_mode);
         LcdAppDisplayDriveStateDrivePage((volatile DriveStateStates*) g_lcd_data.drive_state);
         LcdAppDisplayFaultIndicator(&g_lcd_batt_faults, &g_lcd_motor_faults);
         LcdAppDisplayWarningIndicator(&g_lcd_warnings);

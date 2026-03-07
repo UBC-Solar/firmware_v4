@@ -67,7 +67,6 @@ void CyclicDataSetPackOverdischargeWarning(bool flag);
 void CyclicDataSetPackOverchargeWarning(bool flag);
 
 
-
 /* CYCLIC DATA DRIVE DATA GETTERS */
 uint32_t* CyclicDataGetSpeed(void);
 int16_t* CyclicDataGetPackCurrent(void);

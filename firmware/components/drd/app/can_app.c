@@ -13,6 +13,7 @@
 #include "can_app.h"
 #include "CAN_comms.h"
 #include "cyclic_data_handler.h"
+#include "fault_handler.h"
 
 /* FUNCTION PROTOTYPES */
 /**
@@ -95,7 +96,7 @@ void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data)
 void LcdAppCanRxHandler(uint32_t msg_id, uint8_t* data)
 { 
     //TODO: Filter temperatures and figure out the event flag for SOC
-    if (msg_id == CAN_ID_PACK_CURRENT)
+    if (msg_id == CAN_ID_ECU)
     {
         int16_t tmp_pack_current = (data[1] << 8) | (data[0]);
         tmp_pack_current /= 65.535;
@@ -138,4 +139,24 @@ void LcdAppCanRxHandler(uint32_t msg_id, uint8_t* data)
     //     uint8_t temperature = data[0];
     //     CyclicDataSetTemperature(temperature);
     // }
+}
+
+void FaultHandlerRxHandler(uint32_t msg_id, uint8_t* data)
+{
+    switch (msg_id) {
+    case CAN_ID_MTR_FAULTS:
+        FaultHandlerParseMotorFaults(data);
+        break;
+    case CAN_ID_ECU:
+        FaultHandlerParseECUFaults(data);
+        break;
+    case CAN_ID_BATT_FAULTS:
+        FaultHandlerParseBatteryFaults(data);
+        break;
+    // case :
+    //     FaultHandlerParseTemperatures();
+    //     break;
+    default:
+        break;
+    }
 }

@@ -11,6 +11,7 @@
 #include <stdint.h>
 
 #include "CAN_comms.h"
+#include "drive_state.h"
 
 /* FUNCTION PROTOTYPES */
 /**
@@ -34,11 +35,11 @@ void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data);
 void LcdAppCanRxHandler(uint32_t msg_id, uint8_t* data);
 
 /**
- * @brief Transmits a motor command CAN message from task or ISR context.
- * @param msg Motor command CAN message to transmit.
- * @param isr True to use ISR-safe transmit path, false for normal task context.
+ * @brief Packs and sends the motor command, optionally from an interrupt service routine.
+ * @param motor_command Pointer to the motor control command.
+ * @param isr True if called from ISR, false otherwise.
  */
-void MotorCommandTransmit(CAN_comms_Tx_msg_t msg, bool isr);
+void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr);
 
 /**
  * @brief Queries and processes data related to motor control.

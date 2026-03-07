@@ -53,7 +53,26 @@ void MotorControlQueryData(void)
     CAN_comms_Add_Tx_message(&msg);
 }
 
-void MotorCommandTransmit(CAN_comms_Tx_msg_t msg, bool isr) {
+void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr)
+{
+    CAN_comms_Tx_msg_t msg;
+    msg.header = drive_control_header;
+
+    uint8_t data[8] = {0};
+
+    uint8_t accel_first_byte = (motor_command->accel_DAC_value & 0xFF);
+    uint8_t accel_second_byte = ((motor_command->accel_DAC_value >> 8) & 0xFF);
+    uint8_t regen_first_byte = (motor_command->regen_DAC_value & 0xFF);
+    uint8_t regen_second_byte = ((motor_command->regen_DAC_value >> 8) & 0xFF);
+
+    data[0] = accel_first_byte;
+    data[1] = accel_second_byte;
+    data[2] = regen_first_byte;
+    data[3] = regen_second_byte;
+    data[4] = motor_command->motor_control_flags;
+
+    memcpy(msg.data, data, CAN_DATA_SIZE);
+
     if (isr)
     {
         CAN_comms_Add_Tx_messageISR(&msg);

@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include "CAN_comms.h"
+#include "can_app.h"
 #include "accel_driver.h"
 #include "can_driver.h"
 #include "debug_io.h"
@@ -84,12 +85,6 @@ static void BreakOnHandler(DriveStateCtx *ctx);
  * @param model Pointer to the drive state model.
  */
 static void EcoPowerHandler(DriveStateCtx *ctx);
-/**
- * @brief Packs and sends the motor command, optionally from an interrupt service routine.
- * @param motor_command Pointer to the motor control command.
- * @param isr True if called from ISR, false otherwise.
- */
-static void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr);
 
 /* DRIVE STATE FINITE STATE MACHINE */
 void DriveStateFsmHandler()
@@ -300,30 +295,6 @@ void StateRequestCanMsgHandler(uint8_t* data)
     }
 }
 #endif
-
-/* CAN DATA TX HANDLERS */
-static void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr)
-{
-    CAN_comms_Tx_msg_t msg;
-    msg.header = drive_control_header;
-
-    uint8_t data[8] = {0};
-
-    uint8_t accel_first_byte = (motor_command->accel_DAC_value & 0xFF);
-    uint8_t accel_second_byte = ((motor_command->accel_DAC_value >> 8) & 0xFF);
-    uint8_t regen_first_byte = (motor_command->regen_DAC_value & 0xFF);
-    uint8_t regen_second_byte = ((motor_command->regen_DAC_value >> 8) & 0xFF);
-
-    data[0] = accel_first_byte;
-    data[1] = accel_second_byte;
-    data[2] = regen_first_byte;
-    data[3] = regen_second_byte;
-    data[4] = motor_command->motor_control_flags;
-
-    memcpy(msg.data, data, CAN_DATA_SIZE);
-
-    MotorCommandTransmit(msg, isr);
-}
 
 DriveStateStates DriveStateGetDriveState(void)
 {

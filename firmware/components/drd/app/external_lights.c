@@ -20,7 +20,6 @@
 /*	Global Variables	*/
 volatile bool g_external_lights_left_turn_signal = false;
 volatile bool g_external_lights_right_turn_signal = false;
-volatile bool g_external_lights_braking = false;
 
 /*
  * @brief State machine to handle vehicle external lights.
@@ -29,7 +28,7 @@ volatile bool g_external_lights_braking = false;
 void ExternalLightsStateMachine()
 {
     // Read brake state via gpio_driver
-    g_external_lights_braking = ReadBrakePin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN);
+    bool braking = ReadBrakePin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN);
 
     // Read hazard switch via gpio_driver
     bool hazard_on = ReadHazardPin(HAZARD_PORT, HAZARD_PIN);
@@ -110,7 +109,7 @@ void ExternalLightsStateMachine()
         blts = false;
         prev_state = EXTERNAL_LIGHTS_RTS_STATE;
     }
-    else if (g_external_lights_braking)
+    else if (braking)
     {
         // brake with no turn signal: rear LEDs solid on, front off
         // when braking + turn signal, LTS/RTS branches handle rear LEDs as blinkers
@@ -131,7 +130,7 @@ void ExternalLightsStateMachine()
     }
 
     // BRK_OUT stays on whenever braking regardless of turn signal state
-    ExternalLightsDriverSet(flts, frts, blts, brts, g_external_lights_braking);
+    ExternalLightsDriverSet(flts, frts, blts, brts, braking);
 }
 
 /**

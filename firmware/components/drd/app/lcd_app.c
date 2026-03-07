@@ -44,13 +44,7 @@ LcdAppTemperature g_lcd_temperatures[8] = {0};
 uint8_t g_lcd_page = 1;
 uint8_t g_lcd_page_change = 0;
 
-// Helper Function declarations
-static uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults);
-static uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings);
-
-/*--------------------------------------------------------------------------
-  HELPER FUNCTIONS
---------------------------------------------------------------------------*/
+/** Helper Function declarations */
 
 /**
  * @brief Checks and updates the faults.
@@ -59,6 +53,20 @@ static uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings);
  * @param motor_faults A struct containing the motor faults.
  * @return The count of faults.
  */
+static uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults);
+
+/**
+ * @brief Checks and updates the warnings.
+ *
+ * @param warnings A struct containing the warnings
+ *
+ * @return The count of warnings.
+ */
+static uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings);
+
+/*--------------------------------------------------------------------------
+  HELPER FUNCTIONS
+--------------------------------------------------------------------------*/
 static uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults)
 {
     uint8_t fault_count = 0;
@@ -157,13 +165,7 @@ static uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFault
     return fault_count;
 }
 
-/**
- * @brief Checks and updates the warnings.
- *
- * @param warnings A struct containing the warnings
- *
- * @return The count of warnings.
- */
+
 static uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings)
 {
     uint8_t warning_count = 0;
@@ -230,63 +232,35 @@ void LcdAppDisplaySpeedDrivePage(volatile uint32_t* speed, volatile uint8_t unit
     if (speed == NULL)
     { // Stale speed data
         sprintf(speed_str, "XX");
-        old_bb_speed = LcdDriverDrawText(speed_str,
-                                         LCD_APP_SPEED_TWODIGIT_X + 10,
-                                         LCD_APP_SPEED_Y + 10,
-                                         LCD_APP_SPEED_NULL_FONT,
-                                         LCD_APP_SPEED_SPACING + 10);
+        old_bb_speed = LcdDriverDrawText(speed_str, LCD_APP_SPEED_TWODIGIT_X + 10, LCD_APP_SPEED_Y + 10, LCD_APP_SPEED_NULL_FONT, LCD_APP_SPEED_SPACING + 10);
     }
     else if (*speed < 10)
     { // Single digit speed
         sprintf(speed_str, "%01lu", (unsigned long)*speed);
-        old_bb_speed = LcdDriverDrawText(speed_str,
-                                         LCD_APP_SPEED_ONEDIGIT_X,
-                                         LCD_APP_SPEED_Y,
-                                         LCD_APP_SPEED_FONT,
-                                         LCD_APP_SPEED_SPACING);
+        old_bb_speed = LcdDriverDrawText(speed_str, LCD_APP_SPEED_ONEDIGIT_X, LCD_APP_SPEED_Y, LCD_APP_SPEED_FONT, LCD_APP_SPEED_SPACING);
     }
     else if (*speed < 100)
     { // Double digit second
         sprintf(speed_str, "%02lu", (unsigned long)*speed);
-        old_bb_speed = LcdDriverDrawText(speed_str,
-                                         LCD_APP_SPEED_TWODIGIT_X,
-                                         LCD_APP_SPEED_Y,
-                                         LCD_APP_SPEED_FONT,
-                                         LCD_APP_SPEED_SPACING);
+        old_bb_speed = LcdDriverDrawText(speed_str, LCD_APP_SPEED_TWODIGIT_X, LCD_APP_SPEED_Y, LCD_APP_SPEED_FONT, LCD_APP_SPEED_SPACING);
     }
     else
     {
         sprintf(speed_str, "%03lu", (unsigned long)*speed);
-        old_bb_speed = LcdDriverDrawText(speed_str,
-                                         LCD_APP_SPEED_THREEDIGIT_X,
-                                         LCD_APP_SPEED_Y,
-                                         LCD_APP_SPEED_FONT,
-                                         LCD_APP_SPEED_SPACING);
+        old_bb_speed = LcdDriverDrawText(speed_str, LCD_APP_SPEED_THREEDIGIT_X, LCD_APP_SPEED_Y, LCD_APP_SPEED_FONT, LCD_APP_SPEED_SPACING);
     }
 
     /* Draw the speed units */
     switch (units)
     {
     case LCD_APP_KPH:
-        LcdDriverDrawText("kph",
-                          LCD_APP_SPEED_X + LCD_APP_SPEED_UNIT_KPH_X,
-                          LCD_APP_SPEED_UNIT_Y,
-                          LCD_APP_SPEED_UNITS_FONT,
-                          LCD_APP_SPEED_UNITS_SPACING);
+        LcdDriverDrawText("kph", LCD_APP_SPEED_X + LCD_APP_SPEED_UNIT_KPH_X, LCD_APP_SPEED_UNIT_Y, LCD_APP_SPEED_UNITS_FONT, LCD_APP_SPEED_UNITS_SPACING);
         break;
     case LCD_APP_MPH:
-        LcdDriverDrawText("mph",
-                          LCD_APP_SPEED_X + LCD_APP_SPEED_UNIT_MPH_X,
-                          LCD_APP_SPEED_UNIT_Y,
-                          LCD_APP_SPEED_UNITS_FONT,
-                          LCD_APP_SPEED_UNITS_SPACING);
+        LcdDriverDrawText("mph", LCD_APP_SPEED_X + LCD_APP_SPEED_UNIT_MPH_X, LCD_APP_SPEED_UNIT_Y, LCD_APP_SPEED_UNITS_FONT, LCD_APP_SPEED_UNITS_SPACING);
         break;
     default:
-        LcdDriverDrawText("xxx",
-                          LCD_APP_SPEED_X + LCD_APP_SPEED_UNIT_MPH_X,
-                          LCD_APP_SPEED_UNIT_Y,
-                          LCD_APP_SPEED_UNITS_FONT,
-                          LCD_APP_SPEED_UNITS_SPACING);
+        LcdDriverDrawText("xxx", LCD_APP_SPEED_X + LCD_APP_SPEED_UNIT_MPH_X, LCD_APP_SPEED_UNIT_Y, LCD_APP_SPEED_UNITS_FONT, LCD_APP_SPEED_UNITS_SPACING);
         break;
     }
 
@@ -309,33 +283,25 @@ void LcdAppDisplaySocDrivePage(volatile uint32_t* soc)
     if (soc == NULL)
     {
         sprintf(soc_str, "--");
-        old_bb_soc = LcdDriverDrawText(
-            soc_str, LCD_APP_SOC_TWODIGIT_X, LCD_APP_SOC_Y, LCD_APP_SOC_FONT, LCD_APP_SOC_SPACING);
+        old_bb_soc = LcdDriverDrawText(soc_str, LCD_APP_SOC_TWODIGIT_X, LCD_APP_SOC_Y, LCD_APP_SOC_FONT, LCD_APP_SOC_SPACING);
     }
     else if (*soc < 10)
     {
         sprintf(soc_str, "%01lu", (unsigned long)*soc);
-        old_bb_soc = LcdDriverDrawText(
-            soc_str, LCD_APP_SOC_ONEDIGIT_X, LCD_APP_SOC_Y, LCD_APP_SOC_FONT, LCD_APP_SOC_SPACING);
+        old_bb_soc = LcdDriverDrawText(soc_str, LCD_APP_SOC_ONEDIGIT_X, LCD_APP_SOC_Y, LCD_APP_SOC_FONT, LCD_APP_SOC_SPACING);
     }
     else if (*soc < 100)
     {
         sprintf(soc_str, "%02lu", (unsigned long)*soc);
-        old_bb_soc = LcdDriverDrawText(
-            soc_str, LCD_APP_SOC_TWODIGIT_X, LCD_APP_SOC_Y, LCD_APP_SOC_FONT, LCD_APP_SOC_SPACING);
+        old_bb_soc = LcdDriverDrawText(soc_str, LCD_APP_SOC_TWODIGIT_X, LCD_APP_SOC_Y, LCD_APP_SOC_FONT, LCD_APP_SOC_SPACING);
     }
     else
     {
         sprintf(soc_str, "%03lu", (unsigned long)*soc);
-        old_bb_soc = LcdDriverDrawText(soc_str,
-                                       LCD_APP_SOC_THREEDIGIT_X,
-                                       LCD_APP_SOC_Y,
-                                       LCD_APP_SOC_FONT,
-                                       LCD_APP_SOC_SPACING);
+        old_bb_soc = LcdDriverDrawText(soc_str, LCD_APP_SOC_THREEDIGIT_X, LCD_APP_SOC_Y, LCD_APP_SOC_FONT, LCD_APP_SOC_SPACING);
     }
 
-    LcdDriverDrawChar(
-        LCD_APP_SOC_UNITS, LCD_APP_SOC_UNITS_X, LCD_APP_SOC_Y, LCD_APP_SOC_UNITS_FONT);
+    LcdDriverDrawChar(LCD_APP_SOC_UNITS, LCD_APP_SOC_UNITS_X, LCD_APP_SOC_Y, LCD_APP_SOC_UNITS_FONT);
 
     LcdDriverRefresh();
 }
@@ -356,18 +322,13 @@ void LcdAppDisplayDriveModeDrivePage(volatile uint8_t drive_mode)
     switch (drive_mode)
     {
     case LCD_APP_DRIVE_MODE_ECO:
-        old_bb_drive_mode = LcdDriverDrawChar(
-            LCD_APP_ECO_SYMBOL, LCD_APP_ECO_MODE_X, LCD_APP_ECO_MODE_Y, LCD_APP_ECO_MODE_FONT);
+        old_bb_drive_mode = LcdDriverDrawChar(LCD_APP_ECO_SYMBOL, LCD_APP_ECO_MODE_X, LCD_APP_ECO_MODE_Y, LCD_APP_ECO_MODE_FONT);
         break;
     case LCD_APP_DRIVE_MODE_POWER:
-        old_bb_drive_mode = LcdDriverDrawChar(LCD_APP_POWER_SYMBOL,
-                                              LCD_APP_POWER_MODE_X,
-                                              LCD_APP_POWER_MODE_Y,
-                                              LCD_APP_POWER_MODE_FONT);
+        old_bb_drive_mode = LcdDriverDrawChar(LCD_APP_POWER_SYMBOL, LCD_APP_POWER_MODE_X, LCD_APP_POWER_MODE_Y, LCD_APP_POWER_MODE_FONT);
         break;
     default:
-        old_bb_drive_mode = LcdDriverDrawChar(
-            LCD_APP_ERROR_SYMBOL, LCD_APP_ECO_MODE_X, LCD_APP_ECO_MODE_Y, LCD_APP_ECO_MODE_FONT);
+        old_bb_drive_mode = LcdDriverDrawChar(LCD_APP_ERROR_SYMBOL, LCD_APP_ECO_MODE_X, LCD_APP_ECO_MODE_Y, LCD_APP_ECO_MODE_FONT);
         break;
     }
 
@@ -408,8 +369,7 @@ void LcdAppDisplayDriveStateDrivePage(volatile DriveStateStates* state)
 
     LcdDriverClearBoundingBox(
         LCD_APP_STATE_X, LCD_APP_STATE_Y, old_bb_drive_state.x2, LCD_DRIVER_BOTTOM_RIGHT_Y);
-    old_bb_drive_state = LcdDriverDrawText(
-        state_str, LCD_APP_STATE_X, LCD_APP_STATE_Y, LCD_APP_STATE_FONT, LCD_APP_STATE_SPACING);
+    old_bb_drive_state = LcdDriverDrawText(state_str, LCD_APP_STATE_X, LCD_APP_STATE_Y, LCD_APP_STATE_FONT, LCD_APP_STATE_SPACING);
 
     LcdDriverRefresh();
 }
@@ -431,8 +391,7 @@ void LcdAppDisplayFaultIndicator(LcdAppBattFaults* batt_faults, LcdAppMotorFault
     // Check if there is an existing fault
     if (fault_count > 0)
     {
-        old_bb_fault_indicator = LcdDriverDrawChar(
-            LCD_APP_FAULT_SYMBOL, LCD_APP_FAULT_X, LCD_APP_FAULT_Y, LCD_APP_FAULT_SYMBOL_FONT);
+        old_bb_fault_indicator = LcdDriverDrawChar(LCD_APP_FAULT_SYMBOL, LCD_APP_FAULT_X, LCD_APP_FAULT_Y, LCD_APP_FAULT_SYMBOL_FONT);
     }
     LcdDriverRefresh();
 }
@@ -455,10 +414,7 @@ void LcdAppDisplayWarningIndicator(LcdAppWarnings* warnings)
     // Check if there is an existing warning
     if (warning_count > 0)
     {
-        old_bb_warning_indicator = LcdDriverDrawChar(LCD_APP_WARNING_SYMBOL,
-                                                     LCD_APP_WARNING_X,
-                                                     LCD_APP_WARNING_Y,
-                                                     LCD_APP_WARNING_SYMBOL_FONT);
+        old_bb_warning_indicator = LcdDriverDrawChar(LCD_APP_WARNING_SYMBOL, LCD_APP_WARNING_X, LCD_APP_WARNING_Y, LCD_APP_WARNING_SYMBOL_FONT);
     }
     LcdDriverRefresh();
 }
@@ -481,75 +437,27 @@ void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor
 
     uint8_t fault_count = LcdAppCheckFaults(batt_faults, motor_faults);
 
-    LcdDriverDrawText(LCD_APP_FAULT_LABEL_CHARS,
-                      LCD_APP_FAULT_LABEL_X,
-                      LCD_APP_FAULT_LABEL_Y,
-                      LCD_APP_FAULT_LABEL_FONT,
-                      LCD_APP_FAULT_SPACING);
+    LcdDriverDrawText(LCD_APP_FAULT_LABEL_CHARS, LCD_APP_FAULT_LABEL_X, LCD_APP_FAULT_LABEL_Y, LCD_APP_FAULT_LABEL_FONT, LCD_APP_FAULT_SPACING);
     for (uint8_t i = 0; i < LCD_APP_FAULT_LABEL_UNDERLINE_X; i++)
     {
         LcdDriverSetPixel(i, LCD_APP_FAULT_LABEL_UNDERLINE_Y, 1);
     }
     if (fault_count <= 3)
     {
-        LcdDriverDrawText(faults[0],
-                          LCD_APP_FAULT_FOUR_X1,
-                          LCD_APP_FAULT_FOUR_Y1,
-                          LCD_APP_FAULT_FOUR_FONT,
-                          LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[1],
-                          LCD_APP_FAULT_FOUR_X2,
-                          LCD_APP_FAULT_FOUR_Y2,
-                          LCD_APP_FAULT_FOUR_FONT,
-                          LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[2],
-                          LCD_APP_FAULT_FOUR_X3,
-                          LCD_APP_FAULT_FOUR_Y3,
-                          LCD_APP_FAULT_FOUR_FONT,
-                          LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(faults[0], LCD_APP_FAULT_FOUR_X1, LCD_APP_FAULT_FOUR_Y1, LCD_APP_FAULT_FOUR_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(faults[1], LCD_APP_FAULT_FOUR_X2, LCD_APP_FAULT_FOUR_Y2, LCD_APP_FAULT_FOUR_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(faults[2], LCD_APP_FAULT_FOUR_X3, LCD_APP_FAULT_FOUR_Y3, LCD_APP_FAULT_FOUR_FONT, LCD_APP_FAULT_SPACING);
     }
     else if (fault_count <= 8)
     {
-        LcdDriverDrawText(faults[0],
-                          LCD_APP_FAULT_EIGHT_X1,
-                          LCD_APP_FAULT_EIGHT_Y1,
-                          LCD_APP_FAULT_EIGHT_FONT,
-                          LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[1],
-                          LCD_APP_FAULT_EIGHT_X2,
-                          LCD_APP_FAULT_EIGHT_Y2,
-                          LCD_APP_FAULT_EIGHT_FONT,
-                          LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[2],
-                          LCD_APP_FAULT_EIGHT_X3,
-                          LCD_APP_FAULT_EIGHT_Y3,
-                          LCD_APP_FAULT_EIGHT_FONT,
-                          LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[3],
-                          LCD_APP_FAULT_EIGHT_X4,
-                          LCD_APP_FAULT_EIGHT_Y4,
-                          LCD_APP_FAULT_EIGHT_FONT,
-                          LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[4],
-                          LCD_APP_FAULT_EIGHT_X5,
-                          LCD_APP_FAULT_EIGHT_Y5,
-                          LCD_APP_FAULT_EIGHT_FONT,
-                          LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[5],
-                          LCD_APP_FAULT_EIGHT_X6,
-                          LCD_APP_FAULT_EIGHT_Y6,
-                          LCD_APP_FAULT_EIGHT_FONT,
-                          LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[6],
-                          LCD_APP_FAULT_EIGHT_X7,
-                          LCD_APP_FAULT_EIGHT_Y7,
-                          LCD_APP_FAULT_EIGHT_FONT,
-                          LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[7],
-                          LCD_APP_FAULT_EIGHT_X8,
-                          LCD_APP_FAULT_EIGHT_Y8,
-                          LCD_APP_FAULT_EIGHT_FONT,
-                          LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(faults[0], LCD_APP_FAULT_EIGHT_X1, LCD_APP_FAULT_EIGHT_Y1, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(faults[1], LCD_APP_FAULT_EIGHT_X2, LCD_APP_FAULT_EIGHT_Y2, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(faults[2], LCD_APP_FAULT_EIGHT_X3, LCD_APP_FAULT_EIGHT_Y3, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(faults[3], LCD_APP_FAULT_EIGHT_X4, LCD_APP_FAULT_EIGHT_Y4, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(faults[4], LCD_APP_FAULT_EIGHT_X5, LCD_APP_FAULT_EIGHT_Y5, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(faults[5], LCD_APP_FAULT_EIGHT_X6, LCD_APP_FAULT_EIGHT_Y6, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(faults[6], LCD_APP_FAULT_EIGHT_X7, LCD_APP_FAULT_EIGHT_Y7, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(faults[7], LCD_APP_FAULT_EIGHT_X8, LCD_APP_FAULT_EIGHT_Y8, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
     }
 
     LcdDriverRefresh();
@@ -571,75 +479,27 @@ void LcdAppDisplayWarnings(LcdAppWarnings* warnings)
 
     uint8_t warning_count = LcdAppCheckWarnings(warnings);
 
-    LcdDriverDrawText(LCD_APP_WARNING_LABEL_CHARS,
-                      LCD_APP_WARNING_LABEL_X,
-                      LCD_APP_WARNING_LABEL_Y,
-                      LCD_APP_WARNING_LABEL_FONT,
-                      LCD_APP_WARNING_SPACING);
+    LcdDriverDrawText(LCD_APP_WARNING_LABEL_CHARS, LCD_APP_WARNING_LABEL_X, LCD_APP_WARNING_LABEL_Y, LCD_APP_WARNING_LABEL_FONT, LCD_APP_WARNING_SPACING);
     for (uint8_t i = 0; i < LCD_APP_WARNING_LABEL_UNDERLINE_X; i++)
     {
         LcdDriverSetPixel(i, LCD_APP_WARNING_LABEL_UNDERLINE_Y, 1);
     }
     if (warning_count <= 3)
     {
-        LcdDriverDrawText(warning_char[0],
-                          LCD_APP_WARNING_FOUR_X1,
-                          LCD_APP_WARNING_FOUR_Y1,
-                          LCD_APP_WARNING_FOUR_FONT,
-                          LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[1],
-                          LCD_APP_WARNING_FOUR_X2,
-                          LCD_APP_WARNING_FOUR_Y2,
-                          LCD_APP_WARNING_FOUR_FONT,
-                          LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[2],
-                          LCD_APP_WARNING_FOUR_X3,
-                          LCD_APP_WARNING_FOUR_Y3,
-                          LCD_APP_WARNING_FOUR_FONT,
-                          LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(warning_char[0], LCD_APP_WARNING_FOUR_X1, LCD_APP_WARNING_FOUR_Y1, LCD_APP_WARNING_FOUR_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(warning_char[1], LCD_APP_WARNING_FOUR_X2, LCD_APP_WARNING_FOUR_Y2, LCD_APP_WARNING_FOUR_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(warning_char[2], LCD_APP_WARNING_FOUR_X3, LCD_APP_WARNING_FOUR_Y3, LCD_APP_WARNING_FOUR_FONT, LCD_APP_WARNING_SPACING);
     }
     else if (warning_count <= 8)
     {
-        LcdDriverDrawText(warning_char[0],
-                          LCD_APP_WARNING_EIGHT_X1,
-                          LCD_APP_WARNING_EIGHT_Y1,
-                          LCD_APP_WARNING_EIGHT_FONT,
-                          LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[1],
-                          LCD_APP_WARNING_EIGHT_X2,
-                          LCD_APP_WARNING_EIGHT_Y2,
-                          LCD_APP_WARNING_EIGHT_FONT,
-                          LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[2],
-                          LCD_APP_WARNING_EIGHT_X3,
-                          LCD_APP_WARNING_EIGHT_Y3,
-                          LCD_APP_WARNING_EIGHT_FONT,
-                          LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[3],
-                          LCD_APP_WARNING_EIGHT_X4,
-                          LCD_APP_WARNING_EIGHT_Y4,
-                          LCD_APP_WARNING_EIGHT_FONT,
-                          LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[4],
-                          LCD_APP_WARNING_EIGHT_X5,
-                          LCD_APP_WARNING_EIGHT_Y5,
-                          LCD_APP_WARNING_EIGHT_FONT,
-                          LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[5],
-                          LCD_APP_WARNING_EIGHT_X6,
-                          LCD_APP_WARNING_EIGHT_Y6,
-                          LCD_APP_WARNING_EIGHT_FONT,
-                          LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[6],
-                          LCD_APP_WARNING_EIGHT_X7,
-                          LCD_APP_WARNING_EIGHT_Y7,
-                          LCD_APP_WARNING_EIGHT_FONT,
-                          LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[7],
-                          LCD_APP_WARNING_EIGHT_X8,
-                          LCD_APP_WARNING_EIGHT_Y8,
-                          LCD_APP_WARNING_EIGHT_FONT,
-                          LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(warning_char[0], LCD_APP_WARNING_EIGHT_X1, LCD_APP_WARNING_EIGHT_Y1, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(warning_char[1], LCD_APP_WARNING_EIGHT_X2, LCD_APP_WARNING_EIGHT_Y2, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(warning_char[2], LCD_APP_WARNING_EIGHT_X3, LCD_APP_WARNING_EIGHT_Y3, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(warning_char[3], LCD_APP_WARNING_EIGHT_X4, LCD_APP_WARNING_EIGHT_Y4, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(warning_char[4], LCD_APP_WARNING_EIGHT_X5, LCD_APP_WARNING_EIGHT_Y5, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(warning_char[5], LCD_APP_WARNING_EIGHT_X6, LCD_APP_WARNING_EIGHT_Y6, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(warning_char[6], LCD_APP_WARNING_EIGHT_X7, LCD_APP_WARNING_EIGHT_Y7, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(warning_char[7], LCD_APP_WARNING_EIGHT_X8, LCD_APP_WARNING_EIGHT_Y8, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
     }
 
     LcdDriverRefresh();
@@ -701,20 +561,14 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data)
         temp_x = LCD_APP_MPPT_D_X;
         temp_y = LCD_APP_MPPT_D_Y;
         temp_shift = LCD_APP_TEMP_MPPT_OFFSET;
-        LcdDriverClearBoundingBox(LCD_APP_TEMP_MPPT_OFFSET,
-                                  LCD_APP_MPPT_D_Y,
-                                  LCD_APP_BATT_MAX_X - 2,
-                                  LCD_DRIVER_BOTTOM_RIGHT_Y);
+        LcdDriverClearBoundingBox(LCD_APP_TEMP_MPPT_OFFSET, LCD_APP_MPPT_D_Y, LCD_APP_BATT_MAX_X - 2, LCD_DRIVER_BOTTOM_RIGHT_Y);
         break;
     case BATT_MAX:
         sprintf(temp_label, "%s", LCD_APP_BATT_MAX_CHARS);
         temp_x = LCD_APP_BATT_MAX_X;
         temp_y = LCD_APP_BATT_MAX_Y;
         temp_shift = LCD_APP_TEMP_BATT_OFFSET;
-        LcdDriverClearBoundingBox(LCD_APP_BATT_MAX_X + LCD_APP_TEMP_BATT_OFFSET,
-                                  0,
-                                  LCD_DRIVER_BOTTOM_RIGHT_X,
-                                  LCD_APP_BATT_MIN_Y);
+        LcdDriverClearBoundingBox(LCD_APP_BATT_MAX_X + LCD_APP_TEMP_BATT_OFFSET, 0, LCD_DRIVER_BOTTOM_RIGHT_X, LCD_APP_BATT_MIN_Y);
         break;
     case BATT_MIN:
         sprintf(temp_label, "%s", LCD_APP_BATT_MIN_CHARS);
@@ -758,35 +612,27 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data)
     if (temperature_data.temperature == NULL)
     { // temperature not read
         sprintf(temp_str, "--");
-        bb = LcdDriverDrawText(
-            temp_str, temp_x + temp_shift, temp_y, LCD_APP_TEMP_FONT, LCD_APP_TEMP_SPACING);
+        bb = LcdDriverDrawText(temp_str, temp_x + temp_shift, temp_y, LCD_APP_TEMP_FONT, LCD_APP_TEMP_SPACING);
     }
     else if (*temperature_data.temperature < 10)
     { // Single digit temperature
         sprintf(temp_str, "%01lu", (unsigned long)*temperature_data.temperature);
-        bb = LcdDriverDrawText(
-            temp_str, temp_x + temp_shift, temp_y, LCD_APP_TEMP_FONT, LCD_APP_TEMP_SPACING);
+        bb = LcdDriverDrawText(temp_str, temp_x + temp_shift, temp_y, LCD_APP_TEMP_FONT, LCD_APP_TEMP_SPACING);
     }
     else if (*temperature_data.temperature < 100)
     { // Double digit temperature
         sprintf(temp_str, "%02lu", (unsigned long)*temperature_data.temperature);
-        bb = LcdDriverDrawText(
-            temp_str, temp_x + temp_shift, temp_y, LCD_APP_TEMP_FONT, LCD_APP_TEMP_SPACING);
+        bb = LcdDriverDrawText(temp_str, temp_x + temp_shift, temp_y, LCD_APP_TEMP_FONT, LCD_APP_TEMP_SPACING);
     }
     else
     { // Triple digit
         sprintf(temp_str, "%03lu", (unsigned long)*temperature_data.temperature);
-        bb = LcdDriverDrawText(
-            temp_str, temp_x + temp_shift, temp_y, LCD_APP_TEMP_FONT, LCD_APP_TEMP_SPACING);
+        bb = LcdDriverDrawText(temp_str, temp_x + temp_shift, temp_y, LCD_APP_TEMP_FONT, LCD_APP_TEMP_SPACING);
     }
 
     // Draws the Degrees Celsius symbol according to the position of the bounding box
-    LcdDriverDrawChar(LCD_APP_TEMP_DEGREES_SYMBOL,
-                      bb.x2 + LCD_APP_TEMP_DEGREES_OFFSET_X,
-                      temp_y - LCD_APP_TEMP_DEGREES_OFFSET_Y,
-                      LCD_APP_TEMP_DEGREES_FONT);
-    LcdDriverDrawChar(
-        LCD_APP_TEMP_UNITS, bb.x2 + LCD_APP_TEMP_UNITS_OFFSET, temp_y, LCD_APP_TEMP_UNITS_FONT);
+    LcdDriverDrawChar(LCD_APP_TEMP_DEGREES_SYMBOL, bb.x2 + LCD_APP_TEMP_DEGREES_OFFSET_X, temp_y - LCD_APP_TEMP_DEGREES_OFFSET_Y, LCD_APP_TEMP_DEGREES_FONT);
+    LcdDriverDrawChar(LCD_APP_TEMP_UNITS, bb.x2 + LCD_APP_TEMP_UNITS_OFFSET, temp_y, LCD_APP_TEMP_UNITS_FONT);
 
     LcdDriverRefresh();
 }
@@ -895,63 +741,35 @@ void LcdAppDisplaySpeedDebugPage(volatile uint32_t* speed, volatile uint8_t unit
     if (speed == NULL)
     { // Stale speed data
         sprintf(speed_str, "XX");
-        old_bb_speed = LcdDriverDrawText(speed_str,
-                                         LCD_APP_DEBUG_SPEED_TWODIGIT_X + 10,
-                                         LCD_APP_DEBUG_SPEED_Y + 10,
-                                         LCD_APP_DEBUG_SPEED_FONT,
-                                         LCD_APP_DEBUG_SPEED_SPACING + 10);
+        old_bb_speed = LcdDriverDrawText(speed_str, LCD_APP_DEBUG_SPEED_TWODIGIT_X + 10, LCD_APP_DEBUG_SPEED_Y + 10, LCD_APP_DEBUG_SPEED_FONT, LCD_APP_DEBUG_SPEED_SPACING + 10);
     }
     else if (*speed < 10)
     { // Single digit speed
         sprintf(speed_str, "%01lu", (unsigned long)*speed);
-        old_bb_speed = LcdDriverDrawText(speed_str,
-                                         LCD_APP_DEBUG_SPEED_ONEDIGIT_X,
-                                         LCD_APP_DEBUG_SPEED_Y,
-                                         LCD_APP_DEBUG_SPEED_FONT,
-                                         LCD_APP_DEBUG_SPEED_SPACING);
+        old_bb_speed = LcdDriverDrawText(speed_str, LCD_APP_DEBUG_SPEED_ONEDIGIT_X, LCD_APP_DEBUG_SPEED_Y, LCD_APP_DEBUG_SPEED_FONT, LCD_APP_DEBUG_SPEED_SPACING);
     }
     else if (*speed < 100)
     { // Double digit second
         sprintf(speed_str, "%02lu", (unsigned long)*speed);
-        old_bb_speed = LcdDriverDrawText(speed_str,
-                                         LCD_APP_DEBUG_SPEED_TWODIGIT_X,
-                                         LCD_APP_DEBUG_SPEED_Y,
-                                         LCD_APP_DEBUG_SPEED_FONT,
-                                         LCD_APP_DEBUG_SPEED_SPACING);
+        old_bb_speed = LcdDriverDrawText(speed_str, LCD_APP_DEBUG_SPEED_TWODIGIT_X, LCD_APP_DEBUG_SPEED_Y, LCD_APP_DEBUG_SPEED_FONT, LCD_APP_DEBUG_SPEED_SPACING);
     }
     else
     {
         sprintf(speed_str, "%03lu", (unsigned long)*speed);
-        old_bb_speed = LcdDriverDrawText(speed_str,
-                                         LCD_APP_DEBUG_SPEED_THREEDIGIT_X,
-                                         LCD_APP_DEBUG_SPEED_Y,
-                                         LCD_APP_DEBUG_SPEED_FONT,
-                                         LCD_APP_DEBUG_SPEED_SPACING);
+        old_bb_speed = LcdDriverDrawText(speed_str, LCD_APP_DEBUG_SPEED_THREEDIGIT_X, LCD_APP_DEBUG_SPEED_Y, LCD_APP_DEBUG_SPEED_FONT, LCD_APP_DEBUG_SPEED_SPACING);
     }
 
     /* Draw the speed units */
     switch (units)
     {
     case LCD_APP_KPH:
-        LcdDriverDrawText("kph",
-                          LCD_APP_DEBUG_SPEED_X + LCD_APP_DEBUG_SPEED_UNIT_KPH_X,
-                          LCD_APP_DEBUG_SPEED_UNIT_Y,
-                          LCD_APP_DEBUG_SPEED_UNITS_FONT,
-                          LCD_APP_DEBUG_SPEED_UNITS_SPACING);
+        LcdDriverDrawText("kph", LCD_APP_DEBUG_SPEED_X + LCD_APP_DEBUG_SPEED_UNIT_KPH_X, LCD_APP_DEBUG_SPEED_UNIT_Y, LCD_APP_DEBUG_SPEED_UNITS_FONT, LCD_APP_DEBUG_SPEED_UNITS_SPACING);
         break;
     case LCD_APP_MPH:
-        LcdDriverDrawText("mph",
-                          LCD_APP_DEBUG_SPEED_X + LCD_APP_DEBUG_SPEED_UNIT_MPH_X,
-                          LCD_APP_DEBUG_SPEED_UNIT_Y,
-                          LCD_APP_DEBUG_SPEED_UNITS_FONT,
-                          LCD_APP_DEBUG_SPEED_UNITS_SPACING);
+        LcdDriverDrawText("mph", LCD_APP_DEBUG_SPEED_X + LCD_APP_DEBUG_SPEED_UNIT_MPH_X, LCD_APP_DEBUG_SPEED_UNIT_Y, LCD_APP_DEBUG_SPEED_UNITS_FONT, LCD_APP_DEBUG_SPEED_UNITS_SPACING);
         break;
     default:
-        LcdDriverDrawText("xxx",
-                          LCD_APP_DEBUG_SPEED_X + LCD_APP_DEBUG_SPEED_UNIT_MPH_X,
-                          LCD_APP_DEBUG_SPEED_UNIT_Y,
-                          LCD_APP_DEBUG_SPEED_UNITS_FONT,
-                          LCD_APP_DEBUG_SPEED_UNITS_SPACING);
+        LcdDriverDrawText("xxx", LCD_APP_DEBUG_SPEED_X + LCD_APP_DEBUG_SPEED_UNIT_MPH_X, LCD_APP_DEBUG_SPEED_UNIT_Y, LCD_APP_DEBUG_SPEED_UNITS_FONT, LCD_APP_DEBUG_SPEED_UNITS_SPACING);
         break;
     }
 
@@ -973,44 +791,25 @@ void LcdAppDisplaySocDebugPage(volatile uint32_t* soc)
     if (soc == NULL)
     {
         sprintf(soc_str, "--");
-        old_bb_soc = LcdDriverDrawText(soc_str,
-                                       LCD_APP_DEBUG_SOC_TWODIGIT_X,
-                                       LCD_APP_SOC_Y,
-                                       LCD_APP_DEBUG_SOC_FONT,
-                                       LCD_APP_DEBUG_SOC_SPACING);
+        old_bb_soc = LcdDriverDrawText(soc_str, LCD_APP_DEBUG_SOC_TWODIGIT_X, LCD_APP_SOC_Y, LCD_APP_DEBUG_SOC_FONT, LCD_APP_DEBUG_SOC_SPACING);
     }
     else if (*soc < 10)
     {
         sprintf(soc_str, "%01lu", (unsigned long)*soc);
-        old_bb_soc = LcdDriverDrawText(soc_str,
-                                       LCD_APP_DEBUG_SOC_ONEDIGIT_X,
-                                       LCD_APP_DEBUG_SOC_Y,
-                                       LCD_APP_DEBUG_SOC_FONT,
-                                       LCD_APP_DEBUG_SOC_SPACING);
+        old_bb_soc = LcdDriverDrawText(soc_str, LCD_APP_DEBUG_SOC_ONEDIGIT_X, LCD_APP_DEBUG_SOC_Y, LCD_APP_DEBUG_SOC_FONT, LCD_APP_DEBUG_SOC_SPACING);
     }
     else if (*soc < 100)
     {
         sprintf(soc_str, "%02lu", (unsigned long)*soc);
-        old_bb_soc = LcdDriverDrawText(soc_str,
-                                       LCD_APP_DEBUG_SOC_TWODIGIT_X,
-                                       LCD_APP_DEBUG_SOC_Y,
-                                       LCD_APP_DEBUG_SOC_FONT,
-                                       LCD_APP_DEBUG_SOC_SPACING);
+        old_bb_soc = LcdDriverDrawText(soc_str, LCD_APP_DEBUG_SOC_TWODIGIT_X, LCD_APP_DEBUG_SOC_Y, LCD_APP_DEBUG_SOC_FONT, LCD_APP_DEBUG_SOC_SPACING);
     }
     else
     {
         sprintf(soc_str, "%03lu", (unsigned long)*soc);
-        old_bb_soc = LcdDriverDrawText(soc_str,
-                                       LCD_APP_DEBUG_SOC_THREEDIGIT_X,
-                                       LCD_APP_DEBUG_SOC_Y,
-                                       LCD_APP_DEBUG_SOC_FONT,
-                                       LCD_APP_DEBUG_SOC_SPACING);
+        old_bb_soc = LcdDriverDrawText(soc_str, LCD_APP_DEBUG_SOC_THREEDIGIT_X, LCD_APP_DEBUG_SOC_Y, LCD_APP_DEBUG_SOC_FONT, LCD_APP_DEBUG_SOC_SPACING);
     }
 
-    LcdDriverDrawChar(LCD_APP_SOC_UNITS,
-                      LCD_APP_DEBUG_SOC_UNITS_X,
-                      LCD_APP_DEBUG_SOC_Y,
-                      LCD_APP_DEBUG_SOC_UNITS_FONT);
+    LcdDriverDrawChar(LCD_APP_SOC_UNITS, LCD_APP_DEBUG_SOC_UNITS_X, LCD_APP_DEBUG_SOC_Y, LCD_APP_DEBUG_SOC_UNITS_FONT);
 
     LcdDriverRefresh();
 }
@@ -1049,11 +848,7 @@ void LcdAppDisplayDriveStateDebugPage(volatile DriveStateStates* state)
 
     LcdDriverClearBoundingBox(
         LCD_APP_DEBUG_STATE_X, LCD_APP_DEBUG_STATE_Y, 20, LCD_DRIVER_BOTTOM_RIGHT_Y);
-    old_bb_drive_state = LcdDriverDrawText(state_str,
-                                           LCD_APP_DEBUG_STATE_X,
-                                           LCD_APP_DEBUG_STATE_Y,
-                                           LCD_APP_DEBUG_STATE_FONT,
-                                           LCD_APP_DEBUG_STATE_SPACING);
+    old_bb_drive_state = LcdDriverDrawText(state_str, LCD_APP_DEBUG_STATE_X, LCD_APP_DEBUG_STATE_Y, LCD_APP_DEBUG_STATE_FONT, LCD_APP_DEBUG_STATE_SPACING);
 
     LcdDriverRefresh();
 }
@@ -1166,8 +961,6 @@ void LcdAppChangeScreen() { LcdDriverChangeScreen(); }
         LcdAppDisplayTemperature(g_lcd_temperatures[MOTOR_THERM]);
         break;
     case DEBUG_PAGE:
-        
-
         LcdAppDisplaySpeedDebugPage(g_lcd_data.speed, g_lcd_data.speed_units);
         LcdAppDisplayDriveStateDebugPage((volatile DriveStateStates*) g_lcd_data.drive_state);
         LcdAppDisplaySocDebugPage((volatile uint32_t*)g_lcd_data.soc);

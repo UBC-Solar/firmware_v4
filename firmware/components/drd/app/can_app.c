@@ -43,6 +43,16 @@ void CanTasksInit(void)
     CAN_comms_init(&CAN_comms_config_drd);
 }
 
+/* CAN TX */
+void MotorControlQueryData(void)
+{
+    CAN_comms_Tx_msg_t msg;
+
+    msg.header = mdu_request_header;
+    msg.data[0] = MDU_REQUEST_FRAME;
+    CAN_comms_Add_Tx_message(&msg);
+}
+
 /* CAN RX */
 void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 {

@@ -22,10 +22,18 @@ void TasksDriveState(void* argument)
 {
     (void)argument; // Unused parameter
 
+    uint32_t motor_controller_count = 0;
+
     for (;;)
     {
+        if ((motor_controller_count % 4) == 0) {
+            MotorControlQueryData(); // Motor controller transmit
+        }
+
         osDelay(DRIVE_STATE_FSM_DELAY);
         DriveStateFsmHandler();
+
+        motor_controller_count++;
     }
 }
 

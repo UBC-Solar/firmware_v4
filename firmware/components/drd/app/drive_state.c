@@ -90,10 +90,6 @@ void EcoPowerHandler(DriveStateCtx *ctx);
  * @param isr True if called from ISR, false otherwise.
  */
 void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr);
-/**
- * @brief Queries and processes data related to motor control.
- */
-void MotorControlQueryData(void);
 
 /* DRIVE STATE FINITE STATE MACHINE */
 void DriveStateFsmHandler()
@@ -334,15 +330,6 @@ void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr)
     {
         CAN_comms_Add_Tx_message(&msg);
     }
-}
-
-void MotorControlQueryData(void)
-{
-    CAN_comms_Tx_msg_t msg;
-
-    msg.header = mdu_request_header;
-    msg.data[0] = MDU_REQUEST_FRAME;
-    CAN_comms_Add_Tx_message(&msg);
 }
 
 DriveStateStates DriveStateGetDriveState()

@@ -30,4 +30,9 @@ void LcdAppCanRxHandler(uint32_t msg_id, uint8_t* data);
  */
 void CanTasksInit(void);
 
+/**
+ * @brief Queries and processes data related to motor control.
+ */
+void MotorControlQueryData(void);
+
 #endif /* __CAN_APP_H__ */

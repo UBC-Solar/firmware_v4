@@ -53,6 +53,17 @@ void MotorControlQueryData(void)
     CAN_comms_Add_Tx_message(&msg);
 }
 
+void MotorCommandTransmit(CAN_comms_Tx_msg_t msg, bool isr) {
+    if (isr)
+    {
+        CAN_comms_Add_Tx_messageISR(&msg);
+    }
+    else
+    {
+        CAN_comms_Add_Tx_message(&msg);
+    }
+}
+
 /* CAN RX */
 void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 {

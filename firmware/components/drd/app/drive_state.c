@@ -322,14 +322,7 @@ static void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool 
 
     memcpy(msg.data, data, CAN_DATA_SIZE);
 
-    if (isr)
-    {
-        CAN_comms_Add_Tx_messageISR(&msg);
-    }
-    else
-    {
-        CAN_comms_Add_Tx_message(&msg);
-    }
+    MotorCommandTransmit(msg, isr);
 }
 
 DriveStateStates DriveStateGetDriveState(void)

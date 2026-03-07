@@ -12,6 +12,7 @@
 /*	Includes	*/
 #include "external_lights.h"
 #include "external_lights_driver.h"
+#include "gpio_driver.h"
 #include "main.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -27,13 +28,13 @@ volatile bool g_external_lights_braking = false;
  */
 void ExternalLightsStateMachine()
 {
-    // Read brake state directly from GPIO pin on DRD
-    g_external_lights_braking = (HAL_GPIO_ReadPin(BRK_IN_GPIO_Port, BRK_IN_Pin) == GPIO_PIN_SET);
+    // Read brake state via gpio_driver
+    g_external_lights_braking = ReadBrakePin(BRAKE_INPUT_PORT, BRAKE_INPUT_PIN);
 
-    // Read hazard switch directly from GPIO pin on DRD
-    bool hazard_on = (HAL_GPIO_ReadPin(HAZARD_GPIO_Port, HAZARD_Pin) == GPIO_PIN_SET);
+    // Read hazard switch via gpio_driver
+    bool hazard_on = ReadHazardPin(HAZARD_PORT, HAZARD_PIN);
 
-    static ExternalLightsState_t prev_state =
+    static ExternalLightsState prev_state =
         EXTERNAL_LIGHTS_IDLE_STATE; // keep track of previous state to reset flash counts
     static uint8_t flash_count = 0; // every xth count, the pin flips state, causing flash
     static bool flts = false;       // front left turn signal

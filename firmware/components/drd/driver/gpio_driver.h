@@ -33,8 +33,14 @@
 #define DEBUG_LED0_PIN DEBUG_LED_Pin
 #define DEBUG_LED0_PORT DEBUG_LED_GPIO_Port
 
+#define DEBUG_LEDA1_PIN DEBUG_LEDA1_Pin
+#define DEBUG_LEDA1_PORT DEBUG_LEDA1_GPIO_Port
+
 #define BRAKE_LED_PIN BRK_OUT_Pin
 #define BRAKE_LED_PORT BRK_OUT_GPIO_Port
+
+#define HAZARD_PIN HAZARD_Pin
+#define HAZARD_PORT HAZARD_GPIO_Port
 
 /* DRIVERS FUNCTION PROTOTYPES */
 /**
@@ -64,5 +70,12 @@ void ToggleLedPin(GPIO_TypeDef* port, uint16_t pin);
  * @param brake_on Non-zero to turn on, zero to turn off.
  */
 void SetBrakeLedPin(GPIO_TypeDef* port, uint16_t pin, uint8_t brake_on);
+/**
+ * @brief Reads the state of the hazard switch input pin.
+ * @param port GPIO port.
+ * @param pin GPIO pin number.
+ * @return Pin state (0 or 1).
+ */
+uint8_t ReadHazardPin(GPIO_TypeDef* port, uint16_t pin);
 
 #endif //__DRIVERS_H__

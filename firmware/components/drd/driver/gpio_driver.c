@@ -20,6 +20,8 @@ uint8_t ReadEcoPowerPin(GPIO_TypeDef* port, uint16_t pin) { return HAL_GPIO_Read
 
 void ToggleLedPin(GPIO_TypeDef* port, uint16_t pin) { HAL_GPIO_TogglePin(port, pin); }
 
+uint8_t ReadHazardPin(GPIO_TypeDef* port, uint16_t pin) { return HAL_GPIO_ReadPin(port, pin); }
+
 void SetBrakeLedPin(GPIO_TypeDef* port, uint16_t pin, uint8_t brake_on)
 {
     if (brake_on)

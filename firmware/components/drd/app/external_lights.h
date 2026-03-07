@@ -26,7 +26,7 @@ typedef enum {
     EXTERNAL_LIGHTS_LTS_STATE,
     EXTERNAL_LIGHTS_RTS_STATE,
     EXTERNAL_LIGHTS_BRAKE_STATE,
-} ExternalLightsState_t;
+} ExternalLightsState;
 
 /*	Function Prototypes	*/
 void ExternalLightsStateMachine();

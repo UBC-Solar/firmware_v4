@@ -11,6 +11,7 @@
 
 /*	Includes	*/
 #include "external_lights_driver.h"
+#include "gpio_driver.h"
 
 /**
  * @brief Drives external light GPIO outputs.
@@ -27,7 +28,7 @@ void ExternalLightsDriverSet(bool flts, bool frts, bool blts, bool brts, bool br
 {
     HAL_GPIO_WritePin(LTS_OUT_GPIO_Port, LTS_OUT_Pin, flts ? GPIO_PIN_SET : GPIO_PIN_RESET);
     HAL_GPIO_WritePin(RTS_OUT_GPIO_Port, RTS_OUT_Pin, frts ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(BL_LIGHTS_GPIO_Port, BL_LIGHTS_Pin, blts ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(BR_LIGHTS_GPIO_Port, BR_LIGHTS_Pin, brts ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(DEBUG_LED0_PORT, DEBUG_LED0_PIN, blts ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(DEBUG_LEDA1_PORT, DEBUG_LEDA1_PIN, brts ? GPIO_PIN_SET : GPIO_PIN_RESET);
     HAL_GPIO_WritePin(BRK_OUT_GPIO_Port, BRK_OUT_Pin, brk ? GPIO_PIN_SET : GPIO_PIN_RESET);
 }

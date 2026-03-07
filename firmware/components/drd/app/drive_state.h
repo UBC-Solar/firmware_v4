@@ -47,13 +47,12 @@ typedef struct
     uint8_t motor_control_flags;
 } DriveStateMotorControl;
 
-typedef enum
-{
-    INVALID = (uint8_t)0x00,
-    FORWARD = (uint8_t)0x01,
-    PARK = (uint8_t)0x02,
-    REVERSE = (uint8_t)0x03,
-    // CRUISE = (uint8_t) 0x04
+typedef enum {
+	INVALID = (uint8_t) 0x00,
+	FORWARD = (uint8_t) 0x01,
+	CRUISE = (uint8_t) 0x02,
+	PARK = (uint8_t) 0x03,
+	REVERSE = (uint8_t) 0x04
 } DriveStateStates;
 
 typedef struct {

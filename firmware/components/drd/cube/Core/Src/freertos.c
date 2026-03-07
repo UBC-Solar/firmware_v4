@@ -27,7 +27,6 @@
 /* USER CODE BEGIN Includes */
 #include "tasks.h"
 #include "can_driver.h"
-#include "can_driver.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

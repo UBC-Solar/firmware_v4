@@ -29,6 +29,7 @@ void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data);
  */
 void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg);
 
+/* CAN INIT */
 void CanTasksInit(void)
 {
     CAN_comms_config_t CAN_comms_config_drd = {0};
@@ -42,6 +43,7 @@ void CanTasksInit(void)
     CAN_comms_init(&CAN_comms_config_drd);
 }
 
+/* CAN RX */
 void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 {
 	uint32_t CAN_ID = 0;
@@ -65,7 +67,6 @@ void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
     VehicleStateCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
 }
 
-/* CAN RX */
 void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data)
 {
 

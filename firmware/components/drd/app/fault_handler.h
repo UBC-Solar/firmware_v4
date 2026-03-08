@@ -14,13 +14,30 @@
 
 #include <stdint.h>
 
+/**
+ * @brief Parses motor fault data received from CAN messages from the motor and MDI
+ *
+ * @param can_rx_data Pointer to the received CAN message data containing the temperature information.
+ */
 void FaultHandlerParseMotorFaults(uint8_t* can_rx_data);
-
+/**
+ * @brief Parses battery fault data received from CAN messages from the ECU
+ *
+ * @param can_rx_data Pointer to the received CAN message data containing the temperature information.
+ */
 void FaultHandlerParseECUFaults(uint8_t* can_rx_data);
-
+/**
+ * @brief Parses battery fault data from received CAN messages and updates the cyclic data handler with the latest battery fault information.
+ *
+ * @param can_rx_data Pointer to the received CAN message data containing the battery fault information.
+ */
 void FaultHandlerParseBatteryFaults(uint8_t* can_rx_data);
-
-void FaultHandlerParseTemperatures(uint8_t* can_rx_data);
-
+/**
+ * @brief Parses temperature data from received CAN messages and updates the cyclic data handler with the latest temperatures.
+ *
+ * @param msg_id The CAN message ID to identify which temperature data is being parsed.
+ * @param can_rx_data Pointer to the received CAN message data containing the temperature information.
+ */
+void FaultHandlerParseTemperatures(uint32_t msg_id, uint8_t* can_rx_data);
 
 #endif /* FAULT_HANDLER_H */

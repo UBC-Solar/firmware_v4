@@ -69,7 +69,6 @@ void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 /* CAN RX */
 void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data)
 {
-
     switch (msg_id)
     {
     case FRAME0:
@@ -87,15 +86,9 @@ void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data)
     }
 }
 
-/*
- * @brief CAN rx function which parses message data needed by the LCD
- *
- * @param msg_id 	The id of the CAN message
- * @param data  	The data of the CAN message
- */
 void LcdAppCanRxHandler(uint32_t msg_id, uint8_t* data)
 { 
-    //TODO: Filter temperatures and figure out the event flag for SOC
+    //TODO: Figure out the event flag for SOC
     if (msg_id == CAN_ID_ECU)
     {
         int16_t tmp_pack_current = (data[1] << 8) | (data[0]);
@@ -153,10 +146,9 @@ void FaultHandlerRxHandler(uint32_t msg_id, uint8_t* data)
     case CAN_ID_BATT_FAULTS:
         FaultHandlerParseBatteryFaults(data);
         break;
-    // case :
-    //     FaultHandlerParseTemperatures();
-    //     break;
     default:
+        // Temperatures come from multiple CAN messages so we parse them in the same handler based on the message ID
+        FaultHandlerParseTemperatures(msg_id, data);
         break;
     }
 }

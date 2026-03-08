@@ -17,13 +17,21 @@
  */
 void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data);
 
-/*
+/**
  * @brief CAN rx function which parses message data needed by the LCD
  *
  * @param msg_id 	The id of the CAN message
  * @param data  	The data of the CAN message
  */
 void LcdAppCanRxHandler(uint32_t msg_id, uint8_t* data);
+
+/**
+ * @brief CAN rx function which parses message data needed by the fault handler
+ *
+ * @param msg_id 	The id of the CAN message
+ * @param data  	The data of the CAN message
+ */
+void FaultHandlerRxHandler(uint32_t msg_id, uint8_t* data);
 
 /**
  * @brief Initializes CAN communication tasks.

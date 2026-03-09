@@ -114,7 +114,7 @@ void LcdAppCanRxHandler(uint32_t msg_id, uint8_t* data)
 
         if (next_page)
         {
-            if (g_lcd_page < LCD_APP_MAXPAGES)
+            if (g_lcd_page < LCD_HANDLER_MAXPAGES)
             {
                 g_lcd_page_change = 1;
                 g_lcd_page++;

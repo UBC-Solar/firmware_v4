@@ -34,186 +34,6 @@ static LcdDriverBoundingBox old_bb_warning_indicator = {0, 0, 0, 0};
 static char faults[8][10] = {0};
 static char warning_char[8][10] = {0};
 
-/* External variables*/
-LcdAppData g_lcd_data = {0};
-LcdAppBattFaults g_lcd_batt_faults = {0};
-LcdAppMotorFaults g_lcd_motor_faults = {0};
-LcdAppWarnings g_lcd_warnings = {0};
-LcdAppTemperature g_lcd_temperatures[8] = {0};
-
-uint8_t g_lcd_page = 1;
-uint8_t g_lcd_page_change = 0;
-
-/** Helper Function declarations */
-
-/**
- * @brief Checks and updates the faults.
- *
- * @param batt_faults A struct containing the battery faults.
- * @param motor_faults A struct containing the motor faults.
- * @return The count of faults.
- */
-static uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults);
-
-/**
- * @brief Checks and updates the warnings.
- *
- * @param warnings A struct containing the warnings
- *
- * @return The count of warnings.
- */
-static uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings);
-
-/*--------------------------------------------------------------------------
-  HELPER FUNCTIONS
---------------------------------------------------------------------------*/
-static uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults)
-{
-    uint8_t fault_count = 0;
-
-    if (batt_faults->battery_fault)
-    {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_FLT_CHARS);
-        fault_count++;
-    }
-    if(batt_faults->selftest_fault)
-    {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_SELFTEST_FLT_CHARS);
-        fault_count++;
-    }
-    if (batt_faults->supp_lo)
-    {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_SUPPLO_FLT_CHARS);
-        fault_count++;
-    }
-    if (batt_faults->voltage_high)
-    {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_VOLTHIGH_FLT_CHARS);
-        fault_count++;
-    }
-    if (batt_faults->voltage_low)
-    {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_VOLTLOW_FLT_CHARS);
-        fault_count++;
-    }
-    if (batt_faults->slave_board_comm_fault)
-    {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_SLAVE_COMM_FLT_CHARS);
-        fault_count++;
-    }
-    if (batt_faults->overvolt_fault)
-    {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_OVERVOLT_FLT_CHARS);
-        fault_count++;
-    }
-    if (batt_faults->undervolt_fault)
-    {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_UNDERVOLT_FLT_CHARS);
-        fault_count++;
-    }
-    if (batt_faults->overtemp_fault)
-    {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_OVERTEMP_FLT_CHARS);
-        fault_count++;
-    }
-    if (batt_faults->charge_overcurrent_fault)
-    {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_CHARGE_OC_FLT_CHARS);
-        fault_count++;
-    }
-    if (batt_faults->discharge_overcurrent_fault)
-    {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_DISCHARGE_OC_FLT_CHARS);
-        fault_count++;
-    }
-    if (batt_faults->reset_from_watchdog)
-    {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_RST_FROM_WATCH_FLT_CHARS);
-        fault_count++;
-    }
-    if (motor_faults->motor_system_error)
-    {
-        sprintf(faults[fault_count], "%s", LCD_APP_MTR_SYSTEM_FLT_CHARS);
-        fault_count++;
-    }
-    if (motor_faults->overcurrent_fault)
-    {
-        sprintf(faults[fault_count], "%s", LCD_APP_MTR_OVERCURR_FLT_CHARS);
-        fault_count++;
-    }
-    if (motor_faults->overvoltage_fault)
-    {
-        sprintf(faults[fault_count], "%s", LCD_APP_MTR_OVERVOLT_FLT_CHARS);
-        fault_count++;
-    }
-    if (motor_faults->fet_thermistor_error)
-    {
-        sprintf(faults[fault_count], "%s", LCD_APP_MTR_OVERTEMP_FLT_CHARS);
-        fault_count++;
-    }
-    if (motor_faults->motor_comm_fault)
-    {
-        sprintf(faults[fault_count], "%s", LCD_APP_MTR_COMM_FLT_CHARS);
-        fault_count++;
-    }
-    if (motor_faults->throttle_adc_outofrange)
-    {
-        sprintf(faults[fault_count], "%s", LCD_APP_MTR_THROT_ADC_OOR_FLT_CHARS);
-        fault_count++;
-    }
-    if (motor_faults->throttle_adc_mismatch)
-    {
-        sprintf(faults[fault_count], "%s", LCD_APP_MTR_THROT_ADC_MISMATCH_FLT_CHARS);
-        fault_count++;
-    }
-
-    return fault_count;
-}
-
-
-static uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings)
-{
-    uint8_t warning_count = 0;
-
-    if (warnings->high_temp_warning)
-    {
-        sprintf(warning_char[warning_count], "%s", LCD_APP_HIGHTEMP_WARN_CHARS);
-        warning_count++;
-    }
-    if (warnings->high_volt_warning)
-    {
-        sprintf(warning_char[warning_count], "%s", LCD_APP_HIGHVOLT_WARN_CHARS);
-        warning_count++;
-    }
-    if (warnings->low_temp_warning)
-    {
-        sprintf(warning_char[warning_count], "%s", LCD_APP_LOWTEMP_WARN_CHARS);
-        warning_count++;
-    }
-    if (warnings->low_volt_warning)
-    {
-        sprintf(warning_char[warning_count], "%s", LCD_APP_LOWVOLT_WARN_CHARS);
-        warning_count++;
-    }
-    if (warnings->no_ecu_message)
-    {
-        sprintf(warning_char[warning_count], "%s", LCD_APP_NOMSG_WARN_CHARS);
-        warning_count++;
-    }
-    if (warnings->pack_overcharge)
-    {
-        sprintf(warning_char[warning_count], "%s", LCD_APP_PACK_OC_WARN_CHARS);
-        warning_count++;
-    }
-    if (warnings->pack_overdischarge)
-    {
-        sprintf(warning_char[warning_count], "%s", LCD_APP_PACK_OD_WARN_CHARS);
-        warning_count++;
-    }
-
-    return warning_count;
-}
-
 /*--------------------------------------------------------------------------
   PAGE 1 (DRIVE PAGE) FUNCTIONS
 --------------------------------------------------------------------------*/
@@ -229,10 +49,7 @@ void LcdAppDisplaySpeedDrivePage(volatile uint32_t* speed, volatile uint8_t unit
     char speed_str[12];
 
     /* Clear the previous speed and unit areas */
-    LcdDriverClearBoundingBox(LCD_APP_SPEED_THREEDIGIT_X,
-                              old_bb_speed.y1 + 10,
-                              LCD_DRIVER_BOTTOM_RIGHT_X,
-                              old_bb_speed.y2);
+    LcdDriverClearBoundingBox(LCD_APP_SPEED_THREEDIGIT_X, old_bb_speed.y1 + 10, LCD_DRIVER_BOTTOM_RIGHT_X, old_bb_speed.y2);
 
     if (speed == NULL)
     { // Stale speed data
@@ -428,6 +245,109 @@ void LcdAppDisplayWarningIndicator(LcdAppWarnings* warnings)
   PAGE 2 (FAULT PAGE) FUNCTIONS
 --------------------------------------------------------------------------*/
 
+uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults)
+{
+    uint8_t fault_count = 0;
+
+    if (batt_faults->battery_fault)
+    {
+        sprintf(faults[fault_count], "%s", LCD_APP_BATT_FLT_CHARS);
+        fault_count++;
+    }
+    if(batt_faults->selftest_fault)
+    {
+        sprintf(faults[fault_count], "%s", LCD_APP_BATT_SELFTEST_FLT_CHARS);
+        fault_count++;
+    }
+    if (batt_faults->supp_lo)
+    {
+        sprintf(faults[fault_count], "%s", LCD_APP_BATT_SUPPLO_FLT_CHARS);
+        fault_count++;
+    }
+    if (batt_faults->voltage_high)
+    {
+        sprintf(faults[fault_count], "%s", LCD_APP_BATT_VOLTHIGH_FLT_CHARS);
+        fault_count++;
+    }
+    if (batt_faults->voltage_low)
+    {
+        sprintf(faults[fault_count], "%s", LCD_APP_BATT_VOLTLOW_FLT_CHARS);
+        fault_count++;
+    }
+    if (batt_faults->slave_board_comm_fault)
+    {
+        sprintf(faults[fault_count], "%s", LCD_APP_BATT_SLAVE_COMM_FLT_CHARS);
+        fault_count++;
+    }
+    if (batt_faults->overvolt_fault)
+    {
+        sprintf(faults[fault_count], "%s", LCD_APP_BATT_OVERVOLT_FLT_CHARS);
+        fault_count++;
+    }
+    if (batt_faults->undervolt_fault)
+    {
+        sprintf(faults[fault_count], "%s", LCD_APP_BATT_UNDERVOLT_FLT_CHARS);
+        fault_count++;
+    }
+    if (batt_faults->overtemp_fault)
+    {
+        sprintf(faults[fault_count], "%s", LCD_APP_BATT_OVERTEMP_FLT_CHARS);
+        fault_count++;
+    }
+    if (batt_faults->charge_overcurrent_fault)
+    {
+        sprintf(faults[fault_count], "%s", LCD_APP_BATT_CHARGE_OC_FLT_CHARS);
+        fault_count++;
+    }
+    if (batt_faults->discharge_overcurrent_fault)
+    {
+        sprintf(faults[fault_count], "%s", LCD_APP_BATT_DISCHARGE_OC_FLT_CHARS);
+        fault_count++;
+    }
+    if (batt_faults->reset_from_watchdog)
+    {
+        sprintf(faults[fault_count], "%s", LCD_APP_BATT_RST_FROM_WATCH_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->motor_system_error)
+    {
+        sprintf(faults[fault_count], "%s", LCD_APP_MTR_SYSTEM_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->overcurrent_fault)
+    {
+        sprintf(faults[fault_count], "%s", LCD_APP_MTR_OVERCURR_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->overvoltage_fault)
+    {
+        sprintf(faults[fault_count], "%s", LCD_APP_MTR_OVERVOLT_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->fet_thermistor_error)
+    {
+        sprintf(faults[fault_count], "%s", LCD_APP_MTR_OVERTEMP_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->motor_comm_fault)
+    {
+        sprintf(faults[fault_count], "%s", LCD_APP_MTR_COMM_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->throttle_adc_outofrange)
+    {
+        sprintf(faults[fault_count], "%s", LCD_APP_MTR_THROT_ADC_OOR_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->throttle_adc_mismatch)
+    {
+        sprintf(faults[fault_count], "%s", LCD_APP_MTR_THROT_ADC_MISMATCH_FLT_CHARS);
+        fault_count++;
+    }
+
+    return fault_count;
+}
+
 /**
  * @brief Dynamically displays battery and motor faults on the LCD
  *
@@ -471,6 +391,49 @@ void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor
 /*--------------------------------------------------------------------------
   PAGE 3 (WARNING PAGE) FUNCTIONS
 --------------------------------------------------------------------------*/
+
+uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings)
+{
+    uint8_t warning_count = 0;
+
+    if (warnings->high_temp_warning)
+    {
+        sprintf(warning_char[warning_count], "%s", LCD_APP_HIGHTEMP_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->high_volt_warning)
+    {
+        sprintf(warning_char[warning_count], "%s", LCD_APP_HIGHVOLT_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->low_temp_warning)
+    {
+        sprintf(warning_char[warning_count], "%s", LCD_APP_LOWTEMP_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->low_volt_warning)
+    {
+        sprintf(warning_char[warning_count], "%s", LCD_APP_LOWVOLT_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->no_ecu_message)
+    {
+        sprintf(warning_char[warning_count], "%s", LCD_APP_NOMSG_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->pack_overcharge)
+    {
+        sprintf(warning_char[warning_count], "%s", LCD_APP_PACK_OC_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->pack_overdischarge)
+    {
+        sprintf(warning_char[warning_count], "%s", LCD_APP_PACK_OD_WARN_CHARS);
+        warning_count++;
+    }
+
+    return warning_count;
+}
 
 /**
  * @brief Displays a motor faults on the LCD
@@ -858,120 +821,3 @@ void LcdAppDisplayDriveStateDebugPage(volatile DriveStateStates* state)
     LcdDriverRefresh();
 }
 
-/**
- * @brief Initializes the LCD App and SPI interface.
- *
- * @param hspi Pointer to the SPI handle.
- */
-void LcdAppInit(SPI_HandleTypeDef* hspi)
-{
-    // Initialize the temperature labels for each temperature struct in the array
-    g_lcd_temperatures[0].temp_label = MPPTA;
-    g_lcd_temperatures[1].temp_label = MPPTB;
-    g_lcd_temperatures[2].temp_label = MPPTC;
-    g_lcd_temperatures[3].temp_label = MPPTD;
-    g_lcd_temperatures[4].temp_label = BATT_MIN;
-    g_lcd_temperatures[5].temp_label = BATT_MAX;
-    g_lcd_temperatures[6].temp_label = MOTOR_CONT;
-    g_lcd_temperatures[7].temp_label = MOTOR_THERM;
-
-    // Initialize the LCD driver
-    LcdDriverInit(hspi);
-}
-
-/**
- * @brief Changes the screen
- */
-void LcdAppChangeScreen() { LcdDriverChangeScreen(); }
-
-/**
- * @brief Handles the screen logic for the LCD App, including page changes and updating displayed data.
- */
- void LcdAppPageController(void)
-{
-    // Temporary, will add cyclic data when CAN is implemented.
-    // TODO: HANDLE WITH CYCLIC DATA
-    g_lcd_batt_faults.battery_fault = false;
-    g_lcd_batt_faults.charge_overcurrent_fault = false;
-    g_lcd_batt_faults.discharge_overcurrent_fault = false;
-    g_lcd_batt_faults.overtemp_fault = false;
-    g_lcd_batt_faults.overvolt_fault = false;
-    g_lcd_batt_faults.reset_from_watchdog = false;
-    g_lcd_batt_faults.slave_board_comm_fault = false;
-    g_lcd_batt_faults.supp_lo = false;
-    g_lcd_batt_faults.undervolt_fault = false;
-    g_lcd_batt_faults.voltage_high = false;
-    g_lcd_batt_faults.voltage_low = false;
-
-    g_lcd_motor_faults.fet_thermistor_error = false;
-    g_lcd_motor_faults.motor_comm_fault = false;
-    g_lcd_motor_faults.motor_system_error = false;
-    g_lcd_motor_faults.overcurrent_fault = false;
-    g_lcd_motor_faults.overvoltage_fault = false;
-    g_lcd_motor_faults.throttle_adc_mismatch = false;
-    g_lcd_motor_faults.throttle_adc_outofrange = false;
-
-    g_lcd_warnings.high_temp_warning = false;
-    g_lcd_warnings.high_volt_warning = false;
-    g_lcd_warnings.low_temp_warning = false;
-    g_lcd_warnings.low_volt_warning = false;
-    g_lcd_warnings.no_ecu_message = false;
-    g_lcd_warnings.pack_overcharge = false;
-    g_lcd_warnings.pack_overdischarge = false;
-
-    // Constantly get drive data
-    g_lcd_data.speed = CyclicDataGetSpeed();
-    g_lcd_data.drive_state = CyclicDataGetDriveState();
-    g_lcd_data.soc = CyclicDataGetSoc();
-    g_lcd_data.pack_current = CyclicDataGetPackCurrent();
-    g_lcd_data.pack_voltage = CyclicDataGetPackVoltage();
-
-    // Changes pages if fault flag is set
-    if(LcdAppCheckFaults(&g_lcd_batt_faults, &g_lcd_motor_faults))
-        g_lcd_page = FAULTS_PAGE;
-
-    // Handles what is displayed
-    switch (g_lcd_page)
-    {
-    case DRIVE_PAGE:
-        LcdAppDisplaySpeedDrivePage(g_lcd_data.speed, g_lcd_data.speed_units);
-        LcdAppDisplaySocDrivePage((volatile uint32_t*)g_lcd_data.soc);
-        LcdAppDisplayDriveStateDrivePage((volatile DriveStateStates*) g_lcd_data.drive_state);
-        LcdAppDisplayFaultIndicator(&g_lcd_batt_faults, &g_lcd_motor_faults);
-        LcdAppDisplayWarningIndicator(&g_lcd_warnings);
-        break;
-    case FAULTS_PAGE:
-        LcdAppDisplayFaults(&g_lcd_batt_faults, &g_lcd_motor_faults);
-        break;
-    case WARNINGS_PAGE:
-        LcdAppDisplayWarnings(&g_lcd_warnings);
-        break;
-    case TEMPERATURE_PAGE:
-        g_lcd_temperatures[MPPTA].temperature = CyclicDataGetMpptATemperature();
-        g_lcd_temperatures[MPPTB].temperature = CyclicDataGetMpptBTemperature();
-        g_lcd_temperatures[MPPTC].temperature = CyclicDataGetMpptCTemperature();
-        g_lcd_temperatures[MPPTD].temperature = CyclicDataGetMpptDTemperature();
-        g_lcd_temperatures[BATT_MIN].temperature = CyclicDataGetBatteryMinTemperature();
-        g_lcd_temperatures[BATT_MAX].temperature = CyclicDataGetBatteryMaxTemperature();
-        g_lcd_temperatures[MOTOR_CONT].temperature = CyclicDataGetMtrContTemperature();
-        g_lcd_temperatures[MOTOR_THERM].temperature = CyclicDataGetMtrThermTemperature();
-
-        LcdAppDisplayTemperature(g_lcd_temperatures[MPPTA]);
-        LcdAppDisplayTemperature(g_lcd_temperatures[MPPTB]);
-        LcdAppDisplayTemperature(g_lcd_temperatures[MPPTC]);
-        LcdAppDisplayTemperature(g_lcd_temperatures[MPPTD]);
-        LcdAppDisplayTemperature(g_lcd_temperatures[BATT_MIN]);
-        LcdAppDisplayTemperature(g_lcd_temperatures[BATT_MAX]);
-        LcdAppDisplayTemperature(g_lcd_temperatures[MOTOR_CONT]);
-        LcdAppDisplayTemperature(g_lcd_temperatures[MOTOR_THERM]);
-        break;
-    case DEBUG_PAGE:
-        LcdAppDisplaySpeedDebugPage(g_lcd_data.speed, g_lcd_data.speed_units);
-        LcdAppDisplayDriveStateDebugPage((volatile DriveStateStates*) g_lcd_data.drive_state);
-        LcdAppDisplaySocDebugPage((volatile uint32_t*)g_lcd_data.soc);
-        LcdAppDisplayPowerBar(g_lcd_data.pack_current, g_lcd_data.pack_voltage);
-        break;
-    default:
-        break;
-    }
-}

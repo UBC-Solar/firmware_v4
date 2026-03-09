@@ -38,6 +38,7 @@ void CyclicDataSetMtrThermTemperature(uint8_t temperature);
 /* CYCLIC DATA BATTERY FAULT DATA SETTERS */
 void CyclicDataSetBatteryFault(bool flag);
 void CyclicDataSetBatterySupplyLow(bool flag);
+void CyclicDataSetBMSSelfTestFault(bool flag);
 void CyclicDataSetBatteryVoltageHigh(bool flag);
 void CyclicDataSetBatteryVoltageLow(bool flag);
 void CyclicDataSetBatteryOvertemp(bool flag);
@@ -88,6 +89,7 @@ uint8_t* CyclicDataGetMtrThermTemperature(void);
 /* CYCLIC DATA BATTERY FAULT DATA GETTERS */
 bool* CyclicDataGetBatteryFault(void);
 bool* CyclicDataGetBatterySupplyLow(void);
+bool* CyclicDataGetBMSSelfTestFault(void);
 bool* CyclicDataGetBatteryVoltageHigh(void);
 bool* CyclicDataGetBatteryVoltageLow(void);
 bool* CyclicDataGetBatteryOvertemp(void);

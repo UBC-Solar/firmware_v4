@@ -39,6 +39,7 @@ CYCLIC_DATA(uint8_t, cyclic_mtr_therm_temperature, MAX_CYCLE_TIME); // Motor The
 
 /* CYCLIC DATA BATTERY FAULT DATA DEFINITIONS */
 CYCLIC_DATA(bool, cyclic_battery_fault, MAX_CYCLE_TIME); // Battery fault flag
+CYCLIC_DATA(bool, cyclic_battery_selftest_fault, MAX_CYCLE_TIME); // Battery self-test fault flag
 CYCLIC_DATA(bool, cyclic_battery_supply_low, MAX_CYCLE_TIME);   // Motor fault flag
 CYCLIC_DATA(bool, cyclic_battery_voltage_high, MAX_CYCLE_TIME); // High temperature warning flag
 CYCLIC_DATA(bool, cyclic_battery_voltage_low, MAX_CYCLE_TIME);  // Low temperature warning flag
@@ -91,6 +92,7 @@ void CyclicDataSetMtrThermTemperature(uint8_t temperature) { CYCLIC_DATA_SET(cyc
 
 /* CYCLIC DATA BATTERY FAULT DATA SETTERS */
 void CyclicDataSetBatteryFault(bool flag) { CYCLIC_DATA_SET(cyclic_battery_fault, flag); }
+void CyclicDataSetBMSSelfTestFault(bool flag) { CYCLIC_DATA_SET(cyclic_battery_selftest_fault, flag); }
 void CyclicDataSetBatterySupplyLow(bool flag) { CYCLIC_DATA_SET(cyclic_battery_supply_low, flag); }
 void CyclicDataSetBatteryVoltageHigh(bool flag) { CYCLIC_DATA_SET(cyclic_battery_voltage_high, flag); }
 void CyclicDataSetBatteryVoltageLow(bool flag) { CYCLIC_DATA_SET(cyclic_battery_voltage_low, flag); }
@@ -177,6 +179,7 @@ uint8_t* CyclicDataGetMtrThermTemperature(void) { return CYCLIC_DATA_GET(cyclic_
 /* CYCLIC DATA BATTERY FAULT DATA GETTERS */
 bool* CyclicDataGetBatteryFault(void) { return CYCLIC_DATA_GET(cyclic_battery_fault); }
 bool* CyclicDataGetBatterySupplyLow(void) { return CYCLIC_DATA_GET(cyclic_battery_supply_low); }
+bool* CyclicDataGetBMSSelfTestFault(void) { return CYCLIC_DATA_GET(cyclic_battery_selftest_fault); }
 bool* CyclicDataGetBatteryVoltageHigh(void) { return CYCLIC_DATA_GET(cyclic_battery_voltage_high); }
 bool* CyclicDataGetBatteryVoltageLow(void) { return CYCLIC_DATA_GET(cyclic_battery_voltage_low); }
 bool* CyclicDataGetBatteryOvertemp(void) { return CYCLIC_DATA_GET(cyclic_battery_overtemp); }

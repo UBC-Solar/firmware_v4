@@ -76,6 +76,11 @@ static uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFault
         sprintf(faults[fault_count], "%s", LCD_APP_BATT_FLT_CHARS);
         fault_count++;
     }
+    if(batt_faults->selftest_fault)
+    {
+        sprintf(faults[fault_count], "%s", LCD_APP_BATT_SELFTEST_FLT_CHARS);
+        fault_count++;
+    }
     if (batt_faults->supp_lo)
     {
         sprintf(faults[fault_count], "%s", LCD_APP_BATT_SUPPLO_FLT_CHARS);

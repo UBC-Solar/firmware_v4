@@ -134,18 +134,26 @@ void LcdAppCanRxHandler(uint32_t msg_id, uint8_t* data)
     // }
 }
 
+
 void FaultHandlerRxHandler(uint32_t msg_id, uint8_t* data)
 {
+    // How this is handled: https://docs.google.com/document/d/1lpAI_UW_a7WqzGdEOpQaXZ8MB8aLU-1VR9yYNUQGnVI/edit?usp=sharing
     switch (msg_id) {
-    case CAN_ID_MTR_FAULTS:
-        FaultHandlerParseMotorFaults(data);
+    case CAN_ID_BATT_FAULTS:
+        FaultHandlerParseBatteryFaults(data);
+        FaultHandlerParseBatteryWarnings(data);
         break;
     case CAN_ID_ECU:
         FaultHandlerParseECUFaults(data);
+        FaultHandlerParseECUWarnings(data);
         break;
-    case CAN_ID_BATT_FAULTS:
-        FaultHandlerParseBatteryFaults(data);
+    case CAN_ID_PACK_VOLTAGE:
+        FaultHandlerParsePackVoltageFaults(data);
         break;
+    case CAN_ID_MTR_FAULTS:
+        FaultHandlerParseMotorFaults(data);
+        break;
+        // Other motor faults are handled from drd diagnostics
     default:
         // Temperatures come from multiple CAN messages so we parse them in the same handler based on the message ID
         FaultHandlerParseTemperatures(msg_id, data);

@@ -122,6 +122,7 @@
 #define LCD_APP_FAULT_EIGHT_Y8 52
 
 #define LCD_APP_BATT_FLT_CHARS "BAT_FLT"
+#define LCD_APP_BATT_SELFTEST_FLT_CHARS "SELF_TST"
 #define LCD_APP_BATT_SUPPLO_FLT_CHARS "SUPP_LOW"
 #define LCD_APP_BATT_VOLTHIGH_FLT_CHARS "VOLT_HIGH"
 #define LCD_APP_BATT_VOLTLOW_FLT_CHARS "VOLT_LOW"
@@ -314,6 +315,7 @@ typedef enum
 typedef struct
 {
     volatile bool battery_fault;
+    volatile bool selftest_fault;
     volatile bool supp_lo;
     volatile bool voltage_high;
     volatile bool voltage_low;

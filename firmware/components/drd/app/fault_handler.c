@@ -17,10 +17,27 @@
 #include <sys/select.h>
 #include "can_driver.h"
 #include "cyclic_data_handler.h"
+#include "fault_handler_driver.h"
 
 #define GETBIT(value, bit) (((value) >> (bit)) & 0x01)
 
 static bool g_last_pack_current_sign = 0;
+static bool g_battery_fault = false;
+static bool g_ecu_fault = false;
+static bool g_pack_voltage_fault = false;
+static bool g_motor_fault = false;
+
+void FaultHandlerFlashLED() {
+    //TODO: Flash LED from a task
+    while(g_battery_fault || g_ecu_fault || g_pack_voltage_fault || g_motor_fault) {
+        FaultHandlerDriverFlashDebug();
+    }
+}
+
+void FaultHandlerEStop(uint8_t* can_rx_data) {
+    bool estop = GETBIT(can_rx_data[5], 5);
+    FaultHandlerDriverEStop(estop);
+}
 
 void FaultHandlerParseBatteryFaults(uint8_t* can_rx_data){    
     // TODO: v4 figure out what supplo is
@@ -36,18 +53,20 @@ void FaultHandlerParseBatteryFaults(uint8_t* can_rx_data){
     bool discharge_overcurrent = GETBIT(can_rx_data[0], 6) && !g_last_pack_current_sign;
     CyclicDataSetBatteryChargeOvercurrentFault(charge_overcurrent);
     CyclicDataSetBatteryDischargeOvercurrentFault(discharge_overcurrent);
+
+    bool any_battery_fault = 
+        charge_overcurrent || discharge_overcurrent || 
+        GETBIT(can_rx_data[0], 0) || GETBIT(can_rx_data[0], 1) || 
+        GETBIT(can_rx_data[0], 2) || GETBIT(can_rx_data[0], 3) || 
+        GETBIT(can_rx_data[0], 4);
     // General battery fault flag is set if any of the specific battery faults are set
-    CyclicDataSetBatteryFault(
-        charge_overcurrent || discharge_overcurrent 
-        || GETBIT(can_rx_data[0], 0) || GETBIT(can_rx_data[0], 4) 
-        || GETBIT(can_rx_data[0], 3) || GETBIT(can_rx_data[0], 2)
-        || GETBIT(can_rx_data[0], 1)
-    );
+    CyclicDataSetBatteryFault(any_battery_fault);
 }
 void FaultHandlerParseECUFaults(uint8_t* can_rx_data){
     // MSB of pack current is the sign bit, so we save it to determine if the overcurrent fault is a charge or discharge fault in the battery fault handler
     g_last_pack_current_sign = GETBIT(can_rx_data[1],7);
     CyclicDataSetBatteryResetFromWatchdogFault(GETBIT(can_rx_data[5], 4));
+    g_ecu_fault = GETBIT(can_rx_data[5], 4);
 }
 
 void FaultHandlerParsePackVoltageFaults(uint8_t* can_rx_data){
@@ -57,11 +76,13 @@ void FaultHandlerParsePackVoltageFaults(uint8_t* can_rx_data){
     {
         CyclicDataSetBatteryOvervoltFault(true);
         CyclicDataSetBatteryUndervoltFault(false);
+        g_pack_voltage_fault = true;
     }
     else if(pack_voltage < MIN_PACK_VOLTAGE)
     {
         CyclicDataSetBatteryOvervoltFault(false);
         CyclicDataSetBatteryUndervoltFault(true);
+        g_pack_voltage_fault = true;
     }
     else
     {
@@ -75,6 +96,9 @@ void FaultHandlerParseMotorFaults(uint8_t* can_rx_data){
     CyclicDataSetMotorOvercurrentFault(GETBIT(can_rx_data[2], 1));
     CyclicDataSetMotorOvervoltageFault(GETBIT(can_rx_data[2], 3));
     CyclicDataSetMotorSystemFault(GETBIT(can_rx_data[3], 0));
+
+    g_motor_fault = GETBIT(can_rx_data[0], 3) || GETBIT(can_rx_data[2], 1) 
+                || GETBIT(can_rx_data[2], 3) || GETBIT(can_rx_data[3], 0);
 }
 
 void FaultHandlerParseBatteryWarnings(uint8_t* can_rx_data) {

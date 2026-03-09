@@ -13,11 +13,20 @@
 #define FAULT_HANDLER_H
 
 #include <stdint.h>
+#include <sys/types.h>
 
 #define PACK_VOLTAGE_DIVISOR	468
 #define MAX_PACK_VOLTAGE 	 	134.4
 #define MIN_PACK_VOLTAGE 	 	86.72
 
+/**
+ * @brief Flashes the debug LED based on the current fault status.
+ */
+void FaultHandlerFlashLED();
+/**
+ * @brief Triggers the emergency stop functionality.
+ */
+void FaultHandlerEStop(uint8_t* can_rx_data);
 /**
  * @brief Parses battery fault data from received CAN messages and updates the cyclic data handler with the latest battery fault information.
  *
@@ -54,7 +63,6 @@ void FaultHandlerParseBatteryWarnings(uint8_t* can_rx_data);
  * @param can_rx_data Pointer to the received CAN message data containing the ECU warning information.
  */
 void FaultHandlerParseECUWarnings(uint8_t* can_rx_data);
-
 /**
  * @brief Parses temperature data from received CAN messages and updates the cyclic data handler with the latest temperatures.
  *

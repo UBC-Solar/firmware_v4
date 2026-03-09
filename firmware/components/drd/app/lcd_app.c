@@ -135,10 +135,7 @@ void LcdAppDisplaySocDrivePage(volatile uint32_t* soc)
  */
 void LcdAppDisplayDriveModeDrivePage(volatile uint8_t drive_mode)
 {
-    LcdDriverClearBoundingBox(old_bb_drive_mode.x1,
-                              old_bb_drive_mode.y1 + 4,
-                              old_bb_drive_mode.x2,
-                              old_bb_drive_mode.y2 - 2);
+    LcdDriverClearBoundingBox(old_bb_drive_mode.x1, old_bb_drive_mode.y1 + 4, old_bb_drive_mode.x2, old_bb_drive_mode.y2 - 2);
 
     // Drive mode is valid, display the corresponding symbol.
     switch (drive_mode)
@@ -153,7 +150,6 @@ void LcdAppDisplayDriveModeDrivePage(volatile uint8_t drive_mode)
         old_bb_drive_mode = LcdDriverDrawChar(LCD_APP_ERROR_SYMBOL, LCD_APP_ECO_MODE_X, LCD_APP_ECO_MODE_Y, LCD_APP_ECO_MODE_FONT);
         break;
     }
-
     LcdDriverRefresh();
 }
 
@@ -203,10 +199,7 @@ void LcdAppDisplayDriveStateDrivePage(volatile DriveStateStates* state)
  */
 void LcdAppDisplayFaultIndicator(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults)
 {
-    LcdDriverClearBoundingBox(old_bb_fault_indicator.x1,
-                              old_bb_fault_indicator.y1,
-                              old_bb_fault_indicator.x2,
-                              old_bb_fault_indicator.y2);
+    LcdDriverClearBoundingBox(old_bb_fault_indicator.x1,old_bb_fault_indicator.y1,old_bb_fault_indicator.x2,old_bb_fault_indicator.y2);
 
     uint8_t fault_count = LcdAppCheckFaults(batt_faults, motor_faults);
 
@@ -226,10 +219,7 @@ void LcdAppDisplayFaultIndicator(LcdAppBattFaults* batt_faults, LcdAppMotorFault
  */
 void LcdAppDisplayWarningIndicator(LcdAppWarnings* warnings)
 {
-    LcdDriverClearBoundingBox(old_bb_warning_indicator.x1,
-                              old_bb_warning_indicator.y1,
-                              old_bb_warning_indicator.x2,
-                              old_bb_warning_indicator.y2);
+    LcdDriverClearBoundingBox(old_bb_warning_indicator.x1,old_bb_warning_indicator.y1,old_bb_warning_indicator.x2,old_bb_warning_indicator.y2);
 
     uint8_t warning_count = LcdAppCheckWarnings(warnings);
 
@@ -543,30 +533,21 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data)
         temp_x = LCD_APP_BATT_MIN_X;
         temp_y = LCD_APP_BATT_MIN_Y;
         temp_shift = LCD_APP_TEMP_BATT_OFFSET;
-        LcdDriverClearBoundingBox(LCD_APP_BATT_MAX_X + LCD_APP_TEMP_BATT_OFFSET,
-                                  LCD_APP_BATT_MIN_Y,
-                                  LCD_DRIVER_BOTTOM_RIGHT_X,
-                                  LCD_APP_MTR_CONT_Y);
+        LcdDriverClearBoundingBox(LCD_APP_BATT_MAX_X + LCD_APP_TEMP_BATT_OFFSET,LCD_APP_BATT_MIN_Y, LCD_DRIVER_BOTTOM_RIGHT_X, LCD_APP_MTR_CONT_Y);
         break;
     case MOTOR_CONT:
         sprintf(temp_label, "%s", LCD_APP_MTR_CONT_CHARS);
         temp_x = LCD_APP_MTR_CONT_X;
         temp_y = LCD_APP_MTR_CONT_Y;
         temp_shift = LCD_APP_TEMP_MTR_OFFSET;
-        LcdDriverClearBoundingBox(LCD_APP_MTR_CONT_X + LCD_APP_TEMP_MTR_OFFSET,
-                                  LCD_APP_MTR_CONT_Y,
-                                  LCD_DRIVER_BOTTOM_RIGHT_X,
-                                  LCD_APP_MTR_THERM_Y);
+        LcdDriverClearBoundingBox(LCD_APP_MTR_CONT_X + LCD_APP_TEMP_MTR_OFFSET,LCD_APP_MTR_CONT_Y,LCD_DRIVER_BOTTOM_RIGHT_X,LCD_APP_MTR_THERM_Y);
         break;
     case MOTOR_THERM:
         sprintf(temp_label, "%s", LCD_APP_MTR_THERM_CHARS);
         temp_x = LCD_APP_MTR_THERM_X;
         temp_y = LCD_APP_MTR_THERM_Y;
         temp_shift = LCD_APP_TEMP_MTR_OFFSET;
-        LcdDriverClearBoundingBox(LCD_APP_MTR_CONT_X + LCD_APP_TEMP_MTR_OFFSET,
-                                  LCD_APP_MTR_THERM_Y,
-                                  LCD_DRIVER_BOTTOM_RIGHT_X,
-                                  LCD_DRIVER_BOTTOM_RIGHT_Y);
+        LcdDriverClearBoundingBox(LCD_APP_MTR_CONT_X + LCD_APP_TEMP_MTR_OFFSET,LCD_APP_MTR_THERM_Y,LCD_DRIVER_BOTTOM_RIGHT_X,LCD_DRIVER_BOTTOM_RIGHT_Y);
         break;
     default:
         temp_x = LCD_APP_MTR_THERM_X;
@@ -701,10 +682,7 @@ void LcdAppDisplaySpeedDebugPage(volatile uint32_t* speed, volatile uint8_t unit
     char speed_str[12];
 
     /* Clear the previous speed and unit areas */
-    LcdDriverClearBoundingBox(LCD_APP_DEBUG_SPEED_THREEDIGIT_X,
-                              old_bb_speed.y1,
-                              LCD_DRIVER_BOTTOM_RIGHT_X,
-                              old_bb_speed.y2 - 3);
+    LcdDriverClearBoundingBox(LCD_APP_DEBUG_SPEED_THREEDIGIT_X,old_bb_speed.y1,LCD_DRIVER_BOTTOM_RIGHT_X,old_bb_speed.y2 - 3);
 
     if (speed == NULL)
     { // Stale speed data
@@ -820,4 +798,3 @@ void LcdAppDisplayDriveStateDebugPage(volatile DriveStateStates* state)
 
     LcdDriverRefresh();
 }
-

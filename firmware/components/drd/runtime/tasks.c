@@ -89,6 +89,7 @@ void TasksLcdUpdate(void *argument)
     }
 }
 
+/* DRD HEARTBEAT TASK */
 void TasksTimeSinceStartup(void *argument)
 {
     for (;;)
@@ -99,6 +100,7 @@ void TasksTimeSinceStartup(void *argument)
     }
 }
 
+/* DIAGNOSTIC TASK */
 void TasksDiagnostic(void *argument)
 {
     IwdgAppResetHandle();
@@ -107,6 +109,7 @@ void TasksDiagnostic(void *argument)
     {
         // Refresh the watchdog timer to prevent reset and transmit diagnostics over CAN
         IwdgAppRefresh(&hiwdg);
+        
         DiagnosticTransmit(false);
         osDelay(DIAGNOSTIC_TASK_DELAY);
     }

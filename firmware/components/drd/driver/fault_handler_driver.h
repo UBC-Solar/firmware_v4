@@ -12,6 +12,19 @@
 #ifndef FAULT_HANDLER_DRIVER_H
 #define FAULT_HANDLER_DRIVER_H
 
+#include "main.h"
+#include "stdbool.h"
 
+/**
+ * @brief   Flash debug LED for fault handling
+ */
+void FaultHandlerDriverFlashDebug();
+
+/**
+ * @brief   Triggers the emergency stop functionality.
+ *
+ * @param estop A boolean value indicating whether to engage (true) or disengage (false) the emergency stop.
+ */
+void FaultHandlerDriverEStop(bool estop);
 
 #endif /* FAULT_HANDLER_DRIVER_H */

@@ -64,6 +64,8 @@ void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 	}
 
     VehicleStateCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
+    LcdAppCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
+    FaultHandlerRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
 }
 
 /* CAN RX */
@@ -144,6 +146,7 @@ void FaultHandlerRxHandler(uint32_t msg_id, uint8_t* data)
         FaultHandlerParseBatteryWarnings(data);
         break;
     case CAN_ID_ECU:
+        FaultHandlerEStop(data);
         FaultHandlerParseECUFaults(data);
         FaultHandlerParseECUWarnings(data);
         break;

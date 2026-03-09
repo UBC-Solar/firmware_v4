@@ -61,6 +61,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/app/lcd_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/lcd_handler.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/fault_handler.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/fault_handler_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/accel_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/gpio_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/can_driver.c

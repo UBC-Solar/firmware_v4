@@ -70,8 +70,22 @@ void TasksCalculateSoc(void* argument);
  */
 void TasksLcdUpdate(void *argument);
 
+/**
+ * @brief Diagnostic task main loop.
+ *
+ * Performs diagnostic checks and reports any issues found.
+ * Executes at a fixed interval. Task runs indefinitely until system shutdown.
+ * @param argument Pointer to task-specific arguments (unused).
+ */
 void TasksDiagnostic(void *argument);
 
+/**
+ * @brief Time since startup task main loop.
+ *
+ * Updates the time since startup counter at a fixed interval.
+ * Executes at a 1000ms period. Task runs indefinitely until system shutdown.
+ * @param argument Pointer to task-specific arguments (unused).
+ */
 void TasksTimeSinceStartup(void *argument);
 
 /**

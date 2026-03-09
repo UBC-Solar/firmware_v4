@@ -12,6 +12,7 @@
 #include "cmsis_os2.h"
 #include "iwdg_app.h"
 #include "lcd_handler.h"
+#include "fault_handler.h"
 #include "debug_io.h"
 #include "cyclic_data_handler.h"
 #include "spi.h"
@@ -112,5 +113,16 @@ void TasksDiagnostic(void *argument)
         
         DiagnosticTransmit(false);
         osDelay(DIAGNOSTIC_TASK_DELAY);
+    }
+}
+
+/* FAULT LIGHT FLASH TASK */
+void TasksFaultLightFlash(void *argument)
+{
+    for (;;)
+    {
+        // Implementation for fault light flash task
+        FaultHandlerFlashLED();
+        osDelay(FAULT_LIGHT_FLASH_DELAY);
     }
 }

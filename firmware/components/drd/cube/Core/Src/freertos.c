@@ -19,6 +19,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
+#include "cmsis_os2.h"
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
@@ -100,7 +101,6 @@ const osEventFlagsAttr_t calculate_soc_flag_attributes = {
   .cb_size = sizeof(calculate_soc_flagControlBlock),
 };
 
-
 /* Definitions for TasksDiagnostic */
 osThreadId_t TasksDiagnosticHandle;
 uint32_t TasksDiagnosticBuffer[128];
@@ -113,6 +113,20 @@ const osThreadAttr_t TasksDiagnostic_attributes = {
   .stack_mem = &TasksDiagnosticBuffer[0],
   .stack_size = sizeof(TasksDiagnosticBuffer),
   .priority = (osPriority_t) osPriorityNormal,
+};
+
+/* Definitions for TasksFaultLightFlash */
+osThreadId_t TasksFaultLightFlashHandle;
+uint32_t TasksFaultLightFlashBuffer[128];
+osStaticThreadDef_t TasksFaultLightFlashControlBlock;
+
+const osThreadAttr_t TasksFaultLightFlash_attributes = {
+  .name = "TasksFaultLightFlash",
+  .cb_mem = &TasksFaultLightFlashControlBlock,
+  .cb_size = sizeof(TasksFaultLightFlashControlBlock),
+  .stack_mem = &TasksFaultLightFlashBuffer[0],
+  .stack_size = sizeof(TasksFaultLightFlashBuffer),
+  .priority = (osPriority_t) osPriorityLow,
 };
 
 /* Definitions for TasksTimeSinceStartup */
@@ -192,6 +206,8 @@ void MX_FREERTOS_Init(void) {
   TasksLcdUpdateHandle = osThreadNew(TasksLcdUpdate, NULL, &TasksLcdUpdate_attributes);
   /* creation of TasksDiagnostic */
   TasksDiagnosticHandle = osThreadNew(TasksDiagnostic, NULL, &TasksDiagnostic_attributes);
+  /* creation of TasksFaultLightFlash */
+  TasksFaultLightFlashHandle = osThreadNew(TasksFaultLightFlash, NULL, &TasksFaultLightFlash_attributes);
   /* creation of TasksTimeSinceStartup */
   TasksTimeSinceStartupHandle = osThreadNew(TasksTimeSinceStartup, NULL, &TasksTimeSinceStartup_attributes);
 

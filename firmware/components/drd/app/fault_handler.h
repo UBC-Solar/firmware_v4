@@ -19,6 +19,8 @@
 #define MAX_PACK_VOLTAGE 	 	134.4
 #define MIN_PACK_VOLTAGE 	 	86.72
 
+#define FAULT_LIGHT_FLASH_DELAY 100
+
 /**
  * @brief Flashes the debug LED based on the current fault status.
  */

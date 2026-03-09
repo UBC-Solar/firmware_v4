@@ -89,6 +89,13 @@ void TasksDiagnostic(void *argument);
 void TasksTimeSinceStartup(void *argument);
 
 /**
+ * @brief Fault light flash task main loop.
+ *
+ * @param argument Pointer to task-specific arguments (unused).
+ */
+void TasksFaultLightFlash(void *argument);
+
+/**
  * @brief Initializes DRD CAN communications.
  *
  * Configures CAN filters and registers the RX callback path, then initializes

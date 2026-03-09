@@ -28,7 +28,6 @@ static bool g_pack_voltage_fault = false;
 static bool g_motor_fault = false;
 
 void FaultHandlerFlashLED() {
-    //TODO: Flash LED from a task
     while(g_battery_fault || g_ecu_fault || g_pack_voltage_fault || g_motor_fault) {
         FaultHandlerDriverFlashDebug();
     }

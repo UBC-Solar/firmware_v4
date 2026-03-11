@@ -15,6 +15,7 @@
 #include "debug_io.h"
 #include "cyclic_data_handler.h"
 #include "spi.h"
+#include "external_lights.h"
 #include "diagnostic.h"
 
 /* DRIVE STATE TASK */
@@ -73,6 +74,18 @@ void TasksCalculateSoc(void *argument)
         osEventFlagsClear(calculate_soc_flagHandle, SOC_CALCULATE_ON);
 
         osDelay(CALCULATE_SOC_DELAY);
+    }
+}
+
+/* EXTERNAL LIGHTS TASK */
+void TasksExternalLights(void* argument)
+{
+    (void)argument; // Unused parameter
+
+    for (;;)
+    {
+        ExternalLightsStateMachine();
+        osDelay(EXTERNAL_LIGHTS_STATE_MACHINE_DELAY_MS);
     }
 }
 

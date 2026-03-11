@@ -75,7 +75,16 @@ void TasksDiagnostic(void *argument);
 void TasksTimeSinceStartup(void *argument);
 
 /**
- * @brief Initializes DRD CAN communications.
+ * @brief External lights task main loop.
+ *
+ * Runs the external lights state machine to control turn signals and brake lights.
+ * Executes at a 50ms period. Task runs indefinitely until system shutdown.
+ * @param argument Pointer to task-specific arguments (unused).
+ */
+void TasksExternalLights(void* argument);
+
+/**
+ * @brief GPIO external interrupt callback handler.
  *
  * Configures CAN filters and registers the RX callback path, then initializes
  * the CAN communications layer so CAN RX/TX handling is ready before runtime

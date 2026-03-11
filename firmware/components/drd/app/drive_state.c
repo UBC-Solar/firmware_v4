@@ -130,22 +130,22 @@ static void ComputeNextState(DriveStateCtx *ctx)
     case PARK:
         if (ctx->flags.next_state_request)
         {
-            ctx->state = REVERSE;
+            ctx->state = FORWARD;
         }
 
         else if (ctx->flags.prev_state_request)
         {
-            ctx->state = FORWARD;
+            ctx->state = REVERSE;
         }
         break;
     case FORWARD:
-        if (ctx->flags.next_state_request)
+        if (ctx->flags.prev_state_request)
         {
             ctx->state = PARK;
         }
         break;
     case REVERSE:
-        if (ctx->flags.prev_state_request)
+        if (ctx->flags.next_state_request)
         {
             ctx->state = PARK;
         }

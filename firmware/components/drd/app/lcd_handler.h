@@ -99,11 +99,6 @@ typedef enum
 } LcdAppScreens;
 
 /*	User Variables	*/
-extern LcdAppData g_lcd_data;
-extern LcdAppBattFaults g_lcd_batt_faults;
-extern LcdAppMotorFaults g_lcd_motor_faults;
-extern LcdAppWarnings g_lcd_warnings;
-extern LcdAppTemperature g_lcd_temperatures[8];
 extern uint8_t g_lcd_page;
 extern uint8_t g_lcd_page_change;
 
@@ -122,7 +117,39 @@ void LcdHandlerInit(SPI_HandleTypeDef* hspi);
 /**
  * @brief Handles the screen logic for the LCD App, including page changes and updating displayed data.
  */
- void LcdHandlerPageController(void);
+void LcdHandlerPageController(void);
+
+/* LCD HANDLER BATTERY FAULT DATA SETTERS */
+void LcdHandlerSetBatteryFault(bool fault);
+void LcdHandlerSetBatterySupplyLow(bool fault);
+void LcdHandlerSetBMSSelfTestFault(bool fault);
+void LcdHandlerSetBatteryVoltageHigh(bool fault);
+void LcdHandlerSetBatteryVoltageLow(bool fault);
+void LcdHandlerSetBatteryOvertemp(bool fault);
+void LcdHandlerSetBatterySlaveBoardCommFault(bool fault);
+void LcdHandlerSetBatteryOvervoltFault(bool fault);
+void LcdHandlerSetBatteryUndervoltFault(bool fault);
+void LcdHandlerSetBatteryChargeOvercurrentFault(bool fault);
+void LcdHandlerSetBatteryDischargeOvercurrentFault(bool fault);
+void LcdHandlerSetBatteryResetFromWatchdogFault(bool fault);
+
+/* LCD HANDLER MOTOR FAULT DATA SETTERS */
+void LcdHandlerSetMotorSystemFault(bool fault);
+void LcdHandlerSetMotorOvercurrentFault(bool fault);
+void LcdHandlerSetMotorOvervoltageFault(bool fault);
+void LcdHandlerSetMotorFetThermistorError(bool fault);
+void LcdHandlerSetMotorCommFault(bool fault);
+void LcdHandlerSetMotorThrottleAdcOutOfRange(bool fault);
+void LcdHandlerSetMotorThrottleAdcMismatch(bool fault);
+
+/* LCD HANDLER WARNING DATA SETTERS */
+void LcdHandlerSetLowVoltWarning(bool warning);
+void LcdHandlerSetHighVoltWarning(bool warning);
+void LcdHandlerSetLowTempWarning(bool warning);
+void LcdHandlerSetHighTempWarning(bool warning);
+void LcdHandlerSetNoEcuMessageWarning(bool warning);
+void LcdHandlerSetPackOverdischargeWarning(bool warning);
+void LcdHandlerSetPackOverchargeWarning(bool warning);  
 
 
 #endif /* __LCD_HANDLER_H */

@@ -74,17 +74,8 @@ void TasksLcdUpdate(void *argument)
 {
     LcdHandlerInit(&hspi1);
 
-    // KPH or MPH
-    g_lcd_data.speed_units = LCD_APP_MPH;
-
     for (;;)
     {
-        // Handles clearing the screen
-        if (g_lcd_page_change == 1)
-        {
-            LcdHandlerChangeScreen();
-            g_lcd_page_change = 0;
-        }
         LcdHandlerPageController();
         osDelay(LCD_HANDLER_UPDATE_DELAY);
     }

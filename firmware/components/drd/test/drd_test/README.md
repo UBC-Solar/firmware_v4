@@ -12,8 +12,19 @@ candump -td -H -x -c can0
 
 ### To inject a single CAN Message:
 ```
-# Syntax: cansend <interface> <ID>#<DATA>
-cansend can0 403#01
+# Syntax: cansend <interface> <ID>#<DATA in HEX>
+cansend can0 580#04
 ```
 
 ### To test multiple CAN Messages with a python script:
+```
+# Setup the venv
+chmod +x setup.sh
+rm -rf environment
+./setup.sh
+source environment/bin/activate
+
+# run the script
+python3 lcd_test.py
+```
+

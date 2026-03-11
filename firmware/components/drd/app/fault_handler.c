@@ -12,6 +12,7 @@
  */
 
 #include "fault_handler.h"
+#include "lcd_handler.h"
 #include <stdint.h>
 #include <sys/_intsup.h>
 #include <sys/select.h>
@@ -40,18 +41,18 @@ void FaultHandlerEStop(uint8_t* can_rx_data) {
 
 void FaultHandlerParseBatteryFaults(uint8_t* can_rx_data){    
     // TODO: v4 figure out what supplo is
-    CyclicDataSetBatterySlaveBoardCommFault(GETBIT(can_rx_data[0], 0));
-    CyclicDataSetBMSSelfTestFault(GETBIT(can_rx_data[0], 1));
-    CyclicDataSetBatteryOvertemp(GETBIT(can_rx_data[0], 2));
-    CyclicDataSetBatteryUndervoltFault(GETBIT(can_rx_data[0], 3));
-    CyclicDataSetBatteryVoltageHigh(GETBIT(can_rx_data[0], 4));
+    LcdHandlerSetBatterySlaveBoardCommFault(GETBIT(can_rx_data[0], 0));
+    LcdHandlerSetBMSSelfTestFault(GETBIT(can_rx_data[0], 1));
+    LcdHandlerSetBatteryOvertemp(GETBIT(can_rx_data[0], 2));
+    LcdHandlerSetBatteryUndervoltFault(GETBIT(can_rx_data[0], 3));
+    LcdHandlerSetBatteryVoltageHigh(GETBIT(can_rx_data[0], 4));
 
     // Charging overcurrent fault if pack current is negative
     bool charge_overcurrent = GETBIT(can_rx_data[0], 6) && g_last_pack_current_sign;
     // Discharging overcurrent fault if pack current is positive
     bool discharge_overcurrent = GETBIT(can_rx_data[0], 6) && !g_last_pack_current_sign;
-    CyclicDataSetBatteryChargeOvercurrentFault(charge_overcurrent);
-    CyclicDataSetBatteryDischargeOvercurrentFault(discharge_overcurrent);
+    LcdHandlerSetBatteryChargeOvercurrentFault(charge_overcurrent);
+    LcdHandlerSetBatteryDischargeOvercurrentFault(discharge_overcurrent);
 
     bool any_battery_fault = 
         charge_overcurrent || discharge_overcurrent || 
@@ -59,12 +60,12 @@ void FaultHandlerParseBatteryFaults(uint8_t* can_rx_data){
         GETBIT(can_rx_data[0], 2) || GETBIT(can_rx_data[0], 3) || 
         GETBIT(can_rx_data[0], 4);
     // General battery fault flag is set if any of the specific battery faults are set
-    CyclicDataSetBatteryFault(any_battery_fault);
+    LcdHandlerSetBatteryFault(any_battery_fault);
 }
 void FaultHandlerParseECUFaults(uint8_t* can_rx_data){
     // MSB of pack current is the sign bit, so we save it to determine if the overcurrent fault is a charge or discharge fault in the battery fault handler
     g_last_pack_current_sign = GETBIT(can_rx_data[1],7);
-    CyclicDataSetBatteryResetFromWatchdogFault(GETBIT(can_rx_data[5], 4));
+    LcdHandlerSetBatteryResetFromWatchdogFault(GETBIT(can_rx_data[5], 4));
     g_ecu_fault = GETBIT(can_rx_data[5], 4);
 }
 
@@ -73,44 +74,45 @@ void FaultHandlerParsePackVoltageFaults(uint8_t* can_rx_data){
     pack_voltage = pack_voltage / PACK_VOLTAGE_DIVISOR;
     if(pack_voltage > MAX_PACK_VOLTAGE)
     {
-        CyclicDataSetBatteryOvervoltFault(true);
-        CyclicDataSetBatteryUndervoltFault(false);
+        LcdHandlerSetBatteryOvervoltFault(true);
+        LcdHandlerSetBatteryUndervoltFault(false);
         g_pack_voltage_fault = true;
     }
     else if(pack_voltage < MIN_PACK_VOLTAGE)
     {
-        CyclicDataSetBatteryOvervoltFault(false);
-        CyclicDataSetBatteryUndervoltFault(true);
+        LcdHandlerSetBatteryOvervoltFault(false);
+        LcdHandlerSetBatteryUndervoltFault(true);
         g_pack_voltage_fault = true;
     }
     else
     {
-        CyclicDataSetBatteryOvervoltFault(false);
-        CyclicDataSetBatteryUndervoltFault(false);
+        LcdHandlerSetBatteryOvervoltFault(false);
+        LcdHandlerSetBatteryUndervoltFault(false);
+        g_pack_voltage_fault = false;
     }
 }
 
 void FaultHandlerParseMotorFaults(uint8_t* can_rx_data){
-    CyclicDataSetMotorFetThermistorError(GETBIT(can_rx_data[0], 3));
-    CyclicDataSetMotorOvercurrentFault(GETBIT(can_rx_data[2], 1));
-    CyclicDataSetMotorOvervoltageFault(GETBIT(can_rx_data[2], 3));
-    CyclicDataSetMotorSystemFault(GETBIT(can_rx_data[3], 0));
+    LcdHandlerSetMotorFetThermistorError(GETBIT(can_rx_data[0], 3));
+    LcdHandlerSetMotorOvercurrentFault(GETBIT(can_rx_data[2], 1));
+    LcdHandlerSetMotorOvervoltageFault(GETBIT(can_rx_data[2], 3));
+    LcdHandlerSetMotorSystemFault(GETBIT(can_rx_data[3], 0));
 
     g_motor_fault = GETBIT(can_rx_data[0], 3) || GETBIT(can_rx_data[2], 1) 
                 || GETBIT(can_rx_data[2], 3) || GETBIT(can_rx_data[3], 0);
 }
 
 void FaultHandlerParseBatteryWarnings(uint8_t* can_rx_data) {
-    CyclicDataSetLowVoltWarning(GETBIT(can_rx_data[1], 5));
-    CyclicDataSetHighVoltWarning(GETBIT(can_rx_data[1], 6));
-    CyclicDataSetLowTempWarning(GETBIT(can_rx_data[1], 7));
-    CyclicDataSetHighTempWarning(GETBIT(can_rx_data[2], 0));
-    CyclicDataSetNoEcuMessageWarning(GETBIT(can_rx_data[2], 2));
+    LcdHandlerSetLowVoltWarning(GETBIT(can_rx_data[1], 5));
+    LcdHandlerSetHighVoltWarning(GETBIT(can_rx_data[1], 6));
+    LcdHandlerSetLowTempWarning(GETBIT(can_rx_data[1], 7));
+    LcdHandlerSetHighTempWarning(GETBIT(can_rx_data[2], 0));
+    LcdHandlerSetNoEcuMessageWarning(GETBIT(can_rx_data[2], 2));
 }
 
 void FaultHandlerParseECUWarnings(uint8_t* can_rx_data) {
-    CyclicDataSetPackOverdischargeWarning(GETBIT(can_rx_data[5], 0));
-    CyclicDataSetPackOverchargeWarning(GETBIT(can_rx_data[5], 1));
+    LcdHandlerSetPackOverdischargeWarning(GETBIT(can_rx_data[5], 0));
+    LcdHandlerSetPackOverchargeWarning(GETBIT(can_rx_data[5], 1));
 }
 
 void FaultHandlerParseTemperatures(uint32_t msg_id, uint8_t* can_rx_data){
@@ -147,5 +149,3 @@ void FaultHandlerParseTemperatures(uint32_t msg_id, uint8_t* can_rx_data){
             break;
     }
 }
-
-

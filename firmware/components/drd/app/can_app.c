@@ -7,6 +7,7 @@
 
 /* INCLUDES */
 #include "drive_state.h"
+#include "tasks.h"
 #include "lcd_app.h"
 #include "soc.h"
 #include "can_driver.h"
@@ -90,30 +91,23 @@ void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data)
 
 void LcdAppCanRxHandler(uint32_t msg_id, uint8_t* data)
 { 
-    //TODO: Figure out the event flag for SOC
-    if (msg_id == CAN_ID_ECU)
-    {
+    switch (msg_id) {
+    case CAN_ID_ECU: { // Update pack current and voltage for SOC calculation
         int16_t tmp_pack_current = (data[1] << 8) | (data[0]);
         tmp_pack_current /= 65.535;
         CyclicDataSetPackCurrent(tmp_pack_current);
         g_pack_current_soc = tmp_pack_current;
+    } 
+    case CAN_ID_PACK_VOLTAGE: { // Update pack voltage and trigger SOC calculation
+        uint16_t tmp_pack_voltage = (data[1] << 8) | (data[0]);
+        tmp_pack_voltage /= PACK_VOLTAGE_DIVISOR;
+        CyclicDataSetPackVoltage(tmp_pack_voltage);
+        g_total_pack_voltage_soc = tmp_pack_voltage;
+
+        osEventFlagsSet(calculate_soc_flagHandle, SOC_CALCULATE_ON);
     }
-
-    // if (msg_id == CAN_ID_PACK_VOLTAGE)
-    // {
-    //     uint16_t tmp_pack_voltage = (data[1] << 8) | (data[0]);
-    //     tmp_pack_voltage /= PACK_VOLTAGE_DIVISOR;
-    //     CyclicDataSetPackVoltage(tmp_pack_voltage);
-
-    //     g_total_pack_voltage_soc = tmp_pack_voltage;
-
-    //     osEventFlagsSet(calculate_soc_flagHandle, SOC_CALCULATE_ON);
-    // }
-
-    if (msg_id == STR_CAN_MSG_ID)
-    {
-        uint8_t next_page = (data[0] & 1);
-
+    case STR_CAN_MSG_ID: { // Handle page changes for the LCD
+        uint8_t next_page = ((data[0] >> 2) & 0x1);
         if (next_page)
         {
             if (g_lcd_page < LCD_HANDLER_MAXPAGES)
@@ -128,14 +122,8 @@ void LcdAppCanRxHandler(uint32_t msg_id, uint8_t* data)
             }
         }
     }
-
-    // if (msg_id == CAN_ID_MDI_TEMP)
-    // {
-    //     uint8_t temperature = data[0];
-    //     CyclicDataSetTemperature(temperature);
-    // }
+    }
 }
-
 
 void FaultHandlerRxHandler(uint32_t msg_id, uint8_t* data)
 {

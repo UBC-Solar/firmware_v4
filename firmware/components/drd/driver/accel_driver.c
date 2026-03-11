@@ -10,6 +10,7 @@
 #include "accel_driver.h"
 #include "diagnostic.h"
 #include "adc.h"
+#include <stdbool.h>
 
 /* DEFINES */
 #define ADC_2_ACTIVE 0 // activate if adc2 is used
@@ -80,6 +81,7 @@ static bool ValidateAdcReadings(uint16_t adc1, uint16_t adc2)
     if (adc1 < ADC_LOWER_DEADZONE || adc1 > ADC_UPPER_DEADZONE)
     {
         g_last_error |= ADC1_SENSOR_FAULT;
+        DiagnosticSetThrottleADCOutOfRange(true);
         return false;
     }
 
@@ -88,6 +90,7 @@ static bool ValidateAdcReadings(uint16_t adc1, uint16_t adc2)
     if (adc2 < ADC_LOWER_DEADZONE || adc2 > ADC_UPPER_DEADZONE)
     {
         g_last_error |= ADC2_SENSOR_FAULT;
+        DiagnosticSetThrottleADCOutOfRange(true);
         return false;
     }
 
@@ -95,9 +98,12 @@ static bool ValidateAdcReadings(uint16_t adc1, uint16_t adc2)
     if (abs(adc1 - adc2) > ADC_MAX_DIFFERENCE)
     {
         g_last_error |= ADC_ERROR_DISAGREEMENT;
+        DiagnosticSetThrottleADCMismatch(true);
         return false;
     }
     #endif
+    DiagnosticSetThrottleADCOutOfRange(false);
+    DiagnosticSetThrottleADCMismatch(false);
 
     return true;
 }

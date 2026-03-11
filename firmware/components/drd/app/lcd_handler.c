@@ -12,14 +12,14 @@
 #include "lcd_app.h"
 #include "lcd_driver.h"
 #include "cyclic_data_handler.h"
+#include <stdbool.h>
 
 /* EXTERNAL VARIABLES */
-LcdAppData g_lcd_data = {0};
-LcdAppBattFaults g_lcd_batt_faults = {0};
-LcdAppMotorFaults g_lcd_motor_faults = {0};
-LcdAppWarnings g_lcd_warnings = {0};
-LcdAppTemperature g_lcd_temperatures[8] = {0};
-
+static LcdAppData g_lcd_data = {0};
+static LcdAppBattFaults g_lcd_batt_faults = {0};
+static LcdAppMotorFaults g_lcd_motor_faults = {0};
+static LcdAppWarnings g_lcd_warnings = {0};
+static LcdAppTemperature g_lcd_temperatures[8] = {0};
 uint8_t g_lcd_page = 1;
 uint8_t g_lcd_page_change = 0;
 
@@ -38,6 +38,8 @@ void LcdHandlerInit(SPI_HandleTypeDef* hspi)
     g_lcd_temperatures[6].temp_label = MOTOR_CONT;
     g_lcd_temperatures[7].temp_label = MOTOR_THERM;
 
+    g_lcd_data.speed_units = LCD_APP_MPH;
+
     LcdDriverInit(hspi); // Initialize the LCD driver
 }
 
@@ -45,6 +47,13 @@ void LcdHandlerPageController(void)
 {
     // Get the latest data for the LCD
     LcdHandlerGetData();
+
+    // Handles clearing the screen
+    if (g_lcd_page_change == 1)
+    {
+        LcdHandlerChangeScreen();
+        g_lcd_page_change = 0;
+    }
 
     // Changes pages if fault flag is set
     if(LcdAppCheckFaults(&g_lcd_batt_faults, &g_lcd_motor_faults)) {
@@ -57,6 +66,7 @@ void LcdHandlerPageController(void)
     case DRIVE_PAGE:
         LcdAppDisplaySpeedDrivePage(g_lcd_data.speed, g_lcd_data.speed_units);
         LcdAppDisplaySocDrivePage((volatile uint32_t*)g_lcd_data.soc);
+        LcdAppDisplayDriveModeDrivePage(g_lcd_data.drive_mode);
         LcdAppDisplayDriveStateDrivePage((volatile DriveStateStates*) g_lcd_data.drive_state);
         LcdAppDisplayFaultIndicator(&g_lcd_batt_faults, &g_lcd_motor_faults);
         LcdAppDisplayWarningIndicator(&g_lcd_warnings);
@@ -100,39 +110,43 @@ void LcdHandlerPageController(void)
 void LcdHandlerChangeScreen() { LcdDriverChangeScreen(); }
 
 static void LcdHandlerGetData(void) {
-    /* FAULTS AND WARNINGS */
-    g_lcd_batt_faults.battery_fault = CyclicDataGetBatteryFault();
-    g_lcd_batt_faults.charge_overcurrent_fault = CyclicDataGetBatteryChargeOvercurrentFault();
-    g_lcd_batt_faults.discharge_overcurrent_fault = CyclicDataGetBatteryDischargeOvercurrentFault();
-    g_lcd_batt_faults.overtemp_fault = CyclicDataGetBatteryOvertemp();
-    g_lcd_batt_faults.overvolt_fault = CyclicDataGetBatteryVoltageHigh();
-    g_lcd_batt_faults.reset_from_watchdog = CyclicDataGetBatteryResetFromWatchdogFault();
-    g_lcd_batt_faults.slave_board_comm_fault = CyclicDataGetBatterySlaveBoardCommFault();
-    g_lcd_batt_faults.supp_lo = false;
-    g_lcd_batt_faults.undervolt_fault = CyclicDataGetBatteryUndervoltFault();
-    g_lcd_batt_faults.voltage_high = CyclicDataGetBatteryVoltageHigh();
-    g_lcd_batt_faults.voltage_low = CyclicDataGetBatteryVoltageLow();
-
-    g_lcd_motor_faults.fet_thermistor_error = CyclicDataGetMotorFetThermistorError();
-    g_lcd_motor_faults.motor_comm_fault = CyclicDataGetMotorCommFault();
-    g_lcd_motor_faults.motor_system_error = CyclicDataGetMotorSystemFault();
-    g_lcd_motor_faults.overcurrent_fault = CyclicDataGetMotorOvercurrentFault();
-    g_lcd_motor_faults.overvoltage_fault = CyclicDataGetMotorOvervoltageFault();
-    g_lcd_motor_faults.throttle_adc_mismatch = CyclicDataGetMotorThrottleAdcMismatch();
-    g_lcd_motor_faults.throttle_adc_outofrange = CyclicDataGetMotorThrottleAdcOutOfRange();
-
-    g_lcd_warnings.high_temp_warning = CyclicDataGetHighTempWarning();
-    g_lcd_warnings.high_volt_warning = CyclicDataGetHighVoltWarning();
-    g_lcd_warnings.low_temp_warning = CyclicDataGetLowTempWarning();
-    g_lcd_warnings.low_volt_warning = CyclicDataGetLowVoltWarning();
-    g_lcd_warnings.no_ecu_message = CyclicDataGetNoEcuMessageWarning();
-    g_lcd_warnings.pack_overcharge = CyclicDataGetPackOverchargeWarning();
-    g_lcd_warnings.pack_overdischarge = CyclicDataGetPackOverdischargeWarning();
-
     /* DRIVE DATA*/
     g_lcd_data.speed = CyclicDataGetSpeed();
     g_lcd_data.drive_state = CyclicDataGetDriveState();
+    g_lcd_data.drive_mode = DriveStateGetDriveMode();
     g_lcd_data.soc = CyclicDataGetSoc();
     g_lcd_data.pack_current = CyclicDataGetPackCurrent();
     g_lcd_data.pack_voltage = CyclicDataGetPackVoltage();
 }
+
+/* LCD HANDLER BATTERY FAULT DATA SETTERS */
+void LcdHandlerSetBatteryFault(bool fault) { g_lcd_batt_faults.battery_fault = fault; }
+void LcdHandlerSetBatterySupplyLow(bool fault) { g_lcd_batt_faults.supp_lo = fault; }
+void LcdHandlerSetBMSSelfTestFault(bool fault) { g_lcd_batt_faults.selftest_fault = fault; }
+void LcdHandlerSetBatteryVoltageHigh(bool fault) { g_lcd_batt_faults.voltage_high = fault; }
+void LcdHandlerSetBatteryVoltageLow(bool fault) { g_lcd_batt_faults.voltage_low = fault; }
+void LcdHandlerSetBatteryOvertemp(bool fault) { g_lcd_batt_faults.overtemp_fault = fault; }
+void LcdHandlerSetBatterySlaveBoardCommFault(bool fault) { g_lcd_batt_faults.slave_board_comm_fault = fault; }
+void LcdHandlerSetBatteryOvervoltFault(bool fault) { g_lcd_batt_faults.overvolt_fault = fault; }
+void LcdHandlerSetBatteryUndervoltFault(bool fault) { g_lcd_batt_faults.undervolt_fault = fault; }
+void LcdHandlerSetBatteryChargeOvercurrentFault(bool fault) { g_lcd_batt_faults.charge_overcurrent_fault = fault; }
+void LcdHandlerSetBatteryDischargeOvercurrentFault(bool fault) { g_lcd_batt_faults.discharge_overcurrent_fault = fault; }
+void LcdHandlerSetBatteryResetFromWatchdogFault(bool fault) { g_lcd_batt_faults.reset_from_watchdog = fault; }
+
+/* LCD HANDLER MOTOR FAULT DATA SETTERS */
+void LcdHandlerSetMotorSystemFault(bool fault) { g_lcd_motor_faults.motor_system_error = fault; }
+void LcdHandlerSetMotorOvercurrentFault(bool fault) { g_lcd_motor_faults.overcurrent_fault = fault; }
+void LcdHandlerSetMotorOvervoltageFault(bool fault) { g_lcd_motor_faults.overvoltage_fault = fault; }
+void LcdHandlerSetMotorFetThermistorError(bool fault) { g_lcd_motor_faults.fet_thermistor_error = fault; }
+void LcdHandlerSetMotorCommFault(bool fault) { g_lcd_motor_faults.motor_comm_fault = fault; }
+void LcdHandlerSetMotorThrottleAdcOutOfRange(bool fault) { g_lcd_motor_faults.throttle_adc_outofrange = fault; }
+void LcdHandlerSetMotorThrottleAdcMismatch(bool fault) { g_lcd_motor_faults.throttle_adc_mismatch = fault; }
+
+/* LCD HANDLER WARNING DATA SETTERS */
+void LcdHandlerSetLowVoltWarning(bool warning) { g_lcd_warnings.low_volt_warning = warning; }
+void LcdHandlerSetHighVoltWarning(bool warning) { g_lcd_warnings.high_volt_warning = warning; }
+void LcdHandlerSetLowTempWarning(bool warning) { g_lcd_warnings.low_temp_warning = warning; }
+void LcdHandlerSetHighTempWarning(bool warning) { g_lcd_warnings.high_temp_warning = warning; }
+void LcdHandlerSetNoEcuMessageWarning(bool warning) { g_lcd_warnings.no_ecu_message = warning; }
+void LcdHandlerSetPackOverdischargeWarning(bool warning) { g_lcd_warnings.pack_overdischarge = warning; }
+void LcdHandlerSetPackOverchargeWarning(bool warning) { g_lcd_warnings.pack_overcharge = warning; }  

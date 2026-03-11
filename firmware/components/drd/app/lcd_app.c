@@ -12,6 +12,7 @@
  */
 
 #include "lcd_app.h"
+#include <string.h>
 #include "cyclic_data_handler.h"
 #include "diagnostic.h"
 #include "lcd_driver.h"
@@ -349,7 +350,8 @@ void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor
 
     LcdDriverClearBoundingBox(
         0, LCD_APP_FAULT_FOUR_Y1, LCD_DRIVER_BOTTOM_RIGHT_X, LCD_DRIVER_BOTTOM_RIGHT_Y);
-
+    
+    memset(faults, 0, sizeof(faults)); // Clear the faults array before populating it with current faults
     uint8_t fault_count = LcdAppCheckFaults(batt_faults, motor_faults);
 
     LcdDriverDrawText(LCD_APP_FAULT_LABEL_CHARS, LCD_APP_FAULT_LABEL_X, LCD_APP_FAULT_LABEL_Y, LCD_APP_FAULT_LABEL_FONT, LCD_APP_FAULT_SPACING);

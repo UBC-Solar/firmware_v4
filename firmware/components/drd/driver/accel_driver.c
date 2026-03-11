@@ -1,8 +1,20 @@
-#include "accel_driver.h"
-#include "gpio_driver.h"
-#include <stdlib.h>
+/**
+ * @file    accel_driver.c
+ * @brief   Accelerator ADC driver implementation for UBC Solar DRD board.
+ *
+ * Reads accelerator ADC channels, validates pedal sensor data, and converts
+ * valid input into a throttle DAC command.
+ */
 
-/* PRIVATE VARIABLES */
+/* INCLUDES */
+#include "accel_driver.h"
+#include "diagnostic.h"
+#include "adc.h"
+
+/* DEFINES */
+#define ADC_2_ACTIVE 0 // activate if adc2 is used
+
+/* GLOBAL VARIABLES */
 static AdcError g_last_error = ADC_FAULT_NONE;
 
 /* PRIVATE FUNCTION DECLARATIONS */
@@ -35,12 +47,19 @@ static uint16_t ReadAdc(ADC_HandleTypeDef* hadc)
     return HAL_ADC_GetValue(hadc);
 }
 
-uint16_t AcceleratorDriverReadThrottle(void)
+uint16_t AccelDriverReadThrottle(void)
 {
     g_last_error = ADC_FAULT_NONE;
 
     uint16_t adc1 = ReadAdc(&hadc1);
-    uint16_t adc2 = ReadAdc(&hadc2);
+    DiagnosticSetRawADC1(adc1);
+
+    uint16_t adc2 = 0;
+
+    #if ADC_2_ACTIVE
+    adc2 = ReadAdc(&hadc2);
+    DiagnosticSetRawADC2(adc2);
+    #endif
 
     if (!ValidateAdcReadings(adc1, adc2))
     {
@@ -51,7 +70,7 @@ uint16_t AcceleratorDriverReadThrottle(void)
 }
 
 /* VALIDATION AND ERROR HANDLING */
-AdcError AdcDriverGetError(void) { return g_last_error; }
+AdcError AccelDriverGetAdcError(void) { return g_last_error; }
 
 static bool ValidateAdcReadings(uint16_t adc1, uint16_t adc2)
 {
@@ -64,6 +83,7 @@ static bool ValidateAdcReadings(uint16_t adc1, uint16_t adc2)
         return false;
     }
 
+    #if ADC_2_ACTIVE
     // Check sensor 2 is in valid range
     if (adc2 < ADC_LOWER_DEADZONE || adc2 > ADC_UPPER_DEADZONE)
     {
@@ -77,6 +97,7 @@ static bool ValidateAdcReadings(uint16_t adc1, uint16_t adc2)
         g_last_error |= ADC_ERROR_DISAGREEMENT;
         return false;
     }
+    #endif
 
     return true;
 }
@@ -93,16 +114,18 @@ static uint16_t ConvertToDac(uint16_t adc)
 
 static uint16_t NormalizeToDac(uint16_t adc1, uint16_t adc2)
 {
+    #if !ADC_2_ACTIVE
     (void)adc2; // unused adc value
+    #endif
 
     if (adc1 <= ADC_LOWEST_VALID)
     {
-        return MC_DAC_MAX; // adjust for cascadia use MC_DAC_MAX
+        return MC_DAC_MIN;
     }
 
     if (adc1 >= ADC_HIGHEST_VALID)
     {
-        return MC_DAC_MIN; // do the same here use MC_DAC_MIN
+        return MC_DAC_MAX;
     }
 
     // Linear interpolation from ADC range to DAC range

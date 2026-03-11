@@ -4,9 +4,6 @@
  *
  * This file implements the SOC estimation module using an Extended Kalman Filter (EKF) to estimate
  * battery state-of-charge and related parameters based on voltage and current measurements.
- *
- * @author  UBC Solar
- * @date    Feb 4 2026
  */
 
 #include "soc.h"

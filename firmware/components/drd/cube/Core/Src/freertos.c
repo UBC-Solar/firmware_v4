@@ -31,8 +31,10 @@
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
+typedef StaticTask_t osStaticThreadDef_t;
 /* USER CODE BEGIN PTD */
 typedef StaticTask_t osStaticThreadDef_t;
+typedef StaticEventGroup_t osStaticEventGroupDef_t;
 typedef StaticEventGroup_t osStaticEventGroupDef_t;
 /* USER CODE END PTD */
 
@@ -60,7 +62,7 @@ const osThreadAttr_t TasksLcdUpdate_attributes = {
   .cb_size = sizeof(TasksLcdUpdateControlBlock),
   .stack_mem = &TasksLcdUpdateBuffer[0],
   .stack_size = sizeof(TasksLcdUpdateBuffer),
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 
 /* Definitions for TasksDriveState */
@@ -113,12 +115,46 @@ const osEventFlagsAttr_t calculate_soc_flag_attributes = {
   .cb_size = sizeof(calculate_soc_flagControlBlock),
 };
 
+
+/* Definitions for TasksDiagnostic */
+osThreadId_t TasksDiagnosticHandle;
+uint32_t TasksDiagnosticBuffer[128];
+osStaticThreadDef_t TasksDiagnosticControlBlock;
+
+const osThreadAttr_t TasksDiagnostic_attributes = {
+  .name = "TasksDiagnostic",
+  .cb_mem = &TasksDiagnosticControlBlock,
+  .cb_size = sizeof(TasksDiagnosticControlBlock),
+  .stack_mem = &TasksDiagnosticBuffer[0],
+  .stack_size = sizeof(TasksDiagnosticBuffer),
+  .priority = (osPriority_t) osPriorityNormal,
+};
+
+/* Definitions for TasksTimeSinceStartup */
+osThreadId_t TasksTimeSinceStartupHandle;
+uint32_t TasksTimeSinceStartupBuffer[128];
+osStaticThreadDef_t TasksTimeSinceStartupControlBlock;
+
+const osThreadAttr_t TasksTimeSinceStartup_attributes = {
+  .name = "TasksTimeSinceStartup",
+  .cb_mem = &TasksTimeSinceStartupControlBlock,
+  .cb_size = sizeof(TasksTimeSinceStartupControlBlock),
+  .stack_mem = &TasksTimeSinceStartupBuffer[0],
+  .stack_size = sizeof(TasksTimeSinceStartupBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
+
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
+uint32_t defaultTaskBuffer[ 128 ];
+osStaticThreadDef_t defaultTaskControlBlock;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 128 * 4,
+  .cb_mem = &defaultTaskControlBlock,
+  .cb_size = sizeof(defaultTaskControlBlock),
+  .stack_mem = &defaultTaskBuffer[0],
+  .stack_size = sizeof(defaultTaskBuffer),
   .priority = (osPriority_t) osPriorityNormal,
 };
 
@@ -138,7 +174,7 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
   */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
-  CanTasksInit();
+
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -162,18 +198,20 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  /* creation of TasksDriveState */
-  TasksDriveStateHandle = osThreadNew(TasksDriveState, NULL, &TasksDriveState_attributes);
 
   /* creation of TasksCalculateSoc */
   TasksCalculateSocHandle = osThreadNew(TasksCalculateSoc, NULL, &TasksCalculateSoc_attributes);
+  /* creation of TasksDriveState */
+  TasksDriveStateHandle = osThreadNew(TasksDriveState, NULL, &TasksDriveState_attributes);
   /* creation of TasksLcdUpdate */
   TasksLcdUpdateHandle = osThreadNew(TasksLcdUpdate, NULL, &TasksLcdUpdate_attributes);
-    //TasksDriveStateHandle = osThreadNew(TasksDriveState, NULL, &TasksDriveState_attributes);
-  
   /* creation of TasksExternalLights */
   TasksExternalLightsHandle = osThreadNew(TasksExternalLights, NULL, &TasksExternalLights_attributes);
-    
+  /* creation of TasksDiagnostic */
+  TasksDiagnosticHandle = osThreadNew(TasksDiagnostic, NULL, &TasksDiagnostic_attributes);
+  /* creation of TasksTimeSinceStartup */
+  TasksTimeSinceStartupHandle = osThreadNew(TasksTimeSinceStartup, NULL, &TasksTimeSinceStartup_attributes);
+
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -196,7 +234,7 @@ void StartDefaultTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    osDelay(100);
   }
   /* USER CODE END StartDefaultTask */
 }

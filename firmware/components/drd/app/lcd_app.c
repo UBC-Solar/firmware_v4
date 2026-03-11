@@ -1,8 +1,18 @@
+/**
+ * @file    lcd_app.c
+ * @brief   LCD application logic for the UBC Solar DRD board
+ *
+ * This file contains the implementation of the LCD application logic for the 5 current pages
+ * of the DRD board. It handles updating the LCD display with vehicle state information, faults,
+ * warnings, and other relevant data. It also manages page changes and the formatting of displayed
+ * text fields.
+ *
+ * @author  Gregory Bian
+ * @date    Feb 4 2026
+ */
+
 #include "lcd_app.h"
 #include "cyclic_data_handler.h"
-// #include "diagnostic.h"
-// #include "drd_freertos.h"
-// #include "fault_lights.h"
 #include "lcd_driver.h"
 #include <stdio.h>
 // #include "soc.h"
@@ -29,16 +39,10 @@ LcdAppMotorFaults g_lcd_motor_faults = {0};
 LcdAppWarnings g_lcd_warnings = {0};
 LcdAppTemperature g_lcd_temperatures[8] = {0};
 
-uint8_t g_lcd_page = 0;
+uint8_t g_lcd_page = 1;
 uint8_t g_lcd_page_change = 0;
 
-// Helper Function declarations
-uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults);
-uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings);
-
-/*--------------------------------------------------------------------------
-  HELPER FUNCTIONS
---------------------------------------------------------------------------*/
+/** Helper Function declarations */
 
 /**
  * @brief Checks and updates the faults.
@@ -47,7 +51,21 @@ uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings);
  * @param motor_faults A struct containing the motor faults.
  * @return The count of faults.
  */
-uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults)
+static uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults);
+
+/**
+ * @brief Checks and updates the warnings.
+ *
+ * @param warnings A struct containing the warnings
+ *
+ * @return The count of warnings.
+ */
+static uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings);
+
+/*--------------------------------------------------------------------------
+  HELPER FUNCTIONS
+--------------------------------------------------------------------------*/
+static uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults)
 {
     uint8_t fault_count = 0;
 
@@ -145,14 +163,8 @@ uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* moto
     return fault_count;
 }
 
-/**
- * @brief Checks and updates the warnings.
- *
- * @param warnings A struct containing the warnings
- *
- * @return The count of warnings.
- */
-uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings)
+
+static uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings)
 {
     uint8_t warning_count = 0;
 
@@ -199,12 +211,6 @@ uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings)
   PAGE 1 (DRIVE PAGE) FUNCTIONS
 --------------------------------------------------------------------------*/
 
-/**
- * @brief Displays the speed on the LCD drive page.
- *
- * @param speed The speed value to display.
- * @param units The speed units (LCD_SPEED_UNITS_MPH or LCD_SPEED_UNITS_KPH).
- */
 void LcdAppDisplaySpeedDrivePage(volatile uint32_t* speed, volatile uint8_t units)
 {
     char speed_str[12];
@@ -218,78 +224,41 @@ void LcdAppDisplaySpeedDrivePage(volatile uint32_t* speed, volatile uint8_t unit
     if (speed == NULL)
     { // Stale speed data
         sprintf(speed_str, "XX");
-        old_bb_speed = LcdDriverDrawText(speed_str,
-                                         LCD_APP_SPEED_TWODIGIT_X + 10,
-                                         LCD_APP_SPEED_Y + 10,
-                                         LCD_APP_SPEED_NULL_FONT,
-                                         LCD_APP_SPEED_SPACING + 10);
-        // g_diagnostics.cyclic_flags.speed_timeout = true;
+        old_bb_speed = LcdDriverDrawText(speed_str, LCD_APP_SPEED_TWODIGIT_X + 10, LCD_APP_SPEED_Y + 10, LCD_APP_SPEED_NULL_FONT, LCD_APP_SPEED_SPACING + 10);
     }
     else if (*speed < 10)
     { // Single digit speed
         sprintf(speed_str, "%01lu", (unsigned long)*speed);
-        old_bb_speed = LcdDriverDrawText(speed_str,
-                                         LCD_APP_SPEED_ONEDIGIT_X,
-                                         LCD_APP_SPEED_Y,
-                                         LCD_APP_SPEED_FONT,
-                                         LCD_APP_SPEED_SPACING);
-        // g_diagnostics.cyclic_flags.speed_timeout = false;
+        old_bb_speed = LcdDriverDrawText(speed_str, LCD_APP_SPEED_ONEDIGIT_X, LCD_APP_SPEED_Y, LCD_APP_SPEED_FONT, LCD_APP_SPEED_SPACING);
     }
     else if (*speed < 100)
     { // Double digit second
         sprintf(speed_str, "%02lu", (unsigned long)*speed);
-        old_bb_speed = LcdDriverDrawText(speed_str,
-                                         LCD_APP_SPEED_TWODIGIT_X,
-                                         LCD_APP_SPEED_Y,
-                                         LCD_APP_SPEED_FONT,
-                                         LCD_APP_SPEED_SPACING);
-        // g_diagnostics.cyclic_flags.speed_timeout = false;
+        old_bb_speed = LcdDriverDrawText(speed_str, LCD_APP_SPEED_TWODIGIT_X, LCD_APP_SPEED_Y, LCD_APP_SPEED_FONT, LCD_APP_SPEED_SPACING);
     }
     else
     {
         sprintf(speed_str, "%03lu", (unsigned long)*speed);
-        old_bb_speed = LcdDriverDrawText(speed_str,
-                                         LCD_APP_SPEED_THREEDIGIT_X,
-                                         LCD_APP_SPEED_Y,
-                                         LCD_APP_SPEED_FONT,
-                                         LCD_APP_SPEED_SPACING);
-        // g_diagnostics.cyclic_flags.speed_timeout = false;
+        old_bb_speed = LcdDriverDrawText(speed_str, LCD_APP_SPEED_THREEDIGIT_X, LCD_APP_SPEED_Y, LCD_APP_SPEED_FONT, LCD_APP_SPEED_SPACING);
     }
 
     /* Draw the speed units */
     switch (units)
     {
     case LCD_APP_KPH:
-        LcdDriverDrawText("kph",
-                          LCD_APP_SPEED_X + LCD_APP_SPEED_UNIT_KPH_X,
-                          LCD_APP_SPEED_UNIT_Y,
-                          LCD_APP_SPEED_UNITS_FONT,
-                          LCD_APP_SPEED_UNITS_SPACING);
+        LcdDriverDrawText("kph", LCD_APP_SPEED_X + LCD_APP_SPEED_UNIT_KPH_X, LCD_APP_SPEED_UNIT_Y, LCD_APP_SPEED_UNITS_FONT, LCD_APP_SPEED_UNITS_SPACING);
         break;
     case LCD_APP_MPH:
-        LcdDriverDrawText("mph",
-                          LCD_APP_SPEED_X + LCD_APP_SPEED_UNIT_MPH_X,
-                          LCD_APP_SPEED_UNIT_Y,
-                          LCD_APP_SPEED_UNITS_FONT,
-                          LCD_APP_SPEED_UNITS_SPACING);
+        LcdDriverDrawText("mph", LCD_APP_SPEED_X + LCD_APP_SPEED_UNIT_MPH_X, LCD_APP_SPEED_UNIT_Y, LCD_APP_SPEED_UNITS_FONT, LCD_APP_SPEED_UNITS_SPACING);
         break;
     default:
-        LcdDriverDrawText("xxx",
-                          LCD_APP_SPEED_X + LCD_APP_SPEED_UNIT_MPH_X,
-                          LCD_APP_SPEED_UNIT_Y,
-                          LCD_APP_SPEED_UNITS_FONT,
-                          LCD_APP_SPEED_UNITS_SPACING);
+        LcdDriverDrawText("xxx", LCD_APP_SPEED_X + LCD_APP_SPEED_UNIT_MPH_X, LCD_APP_SPEED_UNIT_Y, LCD_APP_SPEED_UNITS_FONT, LCD_APP_SPEED_UNITS_SPACING);
         break;
     }
 
     LcdDriverRefresh();
 }
 
-/**
- * @brief Displays the state of charge (SOC) on the LCD drive page.
- *
- * @param soc The state of charge (in percent).
- */
 void LcdAppDisplaySocDrivePage(volatile uint32_t* soc)
 {
     char soc_str[12];
@@ -301,46 +270,29 @@ void LcdAppDisplaySocDrivePage(volatile uint32_t* soc)
     if (soc == NULL)
     {
         sprintf(soc_str, "--");
-        old_bb_soc = LcdDriverDrawText(
-            soc_str, LCD_APP_SOC_TWODIGIT_X, LCD_APP_SOC_Y, LCD_APP_SOC_FONT, LCD_APP_SOC_SPACING);
-        // g_diagnostics.cyclic_flags.soc_timeout = true;
+        old_bb_soc = LcdDriverDrawText(soc_str, LCD_APP_SOC_TWODIGIT_X, LCD_APP_SOC_Y, LCD_APP_SOC_FONT, LCD_APP_SOC_SPACING);
     }
     else if (*soc < 10)
     {
         sprintf(soc_str, "%01lu", (unsigned long)*soc);
-        old_bb_soc = LcdDriverDrawText(
-            soc_str, LCD_APP_SOC_ONEDIGIT_X, LCD_APP_SOC_Y, LCD_APP_SOC_FONT, LCD_APP_SOC_SPACING);
-        // g_diagnostics.cyclic_flags.soc_timeout = false;
+        old_bb_soc = LcdDriverDrawText(soc_str, LCD_APP_SOC_ONEDIGIT_X, LCD_APP_SOC_Y, LCD_APP_SOC_FONT, LCD_APP_SOC_SPACING);
     }
     else if (*soc < 100)
     {
         sprintf(soc_str, "%02lu", (unsigned long)*soc);
-        old_bb_soc = LcdDriverDrawText(
-            soc_str, LCD_APP_SOC_TWODIGIT_X, LCD_APP_SOC_Y, LCD_APP_SOC_FONT, LCD_APP_SOC_SPACING);
-        // g_diagnostics.cyclic_flags.soc_timeout = false;
+        old_bb_soc = LcdDriverDrawText(soc_str, LCD_APP_SOC_TWODIGIT_X, LCD_APP_SOC_Y, LCD_APP_SOC_FONT, LCD_APP_SOC_SPACING);
     }
     else
     {
         sprintf(soc_str, "%03lu", (unsigned long)*soc);
-        old_bb_soc = LcdDriverDrawText(soc_str,
-                                       LCD_APP_SOC_THREEDIGIT_X,
-                                       LCD_APP_SOC_Y,
-                                       LCD_APP_SOC_FONT,
-                                       LCD_APP_SOC_SPACING);
-        // g_diagnostics.cyclic_flags.soc_timeout = false;
+        old_bb_soc = LcdDriverDrawText(soc_str, LCD_APP_SOC_THREEDIGIT_X, LCD_APP_SOC_Y, LCD_APP_SOC_FONT, LCD_APP_SOC_SPACING);
     }
 
-    LcdDriverDrawChar(
-        LCD_APP_SOC_UNITS, LCD_APP_SOC_UNITS_X, LCD_APP_SOC_Y, LCD_APP_SOC_UNITS_FONT);
+    LcdDriverDrawChar(LCD_APP_SOC_UNITS, LCD_APP_SOC_UNITS_X, LCD_APP_SOC_Y, LCD_APP_SOC_UNITS_FONT);
 
     LcdDriverRefresh();
 }
 
-/**
- * @brief Displays an E for ECO mode and P for POWER mode
- *
- * @param drive_mode The drive mode
- */
 void LcdAppDisplayDriveModeDrivePage(volatile uint8_t drive_mode)
 {
     LcdDriverClearBoundingBox(old_bb_drive_mode.x1,
@@ -352,29 +304,19 @@ void LcdAppDisplayDriveModeDrivePage(volatile uint8_t drive_mode)
     switch (drive_mode)
     {
     case LCD_APP_DRIVE_MODE_ECO:
-        old_bb_drive_mode = LcdDriverDrawChar(
-            LCD_APP_ECO_SYMBOL, LCD_APP_ECO_MODE_X, LCD_APP_ECO_MODE_Y, LCD_APP_ECO_MODE_FONT);
+        old_bb_drive_mode = LcdDriverDrawChar(LCD_APP_ECO_SYMBOL, LCD_APP_ECO_MODE_X, LCD_APP_ECO_MODE_Y, LCD_APP_ECO_MODE_FONT);
         break;
     case LCD_APP_DRIVE_MODE_POWER:
-        old_bb_drive_mode = LcdDriverDrawChar(LCD_APP_POWER_SYMBOL,
-                                              LCD_APP_POWER_MODE_X,
-                                              LCD_APP_POWER_MODE_Y,
-                                              LCD_APP_POWER_MODE_FONT);
+        old_bb_drive_mode = LcdDriverDrawChar(LCD_APP_POWER_SYMBOL, LCD_APP_POWER_MODE_X, LCD_APP_POWER_MODE_Y, LCD_APP_POWER_MODE_FONT);
         break;
     default:
-        old_bb_drive_mode = LcdDriverDrawChar(
-            LCD_APP_ERROR_SYMBOL, LCD_APP_ECO_MODE_X, LCD_APP_ECO_MODE_Y, LCD_APP_ECO_MODE_FONT);
+        old_bb_drive_mode = LcdDriverDrawChar(LCD_APP_ERROR_SYMBOL, LCD_APP_ECO_MODE_X, LCD_APP_ECO_MODE_Y, LCD_APP_ECO_MODE_FONT);
         break;
     }
 
     LcdDriverRefresh();
 }
 
-/**
- * @brief Displays the drive state on the LCD drive page.
- *
- * @param state The drive state (e.g., FORWARD_STATE, PARK_STATE, REVERSE_STATE).
- */
 void LcdAppDisplayDriveStateDrivePage(volatile DriveStateStates* state)
 {
     char state_str[2] = {LCD_APP_ERROR_SYMBOL, '\0'}; // Default to error symbol.
@@ -382,7 +324,6 @@ void LcdAppDisplayDriveStateDrivePage(volatile DriveStateStates* state)
     if (state == NULL)
     { // Stale data for drive state
         sprintf(state_str, "-");
-        // g_diagnostics.cyclic_flags.drive_state_timeout = true;
     }
     else
     {
@@ -401,22 +342,15 @@ void LcdAppDisplayDriveStateDrivePage(volatile DriveStateStates* state)
             state_str[0] = LCD_APP_ERROR_SYMBOL;
             break;
         }
-        // g_diagnostics.cyclic_flags.drive_state_timeout = false;
     }
 
     LcdDriverClearBoundingBox(
         LCD_APP_STATE_X, LCD_APP_STATE_Y, old_bb_drive_state.x2, LCD_DRIVER_BOTTOM_RIGHT_Y);
-    old_bb_drive_state = LcdDriverDrawText(
-        state_str, LCD_APP_STATE_X, LCD_APP_STATE_Y, LCD_APP_STATE_FONT, LCD_APP_STATE_SPACING);
+    old_bb_drive_state = LcdDriverDrawText(state_str, LCD_APP_STATE_X, LCD_APP_STATE_Y, LCD_APP_STATE_FONT, LCD_APP_STATE_SPACING);
 
     LcdDriverRefresh();
 }
 
-/**
- * @brief Displays a fault indicator on the LCD Drive Page
- *
- * @param fault_indicator A general indicator to signal a fault to prompt the driver to change pages
- */
 void LcdAppDisplayFaultIndicator(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults)
 {
     LcdDriverClearBoundingBox(old_bb_fault_indicator.x1,
@@ -429,18 +363,11 @@ void LcdAppDisplayFaultIndicator(LcdAppBattFaults* batt_faults, LcdAppMotorFault
     // Check if there is an existing fault
     if (fault_count > 0)
     {
-        old_bb_fault_indicator = LcdDriverDrawChar(
-            LCD_APP_FAULT_SYMBOL, LCD_APP_FAULT_X, LCD_APP_FAULT_Y, LCD_APP_FAULT_SYMBOL_FONT);
+        old_bb_fault_indicator = LcdDriverDrawChar(LCD_APP_FAULT_SYMBOL, LCD_APP_FAULT_X, LCD_APP_FAULT_Y, LCD_APP_FAULT_SYMBOL_FONT);
     }
     LcdDriverRefresh();
 }
 
-/**
- * @brief Displays a warning indicator on the LCD Drive Page
- *
- * @param warning_indicator A general indicator to signal a warning to prompt the driver to change
- * pages
- */
 void LcdAppDisplayWarningIndicator(LcdAppWarnings* warnings)
 {
     LcdDriverClearBoundingBox(old_bb_warning_indicator.x1,
@@ -453,10 +380,7 @@ void LcdAppDisplayWarningIndicator(LcdAppWarnings* warnings)
     // Check if there is an existing warning
     if (warning_count > 0)
     {
-        old_bb_warning_indicator = LcdDriverDrawChar(LCD_APP_WARNING_SYMBOL,
-                                                     LCD_APP_WARNING_X,
-                                                     LCD_APP_WARNING_Y,
-                                                     LCD_APP_WARNING_SYMBOL_FONT);
+        old_bb_warning_indicator = LcdDriverDrawChar(LCD_APP_WARNING_SYMBOL, LCD_APP_WARNING_X, LCD_APP_WARNING_Y, LCD_APP_WARNING_SYMBOL_FONT);
     }
     LcdDriverRefresh();
 }
@@ -465,12 +389,6 @@ void LcdAppDisplayWarningIndicator(LcdAppWarnings* warnings)
   PAGE 2 (FAULT PAGE) FUNCTIONS
 --------------------------------------------------------------------------*/
 
-/**
- * @brief Dynamically displays battery and motor faults on the LCD
- *
- * @param batt_faults The battery faults to be displayed on the LCD
- * @param motor_faults The motor faults to be displayed on the LCD
- */
 void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults)
 {
 
@@ -479,75 +397,27 @@ void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor
 
     uint8_t fault_count = LcdAppCheckFaults(batt_faults, motor_faults);
 
-    LcdDriverDrawText(LCD_APP_FAULT_LABEL_CHARS,
-                      LCD_APP_FAULT_LABEL_X,
-                      LCD_APP_FAULT_LABEL_Y,
-                      LCD_APP_FAULT_LABEL_FONT,
-                      LCD_APP_FAULT_SPACING);
+    LcdDriverDrawText(LCD_APP_FAULT_LABEL_CHARS, LCD_APP_FAULT_LABEL_X, LCD_APP_FAULT_LABEL_Y, LCD_APP_FAULT_LABEL_FONT, LCD_APP_FAULT_SPACING);
     for (uint8_t i = 0; i < LCD_APP_FAULT_LABEL_UNDERLINE_X; i++)
     {
         LcdDriverSetPixel(i, LCD_APP_FAULT_LABEL_UNDERLINE_Y, 1);
     }
     if (fault_count <= 3)
     {
-        LcdDriverDrawText(faults[0],
-                          LCD_APP_FAULT_FOUR_X1,
-                          LCD_APP_FAULT_FOUR_Y1,
-                          LCD_APP_FAULT_FOUR_FONT,
-                          LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[1],
-                          LCD_APP_FAULT_FOUR_X2,
-                          LCD_APP_FAULT_FOUR_Y2,
-                          LCD_APP_FAULT_FOUR_FONT,
-                          LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[2],
-                          LCD_APP_FAULT_FOUR_X3,
-                          LCD_APP_FAULT_FOUR_Y3,
-                          LCD_APP_FAULT_FOUR_FONT,
-                          LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(faults[0], LCD_APP_FAULT_FOUR_X1, LCD_APP_FAULT_FOUR_Y1, LCD_APP_FAULT_FOUR_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(faults[1], LCD_APP_FAULT_FOUR_X2, LCD_APP_FAULT_FOUR_Y2, LCD_APP_FAULT_FOUR_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(faults[2], LCD_APP_FAULT_FOUR_X3, LCD_APP_FAULT_FOUR_Y3, LCD_APP_FAULT_FOUR_FONT, LCD_APP_FAULT_SPACING);
     }
     else if (fault_count <= 8)
     {
-        LcdDriverDrawText(faults[0],
-                          LCD_APP_FAULT_EIGHT_X1,
-                          LCD_APP_FAULT_EIGHT_Y1,
-                          LCD_APP_FAULT_EIGHT_FONT,
-                          LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[1],
-                          LCD_APP_FAULT_EIGHT_X2,
-                          LCD_APP_FAULT_EIGHT_Y2,
-                          LCD_APP_FAULT_EIGHT_FONT,
-                          LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[2],
-                          LCD_APP_FAULT_EIGHT_X3,
-                          LCD_APP_FAULT_EIGHT_Y3,
-                          LCD_APP_FAULT_EIGHT_FONT,
-                          LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[3],
-                          LCD_APP_FAULT_EIGHT_X4,
-                          LCD_APP_FAULT_EIGHT_Y4,
-                          LCD_APP_FAULT_EIGHT_FONT,
-                          LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[4],
-                          LCD_APP_FAULT_EIGHT_X5,
-                          LCD_APP_FAULT_EIGHT_Y5,
-                          LCD_APP_FAULT_EIGHT_FONT,
-                          LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[5],
-                          LCD_APP_FAULT_EIGHT_X6,
-                          LCD_APP_FAULT_EIGHT_Y6,
-                          LCD_APP_FAULT_EIGHT_FONT,
-                          LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[6],
-                          LCD_APP_FAULT_EIGHT_X7,
-                          LCD_APP_FAULT_EIGHT_Y7,
-                          LCD_APP_FAULT_EIGHT_FONT,
-                          LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[7],
-                          LCD_APP_FAULT_EIGHT_X8,
-                          LCD_APP_FAULT_EIGHT_Y8,
-                          LCD_APP_FAULT_EIGHT_FONT,
-                          LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(faults[0], LCD_APP_FAULT_EIGHT_X1, LCD_APP_FAULT_EIGHT_Y1, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(faults[1], LCD_APP_FAULT_EIGHT_X2, LCD_APP_FAULT_EIGHT_Y2, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(faults[2], LCD_APP_FAULT_EIGHT_X3, LCD_APP_FAULT_EIGHT_Y3, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(faults[3], LCD_APP_FAULT_EIGHT_X4, LCD_APP_FAULT_EIGHT_Y4, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(faults[4], LCD_APP_FAULT_EIGHT_X5, LCD_APP_FAULT_EIGHT_Y5, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(faults[5], LCD_APP_FAULT_EIGHT_X6, LCD_APP_FAULT_EIGHT_Y6, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(faults[6], LCD_APP_FAULT_EIGHT_X7, LCD_APP_FAULT_EIGHT_Y7, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(faults[7], LCD_APP_FAULT_EIGHT_X8, LCD_APP_FAULT_EIGHT_Y8, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
     }
 
     LcdDriverRefresh();
@@ -557,11 +427,6 @@ void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor
   PAGE 3 (WARNING PAGE) FUNCTIONS
 --------------------------------------------------------------------------*/
 
-/**
- * @brief Displays a motor faults on the LCD
- *
- * @param fault_indicator An indicator to see who
- */
 void LcdAppDisplayWarnings(LcdAppWarnings* warnings)
 {
     LcdDriverClearBoundingBox(
@@ -569,75 +434,27 @@ void LcdAppDisplayWarnings(LcdAppWarnings* warnings)
 
     uint8_t warning_count = LcdAppCheckWarnings(warnings);
 
-    LcdDriverDrawText(LCD_APP_WARNING_LABEL_CHARS,
-                      LCD_APP_WARNING_LABEL_X,
-                      LCD_APP_WARNING_LABEL_Y,
-                      LCD_APP_WARNING_LABEL_FONT,
-                      LCD_APP_WARNING_SPACING);
+    LcdDriverDrawText(LCD_APP_WARNING_LABEL_CHARS, LCD_APP_WARNING_LABEL_X, LCD_APP_WARNING_LABEL_Y, LCD_APP_WARNING_LABEL_FONT, LCD_APP_WARNING_SPACING);
     for (uint8_t i = 0; i < LCD_APP_WARNING_LABEL_UNDERLINE_X; i++)
     {
         LcdDriverSetPixel(i, LCD_APP_WARNING_LABEL_UNDERLINE_Y, 1);
     }
     if (warning_count <= 3)
     {
-        LcdDriverDrawText(warning_char[0],
-                          LCD_APP_WARNING_FOUR_X1,
-                          LCD_APP_WARNING_FOUR_Y1,
-                          LCD_APP_WARNING_FOUR_FONT,
-                          LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[1],
-                          LCD_APP_WARNING_FOUR_X2,
-                          LCD_APP_WARNING_FOUR_Y2,
-                          LCD_APP_WARNING_FOUR_FONT,
-                          LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[2],
-                          LCD_APP_WARNING_FOUR_X3,
-                          LCD_APP_WARNING_FOUR_Y3,
-                          LCD_APP_WARNING_FOUR_FONT,
-                          LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(warning_char[0], LCD_APP_WARNING_FOUR_X1, LCD_APP_WARNING_FOUR_Y1, LCD_APP_WARNING_FOUR_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(warning_char[1], LCD_APP_WARNING_FOUR_X2, LCD_APP_WARNING_FOUR_Y2, LCD_APP_WARNING_FOUR_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(warning_char[2], LCD_APP_WARNING_FOUR_X3, LCD_APP_WARNING_FOUR_Y3, LCD_APP_WARNING_FOUR_FONT, LCD_APP_WARNING_SPACING);
     }
     else if (warning_count <= 8)
     {
-        LcdDriverDrawText(warning_char[0],
-                          LCD_APP_WARNING_EIGHT_X1,
-                          LCD_APP_WARNING_EIGHT_Y1,
-                          LCD_APP_WARNING_EIGHT_FONT,
-                          LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[1],
-                          LCD_APP_WARNING_EIGHT_X2,
-                          LCD_APP_WARNING_EIGHT_Y2,
-                          LCD_APP_WARNING_EIGHT_FONT,
-                          LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[2],
-                          LCD_APP_WARNING_EIGHT_X3,
-                          LCD_APP_WARNING_EIGHT_Y3,
-                          LCD_APP_WARNING_EIGHT_FONT,
-                          LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[3],
-                          LCD_APP_WARNING_EIGHT_X4,
-                          LCD_APP_WARNING_EIGHT_Y4,
-                          LCD_APP_WARNING_EIGHT_FONT,
-                          LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[4],
-                          LCD_APP_WARNING_EIGHT_X5,
-                          LCD_APP_WARNING_EIGHT_Y5,
-                          LCD_APP_WARNING_EIGHT_FONT,
-                          LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[5],
-                          LCD_APP_WARNING_EIGHT_X6,
-                          LCD_APP_WARNING_EIGHT_Y6,
-                          LCD_APP_WARNING_EIGHT_FONT,
-                          LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[6],
-                          LCD_APP_WARNING_EIGHT_X7,
-                          LCD_APP_WARNING_EIGHT_Y7,
-                          LCD_APP_WARNING_EIGHT_FONT,
-                          LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[7],
-                          LCD_APP_WARNING_EIGHT_X8,
-                          LCD_APP_WARNING_EIGHT_Y8,
-                          LCD_APP_WARNING_EIGHT_FONT,
-                          LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(warning_char[0], LCD_APP_WARNING_EIGHT_X1, LCD_APP_WARNING_EIGHT_Y1, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(warning_char[1], LCD_APP_WARNING_EIGHT_X2, LCD_APP_WARNING_EIGHT_Y2, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(warning_char[2], LCD_APP_WARNING_EIGHT_X3, LCD_APP_WARNING_EIGHT_Y3, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(warning_char[3], LCD_APP_WARNING_EIGHT_X4, LCD_APP_WARNING_EIGHT_Y4, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(warning_char[4], LCD_APP_WARNING_EIGHT_X5, LCD_APP_WARNING_EIGHT_Y5, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(warning_char[5], LCD_APP_WARNING_EIGHT_X6, LCD_APP_WARNING_EIGHT_Y6, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(warning_char[6], LCD_APP_WARNING_EIGHT_X7, LCD_APP_WARNING_EIGHT_Y7, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(warning_char[7], LCD_APP_WARNING_EIGHT_X8, LCD_APP_WARNING_EIGHT_Y8, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
     }
 
     LcdDriverRefresh();
@@ -647,16 +464,8 @@ void LcdAppDisplayWarnings(LcdAppWarnings* warnings)
   PAGE 4 (TEMPERATURE PAGE) FUNCTIONS
 --------------------------------------------------------------------------*/
 
-/**
- * @brief Displays a Temperature on the LCD (0-255)
- *
- * @param temperature A struct containing the temperature and id of the temperature.
- */
 void LcdAppDisplayTemperature(LcdAppTemperature temperature_data)
 {
-
-    // TODO: When assigning with CAN ensure that the name is set too
-
     // Stores a Bounding Box used for changing temp symbol position
     LcdDriverBoundingBox bb = {0};
 
@@ -699,20 +508,14 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data)
         temp_x = LCD_APP_MPPT_D_X;
         temp_y = LCD_APP_MPPT_D_Y;
         temp_shift = LCD_APP_TEMP_MPPT_OFFSET;
-        LcdDriverClearBoundingBox(LCD_APP_TEMP_MPPT_OFFSET,
-                                  LCD_APP_MPPT_D_Y,
-                                  LCD_APP_BATT_MAX_X - 2,
-                                  LCD_DRIVER_BOTTOM_RIGHT_Y);
+        LcdDriverClearBoundingBox(LCD_APP_TEMP_MPPT_OFFSET, LCD_APP_MPPT_D_Y, LCD_APP_BATT_MAX_X - 2, LCD_DRIVER_BOTTOM_RIGHT_Y);
         break;
     case BATT_MAX:
         sprintf(temp_label, "%s", LCD_APP_BATT_MAX_CHARS);
         temp_x = LCD_APP_BATT_MAX_X;
         temp_y = LCD_APP_BATT_MAX_Y;
         temp_shift = LCD_APP_TEMP_BATT_OFFSET;
-        LcdDriverClearBoundingBox(LCD_APP_BATT_MAX_X + LCD_APP_TEMP_BATT_OFFSET,
-                                  0,
-                                  LCD_DRIVER_BOTTOM_RIGHT_X,
-                                  LCD_APP_BATT_MIN_Y);
+        LcdDriverClearBoundingBox(LCD_APP_BATT_MAX_X + LCD_APP_TEMP_BATT_OFFSET, 0, LCD_DRIVER_BOTTOM_RIGHT_X, LCD_APP_BATT_MIN_Y);
         break;
     case BATT_MIN:
         sprintf(temp_label, "%s", LCD_APP_BATT_MIN_CHARS);
@@ -756,35 +559,27 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data)
     if (temperature_data.temperature == NULL)
     { // temperature not read
         sprintf(temp_str, "--");
-        bb = LcdDriverDrawText(
-            temp_str, temp_x + temp_shift, temp_y, LCD_APP_TEMP_FONT, LCD_APP_TEMP_SPACING);
+        bb = LcdDriverDrawText(temp_str, temp_x + temp_shift, temp_y, LCD_APP_TEMP_FONT, LCD_APP_TEMP_SPACING);
     }
     else if (*temperature_data.temperature < 10)
     { // Single digit temperature
         sprintf(temp_str, "%01lu", (unsigned long)*temperature_data.temperature);
-        bb = LcdDriverDrawText(
-            temp_str, temp_x + temp_shift, temp_y, LCD_APP_TEMP_FONT, LCD_APP_TEMP_SPACING);
+        bb = LcdDriverDrawText(temp_str, temp_x + temp_shift, temp_y, LCD_APP_TEMP_FONT, LCD_APP_TEMP_SPACING);
     }
     else if (*temperature_data.temperature < 100)
     { // Double digit temperature
         sprintf(temp_str, "%02lu", (unsigned long)*temperature_data.temperature);
-        bb = LcdDriverDrawText(
-            temp_str, temp_x + temp_shift, temp_y, LCD_APP_TEMP_FONT, LCD_APP_TEMP_SPACING);
+        bb = LcdDriverDrawText(temp_str, temp_x + temp_shift, temp_y, LCD_APP_TEMP_FONT, LCD_APP_TEMP_SPACING);
     }
     else
     { // Triple digit
         sprintf(temp_str, "%03lu", (unsigned long)*temperature_data.temperature);
-        bb = LcdDriverDrawText(
-            temp_str, temp_x + temp_shift, temp_y, LCD_APP_TEMP_FONT, LCD_APP_TEMP_SPACING);
+        bb = LcdDriverDrawText(temp_str, temp_x + temp_shift, temp_y, LCD_APP_TEMP_FONT, LCD_APP_TEMP_SPACING);
     }
 
     // Draws the Degrees Celsius symbol according to the position of the bounding box
-    LcdDriverDrawChar(LCD_APP_TEMP_DEGREES_SYMBOL,
-                      bb.x2 + LCD_APP_TEMP_DEGREES_OFFSET_X,
-                      temp_y - LCD_APP_TEMP_DEGREES_OFFSET_Y,
-                      LCD_APP_TEMP_DEGREES_FONT);
-    LcdDriverDrawChar(
-        LCD_APP_TEMP_UNITS, bb.x2 + LCD_APP_TEMP_UNITS_OFFSET, temp_y, LCD_APP_TEMP_UNITS_FONT);
+    LcdDriverDrawChar(LCD_APP_TEMP_DEGREES_SYMBOL, bb.x2 + LCD_APP_TEMP_DEGREES_OFFSET_X, temp_y - LCD_APP_TEMP_DEGREES_OFFSET_Y, LCD_APP_TEMP_DEGREES_FONT);
+    LcdDriverDrawChar(LCD_APP_TEMP_UNITS, bb.x2 + LCD_APP_TEMP_UNITS_OFFSET, temp_y, LCD_APP_TEMP_UNITS_FONT);
 
     LcdDriverRefresh();
 }
@@ -793,12 +588,6 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data)
   PAGE 5 (DEBUG PAGE) FUNCTIONS
 --------------------------------------------------------------------------*/
 
-/**
- * @brief Displays a battery power bar based on pack current and voltage.
- *
- * @param pack_current The battery pack current.
- * @param pack_voltage The battery pack voltage.
- */
 void LcdAppDisplayPowerBar(volatile int16_t* pack_current, volatile uint16_t* pack_voltage)
 {
     /* Clear the drawing area (including extra space for the center line) */
@@ -808,9 +597,6 @@ void LcdAppDisplayPowerBar(volatile int16_t* pack_current, volatile uint16_t* pa
     /* Draw the outline of the power bar */
     LcdDriverDrawRectangle(
         LCD_APP_BAR_LEFT, LCD_APP_BAR_TOP, LCD_APP_BAR_RIGHT, LCD_APP_BAR_BOTTOM, 1);
-
-    // g_diagnostics.cyclic_flags.current_timeout = (pack_current == NULL) ? true : false;
-    // g_diagnostics.cyclic_flags.voltage_timeout = (pack_voltage == NULL) ? true : false;
 
     /* If either of voltage or current equals NULL, we display a cross over the bar*/
     if (pack_current == NULL || pack_voltage == NULL)
@@ -877,12 +663,6 @@ void LcdAppDisplayPowerBar(volatile int16_t* pack_current, volatile uint16_t* pa
     }
 }
 
-/**
- * @brief Displays the speed on the LCD debug page.
- *
- * @param speed The speed value to display.
- * @param units The speed units (LCD_SPEED_UNITS_MPH or LCD_SPEED_UNITS_KPH).
- */
 void LcdAppDisplaySpeedDebugPage(volatile uint32_t* speed, volatile uint8_t units)
 {
     char speed_str[12];
@@ -896,78 +676,41 @@ void LcdAppDisplaySpeedDebugPage(volatile uint32_t* speed, volatile uint8_t unit
     if (speed == NULL)
     { // Stale speed data
         sprintf(speed_str, "XX");
-        old_bb_speed = LcdDriverDrawText(speed_str,
-                                         LCD_APP_DEBUG_SPEED_TWODIGIT_X + 10,
-                                         LCD_APP_DEBUG_SPEED_Y + 10,
-                                         LCD_APP_DEBUG_SPEED_FONT,
-                                         LCD_APP_DEBUG_SPEED_SPACING + 10);
-        // g_diagnostics.cyclic_flags.speed_timeout = true;
+        old_bb_speed = LcdDriverDrawText(speed_str, LCD_APP_DEBUG_SPEED_TWODIGIT_X + 10, LCD_APP_DEBUG_SPEED_Y + 10, LCD_APP_DEBUG_SPEED_FONT, LCD_APP_DEBUG_SPEED_SPACING + 10);
     }
     else if (*speed < 10)
     { // Single digit speed
         sprintf(speed_str, "%01lu", (unsigned long)*speed);
-        old_bb_speed = LcdDriverDrawText(speed_str,
-                                         LCD_APP_DEBUG_SPEED_ONEDIGIT_X,
-                                         LCD_APP_DEBUG_SPEED_Y,
-                                         LCD_APP_DEBUG_SPEED_FONT,
-                                         LCD_APP_DEBUG_SPEED_SPACING);
-        // g_diagnostics.cyclic_flags.speed_timeout = false;
+        old_bb_speed = LcdDriverDrawText(speed_str, LCD_APP_DEBUG_SPEED_ONEDIGIT_X, LCD_APP_DEBUG_SPEED_Y, LCD_APP_DEBUG_SPEED_FONT, LCD_APP_DEBUG_SPEED_SPACING);
     }
     else if (*speed < 100)
     { // Double digit second
         sprintf(speed_str, "%02lu", (unsigned long)*speed);
-        old_bb_speed = LcdDriverDrawText(speed_str,
-                                         LCD_APP_DEBUG_SPEED_TWODIGIT_X,
-                                         LCD_APP_DEBUG_SPEED_Y,
-                                         LCD_APP_DEBUG_SPEED_FONT,
-                                         LCD_APP_DEBUG_SPEED_SPACING);
-        // g_diagnostics.cyclic_flags.speed_timeout = false;
+        old_bb_speed = LcdDriverDrawText(speed_str, LCD_APP_DEBUG_SPEED_TWODIGIT_X, LCD_APP_DEBUG_SPEED_Y, LCD_APP_DEBUG_SPEED_FONT, LCD_APP_DEBUG_SPEED_SPACING);
     }
     else
     {
         sprintf(speed_str, "%03lu", (unsigned long)*speed);
-        old_bb_speed = LcdDriverDrawText(speed_str,
-                                         LCD_APP_DEBUG_SPEED_THREEDIGIT_X,
-                                         LCD_APP_DEBUG_SPEED_Y,
-                                         LCD_APP_DEBUG_SPEED_FONT,
-                                         LCD_APP_DEBUG_SPEED_SPACING);
-        // g_diagnostics.cyclic_flags.speed_timeout = false;
+        old_bb_speed = LcdDriverDrawText(speed_str, LCD_APP_DEBUG_SPEED_THREEDIGIT_X, LCD_APP_DEBUG_SPEED_Y, LCD_APP_DEBUG_SPEED_FONT, LCD_APP_DEBUG_SPEED_SPACING);
     }
 
     /* Draw the speed units */
     switch (units)
     {
     case LCD_APP_KPH:
-        LcdDriverDrawText("kph",
-                          LCD_APP_DEBUG_SPEED_X + LCD_APP_DEBUG_SPEED_UNIT_KPH_X,
-                          LCD_APP_DEBUG_SPEED_UNIT_Y,
-                          LCD_APP_DEBUG_SPEED_UNITS_FONT,
-                          LCD_APP_DEBUG_SPEED_UNITS_SPACING);
+        LcdDriverDrawText("kph", LCD_APP_DEBUG_SPEED_X + LCD_APP_DEBUG_SPEED_UNIT_KPH_X, LCD_APP_DEBUG_SPEED_UNIT_Y, LCD_APP_DEBUG_SPEED_UNITS_FONT, LCD_APP_DEBUG_SPEED_UNITS_SPACING);
         break;
     case LCD_APP_MPH:
-        LcdDriverDrawText("mph",
-                          LCD_APP_DEBUG_SPEED_X + LCD_APP_DEBUG_SPEED_UNIT_MPH_X,
-                          LCD_APP_DEBUG_SPEED_UNIT_Y,
-                          LCD_APP_DEBUG_SPEED_UNITS_FONT,
-                          LCD_APP_DEBUG_SPEED_UNITS_SPACING);
+        LcdDriverDrawText("mph", LCD_APP_DEBUG_SPEED_X + LCD_APP_DEBUG_SPEED_UNIT_MPH_X, LCD_APP_DEBUG_SPEED_UNIT_Y, LCD_APP_DEBUG_SPEED_UNITS_FONT, LCD_APP_DEBUG_SPEED_UNITS_SPACING);
         break;
     default:
-        LcdDriverDrawText("xxx",
-                          LCD_APP_DEBUG_SPEED_X + LCD_APP_DEBUG_SPEED_UNIT_MPH_X,
-                          LCD_APP_DEBUG_SPEED_UNIT_Y,
-                          LCD_APP_DEBUG_SPEED_UNITS_FONT,
-                          LCD_APP_DEBUG_SPEED_UNITS_SPACING);
+        LcdDriverDrawText("xxx", LCD_APP_DEBUG_SPEED_X + LCD_APP_DEBUG_SPEED_UNIT_MPH_X, LCD_APP_DEBUG_SPEED_UNIT_Y, LCD_APP_DEBUG_SPEED_UNITS_FONT, LCD_APP_DEBUG_SPEED_UNITS_SPACING);
         break;
     }
 
     LcdDriverRefresh();
 }
 
-/**
- * @brief Displays the state of charge (SOC) on the LCD debug page.
- *
- * @param soc The state of charge (in percent).
- */
 void LcdAppDisplaySocDebugPage(volatile uint32_t* soc)
 {
     char soc_str[12];
@@ -978,57 +721,29 @@ void LcdAppDisplaySocDebugPage(volatile uint32_t* soc)
     if (soc == NULL)
     {
         sprintf(soc_str, "--");
-        old_bb_soc = LcdDriverDrawText(soc_str,
-                                       LCD_APP_DEBUG_SOC_TWODIGIT_X,
-                                       LCD_APP_SOC_Y,
-                                       LCD_APP_DEBUG_SOC_FONT,
-                                       LCD_APP_DEBUG_SOC_SPACING);
-        // g_diagnostics.cyclic_flags.soc_timeout = true;
+        old_bb_soc = LcdDriverDrawText(soc_str, LCD_APP_DEBUG_SOC_TWODIGIT_X, LCD_APP_SOC_Y, LCD_APP_DEBUG_SOC_FONT, LCD_APP_DEBUG_SOC_SPACING);
     }
     else if (*soc < 10)
     {
         sprintf(soc_str, "%01lu", (unsigned long)*soc);
-        old_bb_soc = LcdDriverDrawText(soc_str,
-                                       LCD_APP_DEBUG_SOC_ONEDIGIT_X,
-                                       LCD_APP_DEBUG_SOC_Y,
-                                       LCD_APP_DEBUG_SOC_FONT,
-                                       LCD_APP_DEBUG_SOC_SPACING);
-        // g_diagnostics.cyclic_flags.soc_timeout = false;
+        old_bb_soc = LcdDriverDrawText(soc_str, LCD_APP_DEBUG_SOC_ONEDIGIT_X, LCD_APP_DEBUG_SOC_Y, LCD_APP_DEBUG_SOC_FONT, LCD_APP_DEBUG_SOC_SPACING);
     }
     else if (*soc < 100)
     {
         sprintf(soc_str, "%02lu", (unsigned long)*soc);
-        old_bb_soc = LcdDriverDrawText(soc_str,
-                                       LCD_APP_DEBUG_SOC_TWODIGIT_X,
-                                       LCD_APP_DEBUG_SOC_Y,
-                                       LCD_APP_DEBUG_SOC_FONT,
-                                       LCD_APP_DEBUG_SOC_SPACING);
-        // g_diagnostics.cyclic_flags.soc_timeout = false;
+        old_bb_soc = LcdDriverDrawText(soc_str, LCD_APP_DEBUG_SOC_TWODIGIT_X, LCD_APP_DEBUG_SOC_Y, LCD_APP_DEBUG_SOC_FONT, LCD_APP_DEBUG_SOC_SPACING);
     }
     else
     {
         sprintf(soc_str, "%03lu", (unsigned long)*soc);
-        old_bb_soc = LcdDriverDrawText(soc_str,
-                                       LCD_APP_DEBUG_SOC_THREEDIGIT_X,
-                                       LCD_APP_DEBUG_SOC_Y,
-                                       LCD_APP_DEBUG_SOC_FONT,
-                                       LCD_APP_DEBUG_SOC_SPACING);
-        // g_diagnostics.cyclic_flags.soc_timeout = false;
+        old_bb_soc = LcdDriverDrawText(soc_str, LCD_APP_DEBUG_SOC_THREEDIGIT_X, LCD_APP_DEBUG_SOC_Y, LCD_APP_DEBUG_SOC_FONT, LCD_APP_DEBUG_SOC_SPACING);
     }
 
-    LcdDriverDrawChar(LCD_APP_SOC_UNITS,
-                      LCD_APP_DEBUG_SOC_UNITS_X,
-                      LCD_APP_DEBUG_SOC_Y,
-                      LCD_APP_DEBUG_SOC_UNITS_FONT);
+    LcdDriverDrawChar(LCD_APP_SOC_UNITS, LCD_APP_DEBUG_SOC_UNITS_X, LCD_APP_DEBUG_SOC_Y, LCD_APP_DEBUG_SOC_UNITS_FONT);
 
     LcdDriverRefresh();
 }
 
-/**
- * @brief Displays the drive state on the LCD debug page.
- *
- * @param state The drive state (e.g., FORWARD_STATE, PARK_STATE, REVERSE_STATE).
- */
 void LcdAppDisplayDriveStateDebugPage(volatile DriveStateStates* state)
 {
     char state_str[2] = {LCD_APP_ERROR_SYMBOL, '\0'}; // Default to error symbol.
@@ -1036,7 +751,6 @@ void LcdAppDisplayDriveStateDebugPage(volatile DriveStateStates* state)
     if (state == NULL)
     { // Stale data for drive state
         sprintf(state_str, "-");
-        // g_diagnostics.cyclic_flags.drive_state_timeout = true;
     }
     else
     {
@@ -1055,25 +769,15 @@ void LcdAppDisplayDriveStateDebugPage(volatile DriveStateStates* state)
             state_str[0] = LCD_APP_ERROR_SYMBOL;
             break;
         }
-        // g_diagnostics.cyclic_flags.drive_state_timeout = false;
     }
 
     LcdDriverClearBoundingBox(
         LCD_APP_DEBUG_STATE_X, LCD_APP_DEBUG_STATE_Y, 20, LCD_DRIVER_BOTTOM_RIGHT_Y);
-    old_bb_drive_state = LcdDriverDrawText(state_str,
-                                           LCD_APP_DEBUG_STATE_X,
-                                           LCD_APP_DEBUG_STATE_Y,
-                                           LCD_APP_DEBUG_STATE_FONT,
-                                           LCD_APP_DEBUG_STATE_SPACING);
+    old_bb_drive_state = LcdDriverDrawText(state_str, LCD_APP_DEBUG_STATE_X, LCD_APP_DEBUG_STATE_Y, LCD_APP_DEBUG_STATE_FONT, LCD_APP_DEBUG_STATE_SPACING);
 
     LcdDriverRefresh();
 }
 
-/**
- * @brief Initializes the LCD App and SPI interface.
- *
- * @param hspi Pointer to the SPI handle.
- */
 void LcdAppInit(SPI_HandleTypeDef* hspi)
 {
     // Initialize the temperature labels for each temperature struct in the array
@@ -1090,76 +794,9 @@ void LcdAppInit(SPI_HandleTypeDef* hspi)
     LcdDriverInit(hspi);
 }
 
-/**
- * @brief Changes the screen
- */
 void LcdAppChangeScreen() { LcdDriverChangeScreen(); }
 
-/*
- * @brief CAN rx function which parses message data needed by the LCD
- *
- * @param msg_id 	The id of the CAN message
- * @param data  	The data of the CAN message
- */
-void LcdAppCanRxHandle(uint32_t msg_id, uint8_t* data)
-{
-    // if (msg_id == CAN_ID_PACK_CURRENT)
-    // {
-    //     int16_t tmp_pack_current = (data[1] << 8) | (data[0]);
-    //     tmp_pack_current /= 65.535;
-    //     set_cyclic_pack_current(tmp_pack_current);
-
-    //     g_pack_current_soc = tmp_pack_current;
-    // }
-
-    // if (msg_id == CAN_ID_PACK_VOLTAGE)
-    // {
-    //     uint16_t tmp_pack_voltage = (data[1] << 8) | (data[0]);
-    //     tmp_pack_voltage /= PACK_VOLTAGE_DIVISOR;
-    //     set_cyclic_pack_voltage(tmp_pack_voltage);
-
-    //     g_total_pack_voltage_soc = tmp_pack_voltage;
-
-    //     osEventFlagsSet(calculate_soc_flagHandle, SOC_CALCULATE_ON);
-    // }
-
-    // if (msg_id == STR_CAN_MSG_ID)
-    // {
-    //     uint8_t next_page = (data[0] & 1);
-
-    //     if (next_page)
-    //     {
-    //         if (g_LCD_page < LCD_APP_MAXPAGES)
-    //         {
-    //             g_LCD_page_change = 1;
-    //             g_LCD_page++;
-    //         }
-    //         else
-    //         {
-    //             g_LCD_page_change = 1;
-    //             g_LCD_page = 1;
-    //         }
-    //     }
-    //     //    	else if(previous_page){
-    //     //    		if(g_LCD_page > 1){
-    //     //    			g_LCD_page_change = 1;
-    //     //    			g_LCD_page--;
-    //     //			}
-    //     //    	}
-    // }
-
-    // if (msg_id == CAN_ID_MDI_TEMP)
-    // {
-    //     uint8_t temperature = data[0];
-    //     set_cyclic_temperature(temperature);
-    // }
-}
-
-
-/**
- * @brief Handles the screen logic for the LCD App, including page changes and updating displayed data.
- */
- void LcdAppPageController(void)
+void LcdAppPageController(void)
 {
     // Temporary, will add cyclic data when CAN is implemented.
     // TODO: HANDLE WITH CYCLIC DATA
@@ -1190,16 +827,25 @@ void LcdAppCanRxHandle(uint32_t msg_id, uint8_t* data)
     g_lcd_warnings.no_ecu_message = false;
     g_lcd_warnings.pack_overcharge = false;
     g_lcd_warnings.pack_overdischarge = false;
+
+    // Constantly get drive data
+    g_lcd_data.speed = CyclicDataGetSpeed();
+    g_lcd_data.drive_state = CyclicDataGetDriveState();
+    g_lcd_data.soc = CyclicDataGetSoc();
+    g_lcd_data.pack_current = CyclicDataGetPackCurrent();
+    g_lcd_data.pack_voltage = CyclicDataGetPackVoltage();
+
+    // Changes pages if fault flag is set
+    if(LcdAppCheckFaults(&g_lcd_batt_faults, &g_lcd_motor_faults))
+        g_lcd_page = FAULTS_PAGE;
+
     // Handles what is displayed
     switch (g_lcd_page)
     {
     case DRIVE_PAGE:
-        g_lcd_data.speed = CyclicDataGetSpeed();
-        g_lcd_data.drive_state = CyclicDataGetDriveState();
-        g_lcd_data.soc = CyclicDataGetSoc();
-
         LcdAppDisplaySpeedDrivePage(g_lcd_data.speed, g_lcd_data.speed_units);
         LcdAppDisplaySocDrivePage((volatile uint32_t*)g_lcd_data.soc);
+        LcdAppDisplayDriveModeDrivePage(g_lcd_data.drive_mode);
         LcdAppDisplayDriveStateDrivePage((volatile DriveStateStates*) g_lcd_data.drive_state);
         LcdAppDisplayFaultIndicator(&g_lcd_batt_faults, &g_lcd_motor_faults);
         LcdAppDisplayWarningIndicator(&g_lcd_warnings);
@@ -1230,12 +876,6 @@ void LcdAppCanRxHandle(uint32_t msg_id, uint8_t* data)
         LcdAppDisplayTemperature(g_lcd_temperatures[MOTOR_THERM]);
         break;
     case DEBUG_PAGE:
-        g_lcd_data.speed = CyclicDataGetSpeed();
-        g_lcd_data.drive_state = CyclicDataGetDriveState();
-        g_lcd_data.soc = CyclicDataGetSoc();
-        g_lcd_data.pack_current = CyclicDataGetPackCurrent();
-        g_lcd_data.pack_voltage = CyclicDataGetPackVoltage();
-
         LcdAppDisplaySpeedDebugPage(g_lcd_data.speed, g_lcd_data.speed_units);
         LcdAppDisplayDriveStateDebugPage((volatile DriveStateStates*) g_lcd_data.drive_state);
         LcdAppDisplaySocDebugPage((volatile uint32_t*)g_lcd_data.soc);

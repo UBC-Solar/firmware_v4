@@ -1,3 +1,15 @@
+/**
+ * @file    lcd_app.h
+ * @brief   LCD application header file for UBC Solar DRD board
+ *
+ * This header declares the data structures, constants, and function prototypes for the LCD application. 
+ * The module implements a controller to handle what is displayed on each page and handles the page transitions.
+ *
+ * @author  Gregory Bian
+ * @date    Feb 4 2026
+ */
+
+
 #ifndef __LCD_APP_H
 #define __LCD_APP_H
 
@@ -314,20 +326,6 @@ typedef struct
     volatile bool reset_from_watchdog;
 } LcdAppBattFaults;
 
-typedef enum {
-    BATTERY_FAULT = 0x00,
-    SUPP_LO = 0x01,
-    VOLTAGE_HIGH = 0x02,
-    VOLTAGE_LOW = 0x03,
-    SLAVE_BOARD_COMM_FAULT = 0x04,
-    OVERVOLT_FAULT = 0x05,
-    UNDERVOLT_FAULT = 0x06,
-    OVERTEMP_FAULT = 0x07,
-    CHARGE_OVERCURRENT_FAULT = 0x08,
-    DISCHARGE_OVERCURRENT_FAULT = 0x09,
-    RESET_FROM_WATCHDOG = 0x0A
-} LcdAppBattFaultIndex;
-
 typedef struct
 {
     volatile bool motor_system_error;
@@ -338,16 +336,6 @@ typedef struct
     volatile bool throttle_adc_outofrange;
     volatile bool throttle_adc_mismatch;
 } LcdAppMotorFaults;
-
-typedef enum {
-    MOTOR_SYSTEM_ERROR = 0x00,
-    OVERCURRENT_FAULT = 0x01,
-    OVERVOLTAGE_FAULT = 0x02,
-    FET_THERMISTOR_ERROR = 0x03,
-    MOTOR_COMM_FAULT = 0x04,
-    THROTTLE_ADC_OUT_OF_RANGE = 0x05,
-    THROTTLE_ADC_MISMATCH = 0x06
-} LcdAppMotorFaultIndex;
 
 typedef struct
 {
@@ -360,23 +348,13 @@ typedef struct
     volatile bool pack_overcharge;
 } LcdAppWarnings;
 
-typedef enum {
-    LOW_VOLT_WARNING = 0x00,
-    HIGH_VOLT_WARNING = 0x01,
-    LOW_TEMP_WARNING = 0x02,
-    HIGH_TEMP_WARNING = 0x03,
-    NO_ECU_MSG_WARNING = 0x04,
-    PACK_OVERDISCHARGE_WARNING = 0x05,
-    PACK_OVERCHARGE_WARNING = 0x06
-} LcdAppWarningIndex;
-
 typedef enum
 {
-    DRIVE_PAGE = 0x00,
-    FAULTS_PAGE = 0x01,
-    WARNINGS_PAGE = 0x02,
-    TEMPERATURE_PAGE = 0x03,
-    DEBUG_PAGE = 0x04
+    DRIVE_PAGE = 0x01,
+    FAULTS_PAGE = 0x02,
+    WARNINGS_PAGE = 0x03,
+    TEMPERATURE_PAGE = 0x04,
+    DEBUG_PAGE = 0x05
 } LcdAppScreens;
 
 /*	User Variables	*/

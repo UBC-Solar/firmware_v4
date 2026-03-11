@@ -49,22 +49,87 @@ typedef struct {
 } DiagnosticDRD;
 
 
-/*	Function Prototypes	*/
+/*	DIAGNOSTIC TX FUNCTION PROTOTYPES	*/
+
+/**
+ * @brief  Sends the time since bootup via CAN
+ * @retval None
+ */
 void DiagnosticTimeSinceBootup();
+
+/**
+ * @brief  Transmits DRD Diagnostic Messages over CAN
+ * @param from_ISR Indicates if the function is called from an ISR context
+ */
 void DiagnosticTransmit(bool from_ISR);
 
+
+/* DIAGNOSTIC SETTERS FUNCTION PROTOTYPES */
+
+/*
+ * @brief Sets the raw ADC1 value
+ * @param raw_adc1 The raw ADC1 value
+ */
 void DiagnosticSetRawADC1(uint16_t raw_adc1);
+/**
+ * @brief Sets the raw ADC2 value
+ * @param raw_adc2 The raw ADC2 value
+ */
 void DiagnosticSetRawADC2(uint16_t raw_adc2);
+/**
+ * @brief Sets the mechanical brake pressed status
+ * @param pressed The mechanical brake pressed status
+ */
 void DiagnosticSetMechBrakePressed(bool pressed);
+/**
+ * @brief Sets the regen enabled status
+ * @param enabled The regen enabled status
+ */
 void DiagnosticSetRegenEnabled(bool enabled);
-void DiagnosticSetThrottleADCOutOfRange(bool out_of_range);
+/**
+ * @brief Sets the throttle ADC out of range status
+ * @param out_of_range The throttle ADC out of range status
+ */
 void DiagnosticSetThrottleADCMismatch(bool mismatch);
+/**
+ * @brief Sets the throttle ADC mismatch status
+ * @param mismatch The throttle ADC mismatch status
+ */
+ void DiagnosticSetThrottleADCOutOfRange(bool out_of_range);
+/**
+ * @brief Sets the watchdog reset status
+ * @param reset The watchdog reset status
+ */
 void DiagnosticSetWatchdogReset(bool reset);
+/**
+ * @brief Sets the motor communication fault status
+ * @param fault The motor communication fault status
+ */
 void DiagnosticSetMotorCommFault(bool fault);   
+/**
+ * @brief Sets the speed timeout status
+ * @param timeout The speed timeout status
+ */
 void DiagnosticSetSpeedTimeout(bool timeout);
+/**
+ * @brief Sets the drive state timeout status
+ * @param timeout The drive state timeout status
+ */
 void DiagnosticSetDriveStateTimeout(bool timeout);
+/**
+ * @brief Sets the SOC timeout status
+ * @param timeout The SOC timeout status
+ */
 void DiagnosticSetSocTimeout(bool timeout);
+/**
+ * @brief Sets the voltage timeout status
+ * @param timeout The voltage timeout status
+ */
 void DiagnosticSetVoltageTimeout(bool timeout);
+/**
+ * @brief Sets the current timeout status
+ * @param timeout The current timeout status
+ */
 void DiagnosticSetCurrentTimeout(bool timeout);
 
 #endif /* INC_DIAGNOSTIC_H_ */

@@ -7,9 +7,18 @@
 #define __CAN_APP_H__
 
 /* INCLUDES */
+#include <stdbool.h>
 #include <stdint.h>
 
+#include "CAN_comms.h"
+#include "drive_state.h"
+
 /* FUNCTION PROTOTYPES */
+/**
+ * @brief Initializes CAN communication tasks.
+ */
+void CanTasksInit(void);
+
 /**
  * @brief Routes a received CAN message to the corresponding DRD handler.
  * @param msg_id Received CAN message ID.
@@ -34,8 +43,15 @@ void LcdAppCanRxHandler(uint32_t msg_id, uint8_t* data);
 void FaultHandlerRxHandler(uint32_t msg_id, uint8_t* data);
 
 /**
- * @brief Initializes CAN communication tasks.
+ * @brief Packs and sends the motor command, optionally from an interrupt service routine.
+ * @param motor_command Pointer to the motor control command.
+ * @param isr True if called from ISR, false otherwise.
  */
-void CanTasksInit(void);
+void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr);
+
+/**
+ * @brief Queries and processes data related to motor control.
+ */
+void MotorControlQueryData(void);
 
 #endif /* __CAN_APP_H__ */

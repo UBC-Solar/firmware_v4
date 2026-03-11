@@ -31,6 +31,7 @@ void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data);
  */
 void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg);
 
+/* CAN INIT */
 void CanTasksInit(void)
 {
     CAN_comms_config_t CAN_comms_config_drd = {0};
@@ -44,6 +45,47 @@ void CanTasksInit(void)
     CAN_comms_init(&CAN_comms_config_drd);
 }
 
+/* CAN TX */
+void MotorControlQueryData(void)
+{
+    CAN_comms_Tx_msg_t msg;
+
+    msg.header = mdu_request_header;
+    msg.data[0] = MDU_REQUEST_FRAME;
+    CAN_comms_Add_Tx_message(&msg);
+}
+
+void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr)
+{
+    CAN_comms_Tx_msg_t msg;
+    msg.header = drive_control_header;
+
+    uint8_t data[8] = {0};
+
+    uint8_t accel_first_byte = (motor_command->accel_DAC_value & 0xFF);
+    uint8_t accel_second_byte = ((motor_command->accel_DAC_value >> 8) & 0xFF);
+    uint8_t regen_first_byte = (motor_command->regen_DAC_value & 0xFF);
+    uint8_t regen_second_byte = ((motor_command->regen_DAC_value >> 8) & 0xFF);
+
+    data[0] = accel_first_byte;
+    data[1] = accel_second_byte;
+    data[2] = regen_first_byte;
+    data[3] = regen_second_byte;
+    data[4] = motor_command->motor_control_flags;
+
+    memcpy(msg.data, data, CAN_DATA_SIZE);
+
+    if (isr)
+    {
+        CAN_comms_Add_Tx_messageISR(&msg);
+    }
+    else
+    {
+        CAN_comms_Add_Tx_message(&msg);
+    }
+}
+
+/* CAN RX */
 void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 {
 	uint32_t CAN_ID = 0;
@@ -69,7 +111,6 @@ void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
     FaultHandlerRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
 }
 
-/* CAN RX */
 void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data)
 {
     switch (msg_id)

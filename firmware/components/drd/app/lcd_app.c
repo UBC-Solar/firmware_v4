@@ -14,10 +14,8 @@
 #include "lcd_app.h"
 #include <string.h>
 #include "cyclic_data_handler.h"
-#include "diagnostic.h"
 #include "lcd_driver.h"
 #include <stdio.h>
-#include "can_driver.h"
 // #include "soc.h"
 
 /*--------------------------------------------------------------------------
@@ -469,16 +467,8 @@ void LcdAppDisplayWarnings(LcdAppWarnings* warnings)
   PAGE 4 (TEMPERATURE PAGE) FUNCTIONS
 --------------------------------------------------------------------------*/
 
-/**
- * @brief Displays a Temperature on the LCD (0-255)
- *
- * @param temperature A struct containing the temperature and id of the temperature.
- */
 void LcdAppDisplayTemperature(LcdAppTemperature temperature_data)
 {
-
-    // TODO: When assigning with CAN ensure that the name is set too
-
     // Stores a Bounding Box used for changing temp symbol position
     LcdDriverBoundingBox bb = {0};
 
@@ -592,12 +582,6 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data)
   PAGE 5 (DEBUG PAGE) FUNCTIONS
 --------------------------------------------------------------------------*/
 
-/**
- * @brief Displays a battery power bar based on pack current and voltage.
- *
- * @param pack_current The battery pack current.
- * @param pack_voltage The battery pack voltage.
- */
 void LcdAppDisplayPowerBar(volatile int16_t* pack_current, volatile uint16_t* pack_voltage)
 {
     /* Clear the drawing area (including extra space for the center line) */
@@ -673,12 +657,6 @@ void LcdAppDisplayPowerBar(volatile int16_t* pack_current, volatile uint16_t* pa
     }
 }
 
-/**
- * @brief Displays the speed on the LCD debug page.
- *
- * @param speed The speed value to display.
- * @param units The speed units (LCD_SPEED_UNITS_MPH or LCD_SPEED_UNITS_KPH).
- */
 void LcdAppDisplaySpeedDebugPage(volatile uint32_t* speed, volatile uint8_t units)
 {
     char speed_str[12];
@@ -724,11 +702,6 @@ void LcdAppDisplaySpeedDebugPage(volatile uint32_t* speed, volatile uint8_t unit
     LcdDriverRefresh();
 }
 
-/**
- * @brief Displays the state of charge (SOC) on the LCD debug page.
- *
- * @param soc The state of charge (in percent).
- */
 void LcdAppDisplaySocDebugPage(volatile uint32_t* soc)
 {
     char soc_str[12];
@@ -762,11 +735,6 @@ void LcdAppDisplaySocDebugPage(volatile uint32_t* soc)
     LcdDriverRefresh();
 }
 
-/**
- * @brief Displays the drive state on the LCD debug page.
- *
- * @param state The drive state (e.g., FORWARD_STATE, PARK_STATE, REVERSE_STATE).
- */
 void LcdAppDisplayDriveStateDebugPage(volatile DriveStateStates* state)
 {
     char state_str[2] = {LCD_APP_ERROR_SYMBOL, '\0'}; // Default to error symbol.

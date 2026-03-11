@@ -21,10 +21,6 @@ void IwdgAppRefresh(IWDG_HandleTypeDef* hiwdg2)
 	#endif // DEBUG
 }
 
-/**
- * @brief Checks if the last reset was caused by the independent watchdog and handles it.
- * If a watchdog reset is detected, it sets a diagnostic flag and performs a series of refreshes to prevent an infinite reset loop.
- */ 
 void IwdgAppResetHandle(){
     if (IwdgDriverIsReset())
 	{

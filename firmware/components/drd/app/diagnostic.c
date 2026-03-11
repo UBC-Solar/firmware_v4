@@ -22,7 +22,6 @@
 static uint32_t g_time_since_bootup = 0;
 DiagnosticDRD g_diagnostics = {0};
 
-
 /***************** Diagnostic Setters *****************/
 
 void DiagnosticSetRawADC1(uint16_t raw_adc1){
@@ -79,10 +78,7 @@ void DiagnosticSetCurrentTimeout(bool timeout){
     g_diagnostics.cyclic_flags.current_timeout = timeout;
 }
 
-/**
- * @brief  Sends the time since bootup via CAN
- * @retval None
- */
+
 void DiagnosticTimeSinceBootup()
 {
     g_time_since_bootup++;
@@ -96,16 +92,11 @@ void DiagnosticTimeSinceBootup()
     CAN_comms_Add_Tx_message(&time_since_bootup_can_tx);
 }
 
-/*	@brief Transmits DRD Diagnostic Messages over CAN
- *
- */
 void DiagnosticTransmit(bool from_ISR)
 {
     CAN_comms_Tx_msg_t msg;
     msg.header = drd_diagnostic_header;
 
-
-    // TODO: Update the data bytes with the appropriate diagnostic data
     msg.data[0] = (g_diagnostics.raw_adc1 & 0xFF);
     msg.data[1] = (g_diagnostics.raw_adc1 >> 8);
     msg.data[2] = (g_diagnostics.raw_adc2 & 0xFF);

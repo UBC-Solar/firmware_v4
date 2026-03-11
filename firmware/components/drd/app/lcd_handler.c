@@ -23,6 +23,7 @@ static LcdAppTemperature g_lcd_temperatures[8] = {0};
 uint8_t g_lcd_page = 1;
 uint8_t g_lcd_page_change = 0;
 uint8_t g_lcd_fault_switch = 0;
+static bool prev_fault = false;
 
 /* STATIC FUNCTION DECLARATION*/
 static void LcdHandlerGetData(void);
@@ -56,10 +57,16 @@ void LcdHandlerPageController(void)
         g_lcd_page_change = 0;
     }
 
-    // Changes pages if fault flag is set
-    if(LcdAppCheckFaults(&g_lcd_batt_faults, &g_lcd_motor_faults)) {
+    // Fault flag
+    bool check_fault = LcdAppCheckFaults(&g_lcd_batt_faults, &g_lcd_motor_faults);
+
+    // Track prev fault to trigger on rising edge of fault detection
+    if(check_fault && !prev_fault) {
+        LcdHandlerChangeScreen();
         g_lcd_page = FAULTS_PAGE;
     }
+
+    prev_fault = check_fault;
 
     // Handles what is displayed
     switch (g_lcd_page)

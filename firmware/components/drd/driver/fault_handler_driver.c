@@ -13,9 +13,9 @@
 
 void FaultHandlerDriverFlashDebug(){
     HAL_GPIO_WritePin(FLT_MCU_GPIO_Port, FLT_MCU_Pin, GPIO_PIN_SET);
-    HAL_Delay(1000);
+    HAL_Delay(200);
     HAL_GPIO_WritePin(FLT_MCU_GPIO_Port, FLT_MCU_Pin, GPIO_PIN_RESET);
-    HAL_Delay(1000);
+    HAL_Delay(200);
 }
 
 void FaultHandlerDriverEStop(bool estop) {

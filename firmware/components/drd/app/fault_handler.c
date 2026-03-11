@@ -54,13 +54,13 @@ void FaultHandlerParseBatteryFaults(uint8_t* can_rx_data){
     LcdHandlerSetBatteryChargeOvercurrentFault(charge_overcurrent);
     LcdHandlerSetBatteryDischargeOvercurrentFault(discharge_overcurrent);
 
-    bool any_battery_fault = 
+    g_battery_fault = 
         charge_overcurrent || discharge_overcurrent || 
         GETBIT(can_rx_data[0], 0) || GETBIT(can_rx_data[0], 1) || 
         GETBIT(can_rx_data[0], 2) || GETBIT(can_rx_data[0], 3) || 
         GETBIT(can_rx_data[0], 4);
     // General battery fault flag is set if any of the specific battery faults are set
-    LcdHandlerSetBatteryFault(any_battery_fault);
+    LcdHandlerSetBatteryFault(g_battery_fault);
 }
 void FaultHandlerParseECUFaults(uint8_t* can_rx_data){
     // MSB of pack current is the sign bit, so we save it to determine if the overcurrent fault is a charge or discharge fault in the battery fault handler

@@ -22,6 +22,7 @@ static LcdAppWarnings g_lcd_warnings = {0};
 static LcdAppTemperature g_lcd_temperatures[8] = {0};
 uint8_t g_lcd_page = 1;
 uint8_t g_lcd_page_change = 0;
+uint8_t g_lcd_fault_switch = 0;
 
 /* STATIC FUNCTION DECLARATION*/
 static void LcdHandlerGetData(void);

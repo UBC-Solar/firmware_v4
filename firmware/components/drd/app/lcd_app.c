@@ -171,13 +171,13 @@ void LcdAppDisplayDriveStateDrivePage(volatile DriveStateStates* state)
     {
         switch (*state)
         {
-        case LCD_APP_FORWARD_STATE:
+        case FORWARD:
             state_str[0] = LCD_APP_FORWARD_SYMBOL;
             break;
-        case LCD_APP_PARK_STATE:
+        case PARK:
             state_str[0] = LCD_APP_PARK_SYMBOL;
             break;
-        case LCD_APP_REVERSE_STATE:
+        case REVERSE:
             state_str[0] = LCD_APP_REVERSE_SYMBOL;
             break;
         default:
@@ -779,13 +779,13 @@ void LcdAppDisplayDriveStateDebugPage(volatile DriveStateStates* state)
     {
         switch (*state)
         {
-        case LCD_APP_FORWARD_STATE:
+        case FORWARD:
             state_str[0] = LCD_APP_FORWARD_SYMBOL;
             break;
-        case LCD_APP_PARK_STATE:
+        case PARK:
             state_str[0] = LCD_APP_PARK_SYMBOL;
             break;
-        case LCD_APP_REVERSE_STATE:
+        case REVERSE:
             state_str[0] = LCD_APP_REVERSE_SYMBOL;
             break;
         default:

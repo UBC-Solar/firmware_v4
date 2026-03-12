@@ -15,6 +15,7 @@
 #include "CAN_comms.h"
 #include "cyclic_data_handler.h"
 #include "fault_handler.h"
+#include <string.h>
 
 /* FUNCTION PROTOTYPES */
 /**
@@ -105,10 +106,9 @@ void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 	{
 		CAN_ID = CAN_comms_Rx_msg->header.StdId; // Get CAN ID
 	}
-
+    FaultHandlerRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
     VehicleStateCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
     LcdAppCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
-    FaultHandlerRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
 }
 
 void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data)
@@ -138,6 +138,7 @@ void LcdAppCanRxHandler(uint32_t msg_id, uint8_t* data)
         tmp_pack_current /= 65.535;
         CyclicDataSetPackCurrent(tmp_pack_current);
         g_pack_current_soc = tmp_pack_current;
+        break;
     } 
     case CAN_ID_PACK_VOLTAGE: { // Update pack voltage and trigger SOC calculation
         uint16_t tmp_pack_voltage = (data[1] << 8) | (data[0]);
@@ -146,22 +147,12 @@ void LcdAppCanRxHandler(uint32_t msg_id, uint8_t* data)
         g_total_pack_voltage_soc = tmp_pack_voltage;
 
         osEventFlagsSet(calculate_soc_flagHandle, SOC_CALCULATE_ON);
+        break;
     }
     case STR_CAN_MSG_ID: { // Handle page changes for the LCD
-        uint8_t next_page = ((data[0] >> 2) & 0x1);
-        if (next_page)
-        {
-            if (g_lcd_page < LCD_HANDLER_MAXPAGES)
-            {
-                g_lcd_page_change = 1;
-                g_lcd_page++;
-            }
-            else
-            {
-                g_lcd_page_change = 1;
-                g_lcd_page = 1;
-            }
-        }
+        bool next_page = ((data[0] >> 2) & 0x1);
+        LcdHandlerChangePage(next_page);
+        break;
     }
     }
 }

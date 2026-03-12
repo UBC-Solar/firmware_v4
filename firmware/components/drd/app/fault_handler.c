@@ -12,6 +12,7 @@
  */
 
 #include "fault_handler.h"
+#include "debug_io.h"
 #include "lcd_handler.h"
 #include <stdint.h>
 #include <sys/_intsup.h>
@@ -72,13 +73,13 @@ void FaultHandlerParseECUFaults(uint8_t* can_rx_data){
 void FaultHandlerParsePackVoltageFaults(uint8_t* can_rx_data){
     uint16_t pack_voltage = (can_rx_data[1] << 8) | can_rx_data[0];
     pack_voltage = pack_voltage / PACK_VOLTAGE_DIVISOR;
-    if(pack_voltage > MAX_PACK_VOLTAGE)
+    if(pack_voltage >= MAX_PACK_VOLTAGE)
     {
         LcdHandlerSetBatteryOvervoltFault(true);
         LcdHandlerSetBatteryUndervoltFault(false);
         g_pack_voltage_fault = true;
     }
-    else if(pack_voltage < MIN_PACK_VOLTAGE)
+    else if(pack_voltage <= MIN_PACK_VOLTAGE)
     {
         LcdHandlerSetBatteryOvervoltFault(false);
         LcdHandlerSetBatteryUndervoltFault(true);

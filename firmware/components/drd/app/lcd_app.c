@@ -12,6 +12,7 @@
  */
 
 #include "lcd_app.h"
+#include <stdint.h>
 #include <string.h>
 #include "cyclic_data_handler.h"
 #include "lcd_driver.h"
@@ -30,8 +31,10 @@ static LcdDriverBoundingBox old_bb_soc = {0, 0, 0, 0};
 static LcdDriverBoundingBox old_bb_fault_indicator = {0, 0, 0, 0};
 static LcdDriverBoundingBox old_bb_warning_indicator = {0, 0, 0, 0};
 
-static char faults[8][10] = {0};
-static char warning_char[8][10] = {0};
+static char g_faults[8][10] = {0};
+static char g_warning_char[8][10] = {0};
+static uint8_t g_prev_fault_count = 0;
+static uint8_t g_prev_warning_count = 0;
 
 /*--------------------------------------------------------------------------
   PAGE 1 (DRIVE PAGE) FUNCTIONS
@@ -236,101 +239,105 @@ void LcdAppDisplayWarningIndicator(LcdAppWarnings* warnings)
 
 uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults)
 {
+    // This clears the faults so we parse faults every time
+    memset(g_faults, 0, sizeof(g_faults));  
+
+    // Stores amount of fault
     uint8_t fault_count = 0;
 
     if (batt_faults->battery_fault)
     {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_FLT_CHARS);
+        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_FLT_CHARS);
         fault_count++;
     }
     if(batt_faults->selftest_fault)
     {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_SELFTEST_FLT_CHARS);
+        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_SELFTEST_FLT_CHARS);
         fault_count++;
     }
     if (batt_faults->supp_lo)
     {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_SUPPLO_FLT_CHARS);
+        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_SUPPLO_FLT_CHARS);
         fault_count++;
     }
     if (batt_faults->voltage_high)
     {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_VOLTHIGH_FLT_CHARS);
+        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_VOLTHIGH_FLT_CHARS);
         fault_count++;
     }
     if (batt_faults->voltage_low)
     {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_VOLTLOW_FLT_CHARS);
+        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_VOLTLOW_FLT_CHARS);
         fault_count++;
     }
     if (batt_faults->slave_board_comm_fault)
     {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_SLAVE_COMM_FLT_CHARS);
+        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_SLAVE_COMM_FLT_CHARS);
         fault_count++;
     }
     if (batt_faults->overvolt_fault)
     {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_OVERVOLT_FLT_CHARS);
+        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_OVERVOLT_FLT_CHARS);
         fault_count++;
     }
     if (batt_faults->undervolt_fault)
     {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_UNDERVOLT_FLT_CHARS);
+        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_UNDERVOLT_FLT_CHARS);
         fault_count++;
     }
     if (batt_faults->overtemp_fault)
     {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_OVERTEMP_FLT_CHARS);
+        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_OVERTEMP_FLT_CHARS);
         fault_count++;
     }
     if (batt_faults->charge_overcurrent_fault)
     {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_CHARGE_OC_FLT_CHARS);
+        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_CHARGE_OC_FLT_CHARS);
         fault_count++;
     }
     if (batt_faults->discharge_overcurrent_fault)
     {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_DISCHARGE_OC_FLT_CHARS);
+        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_DISCHARGE_OC_FLT_CHARS);
         fault_count++;
     }
     if (batt_faults->reset_from_watchdog)
     {
-        sprintf(faults[fault_count], "%s", LCD_APP_BATT_RST_FROM_WATCH_FLT_CHARS);
+        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_RST_FROM_WATCH_FLT_CHARS);
         fault_count++;
     }
     if (motor_faults->motor_system_error)
     {
-        sprintf(faults[fault_count], "%s", LCD_APP_MTR_SYSTEM_FLT_CHARS);
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_SYSTEM_FLT_CHARS);
         fault_count++;
     }
     if (motor_faults->overcurrent_fault)
     {
-        sprintf(faults[fault_count], "%s", LCD_APP_MTR_OVERCURR_FLT_CHARS);
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_OVERCURR_FLT_CHARS);
         fault_count++;
     }
     if (motor_faults->overvoltage_fault)
     {
-        sprintf(faults[fault_count], "%s", LCD_APP_MTR_OVERVOLT_FLT_CHARS);
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_OVERVOLT_FLT_CHARS);
         fault_count++;
     }
     if (motor_faults->fet_thermistor_error)
     {
-        sprintf(faults[fault_count], "%s", LCD_APP_MTR_OVERTEMP_FLT_CHARS);
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_OVERTEMP_FLT_CHARS);
         fault_count++;
     }
     if (motor_faults->motor_comm_fault)
     {
-        sprintf(faults[fault_count], "%s", LCD_APP_MTR_COMM_FLT_CHARS);
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_COMM_FLT_CHARS);
         fault_count++;
     }
     if (motor_faults->throttle_adc_outofrange)
     {
-        sprintf(faults[fault_count], "%s", LCD_APP_MTR_THROT_ADC_OOR_FLT_CHARS);
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_THROT_ADC_OOR_FLT_CHARS);
         fault_count++;
     }
     if (motor_faults->throttle_adc_mismatch)
     {
-        sprintf(faults[fault_count], "%s", LCD_APP_MTR_THROT_ADC_MISMATCH_FLT_CHARS);
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_THROT_ADC_MISMATCH_FLT_CHARS);
         fault_count++;
     }
 
@@ -345,12 +352,17 @@ uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* moto
  */
 void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults)
 {
-
-    LcdDriverClearBoundingBox(
-        0, LCD_APP_FAULT_FOUR_Y1, LCD_DRIVER_BOTTOM_RIGHT_X, LCD_DRIVER_BOTTOM_RIGHT_Y);
-    
-    memset(faults, 0, sizeof(faults)); // Clear the faults array before populating it with current faults
     uint8_t fault_count = LcdAppCheckFaults(batt_faults, motor_faults);
+
+    // This forces the screen to clear given no faults (clear doesn't update dirty pages)
+    if(fault_count == 0 || fault_count < g_prev_fault_count){
+        LcdDriverForceClearBoundingBox(0, LCD_APP_FAULT_FOUR_Y1, LCD_DRIVER_BOTTOM_RIGHT_X, LCD_DRIVER_BOTTOM_RIGHT_Y);
+    } else {
+        // clear normally
+        LcdDriverClearBoundingBox(0, LCD_APP_FAULT_FOUR_Y1, LCD_DRIVER_BOTTOM_RIGHT_X, LCD_DRIVER_BOTTOM_RIGHT_Y);
+    }
+
+    g_prev_fault_count = fault_count;
 
     LcdDriverDrawText(LCD_APP_FAULT_LABEL_CHARS, LCD_APP_FAULT_LABEL_X, LCD_APP_FAULT_LABEL_Y, LCD_APP_FAULT_LABEL_FONT, LCD_APP_FAULT_SPACING);
     for (uint8_t i = 0; i < LCD_APP_FAULT_LABEL_UNDERLINE_X; i++)
@@ -359,20 +371,20 @@ void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor
     }
     if (fault_count <= 3)
     {
-        LcdDriverDrawText(faults[0], LCD_APP_FAULT_FOUR_X1, LCD_APP_FAULT_FOUR_Y1, LCD_APP_FAULT_FOUR_FONT, LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[1], LCD_APP_FAULT_FOUR_X2, LCD_APP_FAULT_FOUR_Y2, LCD_APP_FAULT_FOUR_FONT, LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[2], LCD_APP_FAULT_FOUR_X3, LCD_APP_FAULT_FOUR_Y3, LCD_APP_FAULT_FOUR_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(g_faults[0], LCD_APP_FAULT_FOUR_X1, LCD_APP_FAULT_FOUR_Y1, LCD_APP_FAULT_FOUR_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(g_faults[1], LCD_APP_FAULT_FOUR_X2, LCD_APP_FAULT_FOUR_Y2, LCD_APP_FAULT_FOUR_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(g_faults[2], LCD_APP_FAULT_FOUR_X3, LCD_APP_FAULT_FOUR_Y3, LCD_APP_FAULT_FOUR_FONT, LCD_APP_FAULT_SPACING);
     }
     else if (fault_count <= 8)
     {
-        LcdDriverDrawText(faults[0], LCD_APP_FAULT_EIGHT_X1, LCD_APP_FAULT_EIGHT_Y1, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[1], LCD_APP_FAULT_EIGHT_X2, LCD_APP_FAULT_EIGHT_Y2, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[2], LCD_APP_FAULT_EIGHT_X3, LCD_APP_FAULT_EIGHT_Y3, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[3], LCD_APP_FAULT_EIGHT_X4, LCD_APP_FAULT_EIGHT_Y4, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[4], LCD_APP_FAULT_EIGHT_X5, LCD_APP_FAULT_EIGHT_Y5, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[5], LCD_APP_FAULT_EIGHT_X6, LCD_APP_FAULT_EIGHT_Y6, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[6], LCD_APP_FAULT_EIGHT_X7, LCD_APP_FAULT_EIGHT_Y7, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
-        LcdDriverDrawText(faults[7], LCD_APP_FAULT_EIGHT_X8, LCD_APP_FAULT_EIGHT_Y8, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(g_faults[0], LCD_APP_FAULT_EIGHT_X1, LCD_APP_FAULT_EIGHT_Y1, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(g_faults[1], LCD_APP_FAULT_EIGHT_X2, LCD_APP_FAULT_EIGHT_Y2, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(g_faults[2], LCD_APP_FAULT_EIGHT_X3, LCD_APP_FAULT_EIGHT_Y3, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(g_faults[3], LCD_APP_FAULT_EIGHT_X4, LCD_APP_FAULT_EIGHT_Y4, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(g_faults[4], LCD_APP_FAULT_EIGHT_X5, LCD_APP_FAULT_EIGHT_Y5, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(g_faults[5], LCD_APP_FAULT_EIGHT_X6, LCD_APP_FAULT_EIGHT_Y6, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(g_faults[6], LCD_APP_FAULT_EIGHT_X7, LCD_APP_FAULT_EIGHT_Y7, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
+        LcdDriverDrawText(g_faults[7], LCD_APP_FAULT_EIGHT_X8, LCD_APP_FAULT_EIGHT_Y8, LCD_APP_FAULT_EIGHT_FONT, LCD_APP_FAULT_SPACING);
     }
 
     LcdDriverRefresh();
@@ -384,58 +396,65 @@ void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor
 
 uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings)
 {
+    // This clears the faults so we parse faults every time
+    memset(g_warning_char, 0, sizeof(g_warning_char));
+
+    // Tracks warnings
     uint8_t warning_count = 0;
 
     if (warnings->high_temp_warning)
     {
-        sprintf(warning_char[warning_count], "%s", LCD_APP_HIGHTEMP_WARN_CHARS);
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_HIGHTEMP_WARN_CHARS);
         warning_count++;
     }
     if (warnings->high_volt_warning)
     {
-        sprintf(warning_char[warning_count], "%s", LCD_APP_HIGHVOLT_WARN_CHARS);
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_HIGHVOLT_WARN_CHARS);
         warning_count++;
     }
     if (warnings->low_temp_warning)
     {
-        sprintf(warning_char[warning_count], "%s", LCD_APP_LOWTEMP_WARN_CHARS);
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_LOWTEMP_WARN_CHARS);
         warning_count++;
     }
     if (warnings->low_volt_warning)
     {
-        sprintf(warning_char[warning_count], "%s", LCD_APP_LOWVOLT_WARN_CHARS);
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_LOWVOLT_WARN_CHARS);
         warning_count++;
     }
     if (warnings->no_ecu_message)
     {
-        sprintf(warning_char[warning_count], "%s", LCD_APP_NOMSG_WARN_CHARS);
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_NOMSG_WARN_CHARS);
         warning_count++;
     }
     if (warnings->pack_overcharge)
     {
-        sprintf(warning_char[warning_count], "%s", LCD_APP_PACK_OC_WARN_CHARS);
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_PACK_OC_WARN_CHARS);
         warning_count++;
     }
     if (warnings->pack_overdischarge)
     {
-        sprintf(warning_char[warning_count], "%s", LCD_APP_PACK_OD_WARN_CHARS);
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_PACK_OD_WARN_CHARS);
         warning_count++;
     }
 
     return warning_count;
 }
 
-/**
- * @brief Displays a motor faults on the LCD
- *
- * @param fault_indicator An indicator to see who
- */
+
 void LcdAppDisplayWarnings(LcdAppWarnings* warnings)
 {
-    LcdDriverClearBoundingBox(
-        0, LCD_APP_WARNING_FOUR_Y1, LCD_DRIVER_BOTTOM_RIGHT_X, LCD_DRIVER_BOTTOM_RIGHT_Y);
-
     uint8_t warning_count = LcdAppCheckWarnings(warnings);
+
+    // This forces the screen to clear given no warnings (clear doesn't update dirty pages)
+    if(warning_count == 0 || g_prev_warning_count < warning_count){
+        LcdDriverForceClearBoundingBox( 0, LCD_APP_WARNING_FOUR_Y1, LCD_DRIVER_BOTTOM_RIGHT_X, LCD_DRIVER_BOTTOM_RIGHT_Y);
+    } else {
+        // clear normally
+        LcdDriverClearBoundingBox( 0, LCD_APP_WARNING_FOUR_Y1, LCD_DRIVER_BOTTOM_RIGHT_X, LCD_DRIVER_BOTTOM_RIGHT_Y);
+    }
+
+    g_prev_warning_count = warning_count;
 
     LcdDriverDrawText(LCD_APP_WARNING_LABEL_CHARS, LCD_APP_WARNING_LABEL_X, LCD_APP_WARNING_LABEL_Y, LCD_APP_WARNING_LABEL_FONT, LCD_APP_WARNING_SPACING);
     for (uint8_t i = 0; i < LCD_APP_WARNING_LABEL_UNDERLINE_X; i++)
@@ -444,20 +463,20 @@ void LcdAppDisplayWarnings(LcdAppWarnings* warnings)
     }
     if (warning_count <= 3)
     {
-        LcdDriverDrawText(warning_char[0], LCD_APP_WARNING_FOUR_X1, LCD_APP_WARNING_FOUR_Y1, LCD_APP_WARNING_FOUR_FONT, LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[1], LCD_APP_WARNING_FOUR_X2, LCD_APP_WARNING_FOUR_Y2, LCD_APP_WARNING_FOUR_FONT, LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[2], LCD_APP_WARNING_FOUR_X3, LCD_APP_WARNING_FOUR_Y3, LCD_APP_WARNING_FOUR_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(g_warning_char[0], LCD_APP_WARNING_FOUR_X1, LCD_APP_WARNING_FOUR_Y1, LCD_APP_WARNING_FOUR_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(g_warning_char[1], LCD_APP_WARNING_FOUR_X2, LCD_APP_WARNING_FOUR_Y2, LCD_APP_WARNING_FOUR_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(g_warning_char[2], LCD_APP_WARNING_FOUR_X3, LCD_APP_WARNING_FOUR_Y3, LCD_APP_WARNING_FOUR_FONT, LCD_APP_WARNING_SPACING);
     }
     else if (warning_count <= 8)
     {
-        LcdDriverDrawText(warning_char[0], LCD_APP_WARNING_EIGHT_X1, LCD_APP_WARNING_EIGHT_Y1, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[1], LCD_APP_WARNING_EIGHT_X2, LCD_APP_WARNING_EIGHT_Y2, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[2], LCD_APP_WARNING_EIGHT_X3, LCD_APP_WARNING_EIGHT_Y3, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[3], LCD_APP_WARNING_EIGHT_X4, LCD_APP_WARNING_EIGHT_Y4, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[4], LCD_APP_WARNING_EIGHT_X5, LCD_APP_WARNING_EIGHT_Y5, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[5], LCD_APP_WARNING_EIGHT_X6, LCD_APP_WARNING_EIGHT_Y6, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[6], LCD_APP_WARNING_EIGHT_X7, LCD_APP_WARNING_EIGHT_Y7, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
-        LcdDriverDrawText(warning_char[7], LCD_APP_WARNING_EIGHT_X8, LCD_APP_WARNING_EIGHT_Y8, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(g_warning_char[0], LCD_APP_WARNING_EIGHT_X1, LCD_APP_WARNING_EIGHT_Y1, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(g_warning_char[1], LCD_APP_WARNING_EIGHT_X2, LCD_APP_WARNING_EIGHT_Y2, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(g_warning_char[2], LCD_APP_WARNING_EIGHT_X3, LCD_APP_WARNING_EIGHT_Y3, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(g_warning_char[3], LCD_APP_WARNING_EIGHT_X4, LCD_APP_WARNING_EIGHT_Y4, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(g_warning_char[4], LCD_APP_WARNING_EIGHT_X5, LCD_APP_WARNING_EIGHT_Y5, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(g_warning_char[5], LCD_APP_WARNING_EIGHT_X6, LCD_APP_WARNING_EIGHT_Y6, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(g_warning_char[6], LCD_APP_WARNING_EIGHT_X7, LCD_APP_WARNING_EIGHT_Y7, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
+        LcdDriverDrawText(g_warning_char[7], LCD_APP_WARNING_EIGHT_X8, LCD_APP_WARNING_EIGHT_Y8, LCD_APP_WARNING_EIGHT_FONT, LCD_APP_WARNING_SPACING);
     }
 
     LcdDriverRefresh();

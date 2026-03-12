@@ -133,7 +133,7 @@
 #define LCD_APP_BATT_OVERTEMP_FLT_CHARS "BAT_OTMP"
 #define LCD_APP_BATT_CHARGE_OC_FLT_CHARS "BAT_COC"
 #define LCD_APP_BATT_DISCHARGE_OC_FLT_CHARS "BAT_DCOC"
-#define LCD_APP_BATT_RST_FROM_WATCH_FLT_CHARS "BAT_RFW"
+#define LCD_APP_BATT_RST_FROM_WATCH_FLT_CHARS "ECU_RFW"
 
 #define LCD_APP_MTR_SYSTEM_FLT_CHARS "MTR_SYS"
 #define LCD_APP_MTR_OVERCURR_FLT_CHARS "MTR_OCUR"
@@ -362,9 +362,9 @@ void LcdAppDisplayWarningIndicator(LcdAppWarnings* warnings);
 void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults);
 
 /**
- * @brief Displays a motor faults on the LCD
+ * @brief Dynamically displays car warnings on the LCD
  *
- * @param fault_indicator An indicator to see who
+ * @param warnings The warnings to be displayed on the LCD
  */
 void LcdAppDisplayWarnings(LcdAppWarnings* warnings);
 

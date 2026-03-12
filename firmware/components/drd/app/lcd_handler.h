@@ -98,15 +98,6 @@ typedef enum
     DEBUG_PAGE = 0x05
 } LcdAppScreens;
 
-/*	User Variables	*/
-extern uint8_t g_lcd_page;
-extern uint8_t g_lcd_page_change;
-
-/**
- * @brief Changes the screen
- */
-void LcdHandlerChangeScreen();
-
 /**
  * @brief Initializes the LCD App and SPI interface.
  *
@@ -118,6 +109,12 @@ void LcdHandlerInit(SPI_HandleTypeDef* hspi);
  * @brief Handles the screen logic for the LCD App, including page changes and updating displayed data.
  */
 void LcdHandlerPageController(void);
+
+/**
+ * @brief Handles the page change logic from a CAN Message
+ */
+void LcdHandlerChangePage(bool change_page);
+
 
 /* LCD HANDLER BATTERY FAULT DATA SETTERS */
 void LcdHandlerSetBatteryFault(bool fault);

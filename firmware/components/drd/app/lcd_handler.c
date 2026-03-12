@@ -14,18 +14,21 @@
 #include "cyclic_data_handler.h"
 #include <stdbool.h>
 
-/* EXTERNAL VARIABLES */
+/* STATIC VARIABLES */
 static LcdAppData g_lcd_data = {0};
 static LcdAppBattFaults g_lcd_batt_faults = {0};
 static LcdAppMotorFaults g_lcd_motor_faults = {0};
 static LcdAppWarnings g_lcd_warnings = {0};
 static LcdAppTemperature g_lcd_temperatures[8] = {0};
-uint8_t g_lcd_page = 1;
-uint8_t g_lcd_page_change = 0;
-uint8_t g_lcd_fault_switch = 0;
-static bool prev_fault = false;
+static uint8_t g_lcd_page = 1;
+static bool g_change_page = false;
+static bool g_prev_change_page = false;
+static bool g_prev_fault = false;
 
 /* STATIC FUNCTION DECLARATION*/
+/**
+ * @brief Gets relevant data for LCD controller to parse
+ */
 static void LcdHandlerGetData(void);
 
 void LcdHandlerInit(SPI_HandleTypeDef* hspi)
@@ -50,23 +53,26 @@ void LcdHandlerPageController(void)
     // Get the latest data for the LCD
     LcdHandlerGetData();
 
-    // Handles clearing the screen
-    if (g_lcd_page_change == 1)
-    {
-        LcdHandlerChangeScreen();
-        g_lcd_page_change = 0;
-    }
-
-    // Fault flag
+    // Fault Logic - Trigger Page Change on rising edge of fault detection
     bool check_fault = LcdAppCheckFaults(&g_lcd_batt_faults, &g_lcd_motor_faults);
-
-    // Track prev fault to trigger on rising edge of fault detection
-    if(check_fault && !prev_fault) {
-        LcdHandlerChangeScreen();
+    if(check_fault && !g_prev_fault) {
+        LcdDriverChangeScreen();
         g_lcd_page = FAULTS_PAGE;
     }
+    g_prev_fault = check_fault;
 
-    prev_fault = check_fault;
+    // Page Logic - Trigger Page Change on flag set by CAN message
+    if(g_change_page){
+        // Check if page is above 5 pages
+        if (g_lcd_page < LCD_HANDLER_MAXPAGES) {
+            LcdDriverChangeScreen();
+            g_lcd_page++;
+        }
+        else { // Go to first page if exceed max pages
+            LcdDriverChangeScreen();
+            g_lcd_page = 1;
+        }
+    }
 
     // Handles what is displayed
     switch (g_lcd_page)
@@ -115,7 +121,15 @@ void LcdHandlerPageController(void)
     }
 }
 
-void LcdHandlerChangeScreen() { LcdDriverChangeScreen(); }
+void LcdHandlerChangePage(bool change_page){
+    // Trigger on rising or falling edge of next_page from CAN Message
+    if (change_page != g_prev_change_page) {
+        g_change_page = true;
+    }
+    g_change_page = false;
+    // Set prev_change_page to be change_page to only trigger on rising edge. 
+    g_prev_change_page = change_page;
+}
 
 static void LcdHandlerGetData(void) {
     /* DRIVE DATA*/

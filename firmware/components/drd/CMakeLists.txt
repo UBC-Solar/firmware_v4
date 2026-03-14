@@ -60,6 +60,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/app/cyclic_data_handler.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/lcd_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/lcd_handler.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/test_scripts/lcd_test.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/fault_handler.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/fault_handler_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/external_lights.c
@@ -85,6 +86,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/app
     ${CMAKE_CURRENT_SOURCE_DIR}/driver
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/test_scripts/
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/cyclic_data/
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/debug_io
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/CAN_comms

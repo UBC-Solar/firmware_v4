@@ -16,6 +16,7 @@
 #include "cyclic_data_handler.h"
 #include "fault_handler.h"
 #include <string.h>
+#include "external_lights.h"
 
 /* FUNCTION PROTOTYPES */
 /**
@@ -109,6 +110,8 @@ void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
     FaultHandlerRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
     VehicleStateCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
     LcdAppCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
+    ExternalLightsCanRxHandle(CAN_ID, CAN_comms_Rx_msg->data);
+
 }
 
 void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data)

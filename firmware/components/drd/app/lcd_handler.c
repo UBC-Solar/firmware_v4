@@ -9,6 +9,7 @@
  */
 
 #include "lcd_handler.h"
+#include "lcd_test.h"
 #include "lcd_app.h"
 #include "lcd_driver.h"
 #include "cyclic_data_handler.h"
@@ -55,12 +56,6 @@ void LcdHandlerPageController(void)
 
     // Fault Logic - Trigger Page Change on rising edge of fault detection
     bool check_fault = LcdAppCheckFaults(&g_lcd_batt_faults, &g_lcd_motor_faults);
-    if(check_fault && !g_prev_fault) {
-        LcdDriverChangeScreen();
-        g_lcd_page = FAULTS_PAGE;
-    }
-    g_prev_fault = check_fault;
-
     // Page Logic - Trigger Page Change on flag set by CAN message
     if(g_change_page){
         // Check if page is above 5 pages
@@ -72,7 +67,17 @@ void LcdHandlerPageController(void)
             LcdDriverChangeScreen();
             g_lcd_page = 1;
         }
+        g_change_page = false;
     }
+    if(check_fault && !g_prev_fault) {
+        LcdDriverChangeScreen();
+        g_lcd_page = FAULTS_PAGE;
+    }
+    g_prev_fault = check_fault;
+
+#ifdef LCD_TEST
+    LcdTestInit();
+#endif
 
     // Handles what is displayed
     switch (g_lcd_page)
@@ -126,7 +131,6 @@ void LcdHandlerChangePage(bool change_page){
     if (change_page != g_prev_change_page) {
         g_change_page = true;
     }
-    g_change_page = false;
     // Set prev_change_page to be change_page to only trigger on rising edge. 
     g_prev_change_page = change_page;
 }

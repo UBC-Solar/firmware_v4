@@ -21,6 +21,8 @@
 
 #define LCD_HANDLER_UPDATE_DELAY 200
 
+// #define LCD_TEST
+
 /*	Datatypes */
 typedef struct
 {

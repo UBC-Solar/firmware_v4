@@ -1,6 +1,7 @@
 import can
 import time
 import threading
+import struct
 
 """
 Important notes: the python CAN library sends data in little endian meaning the least significant bit and byte is first
@@ -24,17 +25,24 @@ class DRDTest:
         self.prevswitch = 0
 
     def run_test(self):
-        #  Test drive page soc and speed
-        # print("\nDrive Page: SOC and Speed incrementing")
-        # self.test_drive_page()
+        #  Test drive page speed and drive_state
+        print("\nDrive Page Test and Speed")
+        self.test_drive_page()
         
         # Trigger Fault page by sending a fault message
-        print("Fault Page: Triggering faults")
+        print("\nFault Page: Triggering faults")
         self.test_fault_page()
+
         # Test warning page
         self.switch_page()
-        print("Warning Page: Triggering warnings")
+        print("\nWarning Page: Triggering warnings")
         self.test_warning_page()
+
+        # Test Temperature page
+        self.switch_page()
+        print("\Temperature Page: test temperature")
+        self.script_send_temperature(self.bus)
+
         #Test Temperature page
         self.switch_page()
 
@@ -45,15 +53,27 @@ class DRDTest:
         else:
             send_message(0x580, [0x00])  # Command to switch to drive page
             self.prevswitch = 0
-        time.sleep(1)  # Wait for the page to switch
+
+    def test_change_page(self):
+        print("Testing 100 fast page changes, shouldn't flash because of debouncing")
+        for i in range(100):
+            self.switch_page()
+            time.sleep(0.00025)
+        time.sleep(1)
+        print("Testing 100 fast page changes with fault flags, should stay on fault page")
+        for i in range(100):
+            send_message(0x622, [(1<<0),0,0,0,0,0,0,0])
+            self.switch_page()
+            time.sleep(0.00025)
 
     def test_drive_page(self):
-        time.sleep(1)  # Wait for the LCD to initialize
-        t1 = threading.Thread(target=self.script_send_soc, args=(self.bus,))
+        print("\n\nTesting Drive State")
+        print("\n5 seconds to Switch Drive States with switch")
+        for _ in range(10):
+            self.test_drive_state()
+            time.sleep(0.5)
         t2 = threading.Thread(target=self.script_send_speed_kmh, args=(self.bus,))
-        t1.start()
         t2.start()
-        t1.join()
         t2.join()
 
     def test_fault_page(self):
@@ -62,20 +82,20 @@ class DRDTest:
 
         print("Testing Slave Board Comm Fault and BMS Self Test Fault")
         send_message(0x622, [(1<<0)|(1<<1),0,0,0,0,0,0,0])
-        time.sleep(2)
+        time.sleep(1)
         send_message(0x622, [0,0,0,0,0,0,0,0])
         time.sleep(1)
 
         print("Testing Battery Overtemperature, Battery Undervoltage")
         send_message(0x622, [(1<<2)|(1<<3),0,0,0,0,0,0,0])
-        time.sleep(2)
+        time.sleep(1)
         send_message(0x622, [0,0,0,0,0,0,0,0])
         time.sleep(1)
 
         #TODO: check DCOC and COC works with correct CAN
         print("Testing Battery Overvoltage, Charge OC/DOC")
         send_message(0x622, [(1<<4)|(1<<6),0,0,0,0,0,0,0])
-        time.sleep(2)
+        time.sleep(1)
         send_message(0x622, [0,0,0,0,0,0,0,0])
         time.sleep(1)
 
@@ -83,7 +103,7 @@ class DRDTest:
         safe_value = int(134.4 * 468)
         value = int(136 * 468)
         send_message(0x623, [value & 0xFF,(value >> 8) & 0xFF,0,0,0,0,0,0])
-        time.sleep(2)
+        time.sleep(1)
         send_message(0x623, [safe_value & 0xFF,(safe_value >> 8) & 0xFF,0,0,0,0,0,0]) # clear
         time.sleep(1)
         # print("Testing VOLT_HI increment by 1 from battery")
@@ -95,7 +115,7 @@ class DRDTest:
         print("Testing VOLT_LO from battery")
         value = int(86.72 * 468)
         send_message(0x623, [value & 0xFF,(value >> 8) & 0xFF,0,0,0,0,0,0])
-        time.sleep(2)
+        time.sleep(1)
         send_message(0x623, [safe_value & 0xFF,(safe_value >> 8) & 0xFF,0,0,0,0,0,0])
         time.sleep(1)
         # print("Testing VOLT_LO increment by 1 from battery")
@@ -109,27 +129,27 @@ class DRDTest:
         # cansend can0 450#0000000000100000
         send_message(0x450, [0,0,0,0,0,(1<<4),0,0])
         send_message(0x08A50225, [0,0,0,(1<<0),0,0,0,0], isextended_id=True)
-        time.sleep(2)
+        time.sleep(1)
         send_message(0x450, [0,0,0,0,0,0,0,0])
         send_message(0x08A50225, [0,0,0,0,0,0,0,0], isextended_id=True)
         time.sleep(1)
 
         print("Testing Motor Overcurrent, Motor Overvoltage, FET Thermistor Error")
         send_message(0x08A50225,[(1<<3),0,(1<<1)|(1<<3),0,0,0,0,0], isextended_id=True)
-        time.sleep(2)
+        time.sleep(1)
         send_message(0x08A50225, [0,0,0,0,0,0,0,0], isextended_id=True)
         time.sleep(1)
 
         print("Testing 7 faults on page")
         send_message(0x622, [(1<<0)|(1<<1)|(1<<2)|(1<<3)|(1<<4)|(1<<6),0,0,0,0,0,0,0])
-        time.sleep(2)
+        time.sleep(1)
         send_message(0x622, [0,0,0,0,0,0,0,0])
         time.sleep(1)
 
         print("Testing 8 faults on page")
         send_message(0x450, [0,0,0,0,0,(1<<4),0,0])
         send_message(0x08A50225,[(1<<3),0,(1<<1)|(1<<3),(1<<0),0,0,0,0], isextended_id=True)
-        time.sleep(2)
+        time.sleep(1)
         send_message(0x450, [0,0,0,0,0,0,0,0])
         send_message(0x08A50225, [0,0,0,0,0,0,0,0], isextended_id=True)
         send_message(0x403, [0,0,0,0,0,0,0,0])
@@ -139,35 +159,35 @@ class DRDTest:
     def test_warning_page(self):
         print("Testing Low Voltage Warning, High Voltage Warning")
         send_message(0x622,[0,(1<<5)|(1<<6),0,0,0,0,0,0])
-        time.sleep(2)
+        time.sleep(1)
         send_message(0x622,[0,0,0,0,0,0,0,0])
-        time.sleep(2)
+        time.sleep(1)
 
         print("Testing Battery Low Temperature Warning, Battery High Temperature Warning")
         send_message(0x622,[0,(1<<7),1,0,0,0,0,0])
-        time.sleep(2)
+        time.sleep(1)
         send_message(0x622,[0,0,0,0,0,0,0,0])
-        time.sleep(2)
+        time.sleep(1)
 
         print("Testing No ECU Current Message Received Warning")
         send_message(0x622,[0,0,(1<<2),0,0,0,0,0])
-        time.sleep(2)
+        time.sleep(1)
         send_message(0x622,[0,0,0,0,0,0,0,0])
-        time.sleep(2)
+        time.sleep(1)
 
         print("Testing Pack Overdischarge, Pack Overcharge")
         send_message(0x450,[0,0,0,0,0,(1<<0)|(1<<1),0,0])
-        time.sleep(2)
+        time.sleep(1)
         send_message(0x450,[0,0,0,0,0,0,0,0])
-        time.sleep(2)
+        time.sleep(1)
 
         print("Testing all 7 warnings")
         send_message(0x622,[0,(1<<5)|(1<<6)|(1<<7),1|(1<<2),0,0,0,0,0])
         send_message(0x450,[0,0,0,0,0,(1<<0)|(1<<1),0,0])
-        time.sleep(2)
+        time.sleep(1)
         send_message(0x622,[0,0,0,0,0,0,0,0])
         send_message(0x450,[0,0,0,0,0,0,0,0])
-        time.sleep(2)
+        time.sleep(1)
 
     def test_debug_page(self):
         time.sleep(1)  # Wait for the LCD to initialize
@@ -175,46 +195,21 @@ class DRDTest:
         t1.start()
         t1.join()
 
-    # SETS SPEED TO 0 SO DRIVE STATE CAN BE SWITCHED
-    def script_test_drive_state(self, can_bus):
-        send_message(0x08850225, [00], isextended_id=True)
+    def test_drive_state(self):
+        rpm_val = int((0 * 60) / (2 * 3.14159265 * 0.283 * 3.6)) + 1
 
-    def script_send_soc(self, can_bus):
-        # SOC 0-100% voltage range
-        voltage_start = 94.0   # 0% SOC
-        voltage_end = 129.0    # 100% SOC
-        steps = 36             # step every ~1 V
+        # Pack RPM into data[4] and data[5]
+        data4 = (rpm_val & 0x1F) << 3        # bits 0-4 of rpm into bits 3-7
+        data5 = (rpm_val >> 5) & 0x7F        # bits 5-11 of rpm into bits 0-6
 
-        for i in range(steps + 1):
-            voltage = voltage_start + (voltage_end - voltage_start) * i / steps
-            current = 0.0  # A, no discharge/charge
-
-            # Encode current (int16_t)
-            current_can = int(current * 65.535)
-            # Encode voltage (uint16_t)
-            voltage_can = int(voltage * 1000)
-
-            # Send current over CAN 0x450
-            send_message(0x450, [
-                current_can & 0xFF,
-                (current_can >> 8) & 0xFF,
-                0,0,0,0,0,0
-            ])
-
-            # Send voltage over CAN 0x623
-            send_message(0x623, [
-                voltage_can & 0xFF,
-                (voltage_can >> 8) & 0xFF,
-                0,0,0,0,0,0
-            ])
-
-            print(f"Sent Voltage: {voltage:.1f} V, Current: {current:.1f} A")
-            time.sleep(0.5)  # wait 0.5s between steps
+        # Create 8-byte payload (other bytes can be 0)
+        payload = [0x00, 0x00, 0x00, 0x00, data4, data5, 0x00, 0x00]
+        send_message(0x08850225, payload, isextended_id=True)
 
     def script_send_speed_kmh(self, can_bus):
         """Send speed kmh from 1 to 100 over 10 seconds."""
         wheel_radius = 0.283  # meters
-        for speed in range(1, 101):
+        for speed in range(0, 100):
             # Reverse engineer RPM from speed (v = w*r)
             rpm_val = int((speed * 60) / (2 * 3.14159265 * wheel_radius * 3.6)) + 1
 
@@ -226,12 +221,34 @@ class DRDTest:
             payload = [0x00, 0x00, 0x00, 0x00, data4, data5, 0x00, 0x00]
 
             send_message(0x08850225, payload, isextended_id=True)
-            time.sleep(0.5)
+            time.sleep(0.1)
 
     def script_send_temperature(self, can_bus):
-        for temp in range(0, 99):
-            send_message(0x650, [temp])
+        for temp in range(0, 101):
+            # Battery Min and Max
+            send_message(0x625, [0,temp,0,temp,0,0,0,0])
+
+            float_bytes = struct.pack('<f', float(temp))
+            
+            # Extract the individual bytes (This replaces your bit-shifting)
+            byte_0 = float_bytes[0]
+            byte_1 = float_bytes[1]
+            byte_2 = float_bytes[2]
+            byte_3 = float_bytes[3]
+
+            # Create the payload with the float repeated twice
+            payload = [byte_0, byte_1, byte_2, byte_3, byte_0, byte_1, byte_2, byte_3]
+            send_message(0x6A2, payload)
+            send_message(0x6B2, payload)
+            send_message(0x6C2, payload)
+
+            # Motor controller temp
+            raw_temp = int(temp/5)
+            temp_1 = (raw_temp & 0x03) << 6
+            temp_2 = (raw_temp >> 2) & 0x07
+            send_message(0x08850225, [0,0,0,temp_1,temp_2,0,0,0], isextended_id=True)
             time.sleep(0.1)
+
     def script_send_pack_current_and_voltage(self, can_bus):
         """Send PackCurrent and PackVoltage signals over 30 seconds."""
         current = 40
@@ -246,14 +263,19 @@ class DRDTest:
             voltage -= voltage_step
             time.sleep(0.250)
 
+    def clearbus(self, can_bus):
+        safe_value = int(134.4 * 468)
+        send_message(0x622,[0,0,0,0,0,0,0,0])
+        send_message(0x450,[0,0,0,0,0,0,0,0])
+        send_message(0x08A50225, [0,0,0,0,0,0,0,0], isextended_id=True)
+        send_message(0x623, [safe_value & 0xFF,(safe_value >> 8) & 0xFF,0,0,0,0,0,0]) # clear
+
+
 if(__name__ == "__main__"):
     with can.interface.Bus(channel='can0', interface='socketcan', bitrate=500000) as bus:
         print("CAN bus initialized")
-        send_message(0x623, [0xFF,0xFF,0,0,0,0,0,0])
-        send_message(0x450, [0xFF,0xFF,0,0,0,0,0,0])
-        time.sleep(1)
-        send_message(0x623, [0,0,0,0,0,0,0,0])
-        send_message(0x450, [0,0,0,0,0,0,0,0])
-        # drd_test = DRDTest(bus)
-        # drd_test.script_send_soc(drd_test.bus)
+        drd_test = DRDTest(bus)
+        drd_test.clearbus(bus)
+        drd_test.run_test()
+        # drd_test.run_test()
         print("Test completed")

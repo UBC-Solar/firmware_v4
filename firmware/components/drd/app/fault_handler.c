@@ -20,6 +20,8 @@
 #include "can_driver.h"
 #include "cyclic_data_handler.h"
 #include "fault_handler_driver.h"
+#include <string.h>
+
 
 #define GETBIT(value, bit) (((value) >> (bit)) & 0x01)
 
@@ -128,21 +130,25 @@ void FaultHandlerParseTemperatures(uint32_t msg_id, uint8_t* can_rx_data){
         }
         case FRAME0: { // Motor controller temperature
             uint8_t mtr_cont_temp = (can_rx_data[3] >> 6) | ((can_rx_data[4] & 0x7) << 2 ); 
+            mtr_cont_temp *= 5;
             CyclicDataSetMtrContTemperature(mtr_cont_temp);
             break;
         }
         case MPPTA_TEMPERATURE_CAN_ID: {
-            float mpptA_temp = can_rx_data[5];
+            float mpptA_temp;
+            memcpy(&mpptA_temp, &can_rx_data[4], sizeof(float));
             CyclicDataSetMpptATemperature((uint8_t)mpptA_temp);
             break;
         }
         case MPPTB_TEMPERATURE_CAN_ID: {
-            float mpptB_temp = can_rx_data[5];
+            float mpptB_temp;
+            memcpy(&mpptB_temp, &can_rx_data[4], sizeof(float));
             CyclicDataSetMpptBTemperature((uint8_t)mpptB_temp);
             break;
         }
         case MPPTC_TEMPERATURE_CAN_ID: {
-            float mpptC_temp = can_rx_data[5];
+            float mpptC_temp;
+            memcpy(&mpptC_temp, &can_rx_data[4], sizeof(float));
             CyclicDataSetMpptCTemperature((uint8_t)mpptC_temp);
             break;
         }

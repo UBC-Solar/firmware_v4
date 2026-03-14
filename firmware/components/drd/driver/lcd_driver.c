@@ -234,7 +234,6 @@ void LcdDriverChangeScreen()
     lcd_dirty_pages = LCD_DRIVER_DIRTY_PAGE_CHANGE;
     LcdDriverClearBoundingBox(0, 0, LCD_DRIVER_BOTTOM_RIGHT_X, LCD_DRIVER_BOTTOM_RIGHT_Y);
     LcdDriverRefresh();
-    HAL_Delay(200);
 }
 
 void LcdDriverWriteCommand(uint8_t cmd)

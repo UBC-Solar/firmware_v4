@@ -300,3 +300,7 @@ DriveStateStates DriveStateGetDriveState(void)
 {
     return g_drive_state_ctx.state;
 }
+
+volatile bool DriveStateGetDriveMode(){
+    return g_drive_state_ctx.flags.eco_mode_on;
+}

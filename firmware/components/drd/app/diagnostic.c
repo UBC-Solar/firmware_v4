@@ -13,6 +13,8 @@
 #include "CAN_comms.h"
 #include "can_driver.h"
 #include "diagnostic.h"
+#include "iwdg_driver.h"
+#include "lcd_handler.h"
 #include "drive_state.h"
 #include "soc.h"
 
@@ -40,10 +42,12 @@ void DiagnosticSetRegenEnabled(bool enabled){
 
 void DiagnosticSetThrottleADCOutOfRange(bool out_of_range){
     g_diagnostics.flags.throttle_ADC_out_of_range = out_of_range;
+    LcdHandlerSetMotorThrottleAdcOutOfRange(out_of_range);
 }
 
 void DiagnosticSetThrottleADCMismatch(bool mismatch){
     g_diagnostics.flags.throttle_ADC_mismatch = mismatch;
+    LcdHandlerSetMotorThrottleAdcMismatch(mismatch);
 }  
 
 void DiagnosticSetWatchdogReset(bool reset){

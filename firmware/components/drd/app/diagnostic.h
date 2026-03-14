@@ -21,10 +21,10 @@ typedef union {
 	struct {
 		volatile bool mech_brake_pressed 		: 1; // done
 		volatile bool regen_enabled 			: 1; // done
-		volatile bool throttle_ADC_out_of_range : 1;
-		volatile bool throttle_ADC_mismatch 	: 1;
-		volatile bool watchdog_reset 			: 1; //done
-		volatile bool motor_comm_fault 			: 1;
+		volatile bool throttle_ADC_out_of_range : 1; // done
+		volatile bool throttle_ADC_mismatch 	: 1; // done
+		volatile bool watchdog_reset 			: 1; // done
+		volatile bool motor_comm_fault 			: 1; // never set in v3
 	};
 	uint8_t all_flags;
 } DiagnosticDRDAllFlags;

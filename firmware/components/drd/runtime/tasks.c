@@ -11,7 +11,8 @@
 #include "tasks.h"
 #include "cmsis_os2.h"
 #include "iwdg_app.h"
-#include "lcd_app.h"
+#include "lcd_handler.h"
+#include "fault_handler.h"
 #include "debug_io.h"
 #include "cyclic_data_handler.h"
 #include "spi.h"
@@ -92,24 +93,16 @@ void TasksExternalLights(void* argument)
 /* LCD UPDATE TASK */
 void TasksLcdUpdate(void *argument)
 {
-    LcdAppInit(&hspi1);
-
-    // KPH or MPH
-    g_lcd_data.speed_units = LCD_APP_MPH;
+    LcdHandlerInit(&hspi1);
 
     for (;;)
     {
-        // Handles clearing the screen
-        if (g_lcd_page_change == 1)
-        {
-            LcdAppChangeScreen();
-            g_lcd_page_change = 0;
-        }
-        LcdAppPageController();
-        osDelay(LCD_APP_UPDATE_DELAY);
+        LcdHandlerPageController();
+        osDelay(LCD_HANDLER_UPDATE_DELAY);
     }
 }
 
+/* DRD HEARTBEAT TASK */
 void TasksTimeSinceStartup(void *argument)
 {
     for (;;)
@@ -120,6 +113,7 @@ void TasksTimeSinceStartup(void *argument)
     }
 }
 
+/* DIAGNOSTIC TASK */
 void TasksDiagnostic(void *argument)
 {
     IwdgAppResetHandle();
@@ -128,7 +122,26 @@ void TasksDiagnostic(void *argument)
     {
         // Refresh the watchdog timer to prevent reset and transmit diagnostics over CAN
         IwdgAppRefresh(&hiwdg);
+        
         DiagnosticTransmit(false);
         osDelay(DIAGNOSTIC_TASK_DELAY);
+    }
+}
+
+// TODO:
+/**
+Just leaving a comment so its on our minds: in the future it might be worth making a handful of tasks that run at slower frequencies and then place whatever functionality we need within those tasks.
+For example, task_100hz, task_1000hz, etc. This means we would save space on the task stacks/context that we are currently spending on a task that only every runs every 100 ms or even 1s.
+However, since we have had no issues, it should be fine for now.
+*/
+
+/* FAULT LIGHT FLASH TASK */
+void TasksFaultLightFlash(void *argument)
+{
+    for (;;)
+    {
+        // Implementation for fault light flash task
+        FaultHandlerFlashLED();
+        osDelay(FAULT_LIGHT_FLASH_DELAY);
     }
 }

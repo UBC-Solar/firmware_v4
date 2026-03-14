@@ -70,9 +70,31 @@ void TasksCalculateSoc(void* argument);
  */
 void TasksLcdUpdate(void *argument);
 
+/**
+ * @brief Diagnostic task main loop.
+ *
+ * Performs diagnostic checks and reports any issues found.
+ * Executes at a fixed interval. Task runs indefinitely until system shutdown.
+ * @param argument Pointer to task-specific arguments (unused).
+ */
 void TasksDiagnostic(void *argument);
 
+/**
+ * @brief Time since startup task main loop.
+ *
+ * Updates the time since startup counter at a fixed interval.
+ * Executes at a 1000ms period. Task runs indefinitely until system shutdown.
+ * @param argument Pointer to task-specific arguments (unused).
+ */
 void TasksTimeSinceStartup(void *argument);
+
+/**
+ * @brief Fault light flash task main loop.
+ *
+ * @param argument Pointer to task-specific arguments (unused).
+ */
+void TasksFaultLightFlash(void *argument);
+
 
 /**
  * @brief External lights task main loop.
@@ -82,9 +104,9 @@ void TasksTimeSinceStartup(void *argument);
  * @param argument Pointer to task-specific arguments (unused).
  */
 void TasksExternalLights(void* argument);
-
+ 
 /**
- * @brief GPIO external interrupt callback handler.
+ * @brief Initializes DRD CAN communications.
  *
  * Configures CAN filters and registers the RX callback path, then initializes
  * the CAN communications layer so CAN RX/TX handling is ready before runtime

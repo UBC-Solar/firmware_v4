@@ -10,6 +10,7 @@
  */
 
 #include "lcd_driver.h"
+#include "stm32f1xx_hal.h"
 
 /* Internal SPI handle for LCD communication */
 static SPI_HandleTypeDef* sg_spi_handle = NULL;
@@ -62,6 +63,13 @@ void LcdDriverClearBoundingBox(unsigned char x1,
             lcd_buffer[array_pos] = 0;
         }
     }
+}
+
+void LcdDriverForceClearBoundingBox(unsigned char x1,unsigned char y1,unsigned char x2,unsigned char y2)
+{
+    LcdDriverClearBoundingBox(x1, y1, x2, y2);
+    lcd_dirty_pages = LCD_DRIVER_DIRTY_PAGE_CHANGE;
+    LcdDriverRefresh();
 }
 
 void LcdDriverRefresh()

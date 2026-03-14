@@ -35,6 +35,14 @@ void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data);
 void LcdAppCanRxHandler(uint32_t msg_id, uint8_t* data);
 
 /**
+ * @brief CAN rx function which parses message data needed by the fault handler
+ *
+ * @param msg_id 	The id of the CAN message
+ * @param data  	The data of the CAN message
+ */
+void FaultHandlerCanRxHandler(uint32_t msg_id, uint8_t* data);
+
+/**
  * @brief Packs and sends the motor command, optionally from an interrupt service routine.
  * @param motor_command Pointer to the motor control command.
  * @param isr True if called from ISR, false otherwise.

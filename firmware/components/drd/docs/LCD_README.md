@@ -24,12 +24,12 @@ Possible differences
 ## How to use the Driver
 `lcd_driver.c` initializes the SPI peripheral for communication to the lcd and contains functions to help display values:
 1. `LcdDriverSetPixel()` draws a pixel at a specified location.
-2. `LcdDriverClearBoundingBox()` clears a bounding box.
+2. `LcdDriverClearBoundingBox()` clears a bounding box. NOTE: DUE TO THE DRIVER, THIS DOES NOT CHANGE THE SCREEN AFTER A REFRESH DUE TO THE ST7565_DIRTY_PAGES constant not being set. Use `LcdDriverForceClearBoundingBox()` if need to clear without drawing to the screen. This will create a flashing effect tho.
 3. `LcdDriverDrawRectangle()` draws a rectangle.
 4. `LcdDriverDrawText()`draws text based on the font libraries in `font_verdana.c`.
 5. `LcdDriverDrawChar()` draws a character.
 
-Optimization: ST7565_DIRTY_PAGES is an optimization constant that creates the variable lcd_dirty_pages. The screen will only update if lcd_dirty_pages != 0 which happens in `LcdDriverRefresh()`. Firmware is optimized to avoid errors in refreshing page.
+Optimization: ST7565_DIRTY_PAGES is an optimization constant that creates the variable lcd_dirty_pages. The screen will only update if lcd_dirty_pages != 0. This only happens when a pixel is set with `LcdDriverSetPixel()`. Firmware is optimized to avoid errors in refreshing page.
 
 ## Font Libraries
 All font libraries are included in `font_verdana.c`. If a character is needed search through the fonts [here](https://github.com/edeca/Electronics/tree/master/Include/fonts). If it is not included either hardcode it or ask ChatGPT to generate a Bitmap. Creating your bitmap is possible, but unideal and tedious. 

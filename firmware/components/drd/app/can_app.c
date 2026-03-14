@@ -7,12 +7,17 @@
 
 /* INCLUDES */
 #include "drive_state.h"
+#include "tasks.h"
 #include "lcd_app.h"
 #include "soc.h"
 #include "can_driver.h"
 #include "can_app.h"
 #include "CAN_comms.h"
 #include "cyclic_data_handler.h"
+#include "fault_handler.h"
+#include "external_lights.h"
+#include <string.h>
+
 
 /* FUNCTION PROTOTYPES */
 /**
@@ -103,13 +108,14 @@ void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 	{
 		CAN_ID = CAN_comms_Rx_msg->header.StdId; // Get CAN ID
 	}
-
+    FaultHandlerCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
     VehicleStateCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
+    LcdAppCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
+    ExternalLightsCanRxHandle(CAN_ID, CAN_comms_Rx_msg->data);
 }
 
 void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data)
 {
-
     switch (msg_id)
     {
     case FRAME0:
@@ -127,56 +133,56 @@ void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data)
     }
 }
 
-/*
- * @brief CAN rx function which parses message data needed by the LCD
- *
- * @param msg_id 	The id of the CAN message
- * @param data  	The data of the CAN message
- */
 void LcdAppCanRxHandler(uint32_t msg_id, uint8_t* data)
 { 
-    //TODO: Filter temperatures and figure out the event flag for SOC
-    if (msg_id == CAN_ID_PACK_CURRENT)
-    {
+    switch (msg_id) {
+    case CAN_ID_ECU: { // Update pack current and voltage for SOC calculation
         int16_t tmp_pack_current = (data[1] << 8) | (data[0]);
         tmp_pack_current /= 65.535;
         CyclicDataSetPackCurrent(tmp_pack_current);
         g_pack_current_soc = tmp_pack_current;
+        break;
+    } 
+    case CAN_ID_PACK_VOLTAGE: { // Update pack voltage and trigger SOC calculation
+        uint16_t tmp_pack_voltage = (data[1] << 8) | (data[0]);
+        tmp_pack_voltage /= PACK_VOLTAGE_DIVISOR;
+        CyclicDataSetPackVoltage(tmp_pack_voltage);
+        g_total_pack_voltage_soc = tmp_pack_voltage;
+
+        osEventFlagsSet(calculate_soc_flagHandle, SOC_CALCULATE_ON);
+        break;
     }
-
-    // if (msg_id == CAN_ID_PACK_VOLTAGE)
-    // {
-    //     uint16_t tmp_pack_voltage = (data[1] << 8) | (data[0]);
-    //     tmp_pack_voltage /= PACK_VOLTAGE_DIVISOR;
-    //     CyclicDataSetPackVoltage(tmp_pack_voltage);
-
-    //     g_total_pack_voltage_soc = tmp_pack_voltage;
-
-    //     osEventFlagsSet(calculate_soc_flagHandle, SOC_CALCULATE_ON);
-    // }
-
-    if (msg_id == STR_CAN_MSG_ID)
-    {
-        uint8_t next_page = (data[0] & 1);
-
-        if (next_page)
-        {
-            if (g_lcd_page < LCD_APP_MAXPAGES)
-            {
-                g_lcd_page_change = 1;
-                g_lcd_page++;
-            }
-            else
-            {
-                g_lcd_page_change = 1;
-                g_lcd_page = 1;
-            }
-        }
+    case STR_CAN_MSG_ID: { // Handle page changes for the LCD
+        bool next_page = ((data[0] >> 2) & 0x1);
+        LcdHandlerChangePage(next_page);
+        break;
     }
+    }
+}
 
-    // if (msg_id == CAN_ID_MDI_TEMP)
-    // {
-    //     uint8_t temperature = data[0];
-    //     CyclicDataSetTemperature(temperature);
-    // }
+void FaultHandlerCanRxHandler(uint32_t msg_id, uint8_t* data)
+{
+    // How this is handled: https://docs.google.com/document/d/1lpAI_UW_a7WqzGdEOpQaXZ8MB8aLU-1VR9yYNUQGnVI/edit?usp=sharing
+    switch (msg_id) {
+    case CAN_ID_BATT_FAULTS:
+        FaultHandlerParseBatteryFaults(data);
+        FaultHandlerParseBatteryWarnings(data);
+        break;
+    case CAN_ID_ECU:
+        FaultHandlerEStop(data);
+        FaultHandlerParseECUFaults(data);
+        FaultHandlerParseECUWarnings(data);
+        break;
+    case CAN_ID_PACK_VOLTAGE:
+        FaultHandlerParsePackVoltageFaults(data);
+        break;
+    case CAN_ID_MTR_FAULTS:
+        FaultHandlerParseMotorFaults(data);
+        break;
+        // Other motor faults are handled from drd diagnostics
+    default:
+        // Temperatures come from multiple CAN messages so we parse them in the same handler based on the message ID
+        FaultHandlerParseTemperatures(msg_id, data);
+        break;
+    }
 }

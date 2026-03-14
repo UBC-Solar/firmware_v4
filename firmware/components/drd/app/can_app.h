@@ -40,7 +40,7 @@ void LcdAppCanRxHandler(uint32_t msg_id, uint8_t* data);
  * @param msg_id 	The id of the CAN message
  * @param data  	The data of the CAN message
  */
-void FaultHandlerRxHandler(uint32_t msg_id, uint8_t* data);
+void FaultHandlerCanRxHandler(uint32_t msg_id, uint8_t* data);
 
 /**
  * @brief Packs and sends the motor command, optionally from an interrupt service routine.

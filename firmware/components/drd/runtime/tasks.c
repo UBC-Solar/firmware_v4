@@ -128,6 +128,13 @@ void TasksDiagnostic(void *argument)
     }
 }
 
+// TODO:
+/**
+Just leaving a comment so its on our minds: in the future it might be worth making a handful of tasks that run at slower frequencies and then place whatever functionality we need within those tasks.
+For example, task_100hz, task_1000hz, etc. This means we would save space on the task stacks/context that we are currently spending on a task that only every runs every 100 ms or even 1s.
+However, since we have had no issues, it should be fine for now.
+*/
+
 /* FAULT LIGHT FLASH TASK */
 void TasksFaultLightFlash(void *argument)
 {

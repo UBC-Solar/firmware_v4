@@ -9,13 +9,14 @@
  * @date    Mar 7 2026
  */
 
+#include "cmsis_os2.h"
 #include "fault_handler_driver.h"
 
 void FaultHandlerDriverFlashDebug(){
     HAL_GPIO_WritePin(FLT_MCU_GPIO_Port, FLT_MCU_Pin, GPIO_PIN_SET);
-    HAL_Delay(200);
+    osDelay(200);
     HAL_GPIO_WritePin(FLT_MCU_GPIO_Port, FLT_MCU_Pin, GPIO_PIN_RESET);
-    HAL_Delay(200);
+    osDelay(200);
 }
 
 void FaultHandlerDriverEStop(bool estop) {

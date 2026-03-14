@@ -107,7 +107,7 @@ void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 	{
 		CAN_ID = CAN_comms_Rx_msg->header.StdId; // Get CAN ID
 	}
-    FaultHandlerRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
+    FaultHandlerCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
     VehicleStateCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
     LcdAppCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
     ExternalLightsCanRxHandle(CAN_ID, CAN_comms_Rx_msg->data);
@@ -160,7 +160,7 @@ void LcdAppCanRxHandler(uint32_t msg_id, uint8_t* data)
     }
 }
 
-void FaultHandlerRxHandler(uint32_t msg_id, uint8_t* data)
+void FaultHandlerCanRxHandler(uint32_t msg_id, uint8_t* data)
 {
     // How this is handled: https://docs.google.com/document/d/1lpAI_UW_a7WqzGdEOpQaXZ8MB8aLU-1VR9yYNUQGnVI/edit?usp=sharing
     switch (msg_id) {

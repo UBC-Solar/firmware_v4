@@ -22,7 +22,7 @@
 #include "fault_handler_driver.h"
 #include <string.h>
 
-
+// TODO: Make library with these macros
 #define GETBIT(value, bit) (((value) >> (bit)) & 0x01)
 
 static bool g_last_pack_current_sign = 0;

@@ -102,6 +102,7 @@ static bool ValidateAdcReadings(uint16_t adc1, uint16_t adc2)
         return false;
     }
     #endif
+    //TODO: This is app in driver dont do that
     DiagnosticSetThrottleADCOutOfRange(false);
     DiagnosticSetThrottleADCMismatch(false);
 

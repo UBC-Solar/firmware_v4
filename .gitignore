@@ -56,3 +56,6 @@ build/
 *.idx
 *.index
 *.cache
+
+# Test environments
+firmware/components/drd/test/test_scripts/environment/

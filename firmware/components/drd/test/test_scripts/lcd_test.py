@@ -25,6 +25,7 @@ class DRDTest:
         self.prevswitch = 0
 
     def run_test(self):
+        self.clearbus(self.bus)
         #  Test drive page speed and drive_state
         print("\nDrive Page Test and Speed")
         self.test_drive_page()
@@ -79,6 +80,10 @@ class DRDTest:
     def test_fault_page(self):
         #NOT DONE: Motor_Comm Fault, Throttle Out of Range, Throttle Mismatch, Not sent over CAN
         #Need to Test DCOC and COC with negative ECU pack current
+        print("Test Estop LED")
+        send_message(0x450, [0,0,0,0,0,(1 << 5),0,0])
+        time.sleep(1)
+        send_message(0x450, [0,0,0,0,0,0,0,0])
 
         print("Testing Slave Board Comm Fault and BMS Self Test Fault")
         send_message(0x622, [(1<<0)|(1<<1),0,0,0,0,0,0,0])
@@ -146,13 +151,12 @@ class DRDTest:
         send_message(0x622, [0,0,0,0,0,0,0,0])
         time.sleep(1)
 
-        print("Testing 8 faults on page")
+        print("Testing 5 faults on page")
         send_message(0x450, [0,0,0,0,0,(1<<4),0,0])
         send_message(0x08A50225,[(1<<3),0,(1<<1)|(1<<3),(1<<0),0,0,0,0], isextended_id=True)
         time.sleep(1)
         send_message(0x450, [0,0,0,0,0,0,0,0])
         send_message(0x08A50225, [0,0,0,0,0,0,0,0], isextended_id=True)
-        send_message(0x403, [0,0,0,0,0,0,0,0])
         time.sleep(1)
         
 
@@ -276,6 +280,7 @@ if(__name__ == "__main__"):
         print("CAN bus initialized")
         drd_test = DRDTest(bus)
         drd_test.clearbus(bus)
+        drd_test.test_fault_page()
         drd_test.run_test()
         # drd_test.run_test()
         print("Test completed")

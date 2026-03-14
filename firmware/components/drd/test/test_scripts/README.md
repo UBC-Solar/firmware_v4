@@ -13,7 +13,10 @@ candump -td -H -x -c can0
 ### To inject a single CAN Message:
 ```
 # Syntax: cansend <interface> <ID>#<DATA in HEX>
+# Changes page
 cansend can0 580#04
+# Changes page
+cansend can0 580#00
 ```
 
 ### To test multiple CAN Messages with a python script:

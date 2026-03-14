@@ -43,7 +43,7 @@ void FaultHandlerEStop(uint8_t* can_rx_data) {
 }
 
 void FaultHandlerParseBatteryFaults(uint8_t* can_rx_data){    
-    // TODO: v4 figure out what supplo is
+    // TODO: v4 figure out what supplo is(v4 thing)
     LcdHandlerSetBatterySlaveBoardCommFault(GETBIT(can_rx_data[0], 0));
     LcdHandlerSetBMSSelfTestFault(GETBIT(can_rx_data[0], 1));
     LcdHandlerSetBatteryOvertemp(GETBIT(can_rx_data[0], 2));

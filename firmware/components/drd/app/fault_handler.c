@@ -110,7 +110,8 @@ void FaultHandlerParseBatteryWarnings(uint8_t* can_rx_data) {
     LcdHandlerSetHighVoltWarning(GETBIT(can_rx_data[1], 6));
     LcdHandlerSetLowTempWarning(GETBIT(can_rx_data[1], 7));
     LcdHandlerSetHighTempWarning(GETBIT(can_rx_data[2], 0));
-    LcdHandlerSetNoEcuMessageWarning(GETBIT(can_rx_data[2], 2));
+    //TODO: figure out what No ECU Message actually is
+    //LcdHandlerSetNoEcuMessageWarning(GETBIT(can_rx_data[2], 2));
 }
 
 void FaultHandlerParseECUWarnings(uint8_t* can_rx_data) {

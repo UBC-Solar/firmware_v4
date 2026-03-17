@@ -22,9 +22,9 @@ static LcdAppMotorFaults g_lcd_motor_faults = {0};
 static LcdAppWarnings g_lcd_warnings = {0};
 static LcdAppTemperature g_lcd_temperatures[8] = {0};
 static uint8_t g_lcd_page = 1;
-static bool g_change_page = false;
-static bool g_prev_change_page = false;
-static bool g_prev_fault = false;
+static bool g_str_change_page_flag = false;
+static volatile bool g_prev_change_page = true;
+static volatile bool g_prev_fault = false;
 
 /* STATIC FUNCTION DECLARATION*/
 /**
@@ -57,7 +57,7 @@ void LcdHandlerPageController(void)
     // Fault Logic - Trigger Page Change on rising edge of fault detection
     bool check_fault = LcdAppCheckFaults(&g_lcd_batt_faults, &g_lcd_motor_faults);
     // Page Logic - Trigger Page Change on flag set by CAN message
-    if(g_change_page){
+    if(g_str_change_page_flag){
         // Check if page is above 5 pages
         if (g_lcd_page < LCD_HANDLER_MAXPAGES) {
             LcdDriverChangeScreen();
@@ -67,7 +67,7 @@ void LcdHandlerPageController(void)
             LcdDriverChangeScreen();
             g_lcd_page = 1;
         }
-        g_change_page = false;
+        g_str_change_page_flag = false;
     }
     if(check_fault && !g_prev_fault) {
         LcdDriverChangeScreen();
@@ -127,9 +127,9 @@ void LcdHandlerPageController(void)
 }
 
 void LcdHandlerChangePage(bool change_page){
-    // Trigger on rising or falling edge of next_page from CAN Message
-    if (change_page != g_prev_change_page) {
-        g_change_page = true;
+    // Trigger on rising edge of next_page from CAN Message
+    if (g_prev_change_page == true && change_page == false) {
+        g_str_change_page_flag = true;
     }
     // Set prev_change_page to be change_page to only trigger on rising edge. 
     g_prev_change_page = change_page;

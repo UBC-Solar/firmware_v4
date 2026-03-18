@@ -4,6 +4,7 @@
     "${workspaceFolder}/firmware/components/mdi",
     "${workspaceFolder}/firmware/components/drd",
     "${workspaceFolder}/firmware/components/hvc",
+    "${workspaceFolder}/firmware/components/mst",
   ],
   "cmake.buildDirectory": "${sourceDirectory}/build",
   "cmake.cmakePath": "cube-cmake",

@@ -24,6 +24,12 @@ CompileFlags:
   
 ---
 If:
+  PathMatch: "firmware/components/mst/.*"
+CompileFlags:
+  CompilationDatabase: firmware/components/mst/build/Debug
+  
+---
+If:
   PathMatch: "firmware/common/.*"
 CompileFlags:
   CompilationDatabase: firmware/components/drd/build/Debug

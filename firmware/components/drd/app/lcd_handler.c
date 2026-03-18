@@ -127,11 +127,11 @@ void LcdHandlerPageController(void)
 }
 
 void LcdHandlerChangePage(bool change_page){
-    // Trigger on rising edge of next_page from CAN Message
+    // Trigger on falling edge of next_page from CAN Message
     if (g_prev_change_page == true && change_page == false) {
         g_str_change_page_flag = true;
     }
-    // Set prev_change_page to be change_page to only trigger on rising edge. 
+    // Set prev_change_page to be change_page to only trigger on falling edge. 
     g_prev_change_page = change_page;
 }
 

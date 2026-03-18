@@ -1,0 +1,6 @@
+#!/home/gregorybian/Desktop/UBC_Solar/firmware_v4/firmware/components/drd/test/test_scripts/environment/bin/python
+import sys
+from can.viewer import main
+if __name__ == '__main__':
+    sys.argv[0] = sys.argv[0].removesuffix('.exe')
+    sys.exit(main())

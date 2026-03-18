@@ -15,7 +15,11 @@ If:
   PathMatch: "firmware/components/tel/.*"
 CompileFlags:
   CompilationDatabase: firmware/components/tel/build/Debug
-  
+---
+If:
+  PathMatch: "firmware/components/aerosensor/.*"
+CompileFlags:
+  CompilationDatabase: firmware/components/tel/build/Debug
 ---
 If:
   PathMatch: "firmware/common/.*"

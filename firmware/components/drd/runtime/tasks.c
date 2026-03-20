@@ -10,10 +10,22 @@
 /* INCLUDES */
 #include "tasks.h"
 #include "cmsis_os2.h"
+#include "iwdg_app.h"
+#include "lcd_handler.h"
+#include "fault_handler.h"
+#include "debug_io.h"
+#include "cyclic_data_handler.h"
+#include "spi.h"
+#include "external_lights.h"
+#include "diagnostic.h"
 
 /* DRIVE STATE TASK */
-void TasksDriveState(void)
+void TasksDriveState(void* argument)
 {
+    (void)argument; // Unused parameter
+
+    uint32_t motor_controller_count = 0;
+
     for (;;)
     {
         if ((motor_controller_count % 4) == 0) {

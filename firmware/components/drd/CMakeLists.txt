@@ -75,7 +75,9 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/iwdg_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/can_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/tasks.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/app/diagnostics.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/interrupts.c
+    ${COMMON_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/CAN_comms/CAN_comms.c
 )
 
 # Add include paths
@@ -84,6 +86,9 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/app
     ${CMAKE_CURRENT_SOURCE_DIR}/driver
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/test_scripts/
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/cyclic_data/
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/debug_io
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/CAN_comms
 )
 

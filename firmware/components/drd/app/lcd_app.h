@@ -1,3 +1,15 @@
+/**
+ * @file    lcd_app.h
+ * @brief   LCD application header file for UBC Solar DRD board
+ *
+ * This header declares the data structures, constants, and function prototypes for the LCD application. 
+ * The module implements a controller to handle what is displayed on each page and handles the page transitions.
+ *
+ * @author  Gregory Bian
+ * @date    Feb 4 2026
+ */
+
+
 #ifndef __LCD_APP_H
 #define __LCD_APP_H
 
@@ -7,6 +19,8 @@
 
 // #include "drive_state.h"
 #include "font_verdana.h"
+#include "lcd_handler.h"
+#include "drive_state.h"
 #include "stdbool.h"
 #include "stdint.h"
 #include <main.h>
@@ -54,9 +68,9 @@
 #define LCD_APP_STATE_FONT (Verdana16)
 #define LCD_APP_FORWARD_STATE 0x01
 #define LCD_APP_FORWARD_SYMBOL 'D'
-#define LCD_APP_PARK_STATE 0x03
+#define LCD_APP_PARK_STATE 0x02
 #define LCD_APP_PARK_SYMBOL 'P'
-#define LCD_APP_REVERSE_STATE 0x04
+#define LCD_APP_REVERSE_STATE 0x03
 #define LCD_APP_REVERSE_SYMBOL 'R'
 #define LCD_APP_ERROR_SYMBOL 'X'
 #define LCD_APP_STATE_SPACING 1
@@ -109,6 +123,7 @@
 #define LCD_APP_FAULT_EIGHT_Y8 52
 
 #define LCD_APP_BATT_FLT_CHARS "BAT_FLT"
+#define LCD_APP_BATT_SELFTEST_FLT_CHARS "SELF_TST"
 #define LCD_APP_BATT_SUPPLO_FLT_CHARS "SUPP_LOW"
 #define LCD_APP_BATT_VOLTHIGH_FLT_CHARS "VOLT_HIGH"
 #define LCD_APP_BATT_VOLTLOW_FLT_CHARS "VOLT_LOW"
@@ -118,7 +133,7 @@
 #define LCD_APP_BATT_OVERTEMP_FLT_CHARS "BAT_OTMP"
 #define LCD_APP_BATT_CHARGE_OC_FLT_CHARS "BAT_COC"
 #define LCD_APP_BATT_DISCHARGE_OC_FLT_CHARS "BAT_DCOC"
-#define LCD_APP_BATT_RST_FROM_WATCH_FLT_CHARS "BAT_RFW"
+#define LCD_APP_BATT_RST_FROM_WATCH_FLT_CHARS "ECU_RFW"
 
 #define LCD_APP_MTR_SYSTEM_FLT_CHARS "MTR_SYS"
 #define LCD_APP_MTR_OVERCURR_FLT_CHARS "MTR_OCUR"
@@ -231,7 +246,7 @@
 
 #define LCD_APP_DEBUG_SPEED_FONT (Verdana32)
 #define LCD_APP_DEBUG_SPEED_X 35
-#define LCD_APP_DEBUG_SPEED_ONEDIGIT_X 84
+#define LCD_APP_DEBUG_SPEED_ONEDIGIT_X 80
 #define LCD_APP_DEBUG_SPEED_TWODIGIT_X 57
 #define LCD_APP_DEBUG_SPEED_THREEDIGIT_X 42
 #define LCD_APP_DEBUG_SPEED_Y 22
@@ -263,139 +278,22 @@
 #define LCD_APP_DEBUG_STATE_FONT (Verdana16)
 #define LCD_APP_DEBUG_STATE_SPACING 1
 
-/** LCD Screen Constants */
-#define LCD_APP_MAXPAGES 5
-
-#define LCD_APP_UPDATE_DELAY 200
-
-/*	Datatypes */
-typedef struct
-{
-    volatile uint32_t* speed;
-    volatile uint8_t speed_units;
-    volatile int16_t* pack_current;
-    volatile uint16_t* pack_voltage;
-    volatile uint8_t* drive_state;
-    volatile uint8_t* soc;
-    volatile uint8_t drive_mode;
-} LcdAppData;
-
-typedef struct
-{
-    volatile uint8_t* temperature;
-    uint8_t temp_label;
-} LcdAppTemperature;
-
-typedef enum
-{
-    MPPTA = (uint8_t)0x00,
-    MPPTB = (uint8_t)0x01,
-    MPPTC = (uint8_t)0x02,
-    MPPTD = (uint8_t)0x03,
-    BATT_MIN = (uint8_t)0x04,
-    BATT_MAX = (uint8_t)0x05,
-    MOTOR_CONT = (uint8_t)0x06,
-    MOTOR_THERM = (uint8_t)0x07
-} LcdAppTemperatureLabel;
-
-typedef enum
-{
-    INVALID = (uint8_t)0x00,
-    FORWARD = (uint8_t)0x01,
-    CRUISE = (uint8_t)0x02,
-    PARK = (uint8_t)0x03,
-    REVERSE = (uint8_t)0x04
-} drive_state_t;
-
-typedef struct
-{
-    volatile bool battery_fault;
-    volatile bool supp_lo;
-    volatile bool voltage_high;
-    volatile bool voltage_low;
-    volatile bool slave_board_comm_fault;
-    volatile bool overvolt_fault;
-    volatile bool undervolt_fault;
-    volatile bool overtemp_fault;
-    volatile bool charge_overcurrent_fault;
-    volatile bool discharge_overcurrent_fault;
-    volatile bool reset_from_watchdog;
-} LcdAppBattFaults;
-
-typedef enum {
-    BATTERY_FAULT = 0x00,
-    SUPP_LO = 0x01,
-    VOLTAGE_HIGH = 0x02,
-    VOLTAGE_LOW = 0x03,
-    SLAVE_BOARD_COMM_FAULT = 0x04,
-    OVERVOLT_FAULT = 0x05,
-    UNDERVOLT_FAULT = 0x06,
-    OVERTEMP_FAULT = 0x07,
-    CHARGE_OVERCURRENT_FAULT = 0x08,
-    DISCHARGE_OVERCURRENT_FAULT = 0x09,
-    RESET_FROM_WATCHDOG = 0x0A
-} LcdAppBattFaultIndex;
-
-typedef struct
-{
-    volatile bool motor_system_error;
-    volatile bool overcurrent_fault;
-    volatile bool overvoltage_fault;
-    volatile bool fet_thermistor_error;
-    volatile bool motor_comm_fault;
-    volatile bool throttle_adc_outofrange;
-    volatile bool throttle_adc_mismatch;
-} LcdAppMotorFaults;
-
-typedef enum {
-    MOTOR_SYSTEM_ERROR = 0x00,
-    OVERCURRENT_FAULT = 0x01,
-    OVERVOLTAGE_FAULT = 0x02,
-    FET_THERMISTOR_ERROR = 0x03,
-    MOTOR_COMM_FAULT = 0x04,
-    THROTTLE_ADC_OUT_OF_RANGE = 0x05,
-    THROTTLE_ADC_MISMATCH = 0x06
-} LcdAppMotorFaultIndex;
-
-typedef struct
-{
-    volatile bool low_volt_warning;
-    volatile bool high_volt_warning;
-    volatile bool low_temp_warning;
-    volatile bool high_temp_warning;
-    volatile bool no_ecu_message;
-    volatile bool pack_overdischarge;
-    volatile bool pack_overcharge;
-} LcdAppWarnings;
-
-typedef enum {
-    LOW_VOLT_WARNING = 0x00,
-    HIGH_VOLT_WARNING = 0x01,
-    LOW_TEMP_WARNING = 0x02,
-    HIGH_TEMP_WARNING = 0x03,
-    NO_ECU_MSG_WARNING = 0x04,
-    PACK_OVERDISCHARGE_WARNING = 0x05,
-    PACK_OVERCHARGE_WARNING = 0x06
-} LcdAppWarningIndex;
-
-typedef enum
-{
-    DRIVE_PAGE = 0x00,
-    FAULTS_PAGE = 0x01,
-    WARNINGS_PAGE = 0x02,
-    TEMPERATURE_PAGE = 0x03,
-    DEBUG_PAGE = 0x04
-} LcdAppScreens;
-
-/*	User Variables	*/
-extern LcdAppData g_lcd_data;
-extern LcdAppBattFaults g_lcd_batt_faults;
-extern LcdAppMotorFaults g_lcd_motor_faults;
-extern LcdAppWarnings g_lcd_warnings;
-extern LcdAppTemperature g_lcd_temperatures[8];
-extern uint8_t g_lcd_page;
-extern uint8_t g_lcd_page_change;
-
+/**
+ * @brief Checks and updates the faults.
+ *
+ * @param batt_faults A struct containing the battery faults.
+ * @param motor_faults A struct containing the motor faults.
+ * @return The count of faults.
+ */
+uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults);
+/**
+ * @brief Checks and updates the warnings.
+ *
+ * @param warnings A struct containing the warnings
+ *
+ * @return The count of warnings.
+ */
+uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings);
 /**
  * @brief Displays the speed on the LCD.
  *
@@ -409,7 +307,7 @@ void LcdAppDisplaySpeedDrivePage(volatile uint32_t* speed, volatile uint8_t unit
  *
  * @param state The drive state (e.g., FORWARD_STATE, PARK_STATE, REVERSE_STATE).
  */
-void LcdAppDisplayDriveStateDrivePage(volatile drive_state_t* state);
+void LcdAppDisplayDriveStateDrivePage(volatile DriveStateStates* state);
 
 /**
  * @brief Displays the state of charge (SOC) on the LCD.
@@ -464,9 +362,9 @@ void LcdAppDisplayWarningIndicator(LcdAppWarnings* warnings);
 void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults);
 
 /**
- * @brief Displays a motor faults on the LCD
+ * @brief Dynamically displays car warnings on the LCD
  *
- * @param fault_indicator An indicator to see who
+ * @param warnings The warnings to be displayed on the LCD
  */
 void LcdAppDisplayWarnings(LcdAppWarnings* warnings);
 
@@ -478,12 +376,6 @@ void LcdAppDisplayWarnings(LcdAppWarnings* warnings);
  */
 void LcdAppDisplaySpeedDebugPage(volatile uint32_t* speed, volatile uint8_t units);
 
-// /**
-//  * @brief Displays the drive state on the LCD.
-//  *
-//  * @param state The drive state (e.g., FORWARD_STATE, PARK_STATE, REVERSE_STATE).
-//  */
-// void LcdAppDisplayDriveStateDebugPage(volatile drive_state_t* state);
 
 /**
  * @brief Displays the state of charge (SOC) on the LCD.
@@ -497,31 +389,8 @@ void LcdAppDisplaySocDebugPage(volatile uint32_t* soc);
  *
  * @param state The drive state (e.g., FORWARD_STATE, PARK_STATE, REVERSE_STATE).
  */
-void LcdAppDisplayDriveStateDebugPage(volatile drive_state_t* state);
+void LcdAppDisplayDriveStateDebugPage(volatile DriveStateStates* state);
 
-/**
- * @brief Changes the screen
- */
-void LcdAppChangeScreen();
 
-/*
- * @brief CAN rx function which parses message data needed by the LCD
- *
- * @param msg_id 	The id of the CAN message
- * @param data  	The data of the CAN message
- */
-void LcdAppCanRxHandle(uint32_t msg_id, uint8_t* data);
-
-/**
- * @brief Initializes the LCD App and SPI interface.
- *
- * @param hspi Pointer to the SPI handle.
- */
-void LcdAppInit(SPI_HandleTypeDef* hspi);
-
-/**
- * @brief Handles the screen logic for the LCD App, including page changes and updating displayed data.
- */
- void LcdAppPageController(void);
 
 #endif // LCD_GRAPHICS_H

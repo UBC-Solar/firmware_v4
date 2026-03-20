@@ -1,3 +1,14 @@
+/**
+ * @file    font_verdana.c
+ * @brief   Font data for variousfonts used in the LCD application
+ *
+ * This file contains the bitmap data and index for the Verdana 8pt font, which is used in the LCD application
+ * to render text on the display. The font is proportional and has a height of 11 pixels.
+ *
+ * @author  Gregory Bian
+ * @date    Feb 4 2026
+ */
+
 #include "font_verdana.h"
 
 //---------------------------------------------------------------

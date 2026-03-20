@@ -1,3 +1,15 @@
+/**
+ * @file    lcd_driver.h
+ * @brief   LCD driver header file for the UBC Solar DRD board
+ *
+ * This header file contains the function prototypes and constants for the LCD driver used in the DRD board.
+ * It defines the interface for initializing the LCD, drawing pixels, rectangles, and text, and refreshing
+ * the display. The driver is designed to work with the ST7565 LCD controller.
+ *
+ * @author  Gregory Bian
+ * @date    Feb 4 2026
+ */
+
 #ifndef __LCD_DRIVER_H__
 #define __LCD_DRIVER_H__
 
@@ -68,10 +80,10 @@ void LcdDriverSetPixel(uint8_t x, uint8_t y, uint8_t colour);
 /**
  * @brief Clears a rectangular area in the internal display buffer.
  *
- * @param x1 Left coordinate (1-based).
- * @param y1 Top coordinate (1-based).
- * @param x2 Right coordinate (1-based).
- * @param y2 Bottom coordinate (1-based).
+ * @param x1 Left coordinate (0-based).
+ * @param y1 Top coordinate (0-based).
+ * @param x2 Right coordinate (0-based).
+ * @param y2 Bottom coordinate (0-based).
  */
 void LcdDriverClearBoundingBox(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2);
 
@@ -90,6 +102,16 @@ void LcdDriverRefresh();
  * @param color 1 to draw pixel.
  */
 void LcdDriverDrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t color);
+
+/**
+ * @brief Forces a clear a rectangular area in the internal display buffer.
+ *
+ * @param x1 Left coordinate (0-based).
+ * @param y1 Top coordinate (0-based).
+ * @param x2 Right coordinate (0-based).
+ * @param y2 Bottom coordinate (0-based).
+ */
+void LcdDriverForceClearBoundingBox(unsigned char x1,unsigned char y1,unsigned char x2,unsigned char y2);
 
 /**
  * @brief Draws a text string using an external graphics library.

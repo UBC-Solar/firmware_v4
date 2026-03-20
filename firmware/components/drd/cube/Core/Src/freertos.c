@@ -19,6 +19,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
+#include "cmsis_os2.h"
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
@@ -26,11 +27,16 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "tasks.h"
+#include "can_driver.h"
+#include "external_lights.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
+typedef StaticTask_t osStaticThreadDef_t;
 /* USER CODE BEGIN PTD */
 typedef StaticTask_t osStaticThreadDef_t;
+typedef StaticEventGroup_t osStaticEventGroupDef_t;
+typedef StaticEventGroup_t osStaticEventGroupDef_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -57,7 +63,7 @@ const osThreadAttr_t TasksLcdUpdate_attributes = {
   .cb_size = sizeof(TasksLcdUpdateControlBlock),
   .stack_mem = &TasksLcdUpdateBuffer[0],
   .stack_size = sizeof(TasksLcdUpdateBuffer),
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 
 /* Definitions for TasksDriveState */
@@ -73,12 +79,96 @@ const osThreadAttr_t TasksDriveState_attributes = {
   .stack_size = sizeof(TasksDriveStateBuffer),
   .priority = (osPriority_t) osPriorityLow,
 };
+
+/* Definitions for TasksCalculateSoc */
+osThreadId_t TasksCalculateSocHandle;
+uint32_t TasksCalculateSocBuffer[512];
+osStaticThreadDef_t TasksCalculateSocControlBlock;
+
+const osThreadAttr_t TasksCalculateSoc_attributes = {
+  .name = "TasksCalculateSoc",
+  .cb_mem = &TasksCalculateSocControlBlock,
+  .cb_size = sizeof(TasksCalculateSocControlBlock),
+  .stack_mem = &TasksCalculateSocBuffer[0],
+  .stack_size = sizeof(TasksCalculateSocBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
+
+/* Definitions for TasksExternalLights */
+osThreadId_t TasksExternalLightsHandle;
+uint32_t TasksExternalLightsBuffer[256];
+osStaticThreadDef_t TasksExternalLightsControlBlock;
+
+const osThreadAttr_t TasksExternalLights_attributes = {
+  .name = "TasksExtLights",
+  .cb_mem = &TasksExternalLightsControlBlock,
+  .cb_size = sizeof(TasksExternalLightsControlBlock),
+  .stack_mem = &TasksExternalLightsBuffer[0],
+  .stack_size = sizeof(TasksExternalLightsBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
+
+osEventFlagsId_t calculate_soc_flagHandle;
+osStaticEventGroupDef_t calculate_soc_flagControlBlock;
+const osEventFlagsAttr_t calculate_soc_flag_attributes = {
+  .name = "calculate_soc_flag",
+  .cb_mem = &calculate_soc_flagControlBlock,
+  .cb_size = sizeof(calculate_soc_flagControlBlock),
+};
+
+/* Definitions for TasksDiagnostic */
+osThreadId_t TasksDiagnosticHandle;
+uint32_t TasksDiagnosticBuffer[128];
+osStaticThreadDef_t TasksDiagnosticControlBlock;
+
+const osThreadAttr_t TasksDiagnostic_attributes = {
+  .name = "TasksDiagnostic",
+  .cb_mem = &TasksDiagnosticControlBlock,
+  .cb_size = sizeof(TasksDiagnosticControlBlock),
+  .stack_mem = &TasksDiagnosticBuffer[0],
+  .stack_size = sizeof(TasksDiagnosticBuffer),
+  .priority = (osPriority_t) osPriorityNormal,
+};
+
+/* Definitions for TasksFaultLightFlash */
+osThreadId_t TasksFaultLightFlashHandle;
+uint32_t TasksFaultLightFlashBuffer[128];
+osStaticThreadDef_t TasksFaultLightFlashControlBlock;
+
+const osThreadAttr_t TasksFaultLightFlash_attributes = {
+  .name = "TasksFaultLightFlash",
+  .cb_mem = &TasksFaultLightFlashControlBlock,
+  .cb_size = sizeof(TasksFaultLightFlashControlBlock),
+  .stack_mem = &TasksFaultLightFlashBuffer[0],
+  .stack_size = sizeof(TasksFaultLightFlashBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
+
+/* Definitions for TasksTimeSinceStartup */
+osThreadId_t TasksTimeSinceStartupHandle;
+uint32_t TasksTimeSinceStartupBuffer[128];
+osStaticThreadDef_t TasksTimeSinceStartupControlBlock;
+
+const osThreadAttr_t TasksTimeSinceStartup_attributes = {
+  .name = "TasksTimeSinceStartup",
+  .cb_mem = &TasksTimeSinceStartupControlBlock,
+  .cb_size = sizeof(TasksTimeSinceStartupControlBlock),
+  .stack_mem = &TasksTimeSinceStartupBuffer[0],
+  .stack_size = sizeof(TasksTimeSinceStartupBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
+
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
+uint32_t defaultTaskBuffer[ 128 ];
+osStaticThreadDef_t defaultTaskControlBlock;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 128 * 4,
+  .cb_mem = &defaultTaskControlBlock,
+  .cb_size = sizeof(defaultTaskControlBlock),
+  .stack_mem = &defaultTaskBuffer[0],
+  .stack_size = sizeof(defaultTaskBuffer),
   .priority = (osPriority_t) osPriorityNormal,
 };
 
@@ -122,9 +212,22 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
+
+  /* creation of TasksCalculateSoc */
+  TasksCalculateSocHandle = osThreadNew(TasksCalculateSoc, NULL, &TasksCalculateSoc_attributes);
+  /* creation of TasksDriveState */
+  TasksDriveStateHandle = osThreadNew(TasksDriveState, NULL, &TasksDriveState_attributes);
   /* creation of TasksLcdUpdate */
   TasksLcdUpdateHandle = osThreadNew(TasksLcdUpdate, NULL, &TasksLcdUpdate_attributes);
-    //TasksDriveStateHandle = osThreadNew(TasksDriveState, NULL, &TasksDriveState_attributes);
+  /* creation of TasksExternalLights */
+  TasksExternalLightsHandle = osThreadNew(TasksExternalLights, NULL, &TasksExternalLights_attributes);
+  /* creation of TasksDiagnostic */
+  TasksDiagnosticHandle = osThreadNew(TasksDiagnostic, NULL, &TasksDiagnostic_attributes);
+  /* creation of TasksFaultLightFlash */
+  TasksFaultLightFlashHandle = osThreadNew(TasksFaultLightFlash, NULL, &TasksFaultLightFlash_attributes);
+  /* creation of TasksTimeSinceStartup */
+  TasksTimeSinceStartupHandle = osThreadNew(TasksTimeSinceStartup, NULL, &TasksTimeSinceStartup_attributes);
+
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -147,7 +250,7 @@ void StartDefaultTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    osDelay(100);
   }
   /* USER CODE END StartDefaultTask */
 }

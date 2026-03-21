@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "bmp3.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -31,13 +31,6 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define BMP390_ADDR        (0x76 << 1)   // or 0x77 << 1
-
-#define BMP390_REG_CHIP_ID 0x00
-#define BMP390_REG_STATUS  0x03
-#define BMP390_REG_DATA    0x04
-#define BMP390_REG_PWR_CTRL 0x1B
-#define BMP390_REG_OSR     0x1C
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -62,63 +55,7 @@ static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_I2C2_Init(void);
 /* USER CODE BEGIN PFP */
-void BMP390_Init(I2C_HandleTypeDef *hi2c)
-{
-    uint8_t data;
 
-    // Check chip ID (should be 0x60)
-    if (HAL_I2C_Mem_Read(hi2c, BMP390_ADDR, BMP390_REG_CHIP_ID, 1, &data, 1, HAL_MAX_DELAY) != HAL_OK) {
-        Error_Handler();
-    }
-
-    if (data != 0x60) {
-        // sensor not found
-        Error_Handler();
-    }
-
-    // Set oversampling (recommended minimum: temp x4, press x4)
-    uint8_t osr = (2 << 3) | (2 << 0);
-    if (HAL_I2C_Mem_Write(hi2c, BMP390_ADDR, BMP390_REG_OSR, 1, &osr, 1, HAL_MAX_DELAY) != HAL_OK) {
-        Error_Handler();
-    }
-
-    // Enable pressure + temperature + normal mode
-    // Bit0 = press_en
-    // Bit1 = temp_en
-    // Bit[5:4] = mode = 11 (normal mode)
-    data = (1 << 0) | (1 << 1) | (3 << 4);
-
-    if (HAL_I2C_Mem_Write(hi2c, BMP390_ADDR, BMP390_REG_PWR_CTRL, 1, &data, 1, HAL_MAX_DELAY) != HAL_OK) {
-        Error_Handler();
-    }
-}
-
-void BMP390_ReadRaw(I2C_HandleTypeDef *hi2c, uint32_t *pressure, uint32_t *temperature)
-{
-    uint8_t data[6];
-
-    // Burst read (IMPORTANT for consistency)
-    if (HAL_I2C_Mem_Read(hi2c, BMP390_ADDR, BMP390_REG_DATA, 1, data, 6, HAL_MAX_DELAY) != HAL_OK) {
-        Error_Handler();
-    }
-
-    // Combine 24-bit values
-    *pressure = (data[2] << 16) | (data[1] << 8) | data[0];
-    *temperature = (data[5] << 16) | (data[4] << 8) | data[3];
-}
-
-uint8_t BMP390_DataReady(I2C_HandleTypeDef *hi2c)
-{
-    uint8_t status;
-
-    if (HAL_I2C_Mem_Read(hi2c, BMP390_ADDR, BMP390_REG_STATUS, 1, &status, 1, HAL_MAX_DELAY) != HAL_OK) {
-        Error_Handler();
-    }
-
-    // Bit 5 = pressure ready
-    // Bit 6 = temp ready
-    return (status & ((1 << 5) | (1 << 6)));
-}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -159,12 +96,7 @@ int main(void)
   MX_I2C1_Init();
   MX_I2C2_Init();
   /* USER CODE BEGIN 2 */
-  static uint32_t pressure, temperature;
 
-  // BMP390 startup delay
-  HAL_Delay(10);
-
-  BMP390_Init(&hi2c1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -172,11 +104,6 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-    BMP390_ReadRaw(&hi2c1, &pressure, &temperature);
-
-    // Put breakpoint here or print via UART
-
-    HAL_Delay(100);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

@@ -35,7 +35,8 @@ typedef union {
 
 typedef struct {
     float accel;
-    float cruise_velocity_ms;
+    float set_cruise_velocity_ms;
+    float est_cruise_velocity_ms;
     float prev_cruise_velocity_ms;
 } CruiseData;
 

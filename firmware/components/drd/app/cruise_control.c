@@ -104,7 +104,7 @@ static float Error(float target_velocity_ms, float current_velocity_ms) {
 static float PiControllerForce(float dt, float nominal_force) {
     static float integral = 0.0f;
 
-    float error_value = Error(g_cruise_data.cruise_velocity_ms, GetVelocityMs());
+    float error_value = Error(g_cruise_data.set_cruise_velocity_ms, GetVelocityMs());
 
     bool saturated = isfinite(nominal_force) && (g_cruise_force_data.prev_force_output >= nominal_force);
     if (!saturated) {
@@ -303,7 +303,7 @@ void VelocitySetMs(float dt) {
 
     float f_net = ForceOutput(dt) - (ForceDrag() + ForceRolling() + ForceHill(pitch_degree));
     if (!isfinite(f_net)) {
-        g_cruise_data.cruise_velocity_ms = g_cruise_data.prev_cruise_velocity_ms;
+        g_cruise_data.est_cruise_velocity_ms = g_cruise_data.prev_cruise_velocity_ms;
     }
 
     float accel = f_net / VEHICLE_MASS_KG;
@@ -316,7 +316,7 @@ void VelocitySetMs(float dt) {
 
     g_cruise_data.prev_cruise_velocity_ms = velocity;
 
-    g_cruise_data.cruise_velocity_ms = velocity;
+    g_cruise_data.est_cruise_velocity_ms = velocity;
 }
 
 float GetCruiseAcceleration(void) {

@@ -42,5 +42,8 @@ typedef struct {
 /* FUNCTION PROTOTYPES */
 void VelocitySetMs(float dt);
 float GetCruiseAcceleration(void);
+void ImuStateXCanMsgHandler(uint8_t* data);
+void ImuStateYCanMsgHandler(uint8_t* data);
+void ImuStateZCanMsgHandler(uint8_t* data);
 
 #endif // __CRUISE_CONTROL_H__

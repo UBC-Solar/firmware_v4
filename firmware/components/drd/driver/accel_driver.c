@@ -120,7 +120,7 @@ static uint16_t ConvertToDac(uint16_t adc)
             ADC_NO_THROTTLE_MAX); // Find ratio between 0 to 1 and then * 1023
 }
 
-static uint16_t AccelNormalizeToDac(float value, float min, float max) {
+uint16_t AccelNormalizeToDac(float value, float min, float max) {
     if (value <= min) return MC_DAC_MIN;
     if (value >= max) return MC_DAC_MAX;
 

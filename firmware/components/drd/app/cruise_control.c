@@ -224,7 +224,7 @@ static bool ImuDataValidation(float accel, float gyro) {
     return true;
 }
 
-static void ImuStateXCanMsgHandler(uint8_t* data) {
+void ImuStateXCanMsgHandler(uint8_t* data) {
 
     if (data == NULL) return;
 
@@ -248,7 +248,7 @@ static void ImuStateXCanMsgHandler(uint8_t* data) {
     }
 }
 
-static void ImuStateYCanMsgHandler(uint8_t* data) {
+void ImuStateYCanMsgHandler(uint8_t* data) {
 
     if (data == NULL) return;
 
@@ -272,7 +272,7 @@ static void ImuStateYCanMsgHandler(uint8_t* data) {
     }
 }
 
-static void ImuStateZCanMsgHandler(uint8_t* data) {
+void ImuStateZCanMsgHandler(uint8_t* data) {
 
     if (data == NULL) return;
 

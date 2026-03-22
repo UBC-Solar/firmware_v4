@@ -16,6 +16,7 @@
 #include "cyclic_data_handler.h"
 #include "fault_handler.h"
 #include "external_lights.h"
+#include "cruise_control.h"
 #include <string.h>
 
 
@@ -109,7 +110,7 @@ void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 		CAN_ID = CAN_comms_Rx_msg->header.StdId; // Get CAN ID
 	}
     FaultHandlerCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
-    IMUDataCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
+    ImuDataCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
     VehicleStateCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
     LcdAppCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
     ExternalLightsCanRxHandle(CAN_ID, CAN_comms_Rx_msg->data);
@@ -134,16 +135,16 @@ void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data)
     }
 }
 
-void IMUDataCanRxHandler(uint32_t msg_id, uint8_t* data) {
+void ImuDataCanRxHandler(uint32_t msg_id, uint8_t* data) {
     switch (msg_id) {
         case IMU_AG_X_CAN_MESSAGE_ID:
-            IMUStateXCanMsgHandler(data);
+            ImuStateXCanMsgHandler(data);
             break;
         case IMU_AG_Y_CAN_MESSAGE_ID:
-            IMUStateYCanMsgHandler(data);
+            ImuStateYCanMsgHandler(data);
             break;
         case IMU_AG_Z_CAN_MESSAGE_ID:
-            IMUStateZCanMsgHandler(data);
+            ImuStateZCanMsgHandler(data);
             break;
     }
 }

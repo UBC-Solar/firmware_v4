@@ -42,6 +42,8 @@ typedef enum
 
 uint16_t AccelDriverReadThrottle(void);
 
+uint16_t AccelNormalizeToDac(float accel, float min, float max);
+
 uint16_t AccelCruiseNormalizeToDac(float accel);
 
 /**

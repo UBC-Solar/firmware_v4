@@ -318,6 +318,7 @@ void DriveStateSteeringCanMsgHandler(uint8_t* data)
 
     g_drive_state_ctx.flags.regen_on = ((data[0] >> 0) & 0x01);
     g_drive_state_ctx.flags.cruise_on = ((data[0] >> 1) & 0x01);
+    // TODO: cruise set speed will be configured here
     DiagnosticSetRegenEnabled(g_drive_state_ctx.flags.regen_on);
 }
 

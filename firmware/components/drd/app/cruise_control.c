@@ -52,7 +52,6 @@ static float ForceOutput(float dt);
 static float ForceDrag(void);
 static float ForceRolling(void);
 static float ComputePitch(float accel_forward, float accel_vertical);
-static float ComputeGyro(float pitch, float gyro_pitch_rate, float dt);
 static float UpdatePitch(float accel_x, float accel_z, float gyro_y, float dt);
 static float ForceHill(float radian);
 static bool ImuDataValidation(float accel, float gyro);
@@ -180,10 +179,6 @@ static float ForceRolling(void) {
 
 static float ComputePitch(float accel_forward, float accel_vertical) {
     return atan2f(accel_forward, accel_vertical); // needs to adjust based on IMU setup
-}
-
-static float ComputeGyro(float pitch, float gyro_pitch_rate, float dt) {
-    return pitch + gyro_pitch_rate * dt;
 }
 
 static float UpdatePitch(float accel_x, float accel_z, float gyro_y, float dt)

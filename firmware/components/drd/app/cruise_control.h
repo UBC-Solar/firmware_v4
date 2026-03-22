@@ -22,6 +22,7 @@
 #define CRUISE_SPEED_MIN_MS 6.94 // Min speed so regen still work
 #define CRUISE_SPEED_MAX_MS 22.22
 
+#define ACCEL_CRUISE_DEADZONE 0.1f
 #define ACCEL_MAX 2.0f
 #define ACCEL_MIN -2.5f
 

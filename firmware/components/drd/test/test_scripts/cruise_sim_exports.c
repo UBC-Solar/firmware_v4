@@ -1,45 +1,60 @@
 /**
  * cruise_sim_exports.c
- *
- * Provides:
- *  1. Global variables Python controls (velocity injection, ADC injection)
- *  2. Wrapper functions exported to Python via ctypes
- *
+ * Global variables Python injects into + wrapper functions Python calls.
  */
 #include "cruise_sim_stubs.h"
-#include "cruise_control_test.h"
 
-/* ── Globals Python injects into ────────────────────────────────────────────── */
-float    g_sim_velocity_ms = 6.94f;   /* injected by Python each tick          */
-uint16_t g_sim_adc1        = 1475;    /* injected by Python for pedal position  */
-ADC_HandleTypeDef hadc1    = {0};
+/* ── Hardware mocks ────────────────────────────────────────────────────────── */
+float             g_sim_velocity_ms = 6.94f;
+uint16_t          g_sim_adc1        = 1475;
+ADC_HandleTypeDef hadc1             = {0};
 
-/* ── IMU injection ───────────────────────────────────────────────────────────  */
-/* Python calls sim_inject_imu(ax, az, gy) to send realistic IMU values         */
+/* ── Physics parameter globals (defaults match cruise_control.c #defines) ─── */
+float g_sim_mass         = 300.0f;
+float g_sim_power        = 2000.0f;
+float g_sim_efficiency   = 1.0f;
+float g_sim_cd           = 0.116f;
+float g_sim_rolling      = 0.01f;
+float g_sim_frontal_area = 1.18f;
+float g_sim_air_density  = 1.26714f;
+
+/* ── CAN headers ───────────────────────────────────────────────────────────── */
+typedef struct { uint32_t StdId; uint32_t ExtId; uint32_t IDE; uint32_t DLC; } CAN_TxHeaderTypeDef;
+CAN_TxHeaderTypeDef drive_control_header = {0};
+CAN_TxHeaderTypeDef mdu_request_header   = {0};
+
+/* ── Set all physics params at once ───────────────────────────────────────── */
+void sim_set_params(float mass, float power, float efficiency,
+                    float cd, float rolling, float frontal, float air_density) {
+    g_sim_mass         = mass;
+    g_sim_power        = power;
+    g_sim_efficiency   = efficiency;
+    g_sim_cd           = cd;
+    g_sim_rolling      = rolling;
+    g_sim_frontal_area = frontal;
+    g_sim_air_density  = air_density;
+}
+
+/* ── IMU injection ─────────────────────────────────────────────────────────── */
 void ImuStateXCanMsgHandler(uint8_t* data);
 void ImuStateZCanMsgHandler(uint8_t* data);
 
 void sim_inject_imu(float accel_x, float accel_z, float gyro_y) {
     uint8_t buf[8];
     FloatToBytes fb;
-
-    /* X message: accel_x in bytes[0..3], gyro_x in bytes[4..7] */
     fb.f = accel_x;
     for (int i = 0; i < 4; i++) buf[i]   = fb.bytes[i];
-    fb.f = 0.0f;                           /* gyro_x not used for pitch */
+    fb.f = 0.0f;
     for (int i = 0; i < 4; i++) buf[i+4] = fb.bytes[i];
     ImuStateXCanMsgHandler(buf);
-
-    /* Z message: accel_z in bytes[0..3], gyro_z in bytes[4..7]            */
-    /* gyro_y goes into the Y handler but pitch only uses gyro_y from Y     */
     fb.f = accel_z;
     for (int i = 0; i < 4; i++) buf[i]   = fb.bytes[i];
-    fb.f = gyro_y;                         /* store gyro_y in Z's gyro slot  */
+    fb.f = gyro_y;
     for (int i = 0; i < 4; i++) buf[i+4] = fb.bytes[i];
     ImuStateZCanMsgHandler(buf);
 }
 
-/* ── VelocitySetMs wrapper ───────────────────────────────────────────────────  */
+/* ── Core wrappers ─────────────────────────────────────────────────────────── */
 void VelocitySetMs(float dt);
 
 float sim_velocity_set_ms(float dt) {
@@ -47,36 +62,29 @@ float sim_velocity_set_ms(float dt) {
     return g_cruise_data.est_cruise_velocity_ms;
 }
 
-/* ── Setpoint setter ─────────────────────────────────────────────────────────  */
 void sim_set_cruise_setpoint(float setpoint_ms) {
     g_cruise_data.set_cruise_velocity_ms = setpoint_ms;
 }
 
-/* ── Getters for all CruiseData fields ───────────────────────────────────────  */
-float sim_get_accel(void)          { return g_cruise_data.accel; }
-float sim_get_est_velocity(void)   { return g_cruise_data.est_cruise_velocity_ms; }
+float    sim_get_accel(void)        { return g_cruise_data.accel; }
+float    sim_get_est_velocity(void) { return g_cruise_data.est_cruise_velocity_ms; }
+float    sim_get_f_net(void)        { return g_cruise_data.f_net; }
 
-/* ── AccelCruiseNormalizeToDac ───────────────────────────────────────────────  */
 uint16_t AccelCruiseNormalizeToDac(float accel);
-uint16_t sim_cruise_dac(void) {
-    return AccelCruiseNormalizeToDac(g_cruise_data.accel);
-}
+uint16_t sim_cruise_dac(void)       { return AccelCruiseNormalizeToDac(g_cruise_data.accel); }
 
-/* ── AccelDriverReadThrottle (pedal → DAC) ───────────────────────────────────  */
 uint16_t AccelDriverReadThrottle(void);
 uint16_t sim_pedal_dac(uint16_t adc_value) {
     g_sim_adc1 = adc_value;
     return AccelDriverReadThrottle();
 }
 
-/* ── Reset all static state inside cruise_control.c ─────────────────────────  */
-/* Needed between test runs so the integral/velocity static vars reset          */
 void sim_reset(float initial_velocity_ms, float setpoint_ms) {
-    /* Zero the entire CruiseData */
     volatile CruiseData *d = &g_cruise_data;
     d->accel                   = 0.0f;
     d->set_cruise_velocity_ms  = setpoint_ms;
     d->est_cruise_velocity_ms  = initial_velocity_ms;
     d->prev_cruise_velocity_ms = initial_velocity_ms;
+    d->f_net                   = 0.0f;
     g_sim_velocity_ms          = initial_velocity_ms;
 }

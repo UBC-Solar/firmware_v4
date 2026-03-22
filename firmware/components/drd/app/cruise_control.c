@@ -30,6 +30,9 @@
 #define KI 0.00009 * VEHICLE_MASS_KG
 #define KP 0.5 * VEHICLE_MASS_KG
 
+#define Q_ANGLE   0.001f    // Gyro trust factor
+#define Q_BIAS    0.003f    // Rate of change for the gyro bias
+#define R_MEASURE 0.03f     // Accelerometer at rest trust factor
 #define IMU_ACCEL_MAX (15.5f * 9.80665f)
 #define IMU_GYRO_MAX (3900.0f * M_PI / 180.0f)
 #define ACCEL_DELTA_MAX 20.0f
@@ -78,12 +81,26 @@ typedef struct {
     float prev_force_output;
 } CruiseForceData;
 
+typedef struct {
+    float angle;
+    float bias;
+    float P[2][2];
+    bool  initialised;
+} KalmanState;
+
 /* GLOBAL VARIABLES */
 volatile CruiseData g_cruise_data = {0};
 
 static CruisePitchData g_cruise_pitch_data = {0};
 static CruiseRadianData g_cruise_radian_data = {0};
 static CruiseForceData g_cruise_force_data = {0};
+
+static KalmanState g_kalman = {
+    .angle       = 0.0f,
+    .bias        = 0.0f,
+    .P           = {{Q_ANGLE, 0.0f}, {0.0f, Q_BIAS}},
+    .initialised = false,
+};
 
 static float Clamp(float value, float min, float max) {
     if (value > max) {
@@ -162,31 +179,66 @@ static float ForceRolling(void) {
 }
 
 static float ComputePitch(float accel_forward, float accel_vertical) {
-    return atan2f(accel_forward, accel_vertical);
+    return atan2f(accel_forward, accel_vertical); // needs to adjust based on IMU setup
 }
 
 static float ComputeGyro(float pitch, float gyro_pitch_rate, float dt) {
     return pitch + gyro_pitch_rate * dt;
 }
 
-static float UpdatePitch(float accel_x, float accel_z, float gyro_y, float dt) 
+static float UpdatePitch(float accel_x, float accel_z, float gyro_y, float dt)
 {
-    float accel_forward = accel_x;
-    float accel_vertical = accel_z;
     float gyro_pitch_rate = gyro_y;
+    gyro_pitch_rate = gyro_pitch_rate / 1000.0f;          // mdps → deg/s
+    gyro_pitch_rate = (gyro_pitch_rate * M_PI) / 180.0f;  // deg/s → rad/s
 
-    gyro_pitch_rate = gyro_pitch_rate / 1000.0; // mdps -> deg/s
-    gyro_pitch_rate = (gyro_pitch_rate * M_PI) / 180; // deg/s -> rad/s
+    float pitch_acc = ComputePitch(accel_x, accel_z);     // accelerometer angle
 
-    float pitch_acc = ComputePitch(accel_forward, accel_vertical);
-    float pitch_gyro = ComputeGyro(g_cruise_pitch_data.prev_pitch, gyro_pitch_rate, dt);
+    // On first call, seed the filter with the accelerometer reading
+    if (!g_kalman.initialised) {
+        g_kalman.angle       = pitch_acc;
+        g_kalman.initialised = true;
+    }
 
-    float alpha = 0.98; // Reliance on gyro vs accel
-    float pitch = alpha * pitch_gyro + (1 - alpha) * pitch_acc;
+    // If accel_z deviates from gravity or bump or vibration, then distrust accel
+    float deviation = fabsf(accel_z - 9.81f);
+    float R_adaptive = (deviation > 1.5f) ? R_MEASURE * 10.0f :  // bump
+                       (deviation > 0.5f) ? R_MEASURE * 3.0f  :  // vibration
+                                            R_MEASURE;            // smooth
 
-    g_cruise_pitch_data.prev_pitch = pitch;
+    // Project angle forward using gyro, subtract estimated bias
+    g_kalman.angle += dt * (gyro_pitch_rate - g_kalman.bias);
 
-    return pitch;
+    // Update covariance — uncertainty grows as we integrate
+    g_kalman.P[0][0] += dt * (dt * g_kalman.P[1][1]
+                             - g_kalman.P[0][1]
+                             - g_kalman.P[1][0]
+                             + Q_ANGLE);
+    g_kalman.P[0][1] -= dt * g_kalman.P[1][1];
+    g_kalman.P[1][0] -= dt * g_kalman.P[1][1];
+    g_kalman.P[1][1] += Q_BIAS * dt;
+
+    // Correction based on accelerometer reading
+    float S    = g_kalman.P[0][0] + R_adaptive;
+    float K[2] = { g_kalman.P[0][0] / S,
+                   g_kalman.P[1][0] / S };
+
+    // Difference between accel and prediction
+    float y = pitch_acc - g_kalman.angle;
+
+    // Correct angle and bias estimates
+    g_kalman.angle += K[0] * y;
+    g_kalman.bias  += K[1] * y;
+
+    // Update covariance
+    g_kalman.P[0][0] -= K[0] * g_kalman.P[0][0];
+    g_kalman.P[0][1] -= K[0] * g_kalman.P[0][1];
+    g_kalman.P[1][0] -= K[1] * g_kalman.P[0][0];
+    g_kalman.P[1][1] -= K[1] * g_kalman.P[0][1];
+
+    g_cruise_pitch_data.prev_pitch = -g_kalman.angle;
+
+    return -g_kalman.angle; // negate to match ForceHill() convention
 }
 
 static float ForceHill(float radian) {

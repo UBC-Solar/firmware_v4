@@ -185,6 +185,21 @@ static DriveStateMotorControl ComputeNextCommand(DriveStateCtx *ctx)
         return GetMotorCommand(ctx, ctx->throttle_dac, REGEN_DAC_OFF);
     }
 
+    if (ctx->state == CRUISE)
+    {
+        float cruise_accel = GetCruiseAcceleration();
+        if (cruise_accel >= ACCEL_CRUISE_DEADZONE) {
+            return GetMotorCommand(ctx, ctx->throttle_dac, ctx->flags.regen_on ? ctx->throttle_dac : REGEN_DAC_OFF);
+        }
+        
+        else if (cruise_accel <= -ACCEL_CRUISE_DEADZONE) {
+            uint16_t regen_DAC = ctx->throttle_dac;
+            return GetMotorCommand(ctx, ACCEL_DAC_OFF, regen_DAC);
+        } else {
+            return GetMotorCommand(ctx, ctx->throttle_dac, ctx->flags.regen_on ? REGEN_DAC_ON : REGEN_DAC_OFF);
+        }
+    }
+
     return GetMotorCommand(ctx, ctx->throttle_dac, ctx->flags.regen_on ? REGEN_DAC_ON : REGEN_DAC_OFF);
 }
 
@@ -214,8 +229,8 @@ static void UpdatePedalFlags(DriveStateCtx *ctx)
     DiagnosticSetMechBrakePressed(ctx->flags.brake_on);
 
     if (ctx->state == CRUISE) {
-        float accel = GetCruiseAcceleration();
-        ctx->throttle_dac = AccelCruiseNormalizeToDac(accel);
+        float cruise_accel = GetCruiseAcceleration();
+        ctx->throttle_dac = AccelCruiseNormalizeToDac(cruise_accel);
     } else {
         ctx->throttle_dac = AccelDriverReadThrottle();
     }

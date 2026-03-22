@@ -23,17 +23,22 @@
 #define CONTROL_FREQUENCY_HZ 10
 
 /* STRUCTS */
+#ifndef SIM_STUBS_H
 typedef union {
     float f;
     uint8_t bytes[4];
 } FloatToBytes;
+#endif
 
+#ifndef SIM_STUBS_H
 typedef struct {
     float accel;
     float set_cruise_velocity_ms;
     float est_cruise_velocity_ms;
     float prev_cruise_velocity_ms;
+    float f_net;
 } CruiseData;
+#endif
 
 extern volatile CruiseData g_cruise_data;
 

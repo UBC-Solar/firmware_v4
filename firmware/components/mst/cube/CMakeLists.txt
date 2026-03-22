@@ -35,7 +35,7 @@ enable_language(C ASM)
 add_executable(${CMAKE_PROJECT_NAME})
 
 # Add STM32CubeMX generated sources
-add_subdirectory(cube/cmake/stm32cubemx)
+add_subdirectory(cmake/stm32cubemx)
 
 # Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
@@ -45,19 +45,11 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
-    ${CMAKE_CURRENT_SOURCE_DIR}/app/mst_main.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/driver/can_driver.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/driver/gpio_driver.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/driver/spi_driver.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/driver/uart_driver.c
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
-    ${CMAKE_CURRENT_SOURCE_DIR}/app
-    ${CMAKE_CURRENT_SOURCE_DIR}/driver
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/debug_io
 )
 
 # Add project symbols (macros)

@@ -40,11 +40,9 @@ typedef enum
 
 /* FUNCTION PROTOTYPES */
 
-/**
- * @brief Reads and returns the current throttle value from the accelerator.
- * @return Throttle value as a 16-bit unsigned integer.
- */
 uint16_t AccelDriverReadThrottle(void);
+
+uint16_t AccelCruiseNormalizeToDac(float accel);
 
 /**
  * @brief Returns the last ADC error encountered by the accelerator driver.

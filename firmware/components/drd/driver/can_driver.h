@@ -39,7 +39,9 @@
 #define FRAME0 0x08850225
 #define STR_CAN_MSG_ID 0x580
 
-
+#define IMU_AG_X_CAN_MESSAGE_ID 0x752
+#define IMU_AG_Y_CAN_MESSAGE_ID 0x753
+#define IMU_AG_Z_CAN_MESSAGE_ID 0x754
 
 /* CAN HEADERS */
 extern const CAN_TxHeaderTypeDef drive_control_header;

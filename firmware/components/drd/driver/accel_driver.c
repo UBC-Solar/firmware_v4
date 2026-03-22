@@ -7,6 +7,7 @@
  */
 
 /* INCLUDES */
+#include "cruise_control.h"
 #include "accel_driver.h"
 #include "diagnostic.h"
 #include "adc.h"
@@ -67,7 +68,7 @@ uint16_t AccelDriverReadThrottle(void)
         return MC_DAC_MIN; // Invalid sensors = no throttle
     }
 
-    return NormalizeToDac(adc1, adc2);
+    return AccelNormalizeToDac((float)adc1, (float)ADC_LOWEST_VALID, (float)ADC_HIGHEST_VALID);
 }
 
 /* VALIDATION AND ERROR HANDLING */
@@ -119,34 +120,18 @@ static uint16_t ConvertToDac(uint16_t adc)
             ADC_NO_THROTTLE_MAX); // Find ratio between 0 to 1 and then * 1023
 }
 
-static uint16_t NormalizeToDac(uint16_t adc1, uint16_t adc2)
-{
-    #if !ADC_2_ACTIVE
-    (void)adc2; // unused adc value
-    #endif
+static uint16_t AccelNormalizeToDac(float value, float min, float max) {
+    if (value <= min) return MC_DAC_MIN;
+    if (value >= max) return MC_DAC_MAX;
 
-    if (adc1 <= ADC_LOWEST_VALID)
-    {
-        return MC_DAC_MIN;
-    }
+    float range = max - min;
+    float shift = value - min;
+    float scaled = (shift * MC_DAC_MAX) / range;
 
-    if (adc1 >= ADC_HIGHEST_VALID)
-    {
-        return MC_DAC_MAX;
-    }
-
-    // Linear interpolation from ADC range to DAC range
-    uint32_t range = (uint32_t)(ADC_HIGHEST_VALID - ADC_LOWEST_VALID);
-    uint32_t value = (uint32_t)(adc1 - ADC_LOWEST_VALID);
-    uint32_t scaled = (value * MC_DAC_MAX) / range;
-
-    uint16_t dac_value = (uint16_t)(scaled); // MC_DAC_MAC - scaled for cascadia
-
-    // Clamp to valid range
-    if (dac_value > MC_DAC_MAX)
-    {
-        dac_value = MC_DAC_MAX;
-    }
-
+    uint16_t dac_value = (uint16_t)(scaled);
     return dac_value;
+}
+
+uint16_t AccelCruiseNormalizeToDac(float accel) {
+    return AccelNormalizeToDac(accel, ACCEL_MIN, ACCEL_MAX);
 }

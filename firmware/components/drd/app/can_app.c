@@ -109,6 +109,7 @@ void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 		CAN_ID = CAN_comms_Rx_msg->header.StdId; // Get CAN ID
 	}
     FaultHandlerCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
+    IMUDataCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
     VehicleStateCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
     LcdAppCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
     ExternalLightsCanRxHandle(CAN_ID, CAN_comms_Rx_msg->data);
@@ -124,7 +125,7 @@ void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data)
     case STR_CAN_MSG_ID:
         DriveStateSteeringCanMsgHandler(data);
         break;
-
+   
 #ifdef DEBUG
     case 0x500:
         StateRequestCanMsgHandler(data);
@@ -133,8 +134,22 @@ void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data)
     }
 }
 
+void IMUDataCanRxHandler(uint32_t msg_id, uint8_t* data) {
+    switch (msg_id) {
+        case IMU_AG_X_CAN_MESSAGE_ID:
+            IMUStateXCanMsgHandler(data);
+            break;
+        case IMU_AG_Y_CAN_MESSAGE_ID:
+            IMUStateYCanMsgHandler(data);
+            break;
+        case IMU_AG_Z_CAN_MESSAGE_ID:
+            IMUStateZCanMsgHandler(data);
+            break;
+    }
+}
+
 void LcdAppCanRxHandler(uint32_t msg_id, uint8_t* data)
-{ 
+{
     switch (msg_id) {
     case CAN_ID_ECU: { // Update pack current and voltage for SOC calculation
         int16_t tmp_pack_current = (data[1] << 8) | (data[0]);
@@ -142,7 +157,7 @@ void LcdAppCanRxHandler(uint32_t msg_id, uint8_t* data)
         CyclicDataSetPackCurrent(tmp_pack_current);
         g_pack_current_soc = tmp_pack_current;
         break;
-    } 
+    }
     case CAN_ID_PACK_VOLTAGE: { // Update pack voltage and trigger SOC calculation
         uint16_t tmp_pack_voltage = (data[1] << 8) | (data[0]);
         tmp_pack_voltage /= PACK_VOLTAGE_DIVISOR;

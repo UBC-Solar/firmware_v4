@@ -58,7 +58,7 @@ typedef enum {
 typedef struct {
     DriveStateStates state;
     DriveStateFlags flags;
-    uint32_t velocity_kmh;
+    float velocity_kmh;
     uint16_t throttle_dac;
 } DriveStateCtx;
 
@@ -96,6 +96,10 @@ void DriveStateSteeringCanMsgHandler(uint8_t* data);
  * @brief Returns the current drive state.
  */
 DriveStateStates DriveStateGetDriveState(void);
+
+float GetVelocityMs(void);
+
+bool CruiseControlEnabled(void);
 
 #ifdef DEBUG
 /**

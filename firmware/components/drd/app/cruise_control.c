@@ -65,6 +65,7 @@ typedef struct {
     float prev_pitch;
     float prev_accel;
     float prev_gyro;
+    bool prev_imu_data;
 } CruisePitchData;
 
 typedef struct {
@@ -208,19 +209,17 @@ static float ForceHill(float radian) {
 
 static bool ImuDataValidation(float accel, float gyro) {
 
-    static bool prev_data = false;
-
     if (!isfinite(accel) || !isfinite(gyro)) return false;
     if (fabsf(accel) > IMU_ACCEL_MAX) return false;
     if (fabsf(gyro) > IMU_GYRO_MAX) return false;
-    if (prev_data) {
+    if (g_cruise_pitch_data.prev_imu_data) {
         if (fabsf(accel - g_cruise_pitch_data.prev_accel) > ACCEL_DELTA_MAX) return false;
         if (fabsf(gyro - g_cruise_pitch_data.prev_gyro) > GYRO_DELTA_MAX) return false;
     }
 
     g_cruise_pitch_data.prev_accel = accel;
     g_cruise_pitch_data.prev_gyro = gyro;
-    prev_data = true;
+    g_cruise_pitch_data.prev_imu_data = true;
 
     return true;
 }

@@ -12,6 +12,8 @@
 
 #include "stm32f1xx_hal.h"
 
+#if 0 // this driver is incomplete!
+
 enum BTM_Error {
     BTM_OK = 0,
     BTM_ERROR_PEC,
@@ -75,6 +77,12 @@ typedef enum {
     CS_LOW  = 0,
     CS_HIGH = 1
 } CS_state_t;
+
+
+typedef enum {
+    NCS_HIGH = 0,
+    NCS_LOW  = 1
+} NCS_state_t;
 
 
 typedef enum {
@@ -179,3 +187,5 @@ void spi_init(SPI_HandleTypeDef *SPI_handle);
 void spi_send_wakeup(void);
 void spi_send_cmd(adbms1818_command_t command);
 BTM_Status_t spi_send_cmd_and_poll(adbms1818_command_t command);
+
+#endif

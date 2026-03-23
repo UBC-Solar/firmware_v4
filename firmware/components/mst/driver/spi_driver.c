@@ -8,6 +8,7 @@
 
 #include "spi_driver.h"
 
+#if 0 // this driver is incomplete!
 
 /**
  * Lookup table for PEC (Packet Error Code) CRC (Cyclic Redundancy Check) calculation
@@ -273,3 +274,5 @@ BTM_Status_t BTM_sendCmdAndPoll(BTM_command_t command)
 
 	return status_BTM;
 }
+
+#endif

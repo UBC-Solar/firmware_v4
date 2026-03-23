@@ -1,4 +1,5 @@
 #include "gpio_driver.h"
+#include "stm32f1xx_hal_def.h"
 #include "stm32f1xx_hal_gpio.h"
 #include "uart_driver.h"
 #include "main.h"
@@ -43,6 +44,7 @@ void GPIO_Toggle(GPIO_TypeDef *port, uint16_t pin) {
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
     GPIO_PinState level;
 
+    UNUSED(level);
     // Interrupts are triggered on rising or falling edges, so we read the pin state to determine the current level
 
     // switch (GPIO_Pin) {

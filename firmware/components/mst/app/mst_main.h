@@ -2,7 +2,7 @@
 
 #include "mst_defs.h"
 
-
+void Initialize();
 void CollectPackData();
 void DriveOutputs();
 void SendCanMMessages();

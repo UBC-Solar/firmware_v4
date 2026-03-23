@@ -10,6 +10,8 @@
 #include "stm32f1xx_hal.h"
 #include "can.h"
 
+#include "mst_defs.h"
+
 /**
  * CAN Protocol & STM32F103 constants
  */
@@ -47,7 +49,6 @@ typedef struct {
     volatile CAN_RxMessage_t rx_message_0x450;
 } CAN_Driver_t;
 
-static CAN_Driver_t CAN_driver;
 
 
 /** 
@@ -57,6 +58,10 @@ void CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size
 void CAN_Init(CAN_HandleTypeDef *handle);
 
 void CAN_SendMessageXXX();
+#ifdef UNIT_TEST_CAN
+void CAN_SendMessgeDebug();
+#endif // UNIT_TEST_CAN
+
 void CAN_RecievedMessageCallback();
 
 void CAN_TxCompleteCallback();

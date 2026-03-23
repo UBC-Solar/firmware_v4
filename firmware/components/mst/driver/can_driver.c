@@ -1,6 +1,8 @@
 #include "can_driver.h"
+
 #include "stm32f1xx_hal_def.h"
 
+CAN_Driver_t CAN_driver;
 
 static void tryTransmitFromQueue()
 {
@@ -176,6 +178,30 @@ void CAN_SendMessageXXX()
 
     queueCanMessage(&txMessage);
 }
+
+
+#ifdef UNIT_TEST_CAN
+/**
+ * @brief Send DEBUG CAN message intended for hardware unit tests
+ *
+ * @param pack pack data structure that data will be read from
+ */
+void CAN_SendMessgeDebug()
+{
+    CAN_TxMessage_t txMessage = {0};
+
+    txMessage.tx_header.StdId = 0x42U;
+    txMessage.tx_header.DLC = 8;
+
+    // Data contains alternating bytes of all 0's and all 1's
+    for (int i = 0; i < 8; i++)
+    {
+        txMessage.data[i] = (i % 2) ? 0x00U : 0xFFU;
+    }
+
+    queueCanMessage(&txMessage);
+}
+#endif // UNIT_TEST_CAN 
 
 
 /**

@@ -10,8 +10,7 @@
 
 
 /**
- * Lookup table for PEC (Packet Error Code) CRC calculation
- 
+ * Lookup table for PEC (Packet Error Code) CRC (Cyclic Redundancy Check) calculation
  */
 static const uint16_t pec15Table[256] =
 {

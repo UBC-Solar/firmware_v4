@@ -26,7 +26,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "mst_defs.h"
+#include "mst_main.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -95,13 +96,28 @@ int main(void)
   MX_SPI2_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  Initialize();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    #ifdef UNIT_TEST_MCU
+    Debug_McuTestCycle();
+    #endif // UNIT_TEST_MCU
+
+    #ifdef UNIT_TEST_IO
+    Debug_DigitalIoTestCycle();
+    #endif // UNIT_TEST_IO
+
+    #ifdef UNIT_TEST_CAN
+    Debug_IsoSpiTestCycle();
+    #endif // UNIT_TEST_CAN
+
+    #ifdef UNIT_TEST_ISOSPI
+    Debug_CanTestCycle();
+    #endif // UNIT_TEST_ISOSPI
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

@@ -170,9 +170,9 @@ void Slave_init(SPI_HandleTypeDef *SPI_handle)
         0x00
     };
 
-        slave_controller.SPI_handle = SPI_handle;
+    slave_controller.SPI_handle = SPI_handle;
 
-        for(int ic_num = 0; ic_num < SLAVE_NUM_DEVICES; ic_num++)
+    for(int ic_num = 0; ic_num < SLAVE_NUM_DEVICES; ic_num++)
     {
 		for(int reg_num = 0; reg_num < SLAVE_REG_GROUP_SIZE; reg_num++)
         {
@@ -181,10 +181,12 @@ void Slave_init(SPI_HandleTypeDef *SPI_handle)
         }
     }
 
+#ifndef UNIT_TEST_ISOSPI
 	HAL_Delay(2250); // Let the ADBMS1818 watchdog time out (max 2.2sec) to start IC config from a clean slate
-        Slave_wakeup(); // Wake up all ADBMS1818 devices in the chain
-        Slave_writeRegisterGroup(CMD_WRCFGA, slave_controller.cfgra); // Write to Config. Reg. Group A
-        Slave_writeRegisterGroup(CMD_WRCFGB, slave_controller.cfgrb); // Write to Config. Reg. Group B
+    Slave_wakeup(); // Wake up all ADBMS1818 devices in the chain
+    Slave_writeRegisterGroup(CMD_WRCFGA, slave_controller.cfgra); // Write to Config. Reg. Group A
+    Slave_writeRegisterGroup(CMD_WRCFGB, slave_controller.cfgrb); // Write to Config. Reg. Group B
+#endif // UNIT_TEST_ISOSPI
 }
 
 

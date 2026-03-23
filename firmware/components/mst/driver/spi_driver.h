@@ -13,6 +13,8 @@
 #include "main.h"
 #include "stm32f1xx_hal.h"
 
+#include "mst_defs.h"
+
 #define SLAVE_NUM_DEVICES 2U // Number of ADBMS1818 ICs daisy chained
 
 #define SLAVE_NUM_CELL_INPUTS_PER_DEVICE 18

@@ -7,6 +7,7 @@
 
 #include "can_driver.h"
 #include "gpio_driver.h"
+#include "spi.h"
 #include "spi_driver.h"
 #include "stm32f1xx_hal.h"
 #include "stm32f1xx_hal_gpio.h"
@@ -16,6 +17,10 @@ void Initialize() {
 #ifdef UNIT_TEST_CAN
     CAN_Init(&hcan);
 #endif // UNIT_TEST_CAN
+
+#ifdef UNIT_TEST_ISOSPI
+    Slave_init(&hspi2);
+#endif // UNIT_TEST_ISOSPI
 }
 
 void CollectPackData() {

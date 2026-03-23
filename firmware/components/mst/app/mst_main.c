@@ -104,6 +104,14 @@ void Debug_CanTestCycle() {
 
 #ifdef UNIT_TEST_ISOSPI
 void Debug_IsoSpiTestCycle() {
+    DEBUG_IO_PRINT("Debug_IsoSpiTestCycle start (debug IO)\n");
+    printf("Debug_IsoSpiTestCycle start (printf)\n");
 
+    Slave_sendCmd(CMD_ADCV);
+
+    DEBUG_IO_PRINT("Debug_IsoSpiTestCycle end (debug IO)\n");
+    printf("Debug_IsoSpiTestCycle end (printf)\n");
+    
+    HAL_Delay(2000);
 }
 #endif // UNIT_TEST_ISOSPI

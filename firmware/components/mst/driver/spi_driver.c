@@ -8,7 +8,7 @@
 
 #include "spi_driver.h"
 
-#if 0 // this driver is incomplete!
+Slave_Data_t slave_controller;
 
 /**
  * Lookup table for PEC (Packet Error Code) CRC (Cyclic Redundancy Check) calculation
@@ -75,7 +75,7 @@ uint16_t calculatePec15(uint8_t *data, uint32_t len)
  *
  * @param command The 2-byte command to send
  */
-void sendCommand(adbms1818_command_t command)
+void sendCommand(Slave_Command_t command)
 {
 	uint16_t pecValue;
 	uint8_t tx_message[4];
@@ -87,7 +87,7 @@ void sendCommand(adbms1818_command_t command)
 	tx_message[3] = (uint8_t) pecValue;
 
 	// size parameter is number of bytes to transmit - here it's 4 8bit frames
-	HAL_SPI_Transmit(BTM_data.SPI_handle, tx_message, 4, BTM_TIMEOUT_VAL);
+    HAL_SPI_Transmit(slave_controller.SPI_handle, tx_message, 4, SLAVE_TIMEOUT_VAL);
 }
 
 /**
@@ -97,22 +97,22 @@ void sendCommand(adbms1818_command_t command)
  */
 void writeCS(CS_state_t cs_state)
 {
-    HAL_GPIO_WritePin(BTM_CS_GPIO_PORT, BTM_CS_GPIO_PIN, cs_state);
+    HAL_GPIO_WritePin(SPI_ADBMS_NSS_GPIO_Port, SPI_ADBMS_NSS_Pin, cs_state);
 }
 
-// Helper function to translate a HAL error into a BTM error
-BTM_Status_t processHALStatus(HAL_StatusTypeDef status_HAL, unsigned int device_num)
+// Helper function to translate a HAL error into a Slave error
+Slave_Status_t processHALStatus(HAL_StatusTypeDef status_HAL, unsigned int device_num)
 {
-    BTM_Status_t status_BTM;
-    status_BTM.error = BTM_OK;
-    status_BTM.device_num = BTM_STATUS_DEVICE_NA;
+    Slave_Status_t status_Slave;
+    status_Slave.error = Slave_OK;
+    status_Slave.device_num = 0;
 
     if (status_HAL != HAL_OK) {
-        status_BTM.error = status_HAL + BTM_HAL_ERROR_OFFSET;
-        status_BTM.device_num = device_num;
+        status_Slave.error = status_HAL + Slave_HAL_ERROR_OFFSET;
+        status_Slave.device_num = device_num;
     }
 
-    return status_BTM;
+    return status_Slave;
 }
 
 
@@ -120,12 +120,12 @@ BTM_Status_t processHALStatus(HAL_StatusTypeDef status_HAL, unsigned int device_
 /* PUBLIC FUNCTION DEFINITIONS */
 
 /**
- * @brief Toggles the CS line to wake up the entire chain of LTC6813's.
+ * @brief Toggles the CS line to wake up the entire chain of ADBMS1818 devices.
  *
  * Wakes up the daisy chain as per method described on pg. 52 of datasheet
  * (method 2)
  */
-void BTM_wakeup(void)
+void Slave_wakeup(void)
 {
     // Using HAL_Delay() for this is not particularly ideal, since the
     // minimum delay is 1ms and the delays required are 300us and
@@ -133,7 +133,7 @@ void BTM_wakeup(void)
     // If it doesn't, add another faster timer for more precise delays
 	writeCS(CS_HIGH);
 	HAL_Delay(1); // wait 1ms
-	for (int i = 0; i < BTM_NUM_DEVICES; i++)
+    for (int i = 0; i < SLAVE_NUM_DEVICES; i++)
 	{
 		writeCS(CS_LOW);
 		HAL_Delay(1); // wait 1ms
@@ -144,14 +144,14 @@ void BTM_wakeup(void)
 }
 
 /**
- * @brief Initializes the LTC6813s and driver data
+ * @brief Initializes the ADBMS1818 devices and driver data
  *
  * @param SPI_handle HAL SPI handle for the SPI peripheral used for communication to battery monitoring hardware
  */
-void BTM_init(SPI_HandleTypeDef *SPI_handle)
+void Slave_init(SPI_HandleTypeDef *SPI_handle)
 {
-    // Refer to the LTC6813 datasheet pages 60 and 65 for format and content of config_val_a
-    uint8_t config_val_a[BTM_REG_GROUP_SIZE] =
+    // Refer to the ADBMS1818 datasheet pages 60 and 65 for format and content of config_val_a
+    uint8_t config_val_a[SLAVE_REG_GROUP_SIZE] =
     {
         0xF8 | (REFON << 2) | ADCOPT, // GPIO 1-5 pull-downs off, REFON, ADCOPT
         (VUV & 0xFF), // VUV[7:0]
@@ -160,7 +160,7 @@ void BTM_init(SPI_HandleTypeDef *SPI_handle)
 		0x00, // Discharge off for cells 1 through 8
         0x00, // Discharge off for cells 9 through 12, Discharge timer disabled
     };
-	uint8_t config_val_b[BTM_REG_GROUP_SIZE] =
+	uint8_t config_val_b[SLAVE_REG_GROUP_SIZE] =
     {
         0x0F, // Discharge off for cells 13 through 16, GPIO 6-9 = 1
         0x00, // FDRF = 0, PS = 0, Discharge off for cells 17 and 18
@@ -170,21 +170,21 @@ void BTM_init(SPI_HandleTypeDef *SPI_handle)
         0x00
     };
 
-    BTM_data.SPI_handle = SPI_handle;
+        slave_controller.SPI_handle = SPI_handle;
 
-    for(int ic_num = 0; ic_num < BTM_NUM_DEVICES; ic_num++)
+        for(int ic_num = 0; ic_num < SLAVE_NUM_DEVICES; ic_num++)
     {
-        for(int reg_num = 0; reg_num < BTM_REG_GROUP_SIZE; reg_num++)
+		for(int reg_num = 0; reg_num < SLAVE_REG_GROUP_SIZE; reg_num++)
         {
-            BTM_data.cfgra[ic_num][reg_num] = config_val_a[reg_num];
-            BTM_data.cfgrb[ic_num][reg_num] = config_val_b[reg_num];
+			slave_controller.cfgra[ic_num][reg_num] = config_val_a[reg_num];
+			slave_controller.cfgrb[ic_num][reg_num] = config_val_b[reg_num];
         }
     }
 
-	HAL_Delay(2250); // Let the LTC6813s' watchdog time out (max 2.2sec) to start IC config from a clean slate
-    BTM_wakeup(); // Wake up all LTC6813's in the chain
-    BTM_writeRegisterGroup(CMD_WRCFGA, BTM_data.cfgra); // Write to Config. Reg. Group A
-    BTM_writeRegisterGroup(CMD_WRCFGB, BTM_data.cfgrb); // Write to Config. Reg. Group B
+	HAL_Delay(2250); // Let the ADBMS1818 watchdog time out (max 2.2sec) to start IC config from a clean slate
+        Slave_wakeup(); // Wake up all ADBMS1818 devices in the chain
+        Slave_writeRegisterGroup(CMD_WRCFGA, slave_controller.cfgra); // Write to Config. Reg. Group A
+        Slave_writeRegisterGroup(CMD_WRCFGB, slave_controller.cfgrb); // Write to Config. Reg. Group B
 }
 
 
@@ -194,7 +194,7 @@ void BTM_init(SPI_HandleTypeDef *SPI_handle)
  *
  * @param command The 2-byte command to send
  */
-void BTM_sendCmd(BTM_command_t command)
+void Slave_sendCmd(Slave_Command_t command)
 {
     writeCS(CS_LOW);
     sendCommand(command);
@@ -202,21 +202,21 @@ void BTM_sendCmd(BTM_command_t command)
 }
 
 /**
- * @brief sends a polling-type command (eg. ADCV) and then polls the LTC6813
- * This function is blocking. It will wait for the LTC6813 to signal it is
+ * @brief sends a polling-type command (eg. ADCV) and then polls the ADBMS1818
+ * This function is blocking. It will wait for the ADBMS1818 to signal it is
  * finished; however, there is a timeout feature in case something goes wrong.
- * The timeout threshold is BTM_TIMEOUT_VAL.
+ * The timeout threshold is SLAVE_TIMEOUT_VAL.
  *
  * @param command The 2-byte (polling) command to send
- * @return 	Returns BTM_OK once LTC6813s have completed their conversions,
- *          or BTM_ERROR_TIMEOUT upon timeout.
+ * @return 	Returns Slave_OK once ADBMS1818 devices have completed their conversions,
+ *          or Slave_ERROR_TIMEOUT upon timeout.
  */
-BTM_Status_t BTM_sendCmdAndPoll(BTM_command_t command)
+Slave_Status_t Slave_sendCmdAndPoll(Slave_Command_t command)
 {
     uint8_t rx_buffer = 0;
 	uint32_t start_tick;
 	HAL_StatusTypeDef status_HAL = HAL_OK;
-	BTM_Status_t status_BTM = {BTM_OK, 0};
+    Slave_Status_t status_Slave = {Slave_OK, 0};
 
 	writeCS(CS_LOW);
 
@@ -228,51 +228,158 @@ BTM_Status_t BTM_sendCmdAndPoll(BTM_command_t command)
 	// Make sure MISO goes low...
 	do
 	{
-		if (HAL_GetTick() - start_tick > BTM_TIMEOUT_VAL)
+        if (HAL_GetTick() - start_tick > SLAVE_TIMEOUT_VAL)
 		{
 		    writeCS(CS_HIGH);
-		    status_BTM.error = BTM_ERROR_TIMEOUT; // LTC didn't respond before timeout
-			return status_BTM;
+            status_Slave.error = Slave_ERROR_TIMEOUT; // ADBMS1818 didn't respond before timeout
+            return status_Slave;
 		}
 
 		rx_buffer = 0;
-		status_HAL = HAL_SPI_Receive(BTM_data.SPI_handle, &rx_buffer, 1, BTM_TIMEOUT_VAL);
-		status_BTM = processHALStatus(status_HAL, BTM_STATUS_DEVICE_NA);
-		if (status_BTM.error != BTM_OK) return status_BTM;
+        status_HAL = HAL_SPI_Receive(slave_controller.SPI_handle, &rx_buffer, 1, SLAVE_TIMEOUT_VAL);
+        status_Slave = processHALStatus(status_HAL, 0);
+        if (status_Slave.error != Slave_OK) return status_Slave;
 
 	} while (rx_buffer == 0xFF);
 
-	// ... then wait for MISO to go high;
-	// this signifies that the LTC6813s are done reading their ADCs.
+    // ... then wait for MISO to go high;
+    // this signifies that the ADBMS1818 devices are done reading their ADCs.
 
-	// Must send at least BTM_NUM_DEVICES clock pulses before response is valid
+    // Must send at least SLAVE_NUM_DEVICES clock pulses before response is valid
 	// That's why there's an extra read initially - it's slight overkill but that's ok
 	rx_buffer = 0;
-	status_HAL = HAL_SPI_Receive(BTM_data.SPI_handle, &rx_buffer, 1, BTM_TIMEOUT_VAL);
-	status_BTM = processHALStatus(status_HAL, BTM_STATUS_DEVICE_NA);
-    if (status_BTM.error != BTM_OK)
-		return status_BTM;
-
+    status_HAL = HAL_SPI_Receive(slave_controller.SPI_handle, &rx_buffer, 1, SLAVE_TIMEOUT_VAL);
+    status_Slave = processHALStatus(status_HAL, 0);
+    if (status_Slave.error != Slave_OK) {
+        return status_Slave;
+    }
 	do
 	{
-	    if (HAL_GetTick() - start_tick > BTM_TIMEOUT_VAL)
+	    if (HAL_GetTick() - start_tick > SLAVE_TIMEOUT_VAL)
         {
             writeCS(CS_HIGH);
-            status_BTM.error = BTM_ERROR_TIMEOUT; // LTC didn't respond before timeout
-            return status_BTM;
+            status_Slave.error = Slave_ERROR_TIMEOUT; // ADBMS1818 didn't respond before timeout
+            return status_Slave;
         }
 
 		rx_buffer = 0;
-		status_HAL = HAL_SPI_Receive(BTM_data.SPI_handle, &rx_buffer, 1, BTM_TIMEOUT_VAL);
-		status_BTM = processHALStatus(status_HAL, BTM_STATUS_DEVICE_NA);
-		if (status_BTM.error != BTM_OK)
-            return status_BTM;
+		status_HAL = HAL_SPI_Receive(slave_controller.SPI_handle, &rx_buffer, 1, SLAVE_TIMEOUT_VAL);
+		status_Slave = processHALStatus(status_HAL, 0);
+		if (status_Slave.error != Slave_OK)
+            return status_Slave;
 
 	} while (rx_buffer == 0);
 
 	writeCS(CS_HIGH);
 
-	return status_BTM;
+    return status_Slave;
 }
 
-#endif
+
+/**
+ * @brief Writes the 6 bytes of a configuration register group in the ADBMS1818.
+ *
+ * @param command A write command to specify which register group to write.
+ *                Write commands start with "WR".
+ * @param tx_data Pointer to a 2-dimensional array of size
+ *                SLAVE_NUM_DEVICES x SLAVE_REG_GROUP_SIZE containing the data to write.
+ */
+void Slave_writeRegisterGroup(Slave_Command_t command, uint8_t tx_data[SLAVE_NUM_DEVICES][SLAVE_REG_GROUP_SIZE])
+{
+	uint16_t pecValue = 0;
+	uint8_t tx_message[8];
+
+	writeCS(CS_LOW);
+	sendCommand(command);
+
+	for (int i = 0; i < SLAVE_NUM_DEVICES; i++)
+	{
+		for (int j = 0; j < SLAVE_REG_GROUP_SIZE; j++)
+		{
+			// ADBMS1818 register group writes' data are ordered with data for the last device in the chain first.
+			// This is the opposite of a register group read's device ordering
+			tx_message[j] = tx_data[(SLAVE_NUM_DEVICES - 1) - i][j];
+		}
+		pecValue = calculatePec15(tx_message, SLAVE_REG_GROUP_SIZE);
+		tx_message[6] = (uint8_t) (pecValue >> 8);
+		tx_message[7] = (uint8_t) pecValue;
+		HAL_SPI_Transmit(slave_controller.SPI_handle, tx_message, 8, SLAVE_TIMEOUT_VAL);
+	}
+
+	writeCS(CS_HIGH);
+}
+
+/**
+ * @brief Reads the 6 bytes of a configuration register group in the ADBMS1818.
+ *
+ * The data received will only be written to rx_data if the PEC matches.
+ *
+ * @param command A read command to specify which register group to read.
+ *                Read commands start with "RD".
+ * @param rx_data Pointer to a 2-dimensional array of size
+ *                SLAVE_NUM_DEVICES x SLAVE_REG_GROUP_SIZE to copy received data to.
+ * @return Returns Slave_OK if the received PEC is valid, or Slave_ERROR_PEC if
+ *         a full set of valid data could not be obtained after
+ *         SLAVE_MAX_READ_ATTEMPTS tries.
+ */
+Slave_Status_t Slave_readRegisterGroup(Slave_Command_t command, uint8_t rx_data[SLAVE_NUM_DEVICES][SLAVE_REG_GROUP_SIZE])
+{
+	uint16_t pecValue = 0;
+	Slave_Status_t status = {Slave_OK, 0};
+	HAL_StatusTypeDef status_HAL = HAL_OK;
+	// Initialize rx_message before using it, or the garbage it contains will be
+	// sent as dummy data - see definition of HAL_SPI_Receive
+	uint8_t rx_message[8] = {0};
+	int ic_num = 0;
+	int error_counter = 0;
+
+	// Try a maximum of SLAVE_MAX_READ_ATTEMPTS times to read register group
+	do
+	{
+		// Send command to read register group
+		writeCS(CS_LOW);
+		sendCommand(command);
+
+		// Read back the data, but stop between device data groups on error
+		// This will indicate to caller which ADBMS1818 is having problems, if problems are encountered
+		ic_num = 0;
+		// reset status before a new try
+		status.error = Slave_OK;
+		status.device_num = 0;
+		while ((ic_num < SLAVE_NUM_DEVICES) && (status.error == Slave_OK))
+		{
+			// 6 data bytes + 2 PEC bytes = 8 bytes
+		    status_HAL = HAL_SPI_Receive(slave_controller.SPI_handle, rx_message, 8, SLAVE_TIMEOUT_VAL);
+		    status = processHALStatus(status_HAL, ic_num + 1);
+		    if (status.error != Slave_OK) return status;
+
+			pecValue = calculatePec15(rx_message, 8); // 0 if transfer was clean
+			if (pecValue)
+			{
+				status.error = Slave_ERROR_PEC;
+				status.device_num = ic_num + 1;
+				for(int i = 0; i < 8; i++)
+				{
+					rx_message[i] = 0; // Clear buffer for next try
+				}
+			}
+			else
+			{
+				for (int j = 0; j < 8; j++)
+				{
+					if (j < SLAVE_REG_GROUP_SIZE)
+					{
+						rx_data[ic_num][j] = rx_message[j]; // Copy the data (no PEC)
+					}
+					rx_message[j] = 0; // Clear rx_message for next loop
+				}
+			}
+			ic_num++;
+		}
+
+		writeCS(CS_HIGH);
+		error_counter++;
+	} while ((status.error != Slave_OK) && (error_counter < SLAVE_MAX_READ_ATTEMPTS));
+
+	return status;
+}

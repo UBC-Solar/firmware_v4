@@ -10,34 +10,86 @@
 
 #include <stdint.h>
 
+#include "main.h"
 #include "stm32f1xx_hal.h"
 
-#if 0 // this driver is incomplete!
+#define SLAVE_NUM_DEVICES 2U // Number of ADBMS1818 ICs daisy chained
 
-enum BTM_Error {
-    BTM_OK = 0,
-    BTM_ERROR_PEC,
-    BTM_ERROR_TIMEOUT,
-    BTM_ERROR_SELFTEST,
-    BTM_ERROR_HAL,
-    BTM_ERROR_HAL_BUSY,
-    BTM_ERROR_HAL_TIMEOUT
+#define SLAVE_NUM_CELL_INPUTS_PER_DEVICE 18
+#define SLAVE_REG_GROUP_SIZE 6 // All of the ADBMS1818 register groups consist of 6 bytes
+#define NUM_CELL_VOLT_REGS 6
+#define READINGS_PER_REG 3
+
+#define SLAVE_TIMEOUT_VAL 30U // ms - safety timeout threshold for Slave functions
+#define SLAVE_MAX_READ_ATTEMPTS 3U // maximum number of times to try to perform a
+                                   // read operation from the ADBMS1818 devices
+
+/* Configuration Register Group Parameters */
+
+// Keep voltage references on between ADC reads (significantly speeds up reads,
+//   increases power consumption)
+#define REFON 1
+// 0 = References Shut Down After Conversions,
+// 1 = References Remain Powered Up Until Watchdog Timeout
+
+// Under-voltage threshold for ADBMS1818
+#define VUV 1687U // (2.7V / (16 * 0.0001V)) - 1 = 1687
+// Over-voltage threshold for ADBMS1818
+#define VOV 2624U // (4.2V / (16 * 0.0001V)) - 1 = 2624
+// Note that these thresholds are internal to the ADBMS1818; they only
+//   impact the behaviour of the UV and OV bit flags in the status registers
+
+// ADCOPT selects the ADC mode together with MD, but is in the CFG register
+#define ADCOPT 0
+/* End Configuration Register Group Parameters */
+
+// Discharge Permitted during cell measurement
+#define DCP 0 // 0 = Discharge Not Permitted 1 = Discharge Permitted
+// ADC Mode (speed)
+#define MD MD_7KHZ_3KHZ // Normal mode
+// Self Test Mode Selection
+// #define ST 1 // TODO: Add enumeration if ST commands are needed
+
+typedef struct {
+    SPI_HandleTypeDef *SPI_handle;
+
+    uint8_t cfgra[SLAVE_NUM_DEVICES][SLAVE_REG_GROUP_SIZE]; // Record of Configuration Register Group A for each device
+    uint8_t cfgrb[SLAVE_NUM_DEVICES][SLAVE_REG_GROUP_SIZE]; // Record of Configuration Register Group B for each device
+} Slave_Data_t;
+
+enum Slave_Error {
+    Slave_OK = 0,
+    Slave_ERROR_PEC,
+    Slave_ERROR_TIMEOUT,
+    Slave_ERROR_SELFTEST,
+    Slave_ERROR_HAL,
+    Slave_ERROR_HAL_BUSY,
+    Slave_ERROR_HAL_TIMEOUT
 };
-#define BTM_HAL_ERROR_OFFSET (BTM_ERROR_HAL - HAL_ERROR)
 
-// MARK: defs
-// LTC6813 ADC mode options
+typedef struct {
+    enum Slave_Error error;
+    unsigned int device_num; // Device at which error occurred, if applicable.
+    // 0 = N/A, 1 = first device in chain, 2 = second device...
+    // If there is no error (error == Slave_OK), device_num should be 0.
+    // The reason for the N/A option is not all operations have a means of
+    // differentiating responses of different ADBMS1818 devices in the chain.
+} Slave_Status_t;
+
+#define Slave_HAL_ERROR_OFFSET (Slave_ERROR_HAL - HAL_ERROR)
+
+// ADBMS1818 ADC mode options
 // First freq applies when ADCOPT == 0, second when ADCOPT == 1
 // Descriptions "fast," "normal," 'filtered" apply when ADCOPT == 0
-enum BTM_MD_e {
+enum Slave_MD_e {
     MD_422HZ_1KHZ  = 0x0,
     MD_27KHZ_14KHZ = 0x1,	// fast
     MD_7KHZ_3KHZ   = 0x2,	// normal
     MD_26HZ_2KHZ   = 0x3	// filtered
 };
 
-// LTC6813 ADC Cell Measurement Options
-enum BTM_CH_e {
+// ADBMS1818 ADC Cell Measurement Options
+enum Slave_CH_e {
     CH_ALL = 0x0,
     CH_1 = 0x1, // Measure Cells 1, 7, 13
     CH_2 = 0x2, // Measure Cells 2, 8, 14
@@ -47,8 +99,8 @@ enum BTM_CH_e {
     CH_6 = 0x6  // Measure Cells 6, 12, 18
 };
 
-// LTC6813 GPIO selection for ADC conversion
-enum BTM_CHG_e {
+// ADBMS1818 GPIO selection for ADC conversion
+enum Slave_CHG_e {
     CHG_ALL     = 0x0,    // GPIO 1 through 5, VREF2 and GPIO 6 through 9
     CHG_GPIO1_6 = 0x1,  // GPIO 1 and 6
     CHG_GPIO2_7 = 0x2,  // GPIO 2 and 7
@@ -58,8 +110,8 @@ enum BTM_CHG_e {
     CHG_VREF2   = 0x6
 };
 
-// LTC6813 Status Group selection
-enum BTM_CHST_e {
+// ADBMS1818 Status Group selection
+enum Slave_CHST_e {
     CHST_ALL = 0x0, // Measure all 4 parameters below:
     CHST_SC  = 0x1, // Sum of all Cells
     CHST_ITMP= 0x2, // Internal Die Temperature
@@ -68,7 +120,7 @@ enum BTM_CHST_e {
 };
 
 // Pull-Up/Pull-Down Current for Open Wire Conversions
-enum BTM_PUP_e {
+enum Slave_PUP_e {
     PUP_PULLDOWN = 0x0,
     PUP_PULLUP   = 0x1
 };
@@ -181,11 +233,11 @@ typedef enum {
     CMD_STCOMM  = 0x0723,       // Start I2C /SPI Communication
     CMD_MUTE    = 0x0028,       // Mute discharge
     CMD_UNMUTE  = 0x0029        // Unmute discharge
-} adbms1818_command_t;
+} Slave_Command_t;
 
-void spi_init(SPI_HandleTypeDef *SPI_handle);
-void spi_send_wakeup(void);
-void spi_send_cmd(adbms1818_command_t command);
-BTM_Status_t spi_send_cmd_and_poll(adbms1818_command_t command);
-
-#endif
+void Slave_init(SPI_HandleTypeDef *SPI_handle);
+void Slave_wakeup(void);
+void Slave_sendCmd(Slave_Command_t command);
+Slave_Status_t Slave_sendCmdAndPoll(Slave_Command_t command);
+void Slave_writeRegisterGroup(Slave_Command_t command, uint8_t tx_data[SLAVE_NUM_DEVICES][SLAVE_REG_GROUP_SIZE]);
+Slave_Status_t Slave_readRegisterGroup(Slave_Command_t command, uint8_t rx_data[SLAVE_NUM_DEVICES][SLAVE_REG_GROUP_SIZE]);

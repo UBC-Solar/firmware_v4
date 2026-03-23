@@ -65,6 +65,8 @@ void Error_Handler(void);
 #define LED_OUT_GPIO_Port GPIOB
 #define BOOT1_Pin GPIO_PIN_2
 #define BOOT1_GPIO_Port GPIOB
+#define SPI_ADBMS_NSS_Pin GPIO_PIN_12
+#define SPI_ADBMS_NSS_GPIO_Port GPIOB
 #define FAULT_OUT_Pin GPIO_PIN_9
 #define FAULT_OUT_GPIO_Port GPIOC
 #define LLIM_EN_OUT_Pin GPIO_PIN_10

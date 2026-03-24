@@ -1,5 +1,5 @@
 #include "stdint.h"
-#include "core_cm4.h"
+#include "stm32f1xx.h"
 
 __attribute__((naked)) void HardFault_Entry(void)
 {

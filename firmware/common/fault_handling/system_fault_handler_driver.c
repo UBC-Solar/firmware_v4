@@ -1,5 +1,10 @@
-#include "stdint.h"
+/**
+ * @file system_fault_handler_driver.c
+ * @brief HardFault handler interface for Cortex-M microcontrollers.
+ */
+
 #include "stm32f1xx.h"
+#include "system_fault_handler_driver.h"
 
 __attribute__((naked)) void HardFault_Entry(void)
 {

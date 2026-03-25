@@ -20,6 +20,7 @@
 #include "main.h"
 #include "can.h"
 #include "crc.h"
+#include "dma.h"
 #include "spi.h"
 #include "usart.h"
 #include "gpio.h"
@@ -91,6 +92,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_CAN_Init();
   MX_CRC_Init();
   MX_SPI2_Init();

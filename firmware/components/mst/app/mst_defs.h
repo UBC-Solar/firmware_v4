@@ -11,6 +11,6 @@
  * i.e. you can't run two hardware unit test with the same fw build.
  */
 #define UNIT_TEST_MCU
-#define UNIT_TEST_IO
-#define UNIT_TEST_CAN
-#define UNIT_TEST_ISOSPI
+// #define UNIT_TEST_IO
+// #define UNIT_TEST_CAN
+// #define UNIT_TEST_ISOSPI

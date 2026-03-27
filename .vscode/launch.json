@@ -39,7 +39,11 @@
         {
           "imageFileName": "${command:cmake.launchTargetPath}",
         }
-      ]
+      ],
+      "liveWatch": {
+        "enabled": true,
+        "samplesPerSecond": 10
+      }
     },
     {
       "name": "J-LINK NO SWO (active ELF path)",

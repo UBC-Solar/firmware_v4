@@ -43,6 +43,9 @@
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 
+/* ENUMS */
+typedef enum { IMU_AXIS_X = 0, IMU_AXIS_Y, IMU_AXIS_Z, IMU_AXIS_COUNT } ImuAxis;
+
 /* STRUCTS */
 typedef struct {
     float accel_x;
@@ -73,9 +76,6 @@ typedef struct {
     float P[2][2];
     bool  initialised;
 } KalmanState;
-
-/* ENUMS */
-typedef enum { IMU_AXIS_X = 0, IMU_AXIS_Y, IMU_AXIS_Z, IMU_AXIS_COUNT } ImuAxis;
 
 /* FUNCTION PROTOTYPES */
 static float Clamp(float value, float min, float max);

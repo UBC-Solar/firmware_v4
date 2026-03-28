@@ -18,13 +18,13 @@
 #include "cruise_control.h"
 
 /* DEFINES */
-#define VEHICLE_MASS_KG 300 // Placeholder
-#define POWER_WATTS 2000 // Placeholder
-#define EFFICIENCY_FACTOR 1.0 // Placeholder
-#define DRAG_COEFFICIENT 0.116
+#define VEHICLE_MASS_KG 350
+#define POWER_WATTS 2000
+#define EFFICIENCY_FACTOR 0.95
+#define DRAG_COEFFICIENT 0.1166
 #define AIR_DENSITY 1.26714
-#define FRONTAL_VEHICLE_AREA 1.18
-#define ROLLING_RESISTANCE 0.01 // Placeholder
+#define FRONTAL_VEHICLE_AREA 1.1853
+#define ROLLING_RESISTANCE 0.0234
 #define GRAVITY 9.81
 
 #define KI 0.00009 * VEHICLE_MASS_KG
@@ -43,19 +43,6 @@
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 
-/* FUNCTION PROTOTYPES */
-static float Clamp(float value, float min, float max);
-static float Error(float target_velocity_ms, float current_velocity_ms);
-static float PiControllerForce(float dt, float nominal_force);
-static float NominalForce(void);
-static float ForceOutput(float dt);
-static float ForceDrag(void);
-static float ForceRolling(void);
-static float ComputePitch(float accel_forward, float accel_vertical);
-static float UpdatePitch(float accel_x, float accel_z, float gyro_y, float dt);
-static float ForceHill(float radian);
-static bool ImuDataValidation(float accel, float gyro);
-
 /* STRUCTS */
 typedef struct {
     float accel_x;
@@ -65,9 +52,9 @@ typedef struct {
     float gyro_y;
     float gyro_z;
     float prev_pitch;
-    float prev_accel;
-    float prev_gyro;
-    bool prev_imu_data;
+    float prev_accel[IMU_AXIS_COUNT];
+    float prev_gyro[IMU_AXIS_COUNT];
+    bool prev_imu_data[IMU_AXIS_COUNT];
 } CruisePitchData;
 
 typedef struct {
@@ -86,6 +73,22 @@ typedef struct {
     float P[2][2];
     bool  initialised;
 } KalmanState;
+
+/* ENUMS */
+typedef enum { IMU_AXIS_X = 0, IMU_AXIS_Y, IMU_AXIS_Z, IMU_AXIS_COUNT } ImuAxis;
+
+/* FUNCTION PROTOTYPES */
+static float Clamp(float value, float min, float max);
+static float Error(float target_velocity_ms, float current_velocity_ms);
+static float PiControllerForce(float dt, float nominal_force);
+static float NominalForce(void);
+static float ForceOutput(float dt);
+static float ForceDrag(void);
+static float ForceRolling(void);
+static float ComputePitch(float accel_forward, float accel_vertical);
+static float UpdatePitch(float accel_x, float accel_z, float gyro_y, float dt);
+static float ForceHill(float radian);
+static bool ImuDataValidation(float accel, float gyro, ImuAxis axis);
 
 /* GLOBAL VARIABLES */
 volatile CruiseData g_cruise_data = {0};
@@ -225,11 +228,13 @@ static float UpdatePitch(float accel_x, float accel_z, float gyro_y, float dt)
     g_kalman.angle += K[0] * y;
     g_kalman.bias  += K[1] * y;
 
-    // Update covariance
-    g_kalman.P[0][0] -= K[0] * g_kalman.P[0][0];
-    g_kalman.P[0][1] -= K[0] * g_kalman.P[0][1];
-    g_kalman.P[1][0] -= K[1] * g_kalman.P[0][0];
-    g_kalman.P[1][1] -= K[1] * g_kalman.P[0][1];
+    // Update covariance (save originals before mutating)
+    float P00 = g_kalman.P[0][0];
+    float P01 = g_kalman.P[0][1];
+    g_kalman.P[0][0] -= K[0] * P00;
+    g_kalman.P[0][1] -= K[0] * P01;
+    g_kalman.P[1][0] -= K[1] * P00;
+    g_kalman.P[1][1] -= K[1] * P01;
 
     g_cruise_pitch_data.prev_pitch = -g_kalman.angle;
 
@@ -254,19 +259,19 @@ static float ForceHill(float radian) {
     return force_hill;
 }
 
-static bool ImuDataValidation(float accel, float gyro) {
+static bool ImuDataValidation(float accel, float gyro, ImuAxis axis) {
 
     if (!isfinite(accel) || !isfinite(gyro)) return false;
     if (fabsf(accel) > IMU_ACCEL_MAX) return false;
     if (fabsf(gyro) > IMU_GYRO_MAX) return false;
-    if (g_cruise_pitch_data.prev_imu_data) {
-        if (fabsf(accel - g_cruise_pitch_data.prev_accel) > ACCEL_DELTA_MAX) return false;
-        if (fabsf(gyro - g_cruise_pitch_data.prev_gyro) > GYRO_DELTA_MAX) return false;
+    if (g_cruise_pitch_data.prev_imu_data[axis]) {
+        if (fabsf(accel - g_cruise_pitch_data.prev_accel[axis]) > ACCEL_DELTA_MAX) return false;
+        if (fabsf(gyro - g_cruise_pitch_data.prev_gyro[axis]) > GYRO_DELTA_MAX) return false;
     }
 
-    g_cruise_pitch_data.prev_accel = accel;
-    g_cruise_pitch_data.prev_gyro = gyro;
-    g_cruise_pitch_data.prev_imu_data = true;
+    g_cruise_pitch_data.prev_accel[axis] = accel;
+    g_cruise_pitch_data.prev_gyro[axis] = gyro;
+    g_cruise_pitch_data.prev_imu_data[axis] = true;
 
     return true;
 }
@@ -289,7 +294,7 @@ void ImuStateXCanMsgHandler(uint8_t* data) {
 
     float gyro_x = float_bytes_x.f;
 
-    if (ImuDataValidation(accel_x, gyro_x)) {
+    if (ImuDataValidation(accel_x, gyro_x, IMU_AXIS_X)) {
         g_cruise_pitch_data.accel_x = accel_x;
         g_cruise_pitch_data.gyro_x = gyro_x;
     }
@@ -313,7 +318,7 @@ void ImuStateYCanMsgHandler(uint8_t* data) {
 
     float gyro_y = float_bytes_y.f;
 
-    if (ImuDataValidation(accel_y, gyro_y)) {
+    if (ImuDataValidation(accel_y, gyro_y, IMU_AXIS_Y)) {
         g_cruise_pitch_data.accel_y = accel_y;
         g_cruise_pitch_data.gyro_y = gyro_y;
     }
@@ -337,7 +342,7 @@ void ImuStateZCanMsgHandler(uint8_t* data) {
 
     float gyro_z = float_bytes_z.f;
 
-    if (ImuDataValidation(accel_z, gyro_z)) {
+    if (ImuDataValidation(accel_z, gyro_z, IMU_AXIS_Z)) {
         g_cruise_pitch_data.accel_z = accel_z;
         g_cruise_pitch_data.gyro_z = gyro_z;
     }
@@ -362,10 +367,26 @@ void VelocitySetMs(float dt) {
     velocity = Clamp(velocity, CRUISE_SPEED_MIN_MS, CRUISE_SPEED_MAX_MS);
 
     g_cruise_data.prev_cruise_velocity_ms = velocity;
-
     g_cruise_data.est_cruise_velocity_ms = velocity;
 }
 
 float GetCruiseAcceleration(void) {
     return g_cruise_data.accel;
 }
+
+#ifdef DEBUG
+void CruiseSetpointCanMsgHandler(uint8_t* data) {
+    if (data == NULL) return;
+
+    FloatToBytes fb;
+    for (int i = 0; i < 4; i++) {
+        fb.bytes[i] = data[i];
+    }
+
+    float setpoint_ms = fb.f;
+    if (!isfinite(setpoint_ms)) return;
+    if (setpoint_ms < CRUISE_SPEED_MIN_MS || setpoint_ms > CRUISE_SPEED_MAX_MS) return;
+
+    g_cruise_data.set_cruise_velocity_ms = setpoint_ms;
+}
+#endif

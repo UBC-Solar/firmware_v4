@@ -65,7 +65,7 @@ uint16_t AccelDriverReadThrottle(void)
 
     if (!ValidateAdcReadings(adc1, adc2))
     {
-        return MC_DAC_MIN; // Invalid sensors = no throttle
+        return MC_DAC_MIN;
     }
 
     return AccelNormalizeToDac((float)adc1, (float)ADC_LOWEST_VALID, (float)ADC_HIGHEST_VALID);
@@ -117,7 +117,7 @@ static uint16_t ConvertToDac(uint16_t adc)
               ADC_FULL_THROTTLE_MIN); // Keep adc val within throttle range
     return ((adc - ADC_NO_THROTTLE_MAX) * MC_DAC_MAX) /
            (ADC_FULL_THROTTLE_MIN -
-            ADC_NO_THROTTLE_MAX); // Find ratio between 0 to 1 and then * 1023
+            ADC_NO_THROTTLE_MAX);
 }
 
 uint16_t AccelNormalizeToDac(float value, float min, float max) {

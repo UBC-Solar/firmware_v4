@@ -48,4 +48,8 @@ void ImuStateXCanMsgHandler(uint8_t* data);
 void ImuStateYCanMsgHandler(uint8_t* data);
 void ImuStateZCanMsgHandler(uint8_t* data);
 
+#ifdef DEBUG
+void CruiseSetpointCanMsgHandler(uint8_t* data);
+#endif
+
 #endif // __CRUISE_CONTROL_H__

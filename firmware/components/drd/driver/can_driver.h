@@ -43,6 +43,8 @@
 #define IMU_AG_Y_CAN_MESSAGE_ID 0x753
 #define IMU_AG_Z_CAN_MESSAGE_ID 0x754
 
+#define CRUISE_SETPOINT_CAN_MSG_ID 0x501
+
 /* CAN HEADERS */
 extern const CAN_TxHeaderTypeDef drive_control_header;
 extern const CAN_TxHeaderTypeDef mdu_request_header;

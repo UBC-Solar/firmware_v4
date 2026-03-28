@@ -166,6 +166,11 @@ static void ComputeNextState(DriveStateCtx *ctx)
         {
             ctx->state = FORWARD;
         }
+
+        if (ctx->flags.brake_on)
+        {
+            ctx->state = FORWARD;
+        }
         break;
     default:
         ctx->state = PARK;

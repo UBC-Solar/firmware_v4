@@ -131,6 +131,9 @@ void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data)
     case 0x500:
         StateRequestCanMsgHandler(data);
         break;
+    case CRUISE_SETPOINT_CAN_MSG_ID:
+        CruiseSetpointCanMsgHandler(data);
+        break;
 #endif
     }
 }

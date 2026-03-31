@@ -1,5 +1,7 @@
 #include "adc_driver.h"
 
+#include "adc_process_runtime.h"
+
 static void ADC1_ProcessReadings(int half);
 
 static ADC_HandleTypeDef *hadc1;
@@ -74,6 +76,8 @@ static void ADC1_ProcessReadings(int half) {
             break;
         }
     }
+
+    ADC_Runtime_ProcessReadings();
 }
 
 ADC_Readings ADC_GetReadings(void) {

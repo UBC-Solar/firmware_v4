@@ -20,7 +20,7 @@ void ADC_Runtime_ProcessReadings(void) {
 
     adc_values.supp_sense = voltages.supp_sense / SUPP_DIVIDER_RATIO; // Convert from mV at ADC pin to mV before voltage divider
 
-    adc_values.lv_curr_sense = (readings.lv_curr_sense - LV_CURR_SENSE_ZERO_CURRENT_VOLTAGE) / LV_CURR_SENSE_SENSITIVITY; // Convert mV at ADC pin to mA of current
+    adc_values.lv_curr_sense = (readings.lv_curr_sense - LV_CURR_SENSE_ZERO_CURRENT_OFFSET) / LV_CURR_SENSE_SENSITIVITY; // Convert mV at ADC pin to mA of current
 
     UART_Printf("ADC Values - DCDC Thermistor: %u, Motor Precharge: %u mV, MPPT Precharge: %u mV, Supp Sense: %u mV, LV Curr Sense: %u mA\n\r",
         adc_values.dcdc_thermistor,

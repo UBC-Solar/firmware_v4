@@ -69,11 +69,12 @@ void LcdHandlerPageController(void)
         }
         g_str_change_page_flag = false;
     }
-    if(check_fault && !g_prev_fault) {
+    // Triggers Change of page to fault page 1 time
+    if (check_fault && g_prev_fault == false){
         LcdDriverChangeScreen();
         g_lcd_page = FAULTS_PAGE;
+        g_prev_fault = true;
     }
-    g_prev_fault = check_fault;
 
 #ifdef LCD_TEST
     LcdTestInit();

@@ -105,20 +105,31 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    #ifdef UNIT_TEST_MCU
+    /**
+     * Mainloop
+     */
+    CollectPackData();
+    DriveOutputs();
+    SendCanMMessages();
+
+
+    /**
+     * Tests
+     */
+    #if (UNIT_TEST_MCU == RUN)
     Debug_McuTestCycle();
     #endif // UNIT_TEST_MCU
 
-    #ifdef UNIT_TEST_IO
+    #if (UNIT_TEST_IO == RUN)
     Debug_DigitalIoTestCycle();
     #endif // UNIT_TEST_IO
 
-    #ifdef UNIT_TEST_CAN
-    Debug_IsoSpiTestCycle();
-    #endif // UNIT_TEST_CAN
-
-    #ifdef UNIT_TEST_ISOSPI
+    #if (UNIT_TEST_CAN == RUN)
     Debug_CanTestCycle();
+    #endif // UNIT_TEST_CAN
+    
+    #if (UNIT_TEST_ISOSPI == RUN)
+    Debug_IsoSpiTestCycle();
     #endif // UNIT_TEST_ISOSPI
     /* USER CODE END WHILE */
 
@@ -139,10 +150,13 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -152,15 +166,19 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
     Error_Handler();
   }
+
+  /** Enables the Clock Security System
+  */
+  HAL_RCC_EnableCSS();
 }
 
 /* USER CODE BEGIN 4 */
@@ -176,6 +194,7 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
+  HAL_GPIO_WritePin(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin, GPIO_PIN_SET);
   while (1)
   {
   }

@@ -180,7 +180,7 @@ void CAN_SendMessageXXX()
 }
 
 
-#ifdef UNIT_TEST_CAN
+#if (UNIT_TEST_CAN == RUN)
 /**
  * @brief Send DEBUG CAN message intended for hardware unit tests
  *

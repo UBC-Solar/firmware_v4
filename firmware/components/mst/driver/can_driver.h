@@ -58,7 +58,7 @@ void CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size
 void CAN_Init(CAN_HandleTypeDef *handle);
 
 void CAN_SendMessageXXX();
-#ifdef UNIT_TEST_CAN
+#if (UNIT_TEST_CAN == RUN)
 void CAN_SendMessgeDebug();
 #endif // UNIT_TEST_CAN
 

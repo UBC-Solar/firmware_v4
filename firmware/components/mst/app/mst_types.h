@@ -1,3 +1,8 @@
+#pragma once
+
+#include <stdint.h>
+#include <stdbool.h>
+
 #include "mst_defs.h"
 
 /**
@@ -50,7 +55,7 @@ typedef union {
 } pack_state_t;
 
 
-struct module_t
+typedef struct
 {
     uint32_t voltage_mv;
     float temperature;
@@ -58,11 +63,11 @@ struct module_t
 
     faults_t faults;
     warnings_t warnings;
-};
+} module_t;
 
 
-struct slave_t
+typedef struct
 {
     module_t *modules[NUM_MODULES_PER_SLAVE];
-};
+} slave_t;
 

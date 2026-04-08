@@ -21,6 +21,7 @@
 #include "can.h"
 #include "crc.h"
 #include "dma.h"
+#include "gpio_driver.h"
 #include "spi.h"
 #include "usart.h"
 #include "gpio.h"
@@ -108,10 +109,10 @@ int main(void)
     /**
      * Mainloop
      */
-    CollectPackData();
-    DriveOutputs();
+    CollectBoardData();
+    CollectModuleData();
+    AnalyzeModuleData();
     SendCanMMessages();
-
 
     /**
      * Tests
@@ -197,6 +198,8 @@ void Error_Handler(void)
   HAL_GPIO_WritePin(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin, GPIO_PIN_SET);
   while (1)
   {
+    HAL_Delay(200);
+    GPIO_Toggle(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin);
   }
   /* USER CODE END Error_Handler_Debug */
 }

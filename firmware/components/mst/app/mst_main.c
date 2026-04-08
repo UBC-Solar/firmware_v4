@@ -1,10 +1,17 @@
 #include "mst_main.h"
 
+#include <stdint.h>
 #include <stdio.h>
 
 #include "debug_io.h"
 #include "main.h"
 
+#include "mst_defs.h"
+#include "mst_types.h"
+#include "balancing.h"
+#include "can_messages.h"
+#include "emergency.h"
+#include "module_data.h"
 #include "spi.h"
 #include "usart.h"
 
@@ -29,13 +36,42 @@ void Initialize() {
     Slave_init(&hspi2);
 }
 
-void CollectPackData() {
+void CollectBoardData() {
+    GPIO_PinState balancePinState = 
+        GPIO_Read(BALANCE_EN_IN_GPIO_Port, BALANCE_EN_IN_Pin);
+    pack_state.bits.balancing_enable = balancePinState == GPIO_PIN_SET ? true : false;
 
+    GPIO_PinState scrutineeringPinState = 
+        GPIO_Read(SCRUTINEERING_EN_IN_GPIO_Port, SCRUTINEERING_EN_IN_Pin);
+    pack_state.bits.scrutineering_enable = scrutineeringPinState == GPIO_PIN_SET ? true : false;
+
+    LOG_DEBUG("Balance enable: %d, Scrutineering mode: %d.", balancePinState, scrutineeringPinState);
+}
+
+void CollectModuleData() {
+    uint32_t voltageStart_ms = HAL_GetTick();
+    StartVoltageMeasurement();
+    GetVoltageMeasurement();
+    uint32_t tempStart_ms = HAL_GetTick();
+    StartTemperatureMeasurement();
+    GetTemperatureMeasurement();
+    uint32_t tempEnd_ms = HAL_GetTick();
+    
+    LOG_DEBUG("Voltage measurement: %lu ms, Temperature measurement: %lu ms, Total: %lu ms", 
+              tempStart_ms - voltageStart_ms, 
+              tempEnd_ms - tempStart_ms, 
+              tempEnd_ms - voltageStart_ms);
 }
 
 
-void DriveOutputs() {
+void AnalyzeModuleData() {
+    CheckForEmergency(pack_modules, &pack_faults, &pack_warnings);
 
+    uint32_t balancingStart_ms = HAL_GetTick();
+    DoBalancing();
+    uint32_t balancingEnd_ms = HAL_GetTick();
+    
+    LOG_DEBUG("Balancing measurement: %lu ms", balancingEnd_ms - balancingStart_ms);
 }
 
 

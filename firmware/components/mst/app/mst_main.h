@@ -1,18 +1,19 @@
 #pragma once
 
 #include "mst_defs.h"
+#include "mst_types.h"
 
 
 /**
  * Pack state 
  * MARK: globals
  */
-extern module_t pack_modules[NUM_MODULES];
-extern faults_t pack_faults;
-extern warnings_t pack_warnings;
-extern pack_state_t pack_state;
+// extern module_t pack_modules[NUM_MODULES];
+// extern faults_t pack_faults;
+// extern warnings_t pack_warnings;
+// extern pack_state_t pack_state;
 
-extern slave_t slaves[NUM_SLAVES];
+// extern slave_t slaves[NUM_SLAVES];
 
 
 /**
@@ -20,8 +21,9 @@ extern slave_t slaves[NUM_SLAVES];
  * MARK: f(x)
  */
 void Initialize();
-void CollectPackData();
-void DriveOutputs();
+void CollectBoardData();
+void CollectModuleData();
+void AnalyzeModuleData();
 void SendCanMMessages();
 
 #if (UNIT_TEST_MCU == RUN)

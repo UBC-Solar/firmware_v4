@@ -1,5 +1,6 @@
 #pragma once
 
+#include "logging.h"
 
 /**
  * Molicel M35A Voltage & Temperature Limits
@@ -36,8 +37,9 @@
 /**
  * Firmware-Specific Settings
  */
-/* VERBOSE settings: verbose debugging statements */
-#define VERBOSE 0
+// Set current logging level - users can adjust this to filter log output
+// This affects which logging function are allowed to print in logging.h
+#define CURRENT_LOG_LEVEL LOG_LEVEL_DEBUG
 
 
 /**

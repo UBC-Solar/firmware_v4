@@ -11,3 +11,9 @@ HAL_StatusTypeDef I2C_MemWrite_IT(uint16_t dev_addr, uint16_t mem_addr, uint8_t 
 HAL_StatusTypeDef I2C_MemRead_IT(uint16_t dev_addr, uint16_t mem_addr, uint8_t *data, uint16_t size);
 
 HAL_I2C_StateTypeDef I2C_GetState(void);
+
+// enum defines what we're reading
+typedef enum {
+    I2C_IDLE,
+    I2C_INA228_VOLTAGE
+} I2C_State;

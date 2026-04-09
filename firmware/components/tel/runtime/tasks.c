@@ -9,6 +9,5 @@ void TasksIMU(void* argument)
     for (;;)
     {
         counter++;
-        osDelay(1000); // Delay for 1000ms (1 second)
     }
 }

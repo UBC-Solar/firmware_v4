@@ -6,13 +6,12 @@
             "hidden": true,
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/${presetName}",
-		    "toolchainFile": "${sourceDir}/cmake/gcc-arm-none-eabi.cmake",
+		    "toolchainFile": "${sourceDir}/cube/cmake/gcc-arm-none-eabi.cmake",
             "cacheVariables": {
             }
         },
         {
             "name": "Debug",
-            "displayName": "MDI Debug",
             "inherits": "default",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug"
@@ -20,7 +19,6 @@
         },
         {
             "name": "Release",
-            "displayName": "MDI Release",
             "inherits": "default",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"

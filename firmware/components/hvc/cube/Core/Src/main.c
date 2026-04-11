@@ -102,7 +102,7 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
-  HVC_Init(&huart2, &hadc1, &htim3);
+  HVC_Init(&huart2, &hadc1, &htim3, &hi2c1);
 
   /* USER CODE END 2 */
 

@@ -25,6 +25,7 @@ void HVC_Init(UART_HandleTypeDef *_huart2, ADC_HandleTypeDef *_hadc1, TIM_Handle
 
 void HVC_Main(void) {
     if (HAL_GetTick() - previous_time_ms >= 100) {
+        DEBUG_IO_print("100 ms elapsed, reading shunt voltage.\n");
         previous_time_ms = HAL_GetTick();
         INA228_Read_Shunt_Voltage();
     }

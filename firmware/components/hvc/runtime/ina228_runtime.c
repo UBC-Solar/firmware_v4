@@ -29,11 +29,17 @@ static inline void pack_buf(uint8_t *buf, uint32_t value, uint8_t size) {
 }
 
 void INA228_Init(void) {
+    I2C_PrintState();
     INA228_Write_Config();
+    I2C_PrintState();
     INA228_Write_ADC_Config();
+    I2C_PrintState();
     INA228_Write_Diagnostic_Flags();
+    I2C_PrintState();
     INA228_Write_Over_Voltage();
+    I2C_PrintState();
     INA228_Write_Under_Voltage();
+    I2C_PrintState();
 }
 
 void INA228_Write_Config(void) {
@@ -50,7 +56,11 @@ void INA228_Write_Config(void) {
 
     I2C_MemWrite(INA228_I2C_ADDRESS, INA228_REG_CONFIG, buf, 2);
 
-    DEBUG_IO_print("Wrote CONFIG: 0x%04X, time ms: %lu\n", config, (unsigned long)HAL_GetTick());
+    //I2C_MemWrite_IT(INA228_I2C_ADDRESS, INA228_REG_CONFIG, buf, 2); // Start async read of shunt voltage register so it's ready by the time we need it in the main loop
+
+    //HAL_Delay(10);
+
+    DEBUG_IO_print("Wrote CONFIG: 0x%04X, time ms: %lu\n\r", config, (unsigned long)HAL_GetTick());
 }
 
 void INA228_Write_ADC_Config(void) {
@@ -71,7 +81,7 @@ void INA228_Write_ADC_Config(void) {
 
     I2C_MemWrite(INA228_I2C_ADDRESS, INA228_REG_ADC_CONFIG, buf, 2);
 
-    DEBUG_IO_print("Wrote ADC_CONFIG: 0x%04X, time ms: %lu\n", adc_config, (unsigned long)HAL_GetTick());
+    DEBUG_IO_print("Wrote ADC_CONFIG: 0x%04X, time ms: %lu\n\r", adc_config, (unsigned long)HAL_GetTick());
 }
 
 void INA228_Write_Diagnostic_Flags(void) {
@@ -88,7 +98,7 @@ void INA228_Write_Diagnostic_Flags(void) {
 
     I2C_MemWrite(INA228_I2C_ADDRESS, INA228_REG_DIAG_ALRT, buf, 2);
 
-    DEBUG_IO_print("Wrote DIAG_ALRT: 0x%04X, time ms: %lu\n", diag_alert, (unsigned long)HAL_GetTick());
+    DEBUG_IO_print("Wrote DIAG_ALRT: 0x%04X, time ms: %lu\n\r", diag_alert, (unsigned long)HAL_GetTick());
 }
 
 void INA228_Write_Over_Voltage(void) {
@@ -105,7 +115,7 @@ void INA228_Write_Over_Voltage(void) {
 
     I2C_MemWrite(INA228_I2C_ADDRESS, INA228_REG_SOVL, buf, 2);
 
-    DEBUG_IO_print("Wrote SOVL: 0x%04X, time ms: %lu\n", sovl, (unsigned long)HAL_GetTick());
+    DEBUG_IO_print("Wrote SOVL: 0x%04X, time ms: %lu\n\r", sovl, (unsigned long)HAL_GetTick());
 }
 
 void INA228_Write_Under_Voltage(void) {
@@ -122,14 +132,18 @@ void INA228_Write_Under_Voltage(void) {
 
     I2C_MemWrite(INA228_I2C_ADDRESS, INA228_REG_SUVL, buf, 2);
 
-    DEBUG_IO_print("Wrote SUVL: 0x%04X, time ms: %lu\n", (uint16_t)suvl, (unsigned long)HAL_GetTick());
+    DEBUG_IO_print("Wrote SUVL: 0x%04X, time ms: %lu\n\r", (uint16_t)suvl, (unsigned long)HAL_GetTick());
 }
 
 // send read command, which is read into the shunt_voltage variable by the interrupt function
 void INA228_Read_Shunt_Voltage(void) {
-    HAL_StatusTypeDef status = I2C_MemRead_IT(INA228_I2C_ADDRESS, INA228_REG_SHUNT_VOLTAGE, raw_shunt_voltage_buf, 3, I2C_INA228_SHUNT_VOLTAGE);
+    //DEBUG_IO_print("Initiating I2C read for SHUNT_VOLTAGE, time ms: %lu\n\r", (unsigned long)HAL_GetTick());
 
-    DEBUG_IO_print("Initiated I2C read for SHUNT_VOLTAGE with status: %d, time ms: %lu\n", status, (unsigned long)HAL_GetTick());
+    //HAL_StatusTypeDef status = I2C_MemRead_IT(INA228_I2C_ADDRESS, INA228_REG_SHUNT_VOLTAGE, raw_shunt_voltage_buf, 3, I2C_INA228_SHUNT_VOLTAGE);
+
+    HAL_StatusTypeDef status = I2C_MemRead(INA228_I2C_ADDRESS, INA228_REG_SHUNT_VOLTAGE, raw_shunt_voltage_buf, 3, I2C_INA228_SHUNT_VOLTAGE);
+    
+    DEBUG_IO_print("stat%d\n\r", status);
 }
 
 void INA228_Process_Shunt_Voltage(void) {
@@ -158,10 +172,10 @@ void INA228_Process_Shunt_Voltage(void) {
     shunt_current_mA = (int32_t)(((int64_t)shunt_voltage_nV * 1000) / SHUNT_RESISTANCE_NOHMS);
 
     // print raw_shunt_voltage_buf and raw_value and shunt voltage and shunt current
-    DEBUG_IO_print("Raw shunt voltage bytes: %02X %02X %02X\n", raw_shunt_voltage_buf[0], raw_shunt_voltage_buf[1], raw_shunt_voltage_buf[2]);
-    DEBUG_IO_print("Raw shunt voltage value (after sign extension and shifting): %d\n", raw_value);
-    DEBUG_IO_print("Calculated shunt voltage: %d nV\n", shunt_voltage_nV);
-    DEBUG_IO_print("Calculated shunt current: %d mA\n", shunt_current_mA);
+    DEBUG_IO_print("Raw shunt voltage bytes: %02X %02X %02X\n\r", raw_shunt_voltage_buf[0], raw_shunt_voltage_buf[1], raw_shunt_voltage_buf[2]);
+    DEBUG_IO_print("Raw shunt voltage value (after sign extension and shifting): %d\n\r", raw_value);
+    DEBUG_IO_print("Calculated shunt voltage: %d nV\n\r", shunt_voltage_nV);
+    DEBUG_IO_print("Calculated shunt current: %d mA\n\r", shunt_current_mA);
 }
 
 int32_t INA228_Get_Shunt_Voltage_nV(void) {

@@ -31,6 +31,15 @@ HAL_StatusTypeDef I2C_MasterReceive_IT(uint16_t dev_addr, uint8_t *data, uint16_
     return HAL_I2C_Master_Receive_IT(hi2c, dev_addr, data, size);
 }
 
+HAL_StatusTypeDef I2C_MemWrite(uint16_t dev_addr, uint16_t mem_addr, uint8_t *data, uint16_t size) {
+    if (HAL_I2C_GetState(hi2c) != HAL_I2C_STATE_READY) {
+        UART_Printf("I2C is busy, cannot start new MemWrite operation\r\n");
+        return HAL_BUSY;
+    }
+
+    return HAL_I2C_Mem_Write(hi2c, dev_addr, mem_addr, I2C_MEMADD_SIZE_8BIT, data, size, HAL_MAX_DELAY);
+}
+
 HAL_StatusTypeDef I2C_MemWrite_IT(uint16_t dev_addr, uint16_t mem_addr, uint8_t *data, uint16_t size) {
     if (HAL_I2C_GetState(hi2c) != HAL_I2C_STATE_READY) {
         UART_Printf("I2C is busy, cannot start new MemWrite operation\r\n");
@@ -58,8 +67,10 @@ HAL_I2C_StateTypeDef I2C_GetState(void) {
 void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *_hi2c) {
     if (_hi2c == hi2c) {
         switch (current_i2c_state) {
-            case I2C_INA228_VOLTAGE:
+            case I2C_INA228_SHUNT_VOLTAGE:
                 INA228_Process_Shunt_Voltage();
+                break;
+            default:
                 break;
         }
 

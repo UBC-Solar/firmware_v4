@@ -1,4 +1,5 @@
 #include "can_driver.h"
+#include "logging.h"
 
 #include "stm32f1xx_hal_def.h"
 
@@ -22,7 +23,7 @@ static void tryTransmitFromQueue()
 
     if (HAL_OK != canStatus)
     {
-        Error_Handler();
+        ERROR_HANDLER_LOGGED();
     }
     CAN_driver.tx_queue_pop_index = (CAN_driver.tx_queue_pop_index + 1U) % CAN_TX_QUEUE_CAPACITY;
 }
@@ -45,7 +46,7 @@ static void queueCanMessage(CAN_TxMessage_t *message)
     // Check if there is space in queue
     if (next_push_index == CAN_driver.tx_queue_pop_index)
     {
-        Error_Handler();
+        ERROR_HANDLER_LOGGED();
     }
 
     volatile CAN_TxMessage_t *next_free_queue_slot = &CAN_driver.tx_queue[CAN_driver.tx_queue_push_index];
@@ -92,7 +93,7 @@ void CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size
 
     if ((handle == NULL) || (std_ids == NULL) || (count == 0U) || (count > max_ids))
     {
-        Error_Handler();
+        ERROR_HANDLER_LOGGED();
     }
 
     CAN_FilterTypeDef filter_config;
@@ -130,7 +131,7 @@ void CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size
 
         if (HAL_CAN_ConfigFilter(handle, &filter_config) != HAL_OK)
         {
-            Error_Handler();
+            ERROR_HANDLER_LOGGED();
         }
 
         id_index += CAN_FILTER_NUM_ID_PER_BANK;
@@ -154,7 +155,7 @@ void CAN_Init(CAN_HandleTypeDef *handle)
     // Activate interrupt for completion of message transmission
     if (HAL_CAN_ActivateNotification(CAN_driver.can_handle, CAN_IT_TX_MAILBOX_EMPTY | CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
     {
-        Error_Handler();
+        ERROR_HANDLER_LOGGED();
     }
 
     HAL_CAN_Start(CAN_driver.can_handle);
@@ -180,7 +181,7 @@ void CAN_SendMessageXXX()
 }
 
 
-#ifdef UNIT_TEST_CAN
+#if (UNIT_TEST_CAN == RUN)
 /**
  * @brief Send DEBUG CAN message intended for hardware unit tests
  *
@@ -221,7 +222,7 @@ void CAN_RecievedMessageCallback()
         (CAN_RxHeaderTypeDef *) &new_rx_message.rx_header, 
         (uint8_t *) new_rx_message.data) != HAL_OK)
     {
-        Error_Handler();
+        ERROR_HANDLER_LOGGED();
     }
 
     new_rx_message.timestamp = HAL_GetTick();

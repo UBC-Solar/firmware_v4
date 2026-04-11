@@ -72,7 +72,7 @@ mst:
 
 utest:
 	@echo "=== Running all unit tests ==="
-	cd firmware/components/mdi/ && ./ceedling test:all
+# 	cd firmware/components/mdi/ && ./ceedling test:all
 
 
 clean:

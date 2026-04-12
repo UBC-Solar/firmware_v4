@@ -3,14 +3,14 @@
 #include "debug_io.h"
 #include "i2c_driver.h"
 #include "stm32f1xx_hal_def.h"
+#include "stm32f1xx_hal_i2c.h"
 #include <stdint.h>
 
 // Raw bytes received from INA228 in big-endian format
 // buf[0] = bits 23:16 (MSB), buf[1] = bits 15:8, buf[2] = bits 7:0 (LSB).
 static uint8_t raw_shunt_voltage_buf[3];
 
-// Converted result in nanovolts. volatile because it is written in ISR context
-// (the I2C RxCplt callback) and read in main-loop context.
+// Volatile because written in ISR context (the I2C RxCplt callback) and read in main-loop context.
 static volatile int32_t shunt_voltage_nV = 0;
 static volatile int32_t shunt_current_mA = 0;
 
@@ -29,38 +29,31 @@ static inline void pack_buf(uint8_t *buf, uint32_t value, uint8_t size) {
 }
 
 void INA228_Init(void) {
-    I2C_PrintState();
     INA228_Write_Config();
-    I2C_PrintState();
     INA228_Write_ADC_Config();
-    I2C_PrintState();
     INA228_Write_Diagnostic_Flags();
-    I2C_PrintState();
     INA228_Write_Over_Voltage();
-    I2C_PrintState();
     INA228_Write_Under_Voltage();
-    I2C_PrintState();
+
+    HAL_StatusTypeDef state = I2C_GetState();
+    if (state != HAL_I2C_STATE_READY) {
+        DEBUG_IO_print("Failed to initiate INA228 I2C with state 0x%02X\n\r", state);
+    }
 }
 
 void INA228_Write_Config(void) {
     // CONFIG register (0x00), 16-bit, reset = 0x0000
     // Bit 4: ADCRANGE — set according to INA228_ADCRANGE define
 
-    // for now, don't do temp compensation
-
-    uint16_t config = (uint16_t)INA228_ADCRANGE << 4; // Put ADCRANGE bit in position 4
+    uint16_t config = (uint16_t)INA228_ADCRANGE << 4;
 
     uint8_t buf[2];
     pack_buf(buf, config, 2); // Convert config to little-endian byte array
     swap_endianness(buf, 2); // Swap byte order to big-endian for I2C transmission
 
-    I2C_MemWrite(INA228_I2C_ADDRESS, INA228_REG_CONFIG, buf, 2);
+    HAL_StatusTypeDef status = I2C_MemWrite(INA228_I2C_ADDRESS, INA228_REG_CONFIG, buf, 2);
 
-    //I2C_MemWrite_IT(INA228_I2C_ADDRESS, INA228_REG_CONFIG, buf, 2); // Start async read of shunt voltage register so it's ready by the time we need it in the main loop
-
-    //HAL_Delay(10);
-
-    DEBUG_IO_print("Wrote CONFIG: 0x%04X, time ms: %lu\n\r", config, (unsigned long)HAL_GetTick());
+    DEBUG_IO_print("Wrote CONFIG: 0x%04X\n\r", INA228_Write_Config());
 }
 
 void INA228_Write_ADC_Config(void) {
@@ -72,16 +65,16 @@ void INA228_Write_ADC_Config(void) {
     // Bits  5:3   VTCT   = 5    — 1052 µs temperature conversion time
     // Bits  2:0   AVG    = 0    — no averaging (single conversion per output)
 
-    // Continuous shunt voltage measurement, 1052 µs conversion time for bus and shunt and temp, 4 samples averaged
+    // Setup for Continuous shunt voltage measurement, 1052 µs conversion time for bus and shunt and temp, 4 samples averaged
     uint16_t adc_config = (0xA << 12) | (5 << 9) | (5 << 6) | (5 << 3) | (1 << 0);
 
     uint8_t buf[2];
     pack_buf(buf, adc_config, 2);
     swap_endianness(buf, 2);
 
-    I2C_MemWrite(INA228_I2C_ADDRESS, INA228_REG_ADC_CONFIG, buf, 2);
+    HAL_StatusTypeDef status = I2C_MemWrite(INA228_I2C_ADDRESS, INA228_REG_ADC_CONFIG, buf, 2);
 
-    DEBUG_IO_print("Wrote ADC_CONFIG: 0x%04X, time ms: %lu\n\r", adc_config, (unsigned long)HAL_GetTick());
+    DEBUG_IO_print("Wrote ADC_CONFIG: 0x%04X\n\r", adc_config);
 }
 
 void INA228_Write_Diagnostic_Flags(void) {
@@ -96,83 +89,69 @@ void INA228_Write_Diagnostic_Flags(void) {
     pack_buf(buf, diag_alert, 2);
     swap_endianness(buf, 2);
 
-    I2C_MemWrite(INA228_I2C_ADDRESS, INA228_REG_DIAG_ALRT, buf, 2);
+    HAL_StatusTypeDef status = I2C_MemWrite(INA228_I2C_ADDRESS, INA228_REG_DIAG_ALRT, buf, 2);
 
     DEBUG_IO_print("Wrote DIAG_ALRT: 0x%04X, time ms: %lu\n\r", diag_alert, (unsigned long)HAL_GetTick());
 }
 
 void INA228_Write_Over_Voltage(void) {
     // SOVL register (0x0C), 16-bit, reset = 7FFFh
-    // Fault register LSB = 1250 nV (16× the ADC shunt LSB of 78.125 nV)
-    // Threshold (nV) = INA228_OVERCURRENT_A (A) × SHUNT_RESISTANCE_NOHMS (nΩ) → result in nV
-    // Counts = threshold_nV / fault_LSB_nV
-    // = 60 A × 100496 nΩ / 1250 nV/count = 4824 counts
+    // Counts = INA228_OVERCURRENT_A (A) × SHUNT_RESISTANCE_NOHMS (nΩ) / fault_LSB_nV (nV/LSB)
     uint16_t sovl = (uint16_t)((uint32_t)INA228_OVERCURRENT_A * SHUNT_RESISTANCE_NOHMS / INA228_FAULT_LSB_NV);
 
     uint8_t buf[2];
     pack_buf(buf, sovl, 2);
     swap_endianness(buf, 2);
 
-    I2C_MemWrite(INA228_I2C_ADDRESS, INA228_REG_SOVL, buf, 2);
+    HAL_StatusTypeDef status = I2C_MemWrite(INA228_I2C_ADDRESS, INA228_REG_SOVL, buf, 2);
 
     DEBUG_IO_print("Wrote SOVL: 0x%04X, time ms: %lu\n\r", sovl, (unsigned long)HAL_GetTick());
 }
 
 void INA228_Write_Under_Voltage(void) {
     // SUVL register (0x0D), 16-bit, reset = 0000h
-    // Fault register LSB = 1250 nV (16× the ADC shunt LSB of 78.125 nV)
-    // Threshold is not negative, as the INA228 expects
     // Counts = (INA228_REVERSE_CURRENT_A (A) × SHUNT_RESISTANCE_NOHMS (nΩ) / fault_LSB_nV)
-    // = (20 × 100496 / 1250) = 1608 counts
     int16_t suvl = (int16_t)((uint32_t)INA228_REVERSE_CURRENT_A * SHUNT_RESISTANCE_NOHMS / INA228_FAULT_LSB_NV);
 
     uint8_t buf[2];
     pack_buf(buf, (uint16_t)suvl, 2);
     swap_endianness(buf, 2);
 
-    I2C_MemWrite(INA228_I2C_ADDRESS, INA228_REG_SUVL, buf, 2);
+    HAL_StatusTypeDef status = I2C_MemWrite(INA228_I2C_ADDRESS, INA228_REG_SUVL, buf, 2);
 
     DEBUG_IO_print("Wrote SUVL: 0x%04X, time ms: %lu\n\r", (uint16_t)suvl, (unsigned long)HAL_GetTick());
 }
 
 // send read command, which is read into the shunt_voltage variable by the interrupt function
 void INA228_Read_Shunt_Voltage(void) {
-    //DEBUG_IO_print("Initiating I2C read for SHUNT_VOLTAGE, time ms: %lu\n\r", (unsigned long)HAL_GetTick());
-
     //HAL_StatusTypeDef status = I2C_MemRead_IT(INA228_I2C_ADDRESS, INA228_REG_SHUNT_VOLTAGE, raw_shunt_voltage_buf, 3, I2C_INA228_SHUNT_VOLTAGE);
 
     HAL_StatusTypeDef status = I2C_MemRead(INA228_I2C_ADDRESS, INA228_REG_SHUNT_VOLTAGE, raw_shunt_voltage_buf, 3, I2C_INA228_SHUNT_VOLTAGE);
-    
-    DEBUG_IO_print("stat%d\n\r", status);
 }
 
 void INA228_Process_Shunt_Voltage(void) {
-    // INA228 sends bytes big-endian: buf[0]=MSB, buf[1]=MID, buf[2]=LSB.
-    // Assemble directly without swapping; the swap helper is for write-path only.
+    // INA228 sends bytes big-endian: buf[0]=MSB, buf[1]=MID, buf[2]=LSB. Assemble the buf into an int32_t.
     int32_t raw_value = ((int32_t)raw_shunt_voltage_buf[0] << 16)
                       | ((int32_t)raw_shunt_voltage_buf[1] << 8)
                       |  (int32_t)raw_shunt_voltage_buf[2];
-
-    // Sign-extend from 24-bit two's complement to 32-bit
-    // explanation: if the sign bit (bit 23) is set, we need to set bits 24-31 to 1 to preserve the negative value when converting to a 32-bit int.
-    // move this to the docs!
-    if (raw_value & 0x800000) {
-        raw_value |= 0xFF000000;
-    }
 
     // VSHUNT bits 23:4 are the 20-bit measurement; bits 3:0 are reserved.
     // Right-shift by 4 to discard the reserved bits.
     raw_value = raw_value >> 4;
 
-    // Convert counts → nanovolts: multiply first to avoid truncation to zero
+    // Sign-extend from 24-bit two's complement to 32-bit
+    // explanation: if the sign bit (bit 23) is set, we need to set bits 24-31 to 1 to preserve the negative value when converting to a 32-bit int.
+    // move this to the docs!
+    if (raw_value & 0x800000) {
+        raw_value |= 0xFFF00000;
+    }
+
+    // Convert counts into nanovolts, multiply first to avoid truncation to zero
     shunt_voltage_nV = (int32_t)(((int64_t)raw_value * INA228_VSHUNT_LSB_NV_NUM) / INA228_VSHUNT_LSB_NV_DEN);
 
-    // Convert nV → mA: multiply by 1000 before dividing to avoid truncation to zero
-    // nV / nΩ = A;  A × 1000 = mA
+    // nV / nΩ = A; A * 1000 = mA
     shunt_current_mA = (int32_t)(((int64_t)shunt_voltage_nV * 1000) / SHUNT_RESISTANCE_NOHMS);
 
-    // print raw_shunt_voltage_buf and raw_value and shunt voltage and shunt current
-    DEBUG_IO_print("Raw shunt voltage bytes: %02X %02X %02X\n\r", raw_shunt_voltage_buf[0], raw_shunt_voltage_buf[1], raw_shunt_voltage_buf[2]);
     DEBUG_IO_print("Raw shunt voltage value (after sign extension and shifting): %d\n\r", raw_value);
     DEBUG_IO_print("Calculated shunt voltage: %d nV\n\r", shunt_voltage_nV);
     DEBUG_IO_print("Calculated shunt current: %d mA\n\r", shunt_current_mA);

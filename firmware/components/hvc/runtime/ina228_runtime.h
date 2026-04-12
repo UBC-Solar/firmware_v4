@@ -39,8 +39,6 @@
 #define INA228_VSHUNT_LSB_NV_DEN  10 // Denominator
 #endif
 
-#define SHUNT_RESISTANCE_NOHMS      100496   // Shunt resistor value in nano-ohms (Thx Bryan Cady of Moment Energy!)
-
 // Fault threshold register LSB = 16 × ADC shunt LSB
 // ADCRANGE=1: 16 × 78.125 nV = 1250 nV/LSB
 // ADCRANGE=0: 16 × 312.5  nV = 5000 nV/LSB
@@ -49,6 +47,8 @@
 #else
 #define INA228_FAULT_LSB_NV         5000
 #endif
+
+#define SHUNT_RESISTANCE_NOHMS      100496   // Shunt resistor value in nano-ohms (Thx Bryan Cady of Moment Energy!)
 
 // Fault thresholds in Amperes, unisgned in either case
 #define INA228_OVERCURRENT_A        60   // Positive overcurrent limit (A)

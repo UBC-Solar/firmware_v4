@@ -54,24 +54,57 @@
 #define INA228_OVERCURRENT_A        60   // Positive overcurrent limit (A)
 #define INA228_REVERSE_CURRENT_A    20    // Reverse current magnitude limit (A)
 
-// Call once at startup (before the main loop) with I2C already initialized.
-// Writes CONFIG, ADC_CONFIG, DIAG_ALRT, SOVL, SUVL using blocking I2C.
+/**
+ * @brief Initialise the INA228 — call once at startup after I2C is ready.
+ *        Writes CONFIG, ADC_CONFIG, DIAG_ALRT, SOVL, and SUVL using blocking I2C.
+ */
 void INA228_Init(void);
 
-// Individual register write helpers (called by INA228_I2C_Init)
+/**
+ * @brief Write the CONFIG register (0x00) to set the ADC range.
+ */
 void INA228_Write_Config(void);
+
+/**
+ * @brief Write the ADC_CONFIG register (0x01) to set conversion mode, times, and averaging.
+ */
 void INA228_Write_ADC_Config(void);
+
+/**
+ * @brief Write the DIAG_ALRT register (0x0B) to configure alert latch and slow-alert behaviour.
+ */
 void INA228_Write_Diagnostic_Flags(void);
+
+/**
+ * @brief Write the SOVL register (0x0C) to set the shunt overvoltage (overcurrent) threshold.
+ */
 void INA228_Write_Over_Voltage(void);
+
+/**
+ * @brief Write the SUVL register (0x0D) to set the shunt undervoltage (reverse-current) threshold.
+ */
 void INA228_Write_Under_Voltage(void);
 
-// Trigger an interrupt-driven read of the VSHUNT register.
-// INA228_Process_Shunt_Voltage() is called automatically from the I2C callback.
+/**
+ * @brief Trigger a read of the VSHUNT register.
+ *        INA228_Process_Shunt_Voltage() is called automatically from the I2C RxCplt callback.
+ */
 void INA228_Read_Shunt_Voltage(void);
 
-// Called from HAL_I2C_MemRxCpltCallback — converts raw bytes to engineering units
+/**
+ * @brief Convert the raw VSHUNT bytes into engineering units.
+ *        Called from HAL_I2C_MemRxCpltCallback — do not call directly.
+ */
 void INA228_Process_Shunt_Voltage(void);
 
-// Getters — safe to call from main loop; shunt_voltage is volatile
-int32_t INA228_Get_Shunt_Voltage_nV(void);  // Returns shunt voltage in nanovolts
-int32_t INA228_Get_Shunt_Current_mA(void);  // Returns current in milliamps
+/**
+ * @brief Return the most recently measured shunt voltage.
+ * @return Shunt voltage in nanovolts. Negative values indicate reverse current.
+ */
+int32_t INA228_Get_Shunt_Voltage_nV(void);
+
+/**
+ * @brief Return the most recently calculated shunt current.
+ * @return Current in milliamps. Negative values indicate reverse current.
+ */
+int32_t INA228_Get_Shunt_Current_mA(void);

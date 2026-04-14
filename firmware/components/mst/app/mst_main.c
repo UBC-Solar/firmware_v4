@@ -30,6 +30,7 @@ pack_state_t pack_state = {0};
 slave_t slaves[NUM_SLAVES] = {0};
 
 
+
 void Initialize() {
     UART_Init(&huart1);
     CAN_Init(&hcan);
@@ -49,29 +50,39 @@ void CollectBoardData() {
 }
 
 void CollectModuleData() {
-    uint32_t voltageStart_ms = HAL_GetTick();
+    uint32_t voltage_start_ms = HAL_GetTick();
+    
+    if (pack_state.bits.balancing_active) {
+        PauseAllBalancing(pack_modules);
+    }
     StartVoltageMeasurement();
     GetVoltageMeasurement();
-    uint32_t tempStart_ms = HAL_GetTick();
+    if (pack_state.bits.balancing_active) {
+        ResumeAllBalancing(pack_modules);
+    }
+
+    uint32_t temp_start_ms = HAL_GetTick();
+
     StartTemperatureMeasurement();
     GetTemperatureMeasurement();
-    uint32_t tempEnd_ms = HAL_GetTick();
+    
+    uint32_t temp_end_ms = HAL_GetTick();
     
     LOG_DEBUG("Voltage measurement: %lu ms, Temperature measurement: %lu ms, Total: %lu ms", 
-              tempStart_ms - voltageStart_ms, 
-              tempEnd_ms - tempStart_ms, 
-              tempEnd_ms - voltageStart_ms);
+              temp_start_ms - voltage_start_ms, 
+              temp_end_ms - temp_start_ms, 
+              temp_end_ms - voltage_start_ms);
 }
 
 
 void AnalyzeModuleData() {
     CheckForEmergency(pack_modules, &pack_faults, &pack_warnings);
 
-    uint32_t balancingStart_ms = HAL_GetTick();
-    DoBalancing();
-    uint32_t balancingEnd_ms = HAL_GetTick();
-    
-    LOG_DEBUG("Balancing commands: %lu ms", balancingEnd_ms - balancingStart_ms);
+    uint32_t balancing_start_ms = HAL_GetTick();
+    DoBalancing(&pack_state, pack_modules);
+    uint32_t balancing_end_ms = HAL_GetTick();
+
+    LOG_DEBUG("Balancing commands: %lu ms", balancing_end_ms - balancing_start_ms);
 }
 
 

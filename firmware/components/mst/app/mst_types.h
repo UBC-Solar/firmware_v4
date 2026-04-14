@@ -11,14 +11,12 @@
  */
 typedef union {
     struct {
-        bool fault_comm_fail : 1;
-        bool fault_self_test : 1;
         bool fault_under_voltage : 1;
         bool fault_over_voltage : 1;
         bool fault_over_temperature : 1;
         bool fault_under_temperature : 1; // most likely a measurement failure
 
-        uint8_t _reserved : 1;
+        uint8_t _reserved : 3;
     } bits;
     uint8_t raw;
 } faults_t;
@@ -49,7 +47,10 @@ typedef union {
         bool hlim_enable : 1;
         bool contactor_enable : 1;
 
-        uint8_t _reserved : 2;
+        bool error_comm_fail : 1;
+        bool error_self_test : 1;
+
+        // uint8_t _reserved : 0;
     } bits;
     uint8_t raw;
 } pack_state_t;
@@ -59,7 +60,10 @@ typedef struct
 {
     uint32_t voltage_mv;
     float temperature;
-    bool should_balance; // module is currently being balanced (discharged)
+
+    // Module should be discharged. This is only a suggestion to balance.
+    // 
+    bool should_balance; 
 
     faults_t faults;
     warnings_t warnings;

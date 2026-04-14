@@ -84,7 +84,7 @@ void INA228_Write_ADC_Config(void) {
     // Bits 11:9   VBUSCT = 5    — 1052 µs bus voltage conversion time
     // Bits  8:6   VSHCT  = 5    — 1052 µs shunt voltage conversion time
     // Bits  5:3   VTCT   = 5    — 1052 µs temperature conversion time
-    // Bits  2:0   AVG    = 0    — no averaging (single conversion per output)
+    // Bits  2:0   AVG    = 1    — 4 samples averaged
 
     // Setup for Continuous shunt voltage measurement, 1052 µs conversion time for bus and shunt and temp, 4 samples averaged
     uint16_t adc_config = (0xA << 12) | (5 << 9) | (5 << 6) | (5 << 3) | (1 << 0);
@@ -179,8 +179,8 @@ void INA228_Process_Shunt_Voltage(void) {
     // Right-shift by 4 to discard the reserved bits.
     raw_value = raw_value >> 4;
 
-    // Sign-extend from 24-bit two's complement to 32-bit
-    if (raw_value & 0x800000) {
+    // Sign-extend from 20-bit two's complement to 32-bit
+    if (raw_value & 0x80000) {
         raw_value |= 0xFFF00000;
     }
 

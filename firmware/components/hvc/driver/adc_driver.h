@@ -10,6 +10,10 @@
 #define ADC_RESOLUTION 4095
 #define ADC_VOLTAGE_REFERENCE 3300 // mV
 
+#define ADC_ERROR_BIAS 1
+#define ADC_ERROR_GAIN_DENOM 1 // ADC_ERROR_GAIN = ADC_ERROR_GAIN_NUM / ADC_ERROR_GAIN_DENOM, this way we encode a fraction, like in the INA228 Runtime
+#define ADC_ERROR_GAIN_NUM 1
+
 /**
  * @brief Raw 12-bit ADC readings, one per channel, in scan order.
  */

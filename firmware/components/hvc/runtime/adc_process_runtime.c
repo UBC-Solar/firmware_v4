@@ -1,6 +1,7 @@
 #include "adc_process_runtime.h"
 
 #include "adc_driver.h"
+#include "debug_io.h"
 #include "uart_driver.h"
 
 static ADC_Values adc_values = {0};
@@ -22,12 +23,15 @@ void ADC_Runtime_ProcessReadings(void) {
 
     adc_values.lv_curr_sense = (readings.lv_curr_sense - LV_CURR_SENSE_ZERO_CURRENT_OFFSET) / LV_CURR_SENSE_SENSITIVITY; // Convert mV at ADC pin to mA of current
 
-    UART_Printf("ADC Values - DCDC Thermistor: %u, Motor Precharge: %u mV, MPPT Precharge: %u mV, Supp Sense: %u mV, LV Curr Sense: %u mA\n\r",
+    return;
+    DEBUG_IO_PRINT("ADC Values - DCDC Thermistor: %u, Motor Precharge: %u mV, MPPT Precharge: %u mV, Supp Sense: %u mV, LV Curr Sense: %u mA, LV Curr Voltage: %u mV, LV Curr Reading: %u\n\r",
         adc_values.dcdc_thermistor,
         adc_values.motor_precharge,
         adc_values.mppt_precharge,
         adc_values.supp_sense,
-        adc_values.lv_curr_sense
+        adc_values.lv_curr_sense,
+        voltages.lv_curr_sense,
+        readings.lv_curr_sense
     );
 }
 

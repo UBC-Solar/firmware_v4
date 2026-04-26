@@ -68,6 +68,7 @@ static void ADC1_ProcessReadings(int half) {
             case 3:
                 adc1_readings.supp_sense = results[channel];
                 adc1_voltages.supp_sense = voltage;
+                DEBUG_IO_PRINT("Supp Sense - ADC: %u, Voltage: %u mV\n\r", results[channel], voltage);
             break;
 
             case 4:

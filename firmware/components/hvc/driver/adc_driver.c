@@ -37,7 +37,7 @@ static void ADC1_ProcessReadings(int half) {
     // Sum readings
     for (uint8_t sample = 0; sample < ADC1_SAMPLE_COUNT; sample++) {
         for (uint8_t channel = 0; channel < ADC1_NUM_CHANNELS; channel++) {
-            sum[channel] += adc_buffer[half * ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT + sample * ADC1_NUM_CHANNELS + channel];
+            sum[channel] += adc_buffer[half * ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT + sample * ADC1_NUM_CHANNELS + channel] - ADC_ERROR_BIAS;
         }
     }
 

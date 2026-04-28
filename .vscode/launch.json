@@ -22,7 +22,8 @@
             "label": "ITM",
             "port": 0,
             "encoding": "ascii",
-            "showOnStartup": true
+            "showOnStartup": true,
+            "logfile": "${workspaceFolder}/tools/swo_logs/swo_latest.log"
           }
         ]
       }

@@ -190,8 +190,10 @@ void INA228_Process_Shunt_Voltage(void) {
     // nV / nΩ = A; A * 1000 = mA
     shunt_current_mA = (int32_t)(((int64_t)shunt_voltage_nV * 1000) / SHUNT_RESISTANCE_NOHMS);
 
-    DEBUG_IO_print("Calculated shunt voltage: %d nV\n\r", shunt_voltage_nV);
-    DEBUG_IO_print("Calculated shunt current: %d mA\n\r", shunt_current_mA);
+    DEBUG_IO_print("%d, %d, %d\n\r", HAL_GetTick(), shunt_current_mA, shunt_voltage_nV);
+
+    //DEBUG_IO_print("Calculated shunt voltage: %d nV\n\r", shunt_voltage_nV);
+    //DEBUG_IO_print("Calculated shunt current: %d mA\n\r", shunt_current_mA);
 }
 
 /**

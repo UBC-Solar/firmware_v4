@@ -48,7 +48,7 @@
 #define INA228_FAULT_LSB_NV         5000
 #endif
 
-#define SHUNT_RESISTANCE_NOHMS      100496   // Shunt resistor value in nano-ohms (Thx Bryan Cady of Moment Energy!)
+#define SHUNT_RESISTANCE_NOHMS      99500   // Shunt resistor value in nano-ohms (Thx Bryan Cady of Moment Energy!)
 
 // Fault thresholds in Amperes, unisgned in either case
 #define INA228_OVERCURRENT_A        60   // Positive overcurrent limit (A)

@@ -29,7 +29,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "can_app.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -105,6 +105,7 @@ int main(void)
   MX_TIM2_Init();
   MX_UART5_Init();
   /* USER CODE BEGIN 2 */
+  CanAppInit();
 
   /* USER CODE END 2 */
 

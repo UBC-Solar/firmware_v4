@@ -10,6 +10,6 @@
 #ifndef __TASKS_H__
 #define __TASKS_H__
 
-void TasksDriveState(void* argument);
+void TasksIMU(void* argument);
 
 #endif /* __TASKS_H__ */

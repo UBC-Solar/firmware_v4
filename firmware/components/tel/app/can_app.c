@@ -21,7 +21,7 @@ static void CanAppRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg){
 
 	if (CAN_comms_Rx_msg == NULL)
 	{
-			return;
+		return;
 	}
 
 	if(CAN_comms_Rx_msg->header.IDE == CAN_ID_EXT)

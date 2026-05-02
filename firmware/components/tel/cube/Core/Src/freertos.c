@@ -25,12 +25,13 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "tasks.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+typedef StaticTask_t osStaticThreadDef_t;
+typedef StaticEventGroup_t osStaticEventGroupDef_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -45,6 +46,21 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
+
+/* Definitions for TasksIMU */
+osThreadId_t TasksIMUHandle;
+uint32_t TasksIMUBuffer[256];
+osStaticThreadDef_t TasksIMUControlBlock;
+
+const osThreadAttr_t TasksIMU_attributes = {
+  .name = "TasksIMU",
+  .cb_mem = &TasksIMUControlBlock,
+  .cb_size = sizeof(TasksIMUControlBlock),
+  .stack_mem = &TasksIMUBuffer[0],
+  .stack_size = sizeof(TasksIMUBuffer),
+  .priority = (osPriority_t) osPriorityNormal,
+};
+
 
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
@@ -96,6 +112,9 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+
+  /* creation of TasksIMU */
+  TasksIMUHandle = osThreadNew(TasksIMU, NULL, &TasksIMU_attributes);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */

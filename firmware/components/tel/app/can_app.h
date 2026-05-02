@@ -54,6 +54,11 @@
 
 #define OBC_STATUS_ID                       0x18FF50E5
 
+/**
+ * @brief Initialize the CAN application.
+ * @param None
+ * @retval None
+ */
 void CanAppInit();
 
 #endif /* __CAN_APP__H__ */

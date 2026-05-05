@@ -72,6 +72,22 @@ typedef struct
 
 typedef struct
 {
-    module_t *modules[NUM_MODULES_PER_SLAVE];
+    int slave_reg_num;
+    int module_num;
+} slave_mapping_t;
+
+typedef struct
+{
+    /**
+     * @brief Runtime state representing the selected temperature multiplexer channel.
+     * Only the 2 LSBs are used.
+     */
+    unsigned temp_mux_state : 2;
+
+    // Notice: Static hardware mappings for module bindings (volt_mappings & temp_mappings)
+    // have been historically kept here. If memory becomes an issue, consider migrating 
+    // them to a globally defined `const` array to save RAM.
+    int volt_mappings[SLAVE_NUM_VOLT_REG][SLAVE_NUM_MODULES_PER_VOLT_REG];
+    int temp_mappings[SLAVE_NUM_TEMP_REG][SLAVE_NUM_VAL_PER_TEMP_REG][SLAVE_NUM_MODULES_PER_TEMP_VAL];
 } slave_t;
 

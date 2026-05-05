@@ -1,9 +1,9 @@
 #pragma once
 /**
- * Note: this SPI driver is specifically designed to interface and communicate 
+ * This SPI driver is specifically designed to interface and communicate 
  * with the 2 ADBMS1818 chips on the V4 slaveboards.
  * 
- * Please refer to the ADBMS1818 datasheet for more details on the protocol we implement here:
+ * ADBMS1818 datasheet can be found here:
  * https://www.analog.com/media/en/technical-documentation/data-sheets/adbms1818.pdf
  */
 
@@ -15,48 +15,12 @@
 
 #include "mst_defs.h"
 
-#define SLAVE_NUM_DEVICES 2U // Number of ADBMS1818 ICs daisy chained
-
-#define SLAVE_NUM_CELL_INPUTS_PER_DEVICE 18
-#define SLAVE_REG_GROUP_SIZE 6 // All of the ADBMS1818 register groups consist of 6 bytes
-#define NUM_CELL_VOLT_REGS 6
-#define READINGS_PER_REG 3
-
-#define SLAVE_TIMEOUT_VAL 30U // ms - safety timeout threshold for Slave functions
-#define SLAVE_MAX_READ_ATTEMPTS 3U // maximum number of times to try to perform a
-                                   // read operation from the ADBMS1818 devices
-
-/* Configuration Register Group Parameters */
-
-// Keep voltage references on between ADC reads (significantly speeds up reads,
-//   increases power consumption)
-#define REFON 1
-// 0 = References Shut Down After Conversions,
-// 1 = References Remain Powered Up Until Watchdog Timeout
-
-// Under-voltage threshold for ADBMS1818
-#define VUV 1687U // (2.7V / (16 * 0.0001V)) - 1 = 1687
-// Over-voltage threshold for ADBMS1818
-#define VOV 2624U // (4.2V / (16 * 0.0001V)) - 1 = 2624
-// Note that these thresholds are internal to the ADBMS1818; they only
-//   impact the behaviour of the UV and OV bit flags in the status registers
-
-// ADCOPT selects the ADC mode together with MD, but is in the CFG register
-#define ADCOPT 0
-/* End Configuration Register Group Parameters */
-
-// Discharge Permitted during cell measurement
-#define DCP 0 // 0 = Discharge Not Permitted 1 = Discharge Permitted
-// ADC Mode (speed)
-#define MD MD_7KHZ_3KHZ // Normal mode
-// Self Test Mode Selection
-// #define ST 1 // TODO: Add enumeration if ST commands are needed
 
 typedef struct {
     SPI_HandleTypeDef *SPI_handle;
 
-    uint8_t cfgra[SLAVE_NUM_DEVICES][SLAVE_REG_GROUP_SIZE]; // Record of Configuration Register Group A for each device
-    uint8_t cfgrb[SLAVE_NUM_DEVICES][SLAVE_REG_GROUP_SIZE]; // Record of Configuration Register Group B for each device
+    uint8_t cfgra[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES]; // Record of Configuration Register Group A for each device
+    uint8_t cfgrb[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES]; // Record of Configuration Register Group B for each device
 } Slave_Data_t;
 
 enum Slave_Error {
@@ -237,9 +201,12 @@ typedef enum {
     CMD_UNMUTE  = 0x0029        // Unmute discharge
 } Slave_Command_t;
 
-void Slave_init(SPI_HandleTypeDef *SPI_handle);
-void Slave_wakeup(void);
-void Slave_sendCmd(Slave_Command_t command);
-Slave_Status_t Slave_sendCmdAndPoll(Slave_Command_t command);
-void Slave_writeRegisterGroup(Slave_Command_t command, uint8_t tx_data[SLAVE_NUM_DEVICES][SLAVE_REG_GROUP_SIZE]);
-Slave_Status_t Slave_readRegisterGroup(Slave_Command_t command, uint8_t rx_data[SLAVE_NUM_DEVICES][SLAVE_REG_GROUP_SIZE]);
+void Slave_Init(
+	SPI_HandleTypeDef *SPI_handle,
+	uint8_t config_val_a[SLAVE_REG_SIZE_BYTES],
+	uint8_t config_val_b[SLAVE_REG_SIZE_BYTES]);
+void Slave_WakeUp(void);
+void Slave_SendCmd(Slave_Command_t command);
+Slave_Status_t Slave_SendCmdAndPoll(Slave_Command_t command);
+void Slave_WriteRegisterGroup(Slave_Command_t command, uint8_t tx_data[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES]);
+Slave_Status_t Slave_ReadRegisterGroup(Slave_Command_t command, uint8_t rx_data[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES]);

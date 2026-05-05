@@ -4,8 +4,8 @@
 #include "mst_types.h"
 #include "logging.h"
 
-void StartVoltageMeasurement(void);
-void GetVoltageMeasurement(void);
-void StartTemperatureMeasurement(void);
-void GetTemperatureMeasurement(void);
+void RequestVoltageMeasurement(void);
+void RetrieveVoltageMeasurement(slave_t slaves[NUM_SLAVES], module_t pack_modules[NUM_MODULES]);
+void RequestTemperatureMeasurement(void);
+void RetrieveTemperatureMeasurement(slave_t slaves[NUM_SLAVES], module_t pack_modules[NUM_MODULES]);
 

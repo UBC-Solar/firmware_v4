@@ -34,7 +34,28 @@ slave_t slaves[NUM_SLAVES] = {0};
 void Initialize() {
     UART_Init(&huart1);
     CAN_Init(&hcan);
-    Slave_init(&hspi2);
+
+    // Refer to the ADBMS1818 datasheet pages 65, 68, 69 for 
+    // format and content of configuration register groups A and B
+    uint8_t config_val_a[SLAVE_REG_SIZE_BYTES] =
+    {
+        0xF8 | (REFON << 2) | ADCOPT, // GPIO 1-5 pull-downs off, REFON, ADCOPT
+        (VUV & 0xFF), // VUV[7:0]
+		((uint8_t) (VOV << 4)) | (((uint8_t) (VUV >> 8)) & 0x0F), // VOV[4:0] | VUV[11:8]
+        (VOV >> 4), // VOV[11:4]
+		0x00, // Discharge off for cells 1 through 8
+        0x00, // Discharge off for cells 9 through 12, Discharge timer disabled
+    };
+	uint8_t config_val_b[SLAVE_REG_SIZE_BYTES] =
+    {
+        0x0F, // Discharge off for cells 13 through 16, GPIO 6-9 = 1
+        0x00, // FDRF = 0, PS = 0, Discharge off for cells 17 and 18
+        0x00,
+        0x00,
+        0x00,
+        0x00
+    };
+    Slave_Init(&hspi2, config_val_a, config_val_b);
 }
 
 void CollectBoardData() {
@@ -55,16 +76,16 @@ void CollectModuleData() {
     if (pack_state.bits.balancing_active) {
         PauseAllBalancing(pack_modules);
     }
-    StartVoltageMeasurement();
-    GetVoltageMeasurement();
+    RequestVoltageMeasurement();
+    RetrieveVoltageMeasurement(slaves, pack_modules);
     if (pack_state.bits.balancing_active) {
         ResumeAllBalancing(pack_modules);
     }
 
     uint32_t temp_start_ms = HAL_GetTick();
 
-    StartTemperatureMeasurement();
-    GetTemperatureMeasurement();
+    RequestTemperatureMeasurement();
+    RetrieveTemperatureMeasurement(slaves, pack_modules);
     
     uint32_t temp_end_ms = HAL_GetTick();
     
@@ -87,7 +108,13 @@ void AnalyzeModuleData() {
 
 
 void SendCanMMessages() {
-
+    CAN_SendMessage0x622();
+    CAN_SendMessage0x623();
+    CAN_SendMessage0x625();
+    CAN_SendMessage0x626();
+    CAN_SendMessage0x627();
+    CAN_SendMessage0x628();
+    CAN_SendMessage0x629();
 }
 
 
@@ -159,7 +186,7 @@ int isoSpiCycleCount = 1;
 void Debug_IsoSpiTestCycle() {
     DEBUG_IO_PRINT("Debug_IsoSpiTestCycle round %d (debug IO)\r\n", isoSpiCycleCount);
 
-    Slave_sendCmd(CMD_ADCV);
+    Slave_SendCmd(CMD_ADCV);
 
     HAL_Delay(2000);
 

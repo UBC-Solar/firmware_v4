@@ -7,13 +7,14 @@
  */
 
 #include "spi_driver.h"
+#include <string.h>
 
 Slave_Data_t slave_controller;
 
 /**
  * Lookup table for PEC (Packet Error Code) CRC (Cyclic Redundancy Check) calculation
  */
-static const uint16_t pec15Table[256] =
+static const uint16_t pec_15_table[256] =
 {
     0x0000, 0xC599, 0xCEAB, 0x0B32, 0xD8CF, 0x1D56, 0x1664, 0xD3FD, 0xF407,
     0x319E, 0x3AAC, 0xFF35, 0x2CC8, 0xE951, 0xE263, 0x27FA, 0xAD97, 0x680E,
@@ -54,17 +55,42 @@ static const uint16_t pec15Table[256] =
  * @param len The number of bytes of data to calculate the PEC for
  * @return Returns the 2-byte CRC PEC generated
  */
-uint16_t calculatePec15(uint8_t *data, uint32_t len)
+uint16_t CalculatePec15_(uint8_t *data, uint32_t len)
 {
 	uint16_t remainder, address;
 	remainder = 16; // initial value for PEC computation
 	for (int i = 0; i < len; i++)
 	{
 		address = ((remainder >> 7) ^ data[i]) & 0xff; // lookup table address
-		remainder = (remainder << 8) ^ pec15Table[address];
+		remainder = (remainder << 8) ^ pec_15_table[address];
 	}
 	return (remainder << 1); // The CRC15 has a 0 in the LSB so the final value
 							 // must be leftshifted 1 bit
+}
+
+// Helper function to translate a HAL error into a Slave error
+Slave_Status_t ProcessHalStatus_(HAL_StatusTypeDef status_HAL, unsigned int device_num)
+{
+    Slave_Status_t status_slave;
+    status_slave.error = Slave_OK;
+    status_slave.device_num = 0;
+
+    if (status_HAL != HAL_OK) {
+        status_slave.error = status_HAL + Slave_HAL_ERROR_OFFSET;
+        status_slave.device_num = device_num;
+    }
+
+    return status_slave;
+}
+
+/**
+ * @brief Toggles the SPI Chip Select (CS) pin
+ *
+ * @param cs_state The state (CS_HIGH or CS_LOW) to write to the CS pin
+ */
+void WriteCS_(CS_state_t cs_state)
+{
+    HAL_GPIO_WritePin(SPI_ADBMS_NSS_GPIO_Port, SPI_ADBMS_NSS_Pin, cs_state);
 }
 
 /**
@@ -75,45 +101,58 @@ uint16_t calculatePec15(uint8_t *data, uint32_t len)
  *
  * @param command The 2-byte command to send
  */
-void sendCommand(Slave_Command_t command)
+void SendCommand_(Slave_Command_t command)
 {
-	uint16_t pecValue;
+	uint16_t pec_value;
 	uint8_t tx_message[4];
 
 	tx_message[0] = (uint8_t) (command >> 8);
 	tx_message[1] = (uint8_t) command;
-	pecValue = calculatePec15(tx_message, 2);
-	tx_message[2] = (uint8_t) (pecValue >> 8);
-	tx_message[3] = (uint8_t) pecValue;
+	pec_value = CalculatePec15_(tx_message, 2);
+	tx_message[2] = (uint8_t) (pec_value >> 8);
+	tx_message[3] = (uint8_t) pec_value;
 
 	// size parameter is number of bytes to transmit - here it's 4 8bit frames
-    HAL_SPI_Transmit(slave_controller.SPI_handle, tx_message, 4, SLAVE_TIMEOUT_VAL);
+    HAL_SPI_Transmit(slave_controller.SPI_handle, tx_message, 4, SLAVE_TIMEOUT_MS);
 }
 
-/**
- * @brief Toggles the SPI Chip Select (CS) pin
- *
- * @param cs_state The state (CS_HIGH or CS_LOW) to write to the CS pin
- */
-void writeCS(CS_state_t cs_state)
+Slave_Status_t Poll_()
 {
-    HAL_GPIO_WritePin(SPI_ADBMS_NSS_GPIO_Port, SPI_ADBMS_NSS_Pin, cs_state);
-}
+    uint8_t rx_buffer = 0;
+	uint32_t start_tick;
+	HAL_StatusTypeDef status_HAL = HAL_OK;
+    Slave_Status_t status_slave = {Slave_OK, 0};
 
-// Helper function to translate a HAL error into a Slave error
-Slave_Status_t processHALStatus(HAL_StatusTypeDef status_HAL, unsigned int device_num)
-{
-    Slave_Status_t status_Slave;
-    status_Slave.error = Slave_OK;
-    status_Slave.device_num = 0;
+	start_tick = HAL_GetTick();
 
-    if (status_HAL != HAL_OK) {
-        status_Slave.error = status_HAL + Slave_HAL_ERROR_OFFSET;
-        status_Slave.device_num = device_num;
+    // Must send at least SLAVE_NUM_DEVICES clock pulses before response is valid
+	// That's why there's an extra read initially - it's slight overkill but that's ok
+	rx_buffer = 0;
+    status_HAL = HAL_SPI_Receive(slave_controller.SPI_handle, &rx_buffer, 1, SLAVE_TIMEOUT_MS);
+    status_slave = ProcessHalStatus_(status_HAL, 0);
+    if (status_slave.error != Slave_OK) {
+        return status_slave;
     }
+	do
+	{
+	    if (HAL_GetTick() - start_tick > SLAVE_TIMEOUT_MS)
+        {
+            WriteCS_(CS_HIGH);
+            status_slave.error = Slave_ERROR_TIMEOUT; // ADBMS1818 didn't respond before timeout
+            return status_slave;
+        }
 
-    return status_Slave;
+		rx_buffer = 0;
+		status_HAL = HAL_SPI_Receive(slave_controller.SPI_handle, &rx_buffer, 1, SLAVE_TIMEOUT_MS);
+		status_slave = ProcessHalStatus_(status_HAL, 0);
+		if (status_slave.error != Slave_OK)
+            return status_slave;
+
+	} while (rx_buffer == 0);
+
+	return status_slave;
 }
+
 
 
 /*============================================================================*/
@@ -122,23 +161,18 @@ Slave_Status_t processHALStatus(HAL_StatusTypeDef status_HAL, unsigned int devic
 /**
  * @brief Toggles the CS line to wake up the entire chain of ADBMS1818 devices.
  *
- * Wakes up the daisy chain as per method described on pg. 52 of datasheet
- * (method 2)
+ * See datasheet page 57: "Waking a Daisy Chain--Method 2" for explanation of this algorithm
  */
-void Slave_wakeup(void)
+void Slave_WakeUp(void)
 {
-    // Using HAL_Delay() for this is not particularly ideal, since the
-    // minimum delay is 1ms and the delays required are 300us and
-    // 10us -ish (shorter than 1 ms)
-    // If it doesn't, add another faster timer for more precise delays
-	writeCS(CS_HIGH);
+	WriteCS_(CS_HIGH);
 	HAL_Delay(1); // wait 1ms
     for (int i = 0; i < SLAVE_NUM_DEVICES; i++)
 	{
-		writeCS(CS_LOW);
+		WriteCS_(CS_LOW);
 		HAL_Delay(1); // wait 1ms
-		writeCS(CS_HIGH);
-		// Then delay at least 10us
+		WriteCS_(CS_HIGH);
+		// Then delay at least 10us ( t_WAKE )
 		HAL_Delay(1); // wait 1ms - the minimum with this timer setup
 	}
 }
@@ -148,45 +182,29 @@ void Slave_wakeup(void)
  *
  * @param SPI_handle HAL SPI handle for the SPI peripheral used for communication to battery monitoring hardware
  */
-void Slave_init(SPI_HandleTypeDef *SPI_handle)
+void Slave_Init(
+	SPI_HandleTypeDef *SPI_handle,
+	uint8_t config_val_a[SLAVE_REG_SIZE_BYTES],
+	uint8_t config_val_b[SLAVE_REG_SIZE_BYTES])
 {
-    // Refer to the ADBMS1818 datasheet pages 60 and 65 for format and content of config_val_a
-    uint8_t config_val_a[SLAVE_REG_GROUP_SIZE] =
-    {
-        0xF8 | (REFON << 2) | ADCOPT, // GPIO 1-5 pull-downs off, REFON, ADCOPT
-        (VUV & 0xFF), // VUV[7:0]
-		((uint8_t) (VOV << 4)) | (((uint8_t) (VUV >> 8)) & 0x0F), // VOV[4:0] | VUV[11:8]
-        (VOV >> 4), // VOV[11:4]
-		0x00, // Discharge off for cells 1 through 8
-        0x00, // Discharge off for cells 9 through 12, Discharge timer disabled
-    };
-	uint8_t config_val_b[SLAVE_REG_GROUP_SIZE] =
-    {
-        0x0F, // Discharge off for cells 13 through 16, GPIO 6-9 = 1
-        0x00, // FDRF = 0, PS = 0, Discharge off for cells 17 and 18
-        0x00,
-        0x00,
-        0x00,
-        0x00
-    };
-
     slave_controller.SPI_handle = SPI_handle;
 
     for(int ic_num = 0; ic_num < SLAVE_NUM_DEVICES; ic_num++)
     {
-		for(int reg_num = 0; reg_num < SLAVE_REG_GROUP_SIZE; reg_num++)
+		for(int reg_num = 0; reg_num < SLAVE_REG_SIZE_BYTES; reg_num++)
         {
 			slave_controller.cfgra[ic_num][reg_num] = config_val_a[reg_num];
 			slave_controller.cfgrb[ic_num][reg_num] = config_val_b[reg_num];
         }
     }
 
-#ifndef UNIT_TEST_ISOSPI
-	HAL_Delay(2250); // Let the ADBMS1818 watchdog time out (max 2.2sec) to start IC config from a clean slate
-    Slave_wakeup(); // Wake up all ADBMS1818 devices in the chain
-    Slave_writeRegisterGroup(CMD_WRCFGA, slave_controller.cfgra); // Write to Config. Reg. Group A
-    Slave_writeRegisterGroup(CMD_WRCFGB, slave_controller.cfgrb); // Write to Config. Reg. Group B
+#if (UNIT_TEST_ISOSPI == RUN)
+	return;
 #endif // UNIT_TEST_ISOSPI
+
+    Slave_WakeUp(); // Wake up all ADBMS1818 devices in the chain
+    Slave_WriteRegisterGroup(CMD_WRCFGA, slave_controller.cfgra); // Write to Config. Reg. Group A
+    Slave_WriteRegisterGroup(CMD_WRCFGB, slave_controller.cfgrb); // Write to Config. Reg. Group B
 }
 
 
@@ -196,85 +214,47 @@ void Slave_init(SPI_HandleTypeDef *SPI_handle)
  *
  * @param command The 2-byte command to send
  */
-void Slave_sendCmd(Slave_Command_t command)
+void Slave_SendCmd(Slave_Command_t command)
 {
-    writeCS(CS_LOW);
-    sendCommand(command);
-    writeCS(CS_HIGH);
+    WriteCS_(CS_LOW);
+    SendCommand_(command);
+    WriteCS_(CS_HIGH);
 }
+
 
 /**
  * @brief sends a polling-type command (eg. ADCV) and then polls the ADBMS1818
  * This function is blocking. It will wait for the ADBMS1818 to signal it is
  * finished; however, there is a timeout feature in case something goes wrong.
- * The timeout threshold is SLAVE_TIMEOUT_VAL.
+ * The timeout threshold is SLAVE_TIMEOUT_MS.
  *
  * @param command The 2-byte (polling) command to send
  * @return 	Returns Slave_OK once ADBMS1818 devices have completed their conversions,
  *          or Slave_ERROR_TIMEOUT upon timeout.
  */
-Slave_Status_t Slave_sendCmdAndPoll(Slave_Command_t command)
+Slave_Status_t Slave_SendCmdAndPoll(Slave_Command_t command)
 {
-    uint8_t rx_buffer = 0;
-	uint32_t start_tick;
-	HAL_StatusTypeDef status_HAL = HAL_OK;
-    Slave_Status_t status_Slave = {Slave_OK, 0};
+    Slave_Status_t status_slave = {Slave_OK, 0};
 
-	writeCS(CS_LOW);
+	WriteCS_(CS_LOW);
+	SendCommand_(command);
+	status_slave = Poll_();
+	WriteCS_(CS_HIGH);
 
-	sendCommand(command);
+    return status_slave;
+}
 
-	start_tick = HAL_GetTick(); // Start timeout timer
 
-	// Poll for conversion completion; see "Polling Methods" in datasheet pg. 55-57)
-	// Make sure MISO goes low...
-	do
-	{
-        if (HAL_GetTick() - start_tick > SLAVE_TIMEOUT_VAL)
-		{
-		    writeCS(CS_HIGH);
-            status_Slave.error = Slave_ERROR_TIMEOUT; // ADBMS1818 didn't respond before timeout
-            return status_Slave;
-		}
+Slave_Status_t Slave_Poll(Slave_Command_t command)
+{
+    Slave_Status_t status_slave = {Slave_OK, 0};
 
-		rx_buffer = 0;
-        status_HAL = HAL_SPI_Receive(slave_controller.SPI_handle, &rx_buffer, 1, SLAVE_TIMEOUT_VAL);
-        status_Slave = processHALStatus(status_HAL, 0);
-        if (status_Slave.error != Slave_OK) return status_Slave;
+	WriteCS_(CS_LOW);
+	SendCommand_(CMD_PLADC);
+	status_slave = Poll_();
+	WriteCS_(CS_HIGH);
 
-	} while (rx_buffer == 0xFF);
-
-    // ... then wait for MISO to go high;
-    // this signifies that the ADBMS1818 devices are done reading their ADCs.
-
-    // Must send at least SLAVE_NUM_DEVICES clock pulses before response is valid
-	// That's why there's an extra read initially - it's slight overkill but that's ok
-	rx_buffer = 0;
-    status_HAL = HAL_SPI_Receive(slave_controller.SPI_handle, &rx_buffer, 1, SLAVE_TIMEOUT_VAL);
-    status_Slave = processHALStatus(status_HAL, 0);
-    if (status_Slave.error != Slave_OK) {
-        return status_Slave;
-    }
-	do
-	{
-	    if (HAL_GetTick() - start_tick > SLAVE_TIMEOUT_VAL)
-        {
-            writeCS(CS_HIGH);
-            status_Slave.error = Slave_ERROR_TIMEOUT; // ADBMS1818 didn't respond before timeout
-            return status_Slave;
-        }
-
-		rx_buffer = 0;
-		status_HAL = HAL_SPI_Receive(slave_controller.SPI_handle, &rx_buffer, 1, SLAVE_TIMEOUT_VAL);
-		status_Slave = processHALStatus(status_HAL, 0);
-		if (status_Slave.error != Slave_OK)
-            return status_Slave;
-
-	} while (rx_buffer == 0);
-
-	writeCS(CS_HIGH);
-
-    return status_Slave;
+    return status_slave;
 }
 
 
@@ -284,31 +264,31 @@ Slave_Status_t Slave_sendCmdAndPoll(Slave_Command_t command)
  * @param command A write command to specify which register group to write.
  *                Write commands start with "WR".
  * @param tx_data Pointer to a 2-dimensional array of size
- *                SLAVE_NUM_DEVICES x SLAVE_REG_GROUP_SIZE containing the data to write.
+ *                SLAVE_NUM_DEVICES x SLAVE_REG_SIZE_BYTES containing the data to write.
  */
-void Slave_writeRegisterGroup(Slave_Command_t command, uint8_t tx_data[SLAVE_NUM_DEVICES][SLAVE_REG_GROUP_SIZE])
+void Slave_WriteRegisterGroup(Slave_Command_t command, uint8_t tx_data[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES])
 {
-	uint16_t pecValue = 0;
+	uint16_t pec_value = 0;
 	uint8_t tx_message[8];
 
-	writeCS(CS_LOW);
-	sendCommand(command);
+	WriteCS_(CS_LOW);
+	SendCommand_(command);
 
 	for (int i = 0; i < SLAVE_NUM_DEVICES; i++)
 	{
-		for (int j = 0; j < SLAVE_REG_GROUP_SIZE; j++)
+		for (int j = 0; j < SLAVE_REG_SIZE_BYTES; j++)
 		{
 			// ADBMS1818 register group writes' data are ordered with data for the last device in the chain first.
 			// This is the opposite of a register group read's device ordering
 			tx_message[j] = tx_data[(SLAVE_NUM_DEVICES - 1) - i][j];
 		}
-		pecValue = calculatePec15(tx_message, SLAVE_REG_GROUP_SIZE);
-		tx_message[6] = (uint8_t) (pecValue >> 8);
-		tx_message[7] = (uint8_t) pecValue;
-		HAL_SPI_Transmit(slave_controller.SPI_handle, tx_message, 8, SLAVE_TIMEOUT_VAL);
+		pec_value = CalculatePec15_(tx_message, SLAVE_REG_SIZE_BYTES);
+		tx_message[6] = (uint8_t) (pec_value >> 8);
+		tx_message[7] = (uint8_t) pec_value;
+		HAL_SPI_Transmit(slave_controller.SPI_handle, tx_message, 8, SLAVE_TIMEOUT_MS);
 	}
 
-	writeCS(CS_HIGH);
+	WriteCS_(CS_HIGH);
 }
 
 /**
@@ -319,69 +299,45 @@ void Slave_writeRegisterGroup(Slave_Command_t command, uint8_t tx_data[SLAVE_NUM
  * @param command A read command to specify which register group to read.
  *                Read commands start with "RD".
  * @param rx_data Pointer to a 2-dimensional array of size
- *                SLAVE_NUM_DEVICES x SLAVE_REG_GROUP_SIZE to copy received data to.
+ *                SLAVE_NUM_DEVICES x SLAVE_REG_SIZE_BYTES to copy received data to.
  * @return Returns Slave_OK if the received PEC is valid, or Slave_ERROR_PEC if
  *         a full set of valid data could not be obtained after
  *         SLAVE_MAX_READ_ATTEMPTS tries.
  */
-Slave_Status_t Slave_readRegisterGroup(Slave_Command_t command, uint8_t rx_data[SLAVE_NUM_DEVICES][SLAVE_REG_GROUP_SIZE])
+Slave_Status_t Slave_ReadRegisterGroup(Slave_Command_t command, uint8_t rx_data[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES])
 {
-	uint16_t pecValue = 0;
-	Slave_Status_t status = {Slave_OK, 0};
+	uint16_t pec_value = 0;
+	Slave_Status_t status_slave = {Slave_OK, 0};
 	HAL_StatusTypeDef status_HAL = HAL_OK;
 	// Initialize rx_message before using it, or the garbage it contains will be
 	// sent as dummy data - see definition of HAL_SPI_Receive
 	uint8_t rx_message[8] = {0};
-	int ic_num = 0;
-	int error_counter = 0;
+	
+	// Request to begin read operation
+	WriteCS_(CS_LOW);
+	SendCommand_(command);
 
-	// Try a maximum of SLAVE_MAX_READ_ATTEMPTS times to read register group
-	do
+	// Read back the data
+	for (int ic_num = 0; ic_num < SLAVE_NUM_DEVICES; ic_num++)
 	{
-		// Send command to read register group
-		writeCS(CS_LOW);
-		sendCommand(command);
+		// 6 data bytes + 2 PEC bytes = 8 bytes
+		status_HAL = HAL_SPI_Receive(slave_controller.SPI_handle, rx_message, 8, SLAVE_TIMEOUT_MS);
+		status_slave = ProcessHalStatus_(status_HAL, ic_num);
+		if (status_slave.error != Slave_OK) return status_slave;
 
-		// Read back the data, but stop between device data groups on error
-		// This will indicate to caller which ADBMS1818 is having problems, if problems are encountered
-		ic_num = 0;
-		// reset status before a new try
-		status.error = Slave_OK;
-		status.device_num = 0;
-		while ((ic_num < SLAVE_NUM_DEVICES) && (status.error == Slave_OK))
+		pec_value = CalculatePec15_(rx_message, 8); // 0 if transfer was clean
+		if (pec_value)
 		{
-			// 6 data bytes + 2 PEC bytes = 8 bytes
-		    status_HAL = HAL_SPI_Receive(slave_controller.SPI_handle, rx_message, 8, SLAVE_TIMEOUT_VAL);
-		    status = processHALStatus(status_HAL, ic_num + 1);
-		    if (status.error != Slave_OK) return status;
-
-			pecValue = calculatePec15(rx_message, 8); // 0 if transfer was clean
-			if (pecValue)
-			{
-				status.error = Slave_ERROR_PEC;
-				status.device_num = ic_num + 1;
-				for(int i = 0; i < 8; i++)
-				{
-					rx_message[i] = 0; // Clear buffer for next try
-				}
-			}
-			else
-			{
-				for (int j = 0; j < 8; j++)
-				{
-					if (j < SLAVE_REG_GROUP_SIZE)
-					{
-						rx_data[ic_num][j] = rx_message[j]; // Copy the data (no PEC)
-					}
-					rx_message[j] = 0; // Clear rx_message for next loop
-				}
-			}
-			ic_num++;
+			status_slave.error = Slave_ERROR_PEC;
+			status_slave.device_num = ic_num;
+			return status_slave;
 		}
 
-		writeCS(CS_HIGH);
-		error_counter++;
-	} while ((status.error != Slave_OK) && (error_counter < SLAVE_MAX_READ_ATTEMPTS));
+		memcpy(rx_data[ic_num], rx_message, SLAVE_REG_SIZE_BYTES); // Copy the data (no PEC)
+		memset(rx_message, 0, sizeof(rx_message)); // Clear rx_message for next loop
+	}
 
-	return status;
+	WriteCS_(CS_HIGH);
+
+	return status_slave;
 }

@@ -35,6 +35,48 @@
 
 
 /**
+ * Slaveboards configuration and ADBMS1818 options
+ */
+#define SLAVE_NUM_DEVICES 2U // Number of ADBMS1818 ICs daisy chained
+
+#define SLAVE_NUM_CELL_INPUTS_PER_DEVICE 18
+#define SLAVE_REG_SIZE_BYTES 6 // All of the ADBMS1818 register groups consist of 6 bytes
+
+#define SLAVE_NUM_VOLT_REG 6
+#define SLAVE_NUM_MODULES_PER_VOLT_REG 3
+
+#define SLAVE_NUM_TEMP_REG 4
+#define SLAVE_NUM_VAL_PER_TEMP_REG 3
+#define SLAVE_NUM_MODULES_PER_TEMP_VAL 4
+
+#define SLAVE_TIMEOUT_MS 15U // ms - safety timeout threshold for Slave functions
+
+/* Configuration Register Group Parameters */
+
+// Keep voltage references on between ADC reads (significantly speeds up reads,
+//   increases power consumption)
+#define REFON 1
+// 0 = References Shut Down After Conversions,
+// 1 = References Remain Powered Up Until Watchdog Timeout
+
+// Under-voltage threshold for ADBMS1818
+#define VUV 1687U // (2.7V / (16 * 0.0001V)) - 1 = 1687
+// Over-voltage threshold for ADBMS1818
+#define VOV 2624U // (4.2V / (16 * 0.0001V)) - 1 = 2624
+// Note that these thresholds are internal to the ADBMS1818; they only
+//   impact the behaviour of the UV and OV bit flags in the status registers
+
+// ADCOPT selects the ADC mode together with MD, but is in the CFG register
+#define ADCOPT 0
+/* End Configuration Register Group Parameters */
+
+// Discharge Permitted during cell measurement
+#define DCP 0 // 0 = Discharge Not Permitted 1 = Discharge Permitted
+// ADC Mode (speed)
+#define MD MD_7KHZ_3KHZ // Normal mode
+
+
+/**
  * Firmware-Specific Settings
  */
 // Set current logging level - users can adjust this to filter log output

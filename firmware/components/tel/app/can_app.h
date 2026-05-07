@@ -2,6 +2,8 @@
 #define __CAN_APP__H__
 
 // Definitions for CAN IDs (add or adjust as needed)
+#define RTC_TIMESTAMP_MSG_ID            0x300
+
 #define DRD_DIAGNOSTICS_ID                  0x403
 #define MDI_DIAGNOSTICS_ID                  0x501
 #define STR_DIAGNOSTICS_ID                  0x581

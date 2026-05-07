@@ -1,6 +1,7 @@
 #include "can_driver.h"
 #include "can_app.h"
 #include "CAN_comms.h"
+#include "rtc_app.h"
 
 /**
  * @brief Can Comms Callback Function for processing received CAN messages.
@@ -32,5 +33,18 @@ static void CanAppRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg){
 	{
 		CAN_ID = CAN_comms_Rx_msg->header.StdId; // Get standard CAN ID
 	}
-    // RX Functions go here (RTC)
+    // RX Functions go here
+	RtcDriverRxHandler(CAN_ID, CAN_comms_Rx_msg->data)
+}
+
+void RtcDriverRxHandler(uint32_t msg_id, uint8_t* data)
+{
+    switch (msg_id)
+    {
+    case RTC_TIMESTAMP_MSG_ID:
+        RtcAppSyncMemoratorToTel(data);
+        break;
+    default:
+        break;
+    }
 }

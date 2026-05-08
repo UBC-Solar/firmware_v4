@@ -1,6 +1,7 @@
 #include "can_driver.h"
 #include "can_app.h"
 #include "CAN_comms.h"
+#include "telemetry_app.h"
 
 /**
  * @brief Can Comms Callback Function for processing received CAN messages.

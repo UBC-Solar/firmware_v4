@@ -54,6 +54,55 @@
 
 #define OBC_STATUS_ID                       0x18FF50E5
 
+static CanFilter_t filter_whitelist[]  __attribute__((unused)) = {
+    //         CAN ID                   MOD    COUNT
+    { DRD_MOTOR_COMMAND_ID,                 4,     0               },
+    { DRD_DIAGNOSTICS_ID,                   4,     0               },
+    { DRD_TIME_SINCE_BOOTUP_ID,             1,     0               },
+    { ECU_STATUS_ID,                        1,     0               },
+    { MDI_TIME_SINCE_BOOTUP_ID,             1,     0               },
+    { MDI_DIAGNOSTICS_ID,                   1,     0               },
+    { STR_DIAGNOSTICS_ID,                   1,     0               },
+    { STR_TIME_SINCE_BOOTUP_ID,             1,     0               },
+    { BMS_VOLTAGE_SUMMARY_VOLTAGE_ID,       10,    0               },
+    { BMS_MODULE_VOLTAGES_ID,               9,     0               },
+    { BMS_FAULTS_ID,                        1,     0               },
+    { BMS_TEMP_SUMMARY_ID,                  10,    0               },
+    { BMS_PACK_HEALTH_ID,                   1,     0               },
+    { BMS_MODULE_TEMPERATURES_ID,           9,     0               },
+    { MPPT_A_INPUT_MEASUREMENTS_ID,         1,     0               },
+    { MPPT_B_INPUT_MEASUREMENTS_ID,         1,     0               },
+    { MPPT_C_INPUT_MEASUREMENTS_ID,         1,     0               },
+
+    { MPPT_A_OUTPUT_MEASUREMENTS_ID,        1,     0               },
+    { MPPT_B_OUTPUT_MEASUREMENTS_ID,        1,     0               },
+    { MPPT_C_OUTPUT_MEASUREMENTS_ID,        1,     0               },
+
+    { MPPT_A_TEMPERATURE_ID,                5,     0               },
+    { MPPT_B_TEMPERATURE_ID,                5,     0               },
+    { MPPT_C_TEMPERATURE_ID,                5,     0               },
+    
+    { MPPT_A_STATUS_ID,                     3,     0               },
+    { MPPT_B_STATUS_ID,                     3,     0               },
+    { MPPT_C_STATUS_ID,                     3,     0               },
+
+    { MPPT_A_POWER_CONNECTOR_ID,            4,     0               },
+    { MPPT_B_POWER_CONNECTOR_ID,            4,     0               },
+    { MPPT_C_POWER_CONNECTOR_ID,            4,     0               },
+
+    { MPPT_A_LIMITS_ID,                     10,    0               },
+    { MPPT_B_LIMITS_ID,                     10,    0               },
+    { MPPT_C_LIMITS_ID,                     10,    0               },
+
+    { TEL_TIME_SINCE_BOOTUP_ID,             1,     0               },
+    { TEL_DIAGNOSTICS_ID,                   1,     0               },
+    { MDU_FRAME_0_ID,                       1,     0               },
+    { MDU_FRAME_1_ID,                       5,     0               },
+    { MDU_FRAME_2_ID,                       5,     0               },
+    { OBC_STATUS_ID,                        1,     0               },
+    { GPS_LONG_LAT_ID,                      1,     0               },
+};
+
 /**
  * @brief Initialize the CAN application.
  * @param None

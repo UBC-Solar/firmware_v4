@@ -30,4 +30,6 @@ extern telemetry_diagnostics_t telemetry_diagnostic;
 
 osSemaphoreId_t usart1_tx_semaphore;
 
+void UART_telemetry_transmit(TEL_Msg_TypeDef* can_tel_msg);
+
 #endif /* __TELEMETRY_DRIVER__H__ */

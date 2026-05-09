@@ -44,7 +44,7 @@ void Initialize() {
 		((uint8_t) (VOV << 4)) | (((uint8_t) (VUV >> 8)) & 0x0F), // VOV[4:0] | VUV[11:8]
         (VOV >> 4), // VOV[11:4]
 		0x00, // Discharge off for cells 1 through 8
-        0x00, // Discharge off for cells 9 through 12, Discharge timer disabled
+        0x00  // Discharge off for cells 9 through 12, Discharge timer disabled
     };
 	uint8_t config_val_b[SLAVE_REG_SIZE_BYTES] =
     {
@@ -55,17 +55,19 @@ void Initialize() {
         0x00,
         0x00
     };
-    Slave_Init(&hspi2, config_val_a, config_val_b);
+
+    // Includes Slave_Init (SPI perhiperal initialization)
+    Module_Init(&hspi2, slaves, config_val_a, config_val_b);
 }
 
 void CollectBoardData() {
     GPIO_PinState balancePinState = 
         GPIO_Read(BALANCE_EN_IN_GPIO_Port, BALANCE_EN_IN_Pin);
-    pack_state.bits.balancing_enable = balancePinState == GPIO_PIN_SET ? true : false;
+    pack_state.balancing_enable = balancePinState == GPIO_PIN_SET ? true : false;
 
     GPIO_PinState scrutineeringPinState = 
         GPIO_Read(SCRUTINEERING_EN_IN_GPIO_Port, SCRUTINEERING_EN_IN_Pin);
-    pack_state.bits.scrutineering_enable = scrutineeringPinState == GPIO_PIN_SET ? true : false;
+    pack_state.scrutineering_enable = scrutineeringPinState == GPIO_PIN_SET ? true : false;
 
     LOG_DEBUG("Balance enable: %d, Scrutineering mode: %d.", balancePinState, scrutineeringPinState);
 }
@@ -73,12 +75,12 @@ void CollectBoardData() {
 void CollectModuleData() {
     uint32_t voltage_start_ms = HAL_GetTick();
     
-    if (pack_state.bits.balancing_active) {
+    if (pack_state.balancing_active) {
         PauseAllBalancing(pack_modules);
     }
     RequestVoltageMeasurement();
     RetrieveVoltageMeasurement(slaves, pack_modules);
-    if (pack_state.bits.balancing_active) {
+    if (pack_state.balancing_active) {
         ResumeAllBalancing(pack_modules);
     }
 
@@ -99,8 +101,15 @@ void CollectModuleData() {
 void AnalyzeModuleData() {
     CheckForEmergency(pack_modules, &pack_faults, &pack_warnings);
 
+    ComputePackStatistics(pack_modules, &pack_state);
+}
+
+void DriveOutputs() {
+    GPIO_Write(HLIM_EN_OUT_GPIO_Port, HLIM_EN_OUT_Pin, pack_state.hlim_enable);
+    GPIO_Write(LLIM_EN_OUT_GPIO_Port, LLIM_EN_OUT_Pin, pack_state.llim_enable);
+    
     uint32_t balancing_start_ms = HAL_GetTick();
-    DoBalancing(&pack_state, pack_modules);
+    DoBalancing(&pack_state, pack_modules, slaves);
     uint32_t balancing_end_ms = HAL_GetTick();
 
     LOG_DEBUG("Balancing commands: %lu ms", balancing_end_ms - balancing_start_ms);

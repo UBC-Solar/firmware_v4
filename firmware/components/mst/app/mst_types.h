@@ -38,28 +38,27 @@ typedef union {
 
 
 typedef union {
-    struct {
-        bool balancing_active : 1;
-        bool balancing_enable : 1;
-        bool scrutineering_enable : 1;
+    bool balancing_active : 1;
+    bool balancing_enable : 1;
+    bool scrutineering_enable : 1;
 
-        bool llim_enable : 1;
-        bool hlim_enable : 1;
-        bool contactor_enable : 1;
+    bool llim_enable : 1;
+    bool hlim_enable : 1;
+    bool contactor_enable : 1;
 
-        bool error_comm_fail : 1;
-        bool error_self_test : 1;
-
-        // uint8_t _reserved : 0;
-    } bits;
-    uint8_t raw;
+    bool error_comm_fail : 1;
+    bool error_self_test : 1;
+    
+    uint32_t total_voltage_mV : 16;
+    uint16_t avg_voltage_mV : 16;
+    int32_t avg_temp_mC : 32;
 } pack_state_t;
 
 
 typedef struct
 {
     uint32_t voltage_mv;
-    float temperature;
+    int32_t temperature_mC; // milli-Celsius
 
     // Module should be discharged. This is only a suggestion to balance.
     // 
@@ -89,5 +88,11 @@ typedef struct
     // them to a globally defined `const` array to save RAM.
     int volt_mappings[SLAVE_NUM_VOLT_REG][SLAVE_NUM_MODULES_PER_VOLT_REG];
     int temp_mappings[SLAVE_NUM_TEMP_REG][SLAVE_NUM_VAL_PER_TEMP_REG][SLAVE_NUM_MODULES_PER_TEMP_VAL];
+    int bal_mappings[SLAVE_NUM_BAL_REG][SLAVE_NUM_MODULE_PER_BAL_REG];
 } slave_t;
 
+typedef struct
+{
+    int32_t temperature_mC;
+    uint32_t voltage_uV;
+} thermistor_mapping_t;

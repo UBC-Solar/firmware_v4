@@ -14,6 +14,7 @@
 #include "stm32f1xx_hal.h"
 
 #include "mst_defs.h"
+#include "mst_types.h"
 
 
 typedef struct {

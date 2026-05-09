@@ -49,7 +49,14 @@
 #define SLAVE_NUM_VAL_PER_TEMP_REG 3
 #define SLAVE_NUM_MODULES_PER_TEMP_VAL 4
 
+#define SLAVE_NUM_BAL_REG 2
+#define SLAVE_NUM_MODULE_PER_BAL_REG 12
+
 #define SLAVE_TIMEOUT_MS 15U // ms - safety timeout threshold for Slave functions
+
+#define THERMISTOR_LUT_TABLE_SIZE 17
+
+#define MIN_BALANCE_VOLT_DIFF_MV 150U
 
 /* Configuration Register Group Parameters */
 

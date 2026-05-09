@@ -36,7 +36,7 @@ static void tryTransmitFromQueue()
  *
  * @param message Pointer to buffer containing message to queue
  */
-static void queueCanMessage(CAN_TxMessage_t *message)
+void CAN_QueueTxMessage(CAN_TxMessage_t *message)
 {
     // Start critical section - do not want a CAN TX complete interrupt to be serviced during this function call
     HAL_NVIC_DisableIRQ(USB_HP_CAN1_TX_IRQn);
@@ -177,7 +177,7 @@ void CAN_SendMessageXXX()
 
     // Note: modify txMessage.data
 
-    queueCanMessage(&txMessage);
+    CAN_QueueTxMessage(&txMessage);
 }
 
 
@@ -200,7 +200,7 @@ void CAN_SendMessgeDebug()
         txMessage.data[i] = (i % 2) ? 0x00U : 0xFFU;
     }
 
-    queueCanMessage(&txMessage);
+    CAN_QueueTxMessage(&txMessage);
 }
 #endif // UNIT_TEST_CAN 
 
@@ -232,6 +232,20 @@ void CAN_RecievedMessageCallback()
      *  Do you want to add it to some global data structure for futur processing?
      *  Or do you want to call your own functions here to parse into it right away?
      */
+}
+
+void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan) {
+    CAN_TxCompleteCallback();
+}
+
+
+void HAL_CAN_TxMailbox1CompleteCallback(CAN_HandleTypeDef *hcan) {
+    CAN_TxCompleteCallback();
+}
+
+
+void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan) {
+    CAN_TxCompleteCallback();
 }
 
 /**

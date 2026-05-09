@@ -7,6 +7,7 @@
  */
 
 #include "spi_driver.h"
+#include "mst_defs.h"
 #include <string.h>
 
 Slave_Data_t slave_controller;

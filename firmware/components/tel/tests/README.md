@@ -28,6 +28,6 @@ rm -rf environment
 source environment/bin/activate
 
 # run the script
-python3 lcd_test.py
+python3 radio_test.py
 ```
 

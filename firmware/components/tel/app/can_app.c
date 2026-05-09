@@ -10,13 +10,6 @@
  */
 static void CanAppRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg);
 
-/**
- * @brief RTC Driver CAN RX Handler for processing RTC-related CAN messages.
- * @param msg_id The CAN message ID.
- * @param data Pointer to the received CAN message data.
- */
-static void RtcDriverRxHandler(uint32_t msg_id, uint8_t* data);
-
 
 void CanAppInit(){
     // Initialize CAN Comms RX Callback function 
@@ -43,18 +36,8 @@ static void CanAppRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg){
 		CAN_ID = CAN_comms_Rx_msg->header.StdId; // Get standard CAN ID
 	}
     // RX Functions go here
+	RtcAppRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
 	RtcDriverRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
 	TEL_transmit_msg(CAN_comms_Rx_msg);
 }
 
-static void RtcDriverRxHandler(uint32_t msg_id, uint8_t* data)
-{
-    switch (msg_id)
-    {
-    case RTC_TIMESTAMP_MSG_ID:
-        RtcAppSyncMemoratorToTel(data);
-        break;
-    default:
-        break;
-    }
-}

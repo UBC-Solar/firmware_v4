@@ -3,8 +3,18 @@
 
 #include <stdbool.h>
 
-#define MILLIS_TO_SECONDS(milliseconds) ( (double)(milliseconds * 0.001) )
-#define MILLISECONDS_IN_SECONDS         1000
+typedef struct {
+    uint8_t seconds;
+    uint8_t minutes;
+    uint8_t hours;
+
+} RtcDriverTimeData;
+
+typedef struct {
+    uint8_t day;
+    uint8_t month;
+    uint8_t year;
+} RtcDriverDateData;
 
 typedef enum {
     TIMETYPEDEF_SECONDS_IDX = 0,
@@ -13,18 +23,18 @@ typedef enum {
     TIMETYPEDEF_DAY_IDX = 3,
     TIMETYPEDEF_MONTH_IDX = 4,
     TIMETYPEDEF_YEAR_IDX = 5
-} TIMETYPEDEF_IDX_t;
+} RtcDriverTimeIndexes;
 
 /**
  * @brief Initializes the RTC driver and hardware if not already initialized.
  * @param data Data from the memorator to set the RTC Date
  */
-void RtcDriverSetDate(uint8_t *data);
+void RtcDriverSetDate(RtcDriverDateData *data);
 /**
  * @brief Initializes the RTC driver and hardware if not already initialized.
  * @param data Data from the memorator to set the RTC Time
  */
-void RtcDriverSetTime(uint8_t *data);
+void RtcDriverSetTime(RtcDriverTimeData *data);
 
 /**
  * @brief Get the current timestamp in seconds with milliseconds precision

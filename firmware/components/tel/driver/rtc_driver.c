@@ -4,22 +4,25 @@
 #include "stm32f1xx_hal.h"
 #include <time.h>
 
+#define MILLIS_TO_SECONDS(milliseconds) ( (double)(milliseconds * 0.001) )
+#define MILLISECONDS_IN_SECONDS         1000
+
 static uint32_t start_of_second;
 
-void RtcDriverSetDate(uint8_t *data) {
+void RtcDriverSetDate(RtcDriverDateData *data) {
     /* Initialize Date Object */
     RTC_DateTypeDef sDate = {0};
 
     /* Manually parsing the date, month, and year */
-    sDate.Date  = data[TIMETYPEDEF_DAY_IDX];
-    sDate.Month = data[TIMETYPEDEF_MONTH_IDX];
-    sDate.Year  = data[TIMETYPEDEF_YEAR_IDX];
+    sDate.Date  = data->day;
+    sDate.Month = data->month;
+    sDate.Year  = data->year;
 
     /* Set the RTC Date with these settings */
     HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
 }
 
-void RtcDriverSetTime(uint8_t *data) {
+void RtcDriverSetTime(RtcDriverTimeData *data) {
     // Store the start of the second for timestamp calculations
     start_of_second = HAL_GetTick();
 
@@ -27,9 +30,9 @@ void RtcDriverSetTime(uint8_t *data) {
     RTC_TimeTypeDef sTime = {0};
 
     /* Manually parsing the seconds minutes hours */
-    sTime.Seconds = data[TIMETYPEDEF_SECONDS_IDX];
-    sTime.Minutes = data[TIMETYPEDEF_MINUTES_IDX];
-    sTime.Hours   = data[TIMETYPEDEF_HOURS_IDX];
+    sTime.Seconds = data->seconds;
+    sTime.Minutes = data->minutes;
+    sTime.Hours   = data->hours;
 
     /* Set the RTC time with these settings */
     HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN);

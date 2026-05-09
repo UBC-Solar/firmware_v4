@@ -3,6 +3,8 @@
 #include "can_app.h"
 #include "bitops.h"
 #include "stdbool.h"
+#include "rtc_driver.h"
+#include <string.h>
 
 #define NO_PRIORITY                                 0
 #define NON_BLOCKING                                0
@@ -33,11 +35,13 @@ static bool filter(uint32_t can_id)
 TEL_Msg_TypeDef tel_msg = {0};
 void TEL_transmit_msg(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 {
+    // Not filtered yet??? TODO
     osSemaphoreAcquire(usart1_tx_semaphore, osWaitForever);   // Dont Tx until previous Tx is done
     set_tel_msg(&(CAN_comms_Rx_msg->header), CAN_comms_Rx_msg->data, &tel_msg);
     UART_telemetry_transmit(&tel_msg);
 }
 
+// Change name of this to gps, imu send or something???
 void TEL_transmit_msg_tx(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
 {
     osSemaphoreAcquire(usart1_tx_semaphore, osWaitForever);   // Dont Tx until previous Tx is done
@@ -92,7 +96,7 @@ void set_tel_msg_tx(CAN_TxHeaderTypeDef* header, uint8_t* data, TEL_Msg_TypeDef*
 uint64_t get_timestamp()
 {
     DoubleAsUint64 timestamp_union;
-    timestamp_union.d = RTC_get_timestamp_secs();
+    timestamp_union.d = RtcDriverGetTimeStamp();
     return BITOPS_64BIT_REVERSE(timestamp_union.u);
 }
 

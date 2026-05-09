@@ -1,5 +1,7 @@
 #include "telemetry_driver.h"
 
+telemetry_diagnostics_t telemetry_diagnostic;
+
 void UART_telemetry_transmit(TEL_Msg_TypeDef* can_tel_msg)
 {
     UART_HandleTypeDef *huart = CELLULAR ? &huart2 : &huart4;

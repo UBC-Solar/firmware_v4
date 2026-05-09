@@ -3,8 +3,9 @@
 
 #include "usart.h"
 #include "stdlib.h"
+#include "cmsis_os2.h"
 
-#define CELLULAR 1
+#define CELLULAR 0
 
 #define TEL_DATA_LENGTH                           8U
 #define TEL_MSG_TYPEDEF_SIZE                      sizeof(RADIO_Msg_TypeDef)
@@ -27,9 +28,12 @@ typedef struct {
 } telemetry_diagnostics_t;
 
 extern telemetry_diagnostics_t telemetry_diagnostic;
+extern osSemaphoreId_t usart1_tx_semaphore;
 
-osSemaphoreId_t usart1_tx_semaphore;
-
+/**
+  * @brief Transmits a telemetry message via UART
+  * @param can_tel_msg Pointer to the telemetry message to be transmitted
+  */
 void UART_telemetry_transmit(TEL_Msg_TypeDef* can_tel_msg);
 
 #endif /* __TELEMETRY_DRIVER__H__ */

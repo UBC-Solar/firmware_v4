@@ -56,6 +56,12 @@
 
 #define OBC_STATUS_ID                       0x18FF50E5
 
+typedef struct {
+    uint32_t id;
+    uint8_t  mod;     // transmit on radio only every 'mod' occurrences
+    uint32_t count;   // count of received messages
+} CanFilter_t;
+
 static CanFilter_t filter_whitelist[]  __attribute__((unused)) = {
     //         CAN ID                   MOD    COUNT
     { DRD_MOTOR_COMMAND_ID,                 4,     0               },

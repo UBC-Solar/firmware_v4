@@ -44,6 +44,7 @@ static void CanAppRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg){
 	}
     // RX Functions go here
 	RtcDriverRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
+	TEL_transmit_msg(CAN_comms_Rx_msg);
 }
 
 static void RtcDriverRxHandler(uint32_t msg_id, uint8_t* data)

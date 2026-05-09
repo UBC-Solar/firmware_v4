@@ -1,0 +1,14 @@
+#include "telemetry_driver.h"
+
+void UART_telemetry_transmit(TEL_Msg_TypeDef* can_tel_msg)
+{
+    UART_HandleTypeDef *huart = CELLULAR ? &huart2 : &huart4;
+    
+    if (HAL_UART_Transmit_DMA(huart, (uint8_t *)can_tel_msg, sizeof(TEL_Msg_TypeDef)) != HAL_OK)
+    {
+        telemetry_diagnostic.telemetry_hal_transmit_failures++;
+        osSemaphoreRelease(usart1_tx_semaphore);
+    } else {
+        telemetry_diagnostic.successful_telemetry_tx++;
+    }
+}

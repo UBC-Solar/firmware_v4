@@ -2,6 +2,7 @@
 #include "can_app.h"
 #include "CAN_comms.h"
 #include "rtc_app.h"
+#include "telemetry_app.h"
 
 /**
  * @brief Can Comms Callback Function for processing received CAN messages.

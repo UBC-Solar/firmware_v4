@@ -194,8 +194,8 @@ void Slave_Init(
     {
 		for(int reg_num = 0; reg_num < SLAVE_REG_SIZE_BYTES; reg_num++)
         {
-			slave_controller.cfgra[ic_num][reg_num] = config_val_a[reg_num];
-			slave_controller.cfgrb[ic_num][reg_num] = config_val_b[reg_num];
+			slave_controller.config_registers.cfgra[ic_num][reg_num] = config_val_a[reg_num];
+			slave_controller.config_registers.cfgrb[ic_num][reg_num] = config_val_b[reg_num];
         }
     }
 
@@ -204,10 +204,13 @@ void Slave_Init(
 #endif // UNIT_TEST_ISOSPI
 
     Slave_WakeUp(); // Wake up all ADBMS1818 devices in the chain
-    Slave_WriteRegisterGroup(CMD_WRCFGA, slave_controller.cfgra); // Write to Config. Reg. Group A
-    Slave_WriteRegisterGroup(CMD_WRCFGB, slave_controller.cfgrb); // Write to Config. Reg. Group B
+    Slave_WriteRegisterGroup(CMD_WRCFGA, slave_controller.config_registers.cfgra); // Write to Config. Reg. Group A
+    Slave_WriteRegisterGroup(CMD_WRCFGB, slave_controller.config_registers.cfgrb); // Write to Config. Reg. Group B
 }
 
+Slave_ConfigRegisters_t* Slave_GetConfigRegisters() {
+	return &slave_controller.config_registers;
+}
 
 /**
  * @brief sends a 2-byte command followed by the 2-byte PEC for that command

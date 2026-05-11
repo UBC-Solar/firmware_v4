@@ -16,12 +16,16 @@
 #include "mst_defs.h"
 #include "mst_types.h"
 
+typedef struct {
+    uint8_t cfgra[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES]; // Record of Configuration Register Group A for each device
+
+    uint8_t cfgrb[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES]; // Record of Configuration Register Group B for each device
+} Slave_ConfigRegisters_t;
 
 typedef struct {
     SPI_HandleTypeDef *SPI_handle;
+    Slave_ConfigRegisters_t config_registers;
 
-    uint8_t cfgra[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES]; // Record of Configuration Register Group A for each device
-    uint8_t cfgrb[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES]; // Record of Configuration Register Group B for each device
 } Slave_Data_t;
 
 enum Slave_Error {
@@ -206,6 +210,7 @@ void Slave_Init(
 	SPI_HandleTypeDef *SPI_handle,
 	uint8_t config_val_a[SLAVE_REG_SIZE_BYTES],
 	uint8_t config_val_b[SLAVE_REG_SIZE_BYTES]);
+Slave_ConfigRegisters_t* Slave_GetConfigRegisters();
 void Slave_WakeUp(void);
 void Slave_SendCmd(Slave_Command_t command);
 Slave_Status_t Slave_SendCmdAndPoll(Slave_Command_t command);

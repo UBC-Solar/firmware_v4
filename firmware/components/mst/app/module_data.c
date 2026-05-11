@@ -46,42 +46,86 @@ void Module_Init(
 	uint8_t config_val_b[SLAVE_REG_SIZE_BYTES]) {
     
     // --- Slave 0 Topology Mappings ---
-    slaves[0] = (slave_t) {
+    slaves[0] = (slave_t) 
+    {
+        // 2 bytes per module value, so each register group (6 bytes total) holds data of 3 modules.
         .volt_mappings = {
-            {-1, -1, -1}, {-1, -1, -1}, {-1, -1, -1}, 
-            {-1, -1, -1}, {-1, -1, -1}, {-1, -1, -1}
+            // Cell Voltage Register Group A (C1, C2, C3)
+            { 0,  1,  2}, 
+            // Cell Voltage Register Group B (C4, C5, C6)
+            { 3,  4,  5}, 
+            // Cell Voltage Register Group C (...)
+            { 6,  7,  8}, 
+            // Cell Voltage Register Group D
+            { 9, 10, 11}, 
+            // Cell Voltage Register Group E
+            {12, 13, 14}, 
+            // Cell Voltage Register Group F
+            {15, -1, -1}
         },
+        // 2 bytes per value, each value can hold data for one of 4 modules at any point.
+        // So each register group holds data for 12 modules.
+        // Multiplexer documentation: https://www.ti.com/lit/ds/symlink/sn74lv4052a.pdf
         .temp_mappings = {
+            // Auxiliary Register Group A (GPIO1, GPIO2, GPIO3)
+            { {-1, -1, -1, -1}, {-1, -1, -1, -1}, { 0,  1,  2,  3} },
+            // Auxiliary Register Group B (GPIO4, GPIO5, GPIO6)
+            { { 4,  5,  6,  7}, { 8,  9, 10, 11}, {12, 13, 14, 15} },
+            // Auxiliary Register Group C (...)
             { {-1, -1, -1, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1} },
-            { {-1, -1, -1, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1} },
-            { {-1, -1, -1, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1} },
+            // Auxiliary Register Group D
             { {-1, -1, -1, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1} }
         },
+        // 4 bits per module value, so each 
         .bal_mappings = {
-            {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-            {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}
+            // S Control Register Group
+            { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11},
+            // PWM/S Control Register Group B
+            {-1, -1, -1, -1, -1, -1, 12, 13, 14, 15, -1, -1}
         }
     };
 
     // --- Slave 1 Topology Mappings ---
-    slaves[1] = (slave_t) {
+    slaves[1] = (slave_t)
+    {
+        // 2 bytes per module value, so each register group (6 bytes total) holds data of 3 modules.
         .volt_mappings = {
-            {-1, -1, -1}, {-1, -1, -1}, {-1, -1, -1}, 
-            {-1, -1, -1}, {-1, -1, -1}, {-1, -1, -1}
+            // Cell Voltage Register Group A
+            {16, 17, 18}, 
+            // Cell Voltage Register Group B
+            {19, 20, 21}, 
+            // Cell Voltage Register Group C
+            {22, 23, 24}, 
+            // Cell Voltage Register Group D
+            {25, 26, 27}, 
+            // Cell Voltage Register Group E
+            {28, 29, 30},
+            // Cell Voltage Register Group F,
+            {31, -1, -1}
         },
+        // 2 bytes per value, each value can hold data for one of 4 modules at any point.
+        // So each register group holds data for 12 modules.
+        // Multiplexer documentation: https://www.ti.com/lit/ds/symlink/sn74lv4052a.pdf
         .temp_mappings = {
+            // Auxiliary Register Group A
+            { {-1, -1, -1, -1}, {-1, -1, -1, -1}, {16, 17, 18, 19} },
+            // Auxiliary Register Group B
+            { {20, 21, 22, 23}, {24, 25, 26, 27}, {28, 29, 30, 31} },
+            // Auxiliary Register Group C
             { {-1, -1, -1, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1} },
-            { {-1, -1, -1, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1} },
-            { {-1, -1, -1, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1} },
+            // Auxiliary Register Group D
             { {-1, -1, -1, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1} }
         },
+        // 4 bits per module value, so each 
         .bal_mappings = {
-            {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-            {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}
+            // S Control Register Group
+            {16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
+            // PWM/S Control Register Group B
+            {-1, -1, -1, -1, -1, -1, 28, 29, 30, 31, -1, -1}
         }
     };
 
-    Balancing_Init(slaves);
+    Balancing_Init(slaves, config_val_a, config_val_b);
 
     Slave_Init(SPI_handle, config_val_a, config_val_b);
 }

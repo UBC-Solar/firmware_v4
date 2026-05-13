@@ -3,6 +3,7 @@
 #include "mst_defs.h"
 #include "mst_types.h"
 #include "spi_driver.h"
+#include "balancing.h"
 #include <string.h>
 
 // Look-up table (LUT) to index cell voltage commands
@@ -125,7 +126,7 @@ void Module_Init(
         }
     };
 
-    Balancing_Init(slaves, config_val_a, config_val_b);
+    Balancing_Init(slaves);
 
     Slave_Init(SPI_handle, config_val_a, config_val_b);
 }

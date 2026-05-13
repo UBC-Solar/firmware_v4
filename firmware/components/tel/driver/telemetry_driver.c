@@ -12,5 +12,6 @@ void UART_telemetry_transmit(TEL_Msg_TypeDef* can_tel_msg)
         osSemaphoreRelease(usart1_tx_semaphore);
     } else {
         telemetry_diagnostic.successful_telemetry_tx++;
+        osSemaphoreRelease(usart1_tx_semaphore);
     }
 }

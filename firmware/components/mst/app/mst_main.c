@@ -58,6 +58,7 @@ void Initialize() {
 
     // Includes Slave_Init (SPI perhiperal initialization)
     Module_Init(&hspi2, slaves, config_val_a, config_val_b);
+    LOG_INFO("MST initialization complete.\r\n");
 }
 
 void CollectBoardData() {
@@ -111,12 +112,15 @@ void AnalyzeModuleData() {
     }
 
     ComputePackStatistics(pack_modules, &pack_state);
+    LOG_INFO("Pack stats - Total V: %lu mV, Avg T: %ld mC\r\n", pack_state.total_voltage_mV, pack_state.avg_temp_mC);
 }
 
 void DriveOutputs() {
     GPIO_Write(HLIM_EN_OUT_GPIO_Port, HLIM_EN_OUT_Pin, pack_state.hlim_enable);
     GPIO_Write(LLIM_EN_OUT_GPIO_Port, LLIM_EN_OUT_Pin, pack_state.llim_enable);
     
+    LOG_INFO("Outputs driven - HLIM: %d, LLIM: %d\r\n", pack_state.hlim_enable, pack_state.llim_enable);
+
     uint32_t balancing_start_ms = HAL_GetTick();
     DoBalancing(&pack_state, pack_modules, slaves);
     uint32_t balancing_end_ms = HAL_GetTick();
@@ -133,6 +137,7 @@ void SendCanMMessages() {
     CAN_SendMessage0x627();
     CAN_SendMessage0x628();
     CAN_SendMessage0x629();
+    LOG_DEBUG("CAN messages queued for transmission.\r\n");
 }
 
 

@@ -146,7 +146,11 @@ void GetVoltageForRegister_(slave_t slaves[NUM_SLAVES], module_t pack_modules[NU
     
     uint8_t rx_data[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
     memset(rx_data, 0, sizeof(rx_data));
-    Slave_ReadRegisterGroup(current_cmd, rx_data);
+    Slave_Status_t status = Slave_ReadRegisterGroup(current_cmd, rx_data);
+    if (status.error != Slave_OK) {
+        LOG_ERROR("SPI comm error getting voltage. Err: %d, Dev: %d", status.error, status.device_num);
+        Error_Handler();
+    }
 
     for (int slave_idx = 0; slave_idx < SLAVE_NUM_DEVICES; slave_idx++) {
 
@@ -242,7 +246,11 @@ void GetTemperatureForRegister_(slave_t slaves[NUM_SLAVES], module_t pack_module
 
     uint8_t rx_data[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
     memset(rx_data, 0, sizeof(rx_data));
-    Slave_ReadRegisterGroup(current_cmd, rx_data);
+    Slave_Status_t status = Slave_ReadRegisterGroup(current_cmd, rx_data);
+    if (status.error != Slave_OK) {
+        LOG_ERROR("SPI comm error getting temp. Err: %d, Dev: %d", status.error, status.device_num);
+        Error_Handler();
+    }
 
     for (int slave_idx = 0; slave_idx < SLAVE_NUM_DEVICES; slave_idx++) {
         

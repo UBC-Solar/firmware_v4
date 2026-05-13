@@ -28,11 +28,11 @@ void CAN_SendMessage0x622(void) {
     payload |= (pack_state.balancing_active                    ? 1 : 0) << 8;
     payload |= (pack_state.llim_enable                         ? 1 : 0) << 9;
     payload |= (pack_state.hlim_enable                         ? 1 : 0) << 10;
-    payload |= (pack_warnings.bits.trip_charge_over_temperature     ? 1 : 0) << 11;
+    // payload |= (pack_warnings.bits.trip_charge_over_temperature     ? 1 : 0) << 11;
     payload |= (pack_warnings.bits.warn_low_voltage                 ? 1 : 0) << 12;
     payload |= (pack_warnings.bits.warn_high_voltage                ? 1 : 0) << 13;
-    payload |= (pack_warnings.bits.warn_discharge_high_temperature  ? 1 : 0) << 14;
-    payload |= (pack_warnings.bits.warn_charge_high_temperature     ? 1 : 0) << 15;
+    // payload |= (pack_warnings.bits.warn_discharge_high_temperature  ? 1 : 0) << 14;
+    payload |= (pack_warnings.bits.warn_high_temperature     ? 1 : 0) << 15;
     payload |= (pack_state.balancing_enable                    ? 1 : 0) << 16;
     payload |= (pack_state.scrutineering_enable                ? 1 : 0) << 17;
 

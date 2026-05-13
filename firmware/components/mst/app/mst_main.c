@@ -101,6 +101,15 @@ void CollectModuleData() {
 void AnalyzeModuleData() {
     CheckForEmergency(pack_modules, &pack_faults, &pack_warnings);
 
+    if (pack_faults.raw != 0) {
+        LOG_ERROR("Pack fault bits were not zero\r\n");
+        Error_Handler();
+    }
+    
+    if (pack_warnings.raw != 0) {
+        LOG_DEBUG("Pack warnings present: 0x%X\r\n", pack_warnings.raw);
+    }
+
     ComputePackStatistics(pack_modules, &pack_state);
 }
 

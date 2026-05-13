@@ -9,16 +9,14 @@
 #define MAX_VOLTAGE_mV 4200U
 #define MIN_VOLTAGE_mV 2500U
 
-#define MAX_DISCHARGE_TEMP_degC 60U
-#define MAX_CHARGE_TEMP_degC 60U
-#define MIN_TEMPERATURE_degC 0U
+#define MAX_TEMP_degC 60U
+#define MIN_TEMP_degC 0U
 
 // Warning values
 #define WARN_HIGH_VOLTAGE_mV 4100U
 #define WARN_LOW_VOLTAGE_mV 2600U
 
-#define WARN_DISCHARGE_TEMP_degC 55U
-#define WARN_CHARGE_TEMP_degC 48U
+#define WARN_HIGH_TEMP_degC 55U
 
 
 /**

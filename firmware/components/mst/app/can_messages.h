@@ -22,10 +22,10 @@ BITS:
 8	Pack Balancing Active
 9	LLIM Status
 10	HLIM Status
-11	Charge Overtemperature Trip
+// 11	Charge Overtemperature Trip
 12	Low Voltage Warning
 13	High Voltage Warning
-14	Low Temperature Warning
+// 14	Low Temperature Warning
 15	High Temperature Warning
 16 balancing enable
 17 scrutineering enable

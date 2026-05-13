@@ -24,12 +24,9 @@ typedef union {
 
 typedef union {
     struct {
-        bool trip_charge_over_temperature : 1;
-
         bool warn_low_voltage : 1;
         bool warn_high_voltage : 1;
-        bool warn_discharge_high_temperature : 1;
-        bool warn_charge_high_temperature : 1;
+        bool warn_high_temperature : 1;
 
         uint8_t _reserved : 3;
     } bits;

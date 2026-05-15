@@ -31,6 +31,9 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "can_app.h"
+#include "telemetry_app.h"
+#include "telemetry_driver.h"
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -108,7 +111,6 @@ int main(void)
   MX_UART5_Init();
   /* USER CODE BEGIN 2 */
   CanAppInit();
-
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -127,6 +129,39 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    static TEL_Msg_TypeDef test_msg;
+
+    // Fill with known values
+    memset(&test_msg, 0, sizeof(TEL_Msg_TypeDef));
+
+    test_msg.timestamp       = 0x1122334455667788;   // recognizable pattern
+    test_msg.can_id          = 0xAABBCCDD;
+    test_msg.ID_DELIMETER    = '#';
+
+    // Test payload (easy to spot on receiver)
+    test_msg.data[0] = 0xDE;
+    test_msg.data[1] = 0xAD;
+    test_msg.data[2] = 0xBE;
+    test_msg.data[3] = 0xEF;
+    test_msg.data[4] = 0x01;
+    test_msg.data[5] = 0x02;
+    test_msg.data[6] = 0x03;
+    test_msg.data[7] = 0x04;
+
+    test_msg.data_len        = 8;
+    test_msg.CARRIAGE_RETURN = '\r';
+    test_msg.NEW_LINE        = '\n';
+    UART_HandleTypeDef *huart = CELLULAR ? &huart2 : &huart4;
+
+    if (HAL_UART_Transmit(huart, (uint8_t *)&test_msg, sizeof(TEL_Msg_TypeDef), HAL_MAX_DELAY) != HAL_OK)
+    // if (HAL_UART_Transmit_DMA(huart, (uint8_t *)can_tel_msg, sizeof(TEL_Msg_TypeDef)) != HAL_OK)
+    {
+        telemetry_diagnostic.telemetry_hal_transmit_failures++;
+        // osSemaphoreRelease(usart1_tx_semaphore);
+    } else {
+        telemetry_diagnostic.successful_telemetry_tx++;
+        // osSemaphoreRelease(usart1_tx_semaphore);
+    }
   }
   /* USER CODE END 3 */
 }

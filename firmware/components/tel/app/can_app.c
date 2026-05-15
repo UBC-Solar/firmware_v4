@@ -37,6 +37,6 @@ static void CanAppRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg){
 	}
     // RX Functions go here
 	RtcAppRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
-	TEL_transmit_msg(CAN_comms_Rx_msg);
+	TelAppTransmitMsg(CAN_comms_Rx_msg);
 }
 

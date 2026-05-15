@@ -57,6 +57,7 @@ void DMA1_Channel7_IRQHandler(void);
 void USB_LP_CAN1_RX0_IRQHandler(void);
 void TIM2_IRQHandler(void);
 void I2C1_EV_IRQHandler(void);
+void UART4_IRQHandler(void);
 void DMA2_Channel4_5_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 

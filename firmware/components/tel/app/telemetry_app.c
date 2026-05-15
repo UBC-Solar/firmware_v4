@@ -33,19 +33,19 @@ static bool filter(uint32_t can_id)
 }
 
 TEL_Msg_TypeDef tel_msg = {0};
-void TEL_transmit_msg(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
+void TelAppTransmitMsg(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 {
     // Not filtered yet??? TODO
     osSemaphoreAcquire(usart1_tx_semaphore, osWaitForever);   // Dont Tx until previous Tx is done
-    set_tel_msg(&(CAN_comms_Rx_msg->header), CAN_comms_Rx_msg->data, &tel_msg);
+    TelAppSetMsg(&(CAN_comms_Rx_msg->header), CAN_comms_Rx_msg->data, &tel_msg);
     UART_telemetry_transmit(&tel_msg);
 }
 
 // Change name of this to gps, imu send or something???
-void TEL_transmit_msg_tx(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
+void TelAppTransmitMsg_tx(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
 {
     osSemaphoreAcquire(usart1_tx_semaphore, osWaitForever);   // Dont Tx until previous Tx is done
-    set_tel_msg_tx(&(CAN_comms_Tx_msg->header), CAN_comms_Tx_msg->data, &tel_msg);
+    TelAppSetMsg_tx(&(CAN_comms_Tx_msg->header), CAN_comms_Tx_msg->data, &tel_msg);
     UART_telemetry_transmit(&tel_msg);
 }
 
@@ -55,7 +55,7 @@ void TEL_transmit_msg_tx(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
  * @param header The CAN header struct
  * @param data The CAN data
  */
-void set_tel_msg(CAN_RxHeaderTypeDef* header, uint8_t* data, TEL_Msg_TypeDef* tel_msg)
+void TelAppSetMsg(CAN_RxHeaderTypeDef* header, uint8_t* data, TEL_Msg_TypeDef* tel_msg)
 {
     memset(tel_msg, 0, sizeof(TEL_Msg_TypeDef));           // 0 out all 8 bytes data
     
@@ -74,7 +74,7 @@ void set_tel_msg(CAN_RxHeaderTypeDef* header, uint8_t* data, TEL_Msg_TypeDef* te
  * @param header The CAN header struct
  * @param data The CAN data
  */
-void set_tel_msg_tx(CAN_TxHeaderTypeDef* header, uint8_t* data, TEL_Msg_TypeDef* tel_msg)
+void TelAppSetMsg_tx(CAN_TxHeaderTypeDef* header, uint8_t* data, TEL_Msg_TypeDef* tel_msg)
 {
     memset(tel_msg, 0, sizeof(TEL_Msg_TypeDef));           // 0 out all 8 bytes data
     

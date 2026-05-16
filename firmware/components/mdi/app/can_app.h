@@ -8,8 +8,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "mdi_driver.h"
-
 void CanAppInit(void);
 bool CanAppTryGetMotorCommand(MdiMotorCommand *command);
 uint32_t CanAppGetLastCommandTick(void);

@@ -10,12 +10,8 @@
 
 #include "mdi_driver.h"
 
-extern MdiMotorCommand g_mdi_motor_command;
-extern volatile bool g_mdi_motor_command_received;
-extern volatile uint32_t g_mdi_last_command_tick;
-
 void CanAppInit(void);
-void CanAppSendTimeSinceBootup(void);
-void CanAppSendDiagnosticFlags(void);
+bool CanAppTryGetMotorCommand(MdiMotorCommand *command);
+uint32_t CanAppGetLastCommandTick(void);
 
 #endif /* __CAN_APP_H__ */

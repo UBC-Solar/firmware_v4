@@ -1,4 +1,5 @@
-#include "rtd.h"
+#include "superloop.h"
+
 #include "can_app.h"
 #include "diagnostic.h"
 #include "mdi_driver.h"
@@ -7,11 +8,11 @@
 void AppMain(void)
 {
     CanAppInit();
-    g_mdi_diagnostic_flags.raw = 0;
-    CanAppSendDiagnosticFlags();
+    DiagnosticInit();
+    DiagnosticSendFlags();
 
     MdiStopMotor();
-    g_mdi_last_command_tick = HAL_GetTick();
+
     uint32_t last_diagnostic_tick = HAL_GetTick();
 
     for (;;)
@@ -20,19 +21,20 @@ void AppMain(void)
 
         if ((uint32_t)(now - last_diagnostic_tick) >= MDI_DIAGNOSTICS_DELAY)
         {
-            CanAppSendTimeSinceBootup();
-            CanAppSendDiagnosticFlags();
+            DiagnosticSendTimeSinceBootup();
+            DiagnosticSendFlags();
             last_diagnostic_tick = now;
         }
 
-        if ((uint32_t)(now - g_mdi_last_command_tick) >= MDI_MAX_TIMEOUT_VALUE)
+        if ((uint32_t)(now - CanAppGetLastCommandTick()) >= MDI_MAX_TIMEOUT_VALUE)
         {
             MdiStopMotor();
         }
 
-        if (g_mdi_motor_command_received)
+        MdiMotorCommand command;
+        if (CanAppTryGetMotorCommand(&command))
         {
-            MdiSetMotorCommand(&g_mdi_motor_command);
+            MdiSetMotorCommand(&command);
         }
     }
 }

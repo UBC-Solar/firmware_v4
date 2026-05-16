@@ -1,71 +1,56 @@
 #include "can_app.h"
 #include "can_driver.h"
-#include "diagnostic.h"
+#include "main.h"
 
-MdiMotorCommand g_mdi_motor_command = {0};
-volatile bool g_mdi_motor_command_received = false;
-volatile uint32_t g_mdi_last_command_tick = 0;
+static MdiMotorCommand s_motor_command = {0};
+static bool s_motor_command_received = false;
+static uint32_t s_last_command_tick = 0;
 
-static const CAN_TxHeaderTypeDef mdi_time_since_bootup_header = {
-    .StdId = MDI_TIME_SINCE_BOOTUP_CAN_ID,
-    .ExtId = 0x0000,
-    .IDE = CAN_ID_STD,
-    .RTR = CAN_RTR_DATA,
-    .DLC = 4
-};
-
-static const CAN_TxHeaderTypeDef mdi_diagnostic_flags_header = {
-    .StdId = MDI_DIAGNOSTIC_FLAGS_CAN_ID,
-    .ExtId = 0x0000,
-    .IDE = CAN_ID_STD,
-    .RTR = CAN_RTR_DATA,
-    .DLC = 1
-};
+static void CanAppRxCallback(const CAN_RxHeaderTypeDef *header, const uint8_t *data);
 
 void CanAppInit(void)
 {
     CanDriverInit();
+    CanDriverRegisterRxCallback(CanAppRxCallback);
+    s_motor_command_received = false;
+    s_last_command_tick = HAL_GetTick();
 }
 
-void CanAppSendTimeSinceBootup(void)
+bool CanAppTryGetMotorCommand(MdiMotorCommand *command)
 {
-    static uint32_t time_since_bootup_counter = 0;
-    uint8_t data[4];
-    uint32_t mailbox;
+    if (command == NULL)
+    {
+        return false;
+    }
 
-    data[0] = (uint8_t)(time_since_bootup_counter & 0xFFU);
-    data[1] = (uint8_t)((time_since_bootup_counter >> 8) & 0xFFU);
-    data[2] = (uint8_t)((time_since_bootup_counter >> 16) & 0xFFU);
-    data[3] = (uint8_t)((time_since_bootup_counter >> 24) & 0xFFU);
+    if (!s_motor_command_received)
+    {
+        return false;
+    }
 
-    HAL_CAN_AddTxMessage(&hcan, &mdi_time_since_bootup_header, data, &mailbox);
-    time_since_bootup_counter++;
+    *command = s_motor_command;
+    s_motor_command_received = false;
+    return true;
 }
 
-void CanAppSendDiagnosticFlags(void)
+uint32_t CanAppGetLastCommandTick(void)
 {
-    uint8_t data[1] = {g_mdi_diagnostic_flags.raw};
-    uint32_t mailbox;
-
-    HAL_CAN_AddTxMessage(&hcan, &mdi_diagnostic_flags_header, data, &mailbox);
+    return s_last_command_tick;
 }
 
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *can_handle)
+static void CanAppRxCallback(const CAN_RxHeaderTypeDef *header, const uint8_t *data)
 {
-    uint8_t rx_data[8] = {0};
-    CAN_RxHeaderTypeDef rx_header;
-
-    if (HAL_CAN_GetRxMessage(can_handle, CAN_RX_FIFO0, &rx_header, rx_data) != HAL_OK)
+    if (header == NULL || data == NULL)
     {
         return;
     }
 
-    if (rx_header.IDE != CAN_ID_STD || rx_header.StdId != DRD_MOTOR_COMMAND_CAN_ID)
+    if (header->IDE != CAN_ID_STD || header->StdId != DRD_MOTOR_COMMAND_CAN_ID)
     {
         return;
     }
 
-    MdiParseMotorCommand(rx_data, &g_mdi_motor_command);
-    g_mdi_motor_command_received = true;
-    g_mdi_last_command_tick = HAL_GetTick();
+    MdiParseMotorCommand(data, &s_motor_command);
+    s_motor_command_received = true;
+    s_last_command_tick = HAL_GetTick();
 }

@@ -1,6 +1,7 @@
 #include "can_app.h"
 #include "can_driver.h"
 #include "main.h"
+#include "superloop.c"
 
 static MdiMotorCommand s_motor_command = {0};
 static bool s_motor_command_received = false;

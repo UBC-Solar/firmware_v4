@@ -45,7 +45,11 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
-    ${CMAKE_CURRENT_SOURCE_DIR}/app/rtd.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/can_app.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/diagnostic.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/can_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/mdi_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/superloop.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/debug_io/debug_io.c
 )
 
@@ -53,6 +57,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     ${CMAKE_CURRENT_SOURCE_DIR}/app
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver
+    ${CMAKE_CURRENT_SOURCE_DIR}/runtime
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/debug_io
 )
 

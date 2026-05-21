@@ -2,6 +2,7 @@
 
 #include "can_app.h"
 #include "diagnostic.h"
+#include "iwdg_app.h"
 #include "mdi_driver.h"
 #include "main.h"
 
@@ -9,6 +10,8 @@ void AppMain(void)
 {
     CanAppInit();
     DiagnosticInit();
+    IwdgAppInit();
+    IwdgAppResetHandle();
     DiagnosticSendFlags();
 
     MdiStopMotor();
@@ -18,6 +21,8 @@ void AppMain(void)
     for (;;)
     {
         uint32_t now = HAL_GetTick();
+
+        IwdgAppRefresh();
 
         if ((uint32_t)(now - last_diagnostic_tick) >= MDI_DIAGNOSTICS_DELAY)
         {

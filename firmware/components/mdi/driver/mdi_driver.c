@@ -17,7 +17,15 @@ void MdiSetDacVoltage(MdiDacAddr dac_addr, uint16_t voltage_value)
     i2c_buffer[0] = (uint8_t)(voltage_value >> 8);
     i2c_buffer[1] = (uint8_t)(voltage_value & 0xFFU);
 
-    HAL_I2C_Master_Transmit(&hi2c2, (uint16_t)dac_addr, i2c_buffer, sizeof(i2c_buffer), HAL_MAX_DELAY);
+    if (dac_addr == MDI_DAC_ACCEL)
+    {
+        HAL_I2C_Master_Transmit(&hi2c2, dac_addr, i2c_buffer, sizeof(i2c_buffer), HAL_MAX_DELAY);
+    }
+
+    if (dac_addr == MDI_DAC_REGEN)
+    {
+        HAL_I2C_Master_Transmit(&hi2c1, dac_addr, i2c_buffer, sizeof(i2c_buffer), HAL_MAX_DELAY);
+    }
 }
 
 void MdiSetMotorCommand(const MdiMotorCommand *command)

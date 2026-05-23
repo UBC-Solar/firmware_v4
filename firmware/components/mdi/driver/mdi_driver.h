@@ -11,6 +11,7 @@
 #define MDI_MAX_DAC_VALUE ((uint16_t)(0.90f * 0x3FFU))
 #define MDI_MAX_TIMEOUT_VALUE 100U
 #define MDI_DIAGNOSTICS_DELAY 1000U
+#define MDI_DAC7571_WRITE_ADDR (0x4Cu << 1U)
 
 typedef enum {
     MDI_DAC_REGEN = (0b0001101u << 1),

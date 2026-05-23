@@ -2,6 +2,7 @@
 
 #include "main.h"
 
+extern I2C_HandleTypeDef hi2c1;
 extern I2C_HandleTypeDef hi2c2;
 
 void MdiSetDacVoltage(MdiDacAddr dac_addr, uint16_t voltage_value)
@@ -19,12 +20,12 @@ void MdiSetDacVoltage(MdiDacAddr dac_addr, uint16_t voltage_value)
 
     if (dac_addr == MDI_DAC_ACCEL)
     {
-        HAL_I2C_Master_Transmit(&hi2c2, dac_addr, i2c_buffer, sizeof(i2c_buffer), HAL_MAX_DELAY);
+        HAL_I2C_Master_Transmit(&hi2c2, MDI_DAC7571_WRITE_ADDR, i2c_buffer, sizeof(i2c_buffer), HAL_MAX_DELAY);
     }
 
     if (dac_addr == MDI_DAC_REGEN)
     {
-        HAL_I2C_Master_Transmit(&hi2c1, dac_addr, i2c_buffer, sizeof(i2c_buffer), HAL_MAX_DELAY);
+        HAL_I2C_Master_Transmit(&hi2c1, MDI_DAC7571_WRITE_ADDR, i2c_buffer, sizeof(i2c_buffer), HAL_MAX_DELAY);
     }
 }
 

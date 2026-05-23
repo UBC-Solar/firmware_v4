@@ -106,13 +106,16 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    #if (UNIT_TEST_MCU != RUN) && (UNIT_TEST_IO != RUN) && (UNIT_TEST_CAN != RUN) && (UNIT_TEST_ISOSPI != RUN) && (UNIT_TEST_SLAVE != RUN)
     /**
      * Mainloop
      */
     CollectBoardData();
     CollectModuleData();
     AnalyzeModuleData();
-    SendCanMMessages();
+    DriveOutputs();
+    SendCanMessages();
+    #endif
 
     /**
      * Tests
@@ -132,6 +135,11 @@ int main(void)
     #if (UNIT_TEST_ISOSPI == RUN)
     Debug_IsoSpiTestCycle();
     #endif // UNIT_TEST_ISOSPI
+
+    #if (UNIT_TEST_SLAVE == RUN)
+    Debug_SlaveTestCommsCycle();
+    // Debug_SlaveTestBalanceCycle();
+    #endif // UNIT_TEST_SLAVE
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

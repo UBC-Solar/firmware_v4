@@ -8,6 +8,7 @@
 
 #include "spi_driver.h"
 #include "mst_defs.h"
+#include "stm32f1xx_hal_spi.h"
 #include <string.h>
 
 Slave_Data_t slave_controller;
@@ -47,6 +48,46 @@ static const uint16_t pec_15_table[256] =
     0xAC5D, 0x7FA0, 0xBA39, 0xB10B, 0x7492, 0x5368, 0x96F1, 0x9DC3, 0x585A,
     0x8BA7, 0x4E3E, 0x450C, 0x8095
 };
+/************************************
+Copyright 2012 Analog Devices, Inc. (ADI)
+Permission to freely use, copy, modify, and distribute this software
+for any purpose with or without fee is hereby granted, provided
+that the above copyright notice and this permission notice appear
+in all copies: THIS SOFTWARE IS PROVIDED “AS IS” AND ADI
+DISCLAIMS ALL WARRANTIES
+INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL ADI BE LIABLE FOR ANY
+SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES
+OR ANY DAMAGES WHATSOEVER RESULTING FROM ANY
+USE OF SAME, INCLUDING ANY LOSS OF USE OR DATA
+OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION, ARISING OUT OF OR
+IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+SOFTWARE.
+***************************************/
+uint16_t CRC15_POLY = 0x4599;
+void init_PEC15_Table()
+{
+	LOG_INFO("PEC Init\r\n");
+	for (int i = 0; i < 256; i++)
+	{
+		uint16_t remainder = i << 7;
+		for (int bit = 8; bit > 0; --bit)
+		{
+			if (remainder & 0x4000)
+			{
+			remainder = ((remainder << 1));
+			remainder = (remainder ^ CRC15_POLY);
+			}
+			else
+			{
+			remainder = ((remainder << 1));
+			}
+		}
+		if (pec_15_table[i] != (remainder&0xFFFF)) {
+			LOG_ERROR("PEC table at index %d mismatch!\r\n", i);
+		}
+	}
+}
 
 /**
  * @brief Calculates the PEC for "len" bytes of data (as a group).
@@ -92,6 +133,13 @@ Slave_Status_t ProcessHalStatus_(HAL_StatusTypeDef status_HAL, unsigned int devi
 void WriteCS_(CS_state_t cs_state)
 {
     HAL_GPIO_WritePin(SPI_ADBMS_NSS_GPIO_Port, SPI_ADBMS_NSS_Pin, cs_state);
+
+	if (cs_state == CS_HIGH) {
+		/* After releasing CS, clock a few SPI cycles into an unused buffer to
+		   ensure downstream devices see the clocks. */
+		uint8_t unused_rx[4] = {0};
+		HAL_SPI_Receive(slave_controller.SPI_handle, unused_rx, 4, SLAVE_TIMEOUT_MS);
+	}
 }
 
 /**
@@ -189,6 +237,7 @@ void Slave_Init(
 	uint8_t config_val_b[SLAVE_REG_SIZE_BYTES])
 {
     slave_controller.SPI_handle = SPI_handle;
+	init_PEC15_Table();
 
     for(int ic_num = 0; ic_num < SLAVE_NUM_DEVICES; ic_num++)
     {
@@ -242,7 +291,7 @@ Slave_Status_t Slave_SendCmdAndPoll(Slave_Command_t command)
 
 	WriteCS_(CS_LOW);
 	SendCommand_(command);
-	status_slave = Poll_();
+	status_slave = Poll_(); // blocks here
 	WriteCS_(CS_HIGH);
 
     return status_slave;
@@ -334,6 +383,7 @@ Slave_Status_t Slave_ReadRegisterGroup(Slave_Command_t command, uint8_t rx_data[
 		{
 			status_slave.error = Slave_ERROR_PEC;
 			status_slave.device_num = ic_num;
+			WriteCS_(CS_HIGH);
 			return status_slave;
 		}
 

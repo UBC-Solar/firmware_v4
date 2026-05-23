@@ -198,6 +198,7 @@ typedef enum {
     CMD_CLRAUX  = 0x0712,       // Clear Auxiliary Register Groups
     CMD_CLRSTAT = 0x0713,       // Clear Status Register Groups
     CMD_PLADC   = 0x0714,       // Poll ADC Conversion Status
+    CMD_PLAUX   = 0x0715,       // Poll AUX Conversion Status
     CMD_DIAGN   = 0x0715,       // Diagnose MUX and Poll Status
     CMD_WRCOMM  = 0x0721,       // Write COMM Register Group
     CMD_RDCOMM  = 0x0722,       // Read COMM Register Group

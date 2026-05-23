@@ -28,14 +28,12 @@
 #define NUM_CELLS_PER_MODULE 13U
 
 // Slave(board)s
-#define NUM_SLAVES 2U
-#define NUM_MODULES_PER_SLAVE 16U
+#define SLAVE_NUM_DEVICES 1U // Number of ADBMS1818 ICs daisy chained
 
 
 /**
  * Slaveboards configuration and ADBMS1818 options
  */
-#define SLAVE_NUM_DEVICES 2U // Number of ADBMS1818 ICs daisy chained
 
 #define SLAVE_NUM_CELL_INPUTS_PER_DEVICE 18
 #define SLAVE_REG_SIZE_BYTES 6 // All of the ADBMS1818 register groups consist of 6 bytes
@@ -50,7 +48,7 @@
 #define SLAVE_NUM_BAL_REG 2
 #define SLAVE_NUM_MODULE_PER_BAL_REG 12
 
-#define SLAVE_TIMEOUT_MS 15U // ms - safety timeout threshold for Slave functions
+#define SLAVE_TIMEOUT_MS 100U // ms - safety timeout threshold for Slave functions
 
 #define THERMISTOR_LUT_TABLE_SIZE 17
 
@@ -102,3 +100,4 @@
 #define UNIT_TEST_IO SKIP
 #define UNIT_TEST_CAN SKIP
 #define UNIT_TEST_ISOSPI SKIP
+#define UNIT_TEST_SLAVE RUN

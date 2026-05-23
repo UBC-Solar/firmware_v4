@@ -13,7 +13,7 @@
 // extern warnings_t pack_warnings;
 // extern pack_state_t pack_state;
 
-// extern slave_t slaves[NUM_SLAVES];
+// extern slave_t slaves[SLAVE_NUM_DEVICES];
 
 
 /**
@@ -24,7 +24,8 @@ void Initialize();
 void CollectBoardData();
 void CollectModuleData();
 void AnalyzeModuleData();
-void SendCanMMessages();
+void DriveOutputs();
+void SendCanMessages();
 
 #if (UNIT_TEST_MCU == RUN)
 void Debug_McuTestCycle();
@@ -41,3 +42,9 @@ void Debug_CanTestCycle();
 #if (UNIT_TEST_ISOSPI == RUN)
 void Debug_IsoSpiTestCycle();
 #endif // UNIT_TEST_ISOSPI
+
+#if (UNIT_TEST_SLAVE == RUN)
+void Debug_SlaveTestCommsCycle();
+void Debug_SlaveTestBalanceCycle();
+#endif // UNIT_TEST_ISOSPI
+

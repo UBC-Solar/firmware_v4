@@ -27,7 +27,7 @@ faults_t pack_faults = {0};
 warnings_t pack_warnings = {0};
 pack_state_t pack_state = {0};
 
-slave_t slaves[NUM_SLAVES] = {0};
+slave_t slaves[SLAVE_NUM_DEVICES] = {0};
 
 
 
@@ -104,11 +104,11 @@ void AnalyzeModuleData() {
 
     if (pack_faults.raw != 0) {
         LOG_ERROR("Pack fault bits were not zero\r\n");
-        Error_Handler();
+        Fault();
     }
     
     if (pack_warnings.raw != 0) {
-        LOG_DEBUG("Pack warnings present: 0x%X\r\n", pack_warnings.raw);
+        LOG_INFO("Pack warnings present: 0x%X\r\n", pack_warnings.raw);
     }
 
     ComputePackStatistics(pack_modules, &pack_state);
@@ -129,7 +129,7 @@ void DriveOutputs() {
 }
 
 
-void SendCanMMessages() {
+void SendCanMessages() {
     CAN_SendMessage0x622();
     CAN_SendMessage0x623();
     CAN_SendMessage0x625();
@@ -137,7 +137,7 @@ void SendCanMMessages() {
     CAN_SendMessage0x627();
     CAN_SendMessage0x628();
     CAN_SendMessage0x629();
-    LOG_DEBUG("CAN messages queued for transmission.\r\n");
+    LOG_DEBUG("All CAN messages queued for transmission.\r\n");
 }
 
 
@@ -216,3 +216,61 @@ void Debug_IsoSpiTestCycle() {
     isoSpiCycleCount++;
 }
 #endif // UNIT_TEST_ISOSPI
+
+
+#if (UNIT_TEST_SLAVE == RUN)
+static bool DoesRegGroupMatch_(uint8_t reg_group1[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES],
+                              uint8_t reg_group2[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES])
+{
+    for (int ic_num = 0; ic_num < SLAVE_NUM_DEVICES; ic_num++)
+    {
+        for (int i = 0; i < SLAVE_REG_SIZE_BYTES; i++)
+        {
+            if (reg_group1[ic_num][i] != reg_group2[ic_num][i])
+                return false;
+        }
+    }
+    return true;
+}
+
+void Debug_SlaveTestCommsCycle() {
+    uint8_t test_data[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES] = {
+        {0x55, 0x6E, 0x69, 0x42, 0x43, 0x20}
+#if SLAVE_NUM_DEVICES > 1U
+        , {0x53, 0x6F, 0x6C, 0x61, 0x72, 0x21}
+#endif // SLAVE_NUM_DEVICES > 1
+    };
+
+
+    Slave_Status_t comm_status = {Slave_OK, 0};
+    uint8_t test_data_rx[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES] = {0};
+
+    bool reg_group_match;
+
+    // Slave_WakeUp();
+    Slave_WriteRegisterGroup(CMD_WRCOMM, test_data);
+
+    (void) reg_group_match;
+
+    //HAL_Delay(100);
+    //Slave_WakeUp();
+    comm_status = Slave_ReadRegisterGroup(CMD_RDCOMM, test_data_rx);
+    reg_group_match = DoesRegGroupMatch_(test_data, test_data_rx);
+    
+    GPIO_Write(LED_OUT_GPIO_Port, LED_OUT_Pin, reg_group_match);
+
+    LOG_INFO("Reg group match: %d. Comm error: %d\r\n", reg_group_match, comm_status.error);
+    HAL_Delay(500);
+}
+
+bool balance_enabled = false;
+void Debug_SlaveTestBalanceCycle() {
+    Slave_WakeUp();
+    Debug_DoBalancing(slaves, balance_enabled);
+    balance_enabled = !balance_enabled;
+
+    LOG_INFO("Turned all balancing pins %s\r\n", balance_enabled ? "ON" : "OFF");
+    
+    HAL_Delay(4000);
+}
+#endif

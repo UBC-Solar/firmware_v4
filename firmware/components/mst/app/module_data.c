@@ -1,4 +1,4 @@
-#include "module_data.h"
+ #include "module_data.h"
 #include "main.h"
 #include "mst_defs.h"
 #include "mst_types.h"
@@ -42,7 +42,7 @@ const thermistor_mapping_t thermistor_temp_lut[THERMISTOR_LUT_TABLE_SIZE] = {
 
 void Module_Init(
 	SPI_HandleTypeDef *SPI_handle,
-	slave_t slaves[NUM_SLAVES],
+	slave_t slaves[SLAVE_NUM_DEVICES],
 	uint8_t config_val_a[SLAVE_REG_SIZE_BYTES],
 	uint8_t config_val_b[SLAVE_REG_SIZE_BYTES]) {
     
@@ -86,6 +86,7 @@ void Module_Init(
         }
     };
 
+    #if SLAVE_NUM_DEVICES > 1U
     // --- Slave 1 Topology Mappings ---
     slaves[1] = (slave_t)
     {
@@ -125,6 +126,7 @@ void Module_Init(
             {-1, -1, -1, -1, -1, -1, 28, 29, 30, 31, -1, -1}
         }
     };
+    #endif // SLAVE_NUM_DEVICES > 1
 
     Balancing_Init(slaves);
 
@@ -136,7 +138,7 @@ void RequestVoltageMeasurement(void) {
     Slave_SendCmd(CMD_ADCV);
 }
 
-void GetVoltageForRegister_(slave_t slaves[NUM_SLAVES], module_t pack_modules[NUM_MODULES], int reg_idx) {
+void GetVoltageForRegister_(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES], int reg_idx) {
     if (reg_idx >= SLAVE_NUM_VOLT_REG) {
         LOG_ERROR("Voltage register %d is out of range!\r\n", reg_idx);
         Error_Handler();
@@ -168,10 +170,10 @@ void GetVoltageForRegister_(slave_t slaves[NUM_SLAVES], module_t pack_modules[NU
     }
 }
 
-void RetrieveVoltageMeasurement(slave_t slaves[NUM_SLAVES], module_t pack_modules[NUM_MODULES]) {
+void RetrieveVoltageMeasurement(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES]) {
     Slave_WakeUp();
     
-
+    Slave_SendCmdAndPoll(CMD_PLADC);
 
     for (int reg_idx = 0; reg_idx < SLAVE_NUM_VOLT_REG; reg_idx++) {
         GetVoltageForRegister_(slaves, pack_modules, reg_idx);
@@ -231,7 +233,7 @@ int32_t ThermistorVoltToTemp_(uint16_t adc_meas) {
     return -273150; 
 }
 
-void GetTemperatureForRegister_(slave_t slaves[NUM_SLAVES], module_t pack_modules[NUM_MODULES], int reg_idx) {
+void GetTemperatureForRegister_(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES], int reg_idx) {
     if (reg_idx >= SLAVE_NUM_TEMP_REG) {
         LOG_ERROR("Temperature register %d is out of range!\r\n", reg_idx);
         Error_Handler();
@@ -271,8 +273,11 @@ void GetTemperatureForRegister_(slave_t slaves[NUM_SLAVES], module_t pack_module
     }
 }
 
-void RetrieveTemperatureMeasurement(slave_t slaves[NUM_SLAVES], module_t pack_modules[NUM_MODULES]) {
+void RetrieveTemperatureMeasurement(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES]) {
     Slave_WakeUp();
+
+    Slave_SendCmdAndPoll(CMD_PLAUX);
+
     for (int reg_idx = 0; reg_idx < SLAVE_NUM_TEMP_REG; reg_idx++) {
         GetTemperatureForRegister_(slaves, pack_modules, reg_idx);
     }

@@ -247,7 +247,7 @@ void Debug_SlaveTestCommsCycle() {
 
     bool reg_group_match;
 
-    // Slave_WakeUp();
+    Slave_WakeUp();
     Slave_WriteRegisterGroup(CMD_WRCOMM, test_data);
 
     (void) reg_group_match;

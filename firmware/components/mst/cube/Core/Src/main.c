@@ -137,8 +137,8 @@ int main(void)
     #endif // UNIT_TEST_ISOSPI
 
     #if (UNIT_TEST_SLAVE == RUN)
-    Debug_SlaveTestCommsCycle();
-    // Debug_SlaveTestBalanceCycle();
+    // Debug_SlaveTestCommsCycle();
+    Debug_SlaveTestBalanceCycle();
     #endif // UNIT_TEST_SLAVE
     /* USER CODE END WHILE */
 

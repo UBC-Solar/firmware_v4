@@ -146,20 +146,11 @@ static RtdStatus RtdReadResistance(uint16_t* buffer)
 
 static void RtdResistanceToTemp(uint16_t buffer, uint32_t* temp)
 {
-    float resistance;
-    float temperature_c;
+    uint32_t resistance, temperature;
 
-    resistance = ((float)buffer / 32768.0f) * (float)REFERENCE_RESISTANCE;
-    temperature_c =
-        (resistance - (float)RESISTANCE_AT_0C) /
-        (COEFF_OF_RESISTANCE_PLAT * (float)RESISTANCE_AT_0C);
+    resistance = buffer / 32768.0f * (float)REFERENCE_RESISTANCE;
 
-    if (temperature_c <= 0.0f)
-    {
-        *temp = 0U;
-    }
-    else
-    {
-        *temp = (uint32_t)(temperature_c + 0.5f);
-    }
+    temperature =
+        (uint32_t)((resistance - RESISTANCE_AT_0C) / (COEFF_OF_RESISTANCE_PLAT * RESISTANCE_AT_0C));
+    *temp = temperature;
 }

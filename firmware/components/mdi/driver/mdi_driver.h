@@ -1,7 +1,11 @@
 /**
  * @file    mdi_driver.h
  * @brief   MDI hardware control definitions.
+ * 
+ * @author  Martin Wu & Tony Chen
+ * @date    May 22, 2026
  */
+
 #ifndef __MDI_DRIVER_H__
 #define __MDI_DRIVER_H__
 
@@ -35,9 +39,29 @@ typedef struct {
     bool eco_mode_value;
 } MdiMotorCommand;
 
+/**
+ * @brief Sets a DAC output value for the selected motor control channel.
+ * @param dac_addr Target DAC channel address (accel or regen).
+ * @param voltage_value Requested DAC code before clamping/scaling.
+ */
 void MdiSetDacVoltage(MdiDacAddr dac_addr, uint16_t voltage_value);
+
+/**
+ * @brief Applies a parsed motor command to DAC and GPIO outputs.
+ * @param command Pointer to the motor command to apply.
+ */
 void MdiSetMotorCommand(const MdiMotorCommand *command);
+
+/**
+ * @brief Parses raw CAN payload bytes into an MDI motor command struct.
+ * @param buffer Pointer to the incoming CAN payload buffer.
+ * @param command Output motor command populated from the payload.
+ */
 void MdiParseMotorCommand(const uint8_t *buffer, MdiMotorCommand *command);
+
+/**
+ * @brief Drives outputs to a safe stopped motor state.
+ */
 void MdiStopMotor(void);
 
 #endif /* __MDI_DRIVER_H__ */

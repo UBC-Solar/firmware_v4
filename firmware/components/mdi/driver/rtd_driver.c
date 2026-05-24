@@ -5,7 +5,7 @@
  *      Author: Luke Santosham & Martin Wu
  */
 
-#include "rtd.h"
+#include "rtd_driver.h"
 
 #define COEFF_OF_RESISTANCE_PLAT 0.00385
 #define RESISTANCE_AT_0C 1000
@@ -32,6 +32,8 @@ static bool RtdWriteRegister(uint8_t address_with_write_bit, uint8_t data);
 static bool RtdReadRegister(uint8_t address_read, uint8_t* data);
 static RtdStatus RtdReadResistance(uint16_t* buffer);
 static void RtdResistanceToTemp(uint16_t buffer, uint32_t* temp);
+
+extern SPI_HandleTypeDef hspi1;
 
 // PUBLIC FUNCTIONS
 RtdStatus RtdDriverGetTemp(uint32_t* temperature)
@@ -79,12 +81,12 @@ static bool RtdWriteRegister(uint8_t address_with_write_bit, uint8_t data)
     tx[0] = address_with_write_bit; /* Has write bit (0x80) already OR'd by caller */
     tx[1] = data;
 
-    HAL_GPIO_WritePin(SPI_CS_GPIO_Port, SPI_CS_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
     if (HAL_SPI_TransmitReceive(&hspi1, tx, rx, 2, TIMEOUT_DELAY) != HAL_OK)
     {
         hal_err = true;
     }
-    HAL_GPIO_WritePin(SPI_CS_GPIO_Port, SPI_CS_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
 
     return hal_err;
 }
@@ -106,7 +108,7 @@ static bool RtdReadRegister(uint8_t address_read, uint8_t* data)
     tx[0] = (address_read & 0x7F);
     tx[1] = 0x00;
 
-    HAL_GPIO_WritePin(SPI_CS_GPIO_Port, SPI_CS_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
     if (HAL_SPI_TransmitReceive(&hspi1, tx, rx, 2, TIMEOUT_DELAY) != HAL_OK)
     {
         hal_err = true;
@@ -115,10 +117,11 @@ static bool RtdReadRegister(uint8_t address_read, uint8_t* data)
     {
         *data = rx[1]; /* rx[0] is junk (MISO during address byte), rx[1] is register value */
     }
-    HAL_GPIO_WritePin(SPI_CS_GPIO_Port, SPI_CS_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
 
     return hal_err;
 }
+
 static RtdStatus RtdReadResistance(uint16_t* buffer)
 {
     uint8_t msb = 0, lsb = 0;
@@ -143,11 +146,20 @@ static RtdStatus RtdReadResistance(uint16_t* buffer)
 
 static void RtdResistanceToTemp(uint16_t buffer, uint32_t* temp)
 {
-    uint32_t resistance, temperature;
+    float resistance;
+    float temperature_c;
 
-    resistance = buffer / 32768.0f * (float)REFERENCE_RESISTANCE;
+    resistance = ((float)buffer / 32768.0f) * (float)REFERENCE_RESISTANCE;
+    temperature_c =
+        (resistance - (float)RESISTANCE_AT_0C) /
+        (COEFF_OF_RESISTANCE_PLAT * (float)RESISTANCE_AT_0C);
 
-    temperature =
-        (uint32_t)((resistance - RESISTANCE_AT_0C) / (COEFF_OF_RESISTANCE_PLAT * RESISTANCE_AT_0C));
-    *temp = temperature;
+    if (temperature_c <= 0.0f)
+    {
+        *temp = 0U;
+    }
+    else
+    {
+        *temp = (uint32_t)(temperature_c + 0.5f);
+    }
 }

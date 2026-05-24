@@ -1,3 +1,11 @@
+/**
+ * @file    mdi_driver.c
+ * @brief   MDI actuator output driver implementation.
+ *
+ * @author  Martin Wu & Tony Chen
+ * @date    May 22, 2026
+ */
+
 #include "mdi_driver.h"
 
 #include "main.h"

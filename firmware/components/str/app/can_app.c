@@ -1,6 +1,7 @@
 #include "can_app.h"
 
 #include "can_driver.h"
+#include "hex_app.h"
 #include "main.h"
 #include "stm32f1xx_hal_gpio.h"
 
@@ -31,4 +32,15 @@ void CanAppTransmitNextPage(void)
     data[0] |= (uint8_t)((next_page_state == GPIO_PIN_SET ? 1U : 0U) << STR_NEXT_PAGE_BIT);
 
     CanDriverSend(&str_lcd_page_header, data);
+}
+
+// CAN RX
+void SteeringCanRxHandler(uint32_t msg_id, uint8_t* data)
+{
+    switch (msg_id)
+    {
+    case FRAME0:
+        SteeringVelocityCanMsgHandler(data);
+        break;
+    }
 }

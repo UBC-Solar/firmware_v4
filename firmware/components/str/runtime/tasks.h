@@ -1,6 +1,9 @@
-#ifndef SUPERLOOP_H
-#define SUPERLOOP_H
+#ifndef __TASKS_H__
+#define __TASKS_H__
 
 void AppMain(void);
 
-#endif /* SUPERLOOP_H */
+void StartHexDisplayTask(void *argument);
+void StartSteeringOutputsTask(void *argument);
+
+#endif /* __TASKS_H__ */

@@ -1,6 +1,8 @@
 #ifndef __HEX__APP__H__
 #define __HEX__APP__H__
 
+#include "hex_driver.h"
+
 #include <stdint.h>
 
 void SteeringVelocityCanMsgHandler(uint8_t* data);

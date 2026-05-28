@@ -1,36 +1,29 @@
 #include "tasks.h"
 
-#include <stdint.h>
-
 #include "can_app.h"
 #include "hex_driver.h"
 #include "hex_app.h"
 #include "main.h"
 
-enum
-{
-    STR_UI_PERIOD_MS = 100U,
-};
+#define STEERING_TASK_DELAY 100
+#define HEX_TASK_DELAY 100 // adjust
 
-static void StrInit(void)
+void StartSteeringOutputsTask(void *argument)
 {
-    CanAppInit();
+    for(;;)
+    {
+        StrState();
+        osDelay(STEERING_TASK_DELAY);
+    }
 }
 
-void AppMain(void)
+void StartHexDisplayTask(void *argument)
 {
-    StrInit();
     HexDisplayInit();
 
-    uint8_t count = 0U;
-
-    for (;;)
+    for(;;)
     {
-        HexDisplayWriteDecimal(count);
-        HAL_Delay(STR_UI_PERIOD_MS);
-        count++;
-        if (count == 99U) {
-            count = 0U;
-        }
+        HexDisplayWriteDecimal((uint8_t)ReadCurrentVelocity());
+        osDelay(HEX_TASK_DELAY);
     }
 }

@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -26,6 +27,7 @@
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
+typedef StaticTask_t osStaticThreadDef_t;
 /* USER CODE BEGIN PTD */
 
 /* USER CODE END PTD */
@@ -47,8 +49,47 @@ I2C_HandleTypeDef hi2c1;
 
 UART_HandleTypeDef huart5;
 
+/* Definitions for defaultTask */
+osThreadId_t defaultTaskHandle;
+uint32_t defaultTaskBuffer[ 128 ];
+osStaticThreadDef_t defaultTaskControlBlock;
+const osThreadAttr_t defaultTask_attributes = {
+  .name = "defaultTask",
+  .cb_mem = &defaultTaskControlBlock,
+  .cb_size = sizeof(defaultTaskControlBlock),
+  .stack_mem = &defaultTaskBuffer[0],
+  .stack_size = sizeof(defaultTaskBuffer),
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* USER CODE BEGIN PV */
 
+/* Definitions for TasksHexDisplay */
+osThreadId_t TasksHexDisplayHandle;
+uint32_t TasksHexDisplayBuffer[256];
+osStaticThreadDef_t TasksHexDisplayControlBlock;
+
+const osThreadAttr_t TasksHexDisplay_attributes = {
+  .name = "TasksHexDisplay",
+  .cb_mem = &TasksHexDisplayControlBlock,
+  .cb_size = sizeof(TasksHexDisplayControlBlock),
+  .stack_mem = &TasksHexDisplayBuffer[0],
+  .stack_size = sizeof(TasksHexDisplayBuffer),
+  .priority = (osPriority_t) osPriorityNormal,
+};
+
+/* Definitions for TasksSteeringOutputs */
+osThreadId_t TasksSteeringOutputsHandle;
+uint32_t TasksSteeringOutputsBuffer[256];
+osStaticThreadDef_t TasksSteeringOutputsControlBlock;
+
+const osThreadAttr_t TasksSteeringOutputs_attributes = {
+  .name = "TasksSteeringOutputs",
+  .cb_mem = &TasksSteeringOutputsControlBlock,
+  .cb_size = sizeof(TasksSteeringOutputsControlBlock),
+  .stack_mem = &TasksSteeringOutputsBuffer[0],
+  .stack_size = sizeof(TasksSteeringOutputsBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -57,6 +98,8 @@ static void MX_GPIO_Init(void);
 static void MX_CAN_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_UART5_Init(void);
+void StartDefaultTask(void *argument);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -83,7 +126,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  CanAppInit();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -99,9 +142,50 @@ int main(void)
   MX_I2C1_Init();
   MX_UART5_Init();
   /* USER CODE BEGIN 2 */
-  AppMain();
 
   /* USER CODE END 2 */
+
+  /* Init scheduler */
+  osKernelInitialize();
+
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* creation of defaultTask */
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+
+  /* Initialization for TasksHexDisplay */
+  TasksHexDisplayHandle = osThreadNew(StartHexDisplayTask, NULL, &TasksHexDisplay_attributes);
+
+  /* Initialization for TasksSteeringOutputs */
+  TasksSteeringOutputsHandle = osThreadNew(StartSteeringOutputsTask, NULL, &TasksSteeringOutputs_attributes);
+  /* USER CODE END RTOS_THREADS */
+
+  /* USER CODE BEGIN RTOS_EVENTS */
+  /* add events, ... */
+  /* USER CODE END RTOS_EVENTS */
+
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -281,19 +365,35 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(DEBUG_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : RTS_IN_Pin LTS_IN_Pin NEXT_PAGE_Pin HORN_MCU_Pin
-                           CRUISE_DEC_Pin CRUISE_INC_Pin REGEN_Pin */
-  GPIO_InitStruct.Pin = RTS_IN_Pin|LTS_IN_Pin|NEXT_PAGE_Pin|HORN_MCU_Pin
-                          |CRUISE_DEC_Pin|CRUISE_INC_Pin|REGEN_Pin;
+  /*Configure GPIO pins : RTS_IN_Pin LTS_IN_Pin CRUISE_DEC_Pin CRUISE_INC_Pin */
+  GPIO_InitStruct.Pin = RTS_IN_Pin|LTS_IN_Pin|CRUISE_DEC_Pin|CRUISE_INC_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PTT_MCU_Pin CRUISE_CONTROL_Pin */
-  GPIO_InitStruct.Pin = PTT_MCU_Pin|CRUISE_CONTROL_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  /*Configure GPIO pins : NEXT_PAGE_Pin HORN_MCU_Pin */
+  GPIO_InitStruct.Pin = NEXT_PAGE_Pin|HORN_MCU_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PTT_MCU_Pin */
+  GPIO_InitStruct.Pin = PTT_MCU_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(PTT_MCU_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : CRUISE_CONTROL_Pin */
+  GPIO_InitStruct.Pin = CRUISE_CONTROL_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(CRUISE_CONTROL_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : REGEN_Pin */
+  GPIO_InitStruct.Pin = REGEN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(REGEN_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
@@ -303,6 +403,24 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_StartDefaultTask */
+/**
+  * @brief  Function implementing the defaultTask thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void *argument)
+{
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END 5 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.

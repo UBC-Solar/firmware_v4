@@ -1,46 +1,88 @@
 #include "can_app.h"
 
+#include "CAN_comms.h"
 #include "can_driver.h"
 #include "hex_app.h"
 #include "main.h"
+#include "gpio_app.h"
 #include "stm32f1xx_hal_gpio.h"
 
-enum
-{
-    STR_NEXT_PAGE_BIT = 2U,
-};
+#define STR_DISPLAY_MAX 99U
+#define STR_WHEEL_RADIUS_M 0.283f
+#define M_PI 3.14159
 
-static const CAN_TxHeaderTypeDef str_lcd_page_header = {
-    .StdId = STR_LCD_PAGE_CAN_ID,
-    .ExtId = 0x0000,
-    .IDE = CAN_ID_STD,
-    .RTR = CAN_RTR_DATA,
-    .DLC = 1,
-    .TransmitGlobalTime = DISABLE,
-};
-
-void CanAppInit(void)
+void CanTasksInit(void)
 {
-    CanDriverInit();
+    CAN_comms_config_t CAN_comms_config_str = {0};
+    CAN_FilterTypeDef can_filter = {0};
+    CanFilterInit(&can_filter);
+
+    CAN_comms_config_str.hcan = &hcan;
+    CAN_comms_config_str.CAN_Filter = can_filter;
+    CAN_comms_config_str.CAN_comms_Rx_callback = CANCommsRxCallback;
+
+    CAN_comms_init(&CAN_comms_config_str);
 }
 
-void CanAppTransmitNextPage(void)
+void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 {
-    uint8_t data[8] = {0};
-    GPIO_PinState next_page_state = !HAL_GPIO_ReadPin(NEXT_PAGE_GPIO_Port, NEXT_PAGE_Pin);
+	uint32_t CAN_ID = 0;
+	if (CAN_comms_Rx_msg == NULL)
+	{
+		return;
+	}
 
-    data[0] |= (uint8_t)((next_page_state == GPIO_PIN_SET ? 1U : 0U) << STR_NEXT_PAGE_BIT);
-
-    CanDriverSend(&str_lcd_page_header, data);
+	if(CAN_comms_Rx_msg->header.IDE == CAN_ID_EXT)
+	{
+		CAN_ID = CAN_comms_Rx_msg->header.ExtId; // Get CAN ID
+	}
+	else
+	{
+		CAN_ID = CAN_comms_Rx_msg->header.StdId; // Get CAN ID
+	}
+    void SteeringCanRxHandler(uint32_t msg_id, uint8_t* data);
 }
 
-// CAN RX
 void SteeringCanRxHandler(uint32_t msg_id, uint8_t* data)
 {
-    switch (msg_id)
+    if (msg_id == FRAME0)
     {
-    case FRAME0:
         SteeringVelocityCanMsgHandler(data);
-        break;
     }
+}
+
+void SteeringVelocityCanMsgHandler(uint8_t* data)
+{
+    if (data == NULL)
+    {
+        return;
+    }
+
+    uint32_t rpm = (data[4] >> 3) | ((data[5] & 0x7f) << 5);
+    float velocity_mps = (STR_WHEEL_RADIUS_M * 2.0f * (float)M_PI * (float)rpm) / 60.0f;
+    uint32_t velocity_kmh = (uint32_t)(velocity_mps * 3.6f);
+
+    GetVelocity(velocity_kmh);
+}
+
+void TurnSignalHornPtt(bool turn_left, bool turn_right, bool horn, bool ptt, bool regen, bool next_page, bool cruise)
+{
+    CAN_comms_Tx_msg_t msg;
+    msg.header = drive_control_header;
+    msg.header.DLC = (uint8_t)CAN_DATA_SIZE;
+
+    uint8_t data[CAN_DATA_SIZE] = {0};
+
+    data[0] =
+        (regen      ? (1U << 0) : 0U) |
+        (cruise     ? (1U << 1) : 0U) |
+        (next_page  ? (1U << 2) : 0U) |
+        (turn_left  ? (1U << 3) : 0U) |
+        (turn_right ? (1U << 4) : 0U) |
+        (horn       ? (1U << 5) : 0U) |
+        (ptt        ? (1U << 6) : 0U);
+
+    memcpy(msg.data, data, CAN_DATA_SIZE);
+
+    CAN_comms_Add_Tx_message(&msg);
 }

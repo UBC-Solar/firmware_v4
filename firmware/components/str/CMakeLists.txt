@@ -50,14 +50,23 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/can_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/hex_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/tasks.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/interrupts.c
+)
+
+# Add common sources (shared libraries/utilities)
+file(GLOB_RECURSE COMMON_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../../common/*/*.c")
+
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+    ${COMMON_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/CAN_comms/CAN_comms.c
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined include paths
     ${CMAKE_CURRENT_SOURCE_DIR}/app
     ${CMAKE_CURRENT_SOURCE_DIR}/driver
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/CAN_comms
 )
 
 # Add project symbols (macros)

@@ -33,5 +33,6 @@
   "editor.codeActionsOnSave": {
     "source.fixAll": "never",
     "source.organizeImports": "never"
-  }
+  },
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }

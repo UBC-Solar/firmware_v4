@@ -9,5 +9,6 @@
 void CanAppInit(void);
 void CanAppTransmitNextPage(void);
 void SteeringCanRxHandler(uint32_t msg_id, uint8_t* data);
+void TurnSignalHornPtt(bool turn_left, bool turn_right, bool horn, bool ptt, bool regen, bool next_page, bool cruise, uint16_t set_velocity_kmh);
 
 #endif /* __CAN_APP_H__ */

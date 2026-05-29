@@ -9,6 +9,7 @@
 DiagnosticTEL g_tel_diagnostic_flags = {0};
 volatile uint32_t g_time_since_bootup;
 
+/** STATIC FUNCTION PROTOTYPES */
 /**
  * @brief  Sends the time since bootup via CAN
  * @retval None
@@ -21,6 +22,7 @@ static void DiagnosticsTimeSinceBootup();
  */
 static void DiagnosticsSendTelFlags();
 
+/** FUNCTION DEFINITIONS */
 static void DiagnosticsTimeSinceBootup()
 {
     CAN_comms_Tx_msg_t time_since_bootup_can_tx = {
@@ -33,7 +35,7 @@ static void DiagnosticsTimeSinceBootup()
 
     CAN_comms_Add_Tx_message(&time_since_bootup_can_tx);
     osDelay(3);
-    TelAppTransmitMsg_tx(&time_since_bootup_can_tx);
+    TelAppTransmitInternalMsg(&time_since_bootup_can_tx);
 }
 
 static void DiagnosticsSendTelFlags()
@@ -45,7 +47,7 @@ static void DiagnosticsSendTelFlags()
 
     CAN_comms_Add_Tx_message(&tel_flags_can_tx);
     osDelay(3);
-    TelAppTransmitMsg_tx(&tel_flags_can_tx);
+    TelAppTransmitInternalMsg(&tel_flags_can_tx);
 }
 
 void DiagnosticsTransmit()

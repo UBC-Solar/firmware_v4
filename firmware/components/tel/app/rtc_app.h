@@ -16,5 +16,4 @@ void RtcAppSyncMemoratorToTel(uint8_t *data);
  */
 void RtcAppRxHandler(uint32_t msg_id, uint8_t* data);
 
-
 #endif /* __RTC__APP__H__ */

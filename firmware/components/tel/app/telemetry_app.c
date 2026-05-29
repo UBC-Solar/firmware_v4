@@ -1,3 +1,15 @@
+/**
+ * @file    telemetry_app.c
+ * @brief   Telemetry application logic for the UBC Solar telemetry system
+ *
+ * This file contains the implementation of the telemetry application logic for the UBC Solar telemetry system. 
+ * It handles the transmission and processing of telemetry messages.
+ *
+ * @author  Tony Chen and Gregory Bian
+ * @date    May 22 2026
+ */
+
+/* INCLUDES */
 #include "telemetry_app.h"
 #include "telemetry_driver.h"
 #include "can_app.h"
@@ -6,6 +18,7 @@
 #include "rtc_driver.h"
 #include <string.h>
 
+/* DEFINES */
 #define NO_PRIORITY                                 0
 #define NON_BLOCKING                                0
 #define ID_DELIMITER_CHAR                           '#'
@@ -14,6 +27,51 @@
 #define MASK_4_BITS                                 0xF
 #define NUM_FILTERS                                 ((int)(sizeof(filter_whitelist) / sizeof(filter_whitelist[0])))
 
+/* STATIC VARIABLES */
+static TEL_Msg_TypeDef tel_msg = {0};
+
+/* STATIC FUNCTION PROTOTYPES */
+/**
+ * @brief  Filters CAN IDs based on a whitelist
+ * @param  can_id: The CAN ID to filter
+ * @retval true if the ID is in the whitelist, false otherwise
+ */
+static bool filter(uint32_t can_id);
+/**
+ * @brief  Sets the fields in the telemetry message struct
+ * @param  header: Pointer to the CAN header struct
+ * @param  data: Pointer to the CAN data
+ * @param  tel_msg: Pointer to the telemetry message struct
+ * @retval None
+ */
+static void TelAppSetMsg(CAN_RxHeaderTypeDef* header, uint8_t* data, TEL_Msg_TypeDef* tel_msg);
+/**
+ * @brief  Sets the fields in the telemetry message struct for transmission
+ * @param  header: Pointer to the CAN header struct
+ * @param  data: Pointer to the CAN data
+ * @param  tel_msg: Pointer to the telemetry message struct
+ * @retval None
+ */
+static void TelAppSetMsg_tx(CAN_TxHeaderTypeDef* header, uint8_t* data, TEL_Msg_TypeDef* tel_msg);
+/**
+ * @brief  Gets the timestamp for the telemetry message
+ * @retval The timestamp as a 64-bit unsigned integer
+ */
+static uint64_t get_timestamp(void);
+/**
+ * @brief  Gets the CAN ID from the CAN header struct
+ * @param  can_msg_header_ptr: Pointer to the CAN header struct
+ * @retval The CAN ID as a 32-bit unsigned integer
+ */
+static uint32_t get_can_id(CAN_RxHeaderTypeDef* can_msg_header_ptr);
+/**
+ * @brief  Gets the data length from the CAN header struct
+ * @param  DLC: The data length code from the CAN header
+ * @retval The data length as an 8-bit unsigned integer
+ */
+static uint8_t get_data_length(uint32_t DLC);
+
+/* FUNCTION DEFINITIONS */
 static bool filter(uint32_t can_id)
 {
     #ifdef DEBUG
@@ -32,7 +90,6 @@ static bool filter(uint32_t can_id)
     #endif
 }
 
-TEL_Msg_TypeDef tel_msg = {0};
 void TelAppTransmitMsg(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 {
     // Not filtered yet??? TODO
@@ -42,20 +99,14 @@ void TelAppTransmitMsg(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 }
 
 // Change name of this to gps, imu send or something???
-void TelAppTransmitMsg_tx(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
+void TelAppTransmitInternalMsg(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
 {
     osSemaphoreAcquire(usart1_tx_semaphore, osWaitForever);   // Dont Tx until previous Tx is done
     TelAppSetMsg_tx(&(CAN_comms_Tx_msg->header), CAN_comms_Tx_msg->data, &tel_msg);
     UART_telemetry_transmit(&tel_msg);
 }
 
-/**
- * @brief Sets all the fields in the radio message struct
- * 
- * @param header The CAN header struct
- * @param data The CAN data
- */
-void TelAppSetMsg(CAN_RxHeaderTypeDef* header, uint8_t* data, TEL_Msg_TypeDef* tel_msg)
+static void TelAppSetMsg(CAN_RxHeaderTypeDef* header, uint8_t* data, TEL_Msg_TypeDef* tel_msg)
 {
     memset(tel_msg, 0, sizeof(TEL_Msg_TypeDef));           // 0 out all 8 bytes data
     
@@ -74,7 +125,7 @@ void TelAppSetMsg(CAN_RxHeaderTypeDef* header, uint8_t* data, TEL_Msg_TypeDef* t
  * @param header The CAN header struct
  * @param data The CAN data
  */
-void TelAppSetMsg_tx(CAN_TxHeaderTypeDef* header, uint8_t* data, TEL_Msg_TypeDef* tel_msg)
+static void TelAppSetMsg_tx(CAN_TxHeaderTypeDef* header, uint8_t* data, TEL_Msg_TypeDef* tel_msg)
 {
     memset(tel_msg, 0, sizeof(TEL_Msg_TypeDef));           // 0 out all 8 bytes data
     
@@ -100,27 +151,13 @@ uint64_t get_timestamp()
     return BITOPS_64BIT_REVERSE(timestamp_union.u);
 }
 
-/**
- * @brief Getter for CAN ID inside the CAN header struct
- * 
- * @param can_msg_header_ptr The CAN header struct
- * 
- * @return The CAN ID as a 32-bit unsigned integer to account for both standard and extended IDs
- */
-uint32_t get_can_id(CAN_RxHeaderTypeDef* can_msg_header_ptr)
+static uint32_t get_can_id(CAN_RxHeaderTypeDef* can_msg_header_ptr)
 {
     uint32_t can_id = (can_msg_header_ptr->IDE == CAN_ID_STD) ? can_msg_header_ptr->StdId : can_msg_header_ptr->ExtId;
     return BITOPS_32BIT_REVERSE(can_id);
 }
 
-/**
- * @brief Gets the data length in the radio message
- * 
- * @param DLC The data length code from the CAN header
- * 
- * @return The data length as an 8-bit unsigned integer but only the 4 least significant bits are used
- */
-uint8_t get_data_length(uint32_t DLC)
+static uint8_t get_data_length(uint32_t DLC)
 {
     return (uint8_t) (DLC & MASK_4_BITS);
 }

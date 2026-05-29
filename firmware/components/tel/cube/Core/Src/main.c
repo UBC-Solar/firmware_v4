@@ -162,6 +162,7 @@ int main(void)
         telemetry_diagnostic.successful_telemetry_tx++;
         // osSemaphoreRelease(usart1_tx_semaphore);
     }
+    HAL_Delay(100);
   }
   /* USER CODE END 3 */
 }

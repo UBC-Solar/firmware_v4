@@ -65,7 +65,7 @@ void SteeringVelocityCanMsgHandler(uint8_t* data)
     GetVelocity(velocity_kmh);
 }
 
-void TurnSignalHornPtt(bool turn_left, bool turn_right, bool horn, bool ptt, bool regen, bool next_page, bool cruise)
+void TurnSignalHornPtt(bool turn_left, bool turn_right, bool horn, bool ptt, bool regen, bool next_page, bool cruise, uint16_t set_velocity_kmh)
 {
     CAN_comms_Tx_msg_t msg;
     msg.header = drive_control_header;
@@ -81,6 +81,10 @@ void TurnSignalHornPtt(bool turn_left, bool turn_right, bool horn, bool ptt, boo
         (turn_right ? (1U << 4) : 0U) |
         (horn       ? (1U << 5) : 0U) |
         (ptt        ? (1U << 6) : 0U);
+
+    /* pack set velocity (km/h) into data[1..2] little-endian */
+    data[1] = (uint8_t)(set_velocity_kmh & 0xFF);
+    data[2] = (uint8_t)((set_velocity_kmh >> 8) & 0xFF);
 
     memcpy(msg.data, data, CAN_DATA_SIZE);
 

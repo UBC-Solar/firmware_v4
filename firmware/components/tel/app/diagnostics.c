@@ -5,11 +5,23 @@
 #include "can_driver.h"
 #include "can_app.h"
 
-
+// TODO: change to static variables
 DiagnosticTEL g_tel_diagnostic_flags = {0};
 volatile uint32_t g_time_since_bootup;
 
-void DiagnosticsTimeSinceBootup()
+/**
+ * @brief  Sends the time since bootup via CAN
+ * @retval None
+ */
+static void DiagnosticsTimeSinceBootup();
+
+/**
+ * @brief  Sends the TEL diagnostic flags via CAN
+ * @retval None
+ */
+static void DiagnosticsSendTelFlags();
+
+static void DiagnosticsTimeSinceBootup()
 {
     CAN_comms_Tx_msg_t time_since_bootup_can_tx = {
         .data[0] = (g_time_since_bootup & 0x000000FFU) >> 0,
@@ -24,7 +36,7 @@ void DiagnosticsTimeSinceBootup()
     TelAppTransmitMsg_tx(&time_since_bootup_can_tx);
 }
 
-void DiagnosticsSendTelFlags()
+static void DiagnosticsSendTelFlags()
 {
     CAN_comms_Tx_msg_t tel_flags_can_tx = {
         .data[0] = g_tel_diagnostic_flags.raw,
@@ -36,7 +48,7 @@ void DiagnosticsSendTelFlags()
     TelAppTransmitMsg_tx(&tel_flags_can_tx);
 }
 
-void DiagnosticsSend()
+void DiagnosticsTransmit()
 {
     DiagnosticsTimeSinceBootup();
     DiagnosticsSendTelFlags();

@@ -15,14 +15,20 @@ typedef union {
     volatile uint8_t raw;
 } DiagnosticTEL;
 
-
 //TODO: remove extern and change to getter functions when telemetry app is fully implemented
 extern volatile uint32_t g_time_since_bootup;
 extern DiagnosticTEL g_tel_diagnostic_flags;
 
-void DiagnosticsTimeSinceBootup();
-void DiagnosticsSendTelFlags();
-void DiagnosticsSend();
+/**
+ * @brief  Initializes the diagnostics module
+ * @retval None
+ */
 void DiagnosticsInit();
+/**
+ * @brief  Sends the time since bootup via CAN
+ * @retval None
+ */
+void DiagnosticsTransmit();
+
 
 #endif /* DIAGNOSTIC_H_ */

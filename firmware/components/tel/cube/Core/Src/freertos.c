@@ -62,12 +62,12 @@ const osThreadAttr_t TasksIMU_attributes = {
   .cb_size = sizeof(TasksIMUControlBlock),
   .stack_mem = &TasksIMUBuffer[0],
   .stack_size = sizeof(TasksIMUBuffer),
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityLow,
 };
 
 /* Definitions for TasksDiagnostics */
 osThreadId_t TasksDiagnosticsHandle;
-uint32_t TasksDiagnosticsBuffer[256];
+uint32_t TasksDiagnosticsBuffer[128];
 osStaticThreadDef_t TasksDiagnosticsControlBlock;
 
 const osThreadAttr_t TasksDiagnostics_attributes = {
@@ -76,12 +76,12 @@ const osThreadAttr_t TasksDiagnostics_attributes = {
   .cb_size = sizeof(TasksDiagnosticsControlBlock),
   .stack_mem = &TasksDiagnosticsBuffer[0],
   .stack_size = sizeof(TasksDiagnosticsBuffer),
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityHigh,
 };
 
 /* Definitions for TasksTimeSinceStartup */
 osThreadId_t TasksTimeSinceStartupHandle;
-uint32_t TasksTimeSinceStartupBuffer[256];
+uint32_t TasksTimeSinceStartupBuffer[128];
 osStaticThreadDef_t TasksTimeSinceStartupControlBlock;
 
 const osThreadAttr_t TasksTimeSinceStartup_attributes = {
@@ -90,7 +90,7 @@ const osThreadAttr_t TasksTimeSinceStartup_attributes = {
   .cb_size = sizeof(TasksTimeSinceStartupControlBlock),
   .stack_mem = &TasksTimeSinceStartupBuffer[0],
   .stack_size = sizeof(TasksTimeSinceStartupBuffer),
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityLow,
 };
 
 /* USER CODE END Variables */

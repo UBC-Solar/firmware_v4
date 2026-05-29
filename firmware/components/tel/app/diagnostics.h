@@ -16,11 +16,6 @@ typedef union {
     volatile uint8_t raw;
 } DiagnosticTEL;
 
-/* EXTERNAL VARIABLES */
-//TODO: remove extern and change to getter functions when telemetry app is fully implemented
-extern volatile uint32_t g_time_since_bootup;
-extern DiagnosticTEL g_tel_diagnostic_flags;
-
 /* FUNCTION PROTOTYPES */
 /**
  * @brief  Initializes the diagnostics module
@@ -29,10 +24,51 @@ extern DiagnosticTEL g_tel_diagnostic_flags;
 void DiagnosticsInit();
 
 /**
+ * @brief  Sends the TEL diagnostic flags via CAN
+ * @retval None
+ */
+void DiagnosticsSendTelFlags();
+
+/**
  * @brief  Sends the time since bootup via CAN
  * @retval None
  */
-void DiagnosticsTransmit();
+void DiagnosticsTimeSinceBootup();
+
+/**
+ * @brief  Sets the TEL crash IWDG flag
+ * @param  value: The value to set the flag to
+ * @retval None
+ */
+void DiagnosticsSetTelCrashIwdgFlag(bool value);
+
+/**
+ * @brief  Sets the IMU read fail flag
+ * @param  value: The value to set the flag to
+ * @retval None
+ */
+void DiagnosticsSetImuReadFailFlag(bool value);
+
+/**
+ * @brief  Sets the IMU write fail flag
+ * @param  value: The value to set the flag to
+ * @retval None
+ */
+void DiagnosticsSetImuWriteFailFlag(bool value);
+
+/**
+ * @brief  Sets the GPS read fail flag
+ * @param  value: The value to set the flag to
+ * @retval None
+ */
+void DiagnosticsSetGpsReadFailFlag(bool value);
+
+/**
+ * @brief  Sets the GPS write fail flag
+ * @param  value: The value to set the flag to
+ * @retval None
+ */
+void DiagnosticsSetGpsWriteFailFlag(bool value);
 
 
 #endif /* DIAGNOSTIC_H_ */

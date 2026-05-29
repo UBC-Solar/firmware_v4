@@ -1,5 +1,6 @@
 #include "tasks.h"
 #include "CAN_comms.h"
+#include "cmsis_os2.h"
 #include "usart.h"
 #include "rtc.h"
 #include "telemetry_app.h"
@@ -13,6 +14,7 @@ void TasksIMU(void* argument)
     for (;;)
     {
         // TODO: Implement IMU data acquisition and processing
+        osDelay(osWaitForever);
     }
 }
 
@@ -23,8 +25,8 @@ void TasksDiagnostics(void* argument)
 
     for (;;)
     {
-        DiagnosticsTransmit();
-        osDelay(TIME_SINCE_STARTUP_TASK_DELAY);
+        DiagnosticsSendTelFlags();
+        osDelay(DIAGNOSTICS_TASK_DELAY);
     }
 }
 
@@ -35,6 +37,7 @@ void TimeSinceStartup(void* argument)
 
     for (;;)
     {
+        DiagnosticsTimeSinceBootup();
         osDelay(TIME_SINCE_STARTUP_TASK_DELAY); // Delay for specified time
     }
 }

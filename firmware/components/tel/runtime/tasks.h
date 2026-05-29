@@ -12,6 +12,8 @@
 
 /* DEFINES */
 #define TIME_SINCE_STARTUP_TASK_DELAY 1000
+#define IMU_TASK_DELAY 100
+#define DIAGNOSTICS_TASK_DELAY 100
 
 /**
  * @brief   IMU task function

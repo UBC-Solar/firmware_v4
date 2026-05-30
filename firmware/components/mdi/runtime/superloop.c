@@ -1,9 +1,13 @@
+/**
+ * @file    superloop.c
+ * @brief   MDI superloop implementation.
+ */
 #include "superloop.h"
 
 #include "can_app.h"
 #include "diagnostic.h"
 #include "iwdg_app.h"
-#include "mdi_driver.h"
+#include "mdi_app.h"
 #include "main.h"
 
 void AppMain(void)
@@ -14,7 +18,7 @@ void AppMain(void)
     IwdgAppResetHandle();
     DiagnosticSendFlags();
 
-    MdiStopMotor();
+    MdiAppStopMotor();
 
     uint32_t last_diagnostic_tick = HAL_GetTick();
 
@@ -33,13 +37,13 @@ void AppMain(void)
 
         if ((uint32_t)(now - CanAppGetLastCommandTick()) >= MDI_MAX_TIMEOUT_VALUE)
         {
-            MdiStopMotor();
+            MdiAppStopMotor();
         }
 
         MdiMotorCommand command;
         if (CanAppTryGetMotorCommand(&command))
         {
-            MdiSetMotorCommand(&command);
+            MdiAppSetMotorCommand(&command);
         }
     }
 }

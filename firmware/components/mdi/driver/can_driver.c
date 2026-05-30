@@ -1,3 +1,7 @@
+/**
+ * @file    can_driver.c
+ * @brief   CAN driver implementation for the MDI board.
+ */
 #include "can_driver.h"
 
 static void CanFilterInit(CAN_FilterTypeDef *filter);

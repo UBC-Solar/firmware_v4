@@ -1,3 +1,7 @@
+/**
+ * @file    iwdg_driver.c
+ * @brief   Independent watchdog driver implementation for MDI.
+ */
 #include "iwdg_driver.h"
 
 #include "main.h"

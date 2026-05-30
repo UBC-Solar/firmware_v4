@@ -34,9 +34,9 @@ typedef struct {
     bool eco_mode_value;
 } MdiMotorCommand;
 
-void MdiSetDacVoltage(MdiDacAddr dac_addr, uint16_t voltage_value);
-void MdiSetMotorCommand(const MdiMotorCommand *command);
-void MdiParseMotorCommand(const uint8_t *buffer, MdiMotorCommand *command);
-void MdiStopMotor(void);
+void MdiDriverSetDacVoltage(MdiDacAddr dac_addr, uint16_t voltage_value);
+void MdiDriverSetMotorCommand(const MdiMotorCommand *command);
+void MdiDriverParseMotorCommand(const uint8_t *buffer, MdiMotorCommand *command);
+void MdiDriverStopMotor(void);
 
 #endif /* __MDI_DRIVER_H__ */

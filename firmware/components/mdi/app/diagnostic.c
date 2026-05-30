@@ -1,3 +1,7 @@
+/**
+ * @file    diagnostic.c
+ * @brief   MDI diagnostic flag management and CAN reporting.
+ */
 #include "diagnostic.h"
 
 #include "can_driver.h"

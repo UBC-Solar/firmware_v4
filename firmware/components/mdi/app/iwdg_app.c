@@ -1,3 +1,7 @@
+/**
+ * @file    iwdg_app.c
+ * @brief   MDI independent watchdog application logic.
+ */
 #include "iwdg_app.h"
 
 #include "diagnostic.h"

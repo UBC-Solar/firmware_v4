@@ -8,7 +8,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "mdi_driver.h"
+#include "mdi_app.h"
 
 void CanAppInit(void);
 bool CanAppTryGetMotorCommand(MdiMotorCommand *command);

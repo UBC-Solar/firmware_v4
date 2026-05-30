@@ -1,3 +1,7 @@
+/**
+ * @file    can_app.c
+ * @brief   MDI CAN application logic.
+ */
 #include "can_app.h"
 #include "can_driver.h"
 #include "main.h"
@@ -45,12 +49,7 @@ static void CanAppRxCallback(const CAN_RxHeaderTypeDef *header, const uint8_t *d
         return;
     }
 
-    if (header->IDE != CAN_ID_STD || header->StdId != DRD_MOTOR_COMMAND_CAN_ID)
-    {
-        return;
-    }
-
-    MdiParseMotorCommand(data, &s_motor_command);
+    MdiAppParseMotorCommand(data, &s_motor_command);
     s_motor_command_received = true;
     s_last_command_tick = HAL_GetTick();
 }

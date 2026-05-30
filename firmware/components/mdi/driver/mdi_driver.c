@@ -1,10 +1,14 @@
+/**
+ * @file    mdi_driver.c
+ * @brief   MDI hardware driver implementation.
+ */
 #include "mdi_driver.h"
 
 #include "main.h"
 
 extern I2C_HandleTypeDef hi2c2;
 
-void MdiSetDacVoltage(MdiDacAddr dac_addr, uint16_t voltage_value)
+void MdiDriverSetDacVoltage(MdiDacAddr dac_addr, uint16_t voltage_value)
 {
     uint8_t i2c_buffer[2] = {0};
 
@@ -20,15 +24,15 @@ void MdiSetDacVoltage(MdiDacAddr dac_addr, uint16_t voltage_value)
     HAL_I2C_Master_Transmit(&hi2c2, (uint16_t)dac_addr, i2c_buffer, sizeof(i2c_buffer), HAL_MAX_DELAY);
 }
 
-void MdiSetMotorCommand(const MdiMotorCommand *command)
+void MdiDriverSetMotorCommand(const MdiMotorCommand *command)
 {
     if (command == NULL)
     {
         return;
     }
 
-    MdiSetDacVoltage(MDI_DAC_ACCEL, command->accel_DAC_value);
-    MdiSetDacVoltage(MDI_DAC_REGEN, command->regen_DAC_value);
+    MdiDriverSetDacVoltage(MDI_DAC_ACCEL, 900);
+    MdiDriverSetDacVoltage(MDI_DAC_REGEN, command->regen_DAC_value);
 
     HAL_GPIO_WritePin(DIR_GPIO_Port, DIR_Pin,
                       command->direction_value ? GPIO_PIN_SET : GPIO_PIN_RESET);
@@ -36,7 +40,7 @@ void MdiSetMotorCommand(const MdiMotorCommand *command)
                       command->eco_mode_value ? GPIO_PIN_SET : GPIO_PIN_RESET);
 }
 
-void MdiParseMotorCommand(const uint8_t *buffer, MdiMotorCommand *command)
+void MdiDriverParseMotorCommand(const uint8_t *buffer, MdiMotorCommand *command)
 {
     if (buffer == NULL || command == NULL)
     {
@@ -49,12 +53,12 @@ void MdiParseMotorCommand(const uint8_t *buffer, MdiMotorCommand *command)
     command->eco_mode_value = ((buffer[4] & (1U << 1)) != 0U);
 }
 
-void MdiStopMotor(void)
+void MdiDriverStopMotor(void)
 {
     MdiMotorCommand command = {0};
 
     command.direction_value = MDI_DIRECTION_FORWARD;
     command.eco_mode_value = MDI_ECO_MODE;
 
-    MdiSetMotorCommand(&command);
+    MdiDriverSetMotorCommand(&command);
 }

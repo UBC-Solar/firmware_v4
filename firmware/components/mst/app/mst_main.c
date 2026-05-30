@@ -77,12 +77,12 @@ void CollectModuleData() {
     uint32_t voltage_start_ms = HAL_GetTick();
     
     if (pack_state.balancing_active) {
-        PauseAllBalancing(pack_modules);
+        PauseAllBalancing();
     }
     RequestVoltageMeasurement();
     RetrieveVoltageMeasurement(slaves, pack_modules);
     if (pack_state.balancing_active) {
-        ResumeAllBalancing(pack_modules);
+        ResumeAllBalancing();
     }
 
     uint32_t temp_start_ms = HAL_GetTick();
@@ -130,13 +130,13 @@ void DriveOutputs() {
 
 
 void SendCanMessages() {
-    CAN_SendMessage0x622();
-    CAN_SendMessage0x623();
-    CAN_SendMessage0x625();
-    CAN_SendMessage0x626();
-    CAN_SendMessage0x627();
-    CAN_SendMessage0x628();
-    CAN_SendMessage0x629();
+    // CAN_SendMessage0x622();
+    // CAN_SendMessage0x623();
+    // CAN_SendMessage0x625();
+    // CAN_SendMessage0x626();
+    // CAN_SendMessage0x627();
+    // CAN_SendMessage0x628();
+    // CAN_SendMessage0x629();
     LOG_DEBUG("All CAN messages queued for transmission.\r\n");
 }
 
@@ -263,14 +263,71 @@ void Debug_SlaveTestCommsCycle() {
     HAL_Delay(500);
 }
 
-bool balance_enabled = false;
+bool balance_enabled = true;
 void Debug_SlaveTestBalanceCycle() {
     Slave_WakeUp();
+
+    ResumeAllBalancing();
     Debug_DoBalancing(slaves, balance_enabled);
+
+    if (balance_enabled) {
+        // Refer to the ADBMS1818 datasheet pages 65, 68, 69 for 
+        // format and content of configuration register groups A and B
+        uint8_t config_val_a[SLAVE_REG_SIZE_BYTES] =
+        {
+            0xF8 | (REFON << 2) | ADCOPT, // GPIO 1-5 pull-downs off, REFON, ADCOPT
+            (VUV & 0xFF), // VUV[7:0]
+            ((uint8_t) (VOV << 4)) | (((uint8_t) (VUV >> 8)) & 0x0F), // VOV[4:0] | VUV[11:8]
+            (VOV >> 4), // VOV[11:4]
+            0xFF, // Discharge off for cells 1 through 8
+            0x0F  // Discharge off for cells 9 through 12, Discharge timer disabled
+        };
+        uint8_t config_val_b[SLAVE_REG_SIZE_BYTES] =
+        {
+            0xFF, // Discharge off for cells 13 through 16, GPIO 6-9 = 1
+            0x00, // FDRF = 0, PS = 0, Discharge off for cells 17 and 18
+            0x00,
+            0x00,
+            0x00,
+            0x00
+        };
+
+        Slave_WriteRegisterGroup(CMD_WRCFGA, config_val_a); // Write to Config. Reg. Group A
+        Slave_WriteRegisterGroup(CMD_WRCFGB, config_val_b); // Write to Config. Reg. Group B
+    }
+    else {
+        // Refer to the ADBMS1818 datasheet pages 65, 68, 69 for 
+        // format and content of configuration register groups A and B
+        uint8_t config_val_a[SLAVE_REG_SIZE_BYTES] =
+        {
+            0xF8 | (REFON << 2) | ADCOPT, // GPIO 1-5 pull-downs off, REFON, ADCOPT
+            (VUV & 0xFF), // VUV[7:0]
+            ((uint8_t) (VOV << 4)) | (((uint8_t) (VUV >> 8)) & 0x0F), // VOV[4:0] | VUV[11:8]
+            (VOV >> 4), // VOV[11:4]
+            0x00, // Discharge off for cells 1 through 8
+            0x00  // Discharge off for cells 9 through 12, Discharge timer disabled
+        };
+        uint8_t config_val_b[SLAVE_REG_SIZE_BYTES] =
+        {
+            0x0F, // Discharge off for cells 13 through 16, GPIO 6-9 = 1
+            0x00, // FDRF = 0, PS = 0, Discharge off for cells 17 and 18
+            0x00,
+            0x00,
+            0x00,
+            0x00
+        };
+        
+        Slave_WriteRegisterGroup(CMD_WRCFGA, config_val_a); // Write to Config. Reg. Group A
+        Slave_WriteRegisterGroup(CMD_WRCFGB, config_val_b); // Write to Config. Reg. Group B
+    }
+    LOG_INFO("Turned all balancing pins %s\r\n", balance_enabled ? "ON" : "OFF");
     balance_enabled = !balance_enabled;
 
-    LOG_INFO("Turned all balancing pins %s\r\n", balance_enabled ? "ON" : "OFF");
+
+    HAL_Delay(500);
+}
+
+void Debug_SlaveTestMuxCycle() {
     
-    HAL_Delay(4000);
 }
 #endif

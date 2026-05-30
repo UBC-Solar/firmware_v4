@@ -16,28 +16,33 @@ const Slave_Command_t cell_voltage_commands_lut[SLAVE_NUM_VOLT_REG] = {
     CMD_RDCVF
 };
 
-// Thermistor voltage-to-temperature look-up table
-// See https://www.vishay.com/docs/29050/ntclg100.pdf
+/**
+ * Thermistor voltage-to-temperature look-up table.
+ * See https://www.vishay.com/docs/29050/ntclg100.pdf.
+ * First value is temperature in milli-Celsius,
+ * second value is resistance (computed at initialization time),
+ * third value is thermistor resistance.
+ */
 const thermistor_mapping_t thermistor_temp_lut[THERMISTOR_LUT_TABLE_SIZE] = {
-    {-30, 175200},
-    {0, 32554},
-    {10, 19872},
-    {20, 12488},
+    { -30000, 0, 175200 },
+    {      0, 0, 32554  },
+    {  10000, 0, 19872  },
+    {  20000, 0, 12488  },
     // values above are out of expected range, and thus more sparse
-    {25, 10000},
-    {30, 8059},
-    {35, 6535},
-    {40, 5330},
-    {45, 4372},
-    {50, 3605},
-    {55, 2989},
-    {60, 2490},
-    {65, 2084},
+    {  25000, 0, 10000  },
+    {  30000, 0, 8059   },
+    {  35000, 0, 6535   },
+    {  40000, 0, 5330   },
+    {  45000, 0, 4372   },
+    {  50000, 0, 3605   },
+    {  55000, 0, 2989   },
+    {  60000, 0, 2490   },
+    {  65000, 0, 2084   },
     // values below are out of expected range, and thus more sparse
-    {80, 1256},
-    {100, 677.3},
-    {150, 182.6},
-    {200, 63.67}
+    {  80000, 0, 1256   },
+    { 100000, 0, 677.3  },
+    { 150000, 0, 182.6  },
+    { 200000, 0, 63.67  }
 };
 
 void Module_Init(
@@ -71,9 +76,9 @@ void Module_Init(
             // Auxiliary Register Group A (GPIO1, GPIO2, GPIO3)
             { {-1, -1, -1, -1}, {-1, -1, -1, -1}, { 0,  1,  2,  3} },
             // Auxiliary Register Group B (GPIO4, GPIO5, GPIO6)
-            { { 4,  5,  6,  7}, { 8,  9, 10, 11}, {12, 13, 14, 15} },
+            { { 4,  5,  6,  7}, { 8,  9, 10, 11}, {-1, -1, -1, -1} },
             // Auxiliary Register Group C (...)
-            { {-1, -1, -1, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1} },
+            { {12, 13, 14, 15}, {-1, -1, -1, -1}, {-1, -1, -1, -1} },
             // Auxiliary Register Group D
             { {-1, -1, -1, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1} }
         },
@@ -128,6 +133,10 @@ void Module_Init(
     };
     #endif // SLAVE_NUM_DEVICES > 1
 
+    // for (int i = 0; i < THERMISTOR_LUT_TABLE_SIZE; i++) {
+    //     thermistor_temp_lut[i]
+    // }
+
     Balancing_Init(slaves);
 
     Slave_Init(SPI_handle, config_val_a, config_val_b);
@@ -149,6 +158,8 @@ void GetVoltageForRegister_(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_mod
     
     uint8_t rx_data[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
     memset(rx_data, 0, sizeof(rx_data));
+    // TODO: remove test-only wakeup
+    Slave_WakeUp();
     Slave_Status_t status = Slave_ReadRegisterGroup(current_cmd, rx_data);
     if (status.error != Slave_OK) {
         LOG_ERROR("SPI comm error getting voltage. Err: %d, Dev: %d", status.error, status.device_num);
@@ -188,24 +199,22 @@ void RequestTemperatureMeasurement(void) {
 
 /**
  * @brief Converts a 16-bit ADC value to Temperature in milli-Celsius using pure integer math
- * @param adc_meas The raw 16-bit ADC reading (0 - 65535)
+ * @param thermistor_uV The raw 16-bit ADC reading (0 - 65535)
  * @return Temperature in milli-Celsius (e.g., 25500 = 25.5 C)
  */
-int32_t ThermistorVoltToTemp_(uint16_t adc_meas) {
-    // 1. Out-of-bounds checks
-    // If ADC is higher than our lowest temperature point (colder than table)
-    if (adc_meas >= thermistor_temp_lut[0].voltage_uV) {
+int32_t ThermistorVoltToTemp_(uint16_t thermistor_uV) {
+    // 1. Clamp to maximum or minimum values
+    if (thermistor_uV >= thermistor_temp_lut[0].voltage_uV) {
         return thermistor_temp_lut[0].temperature_mC;
     }
-    // If ADC is lower than our highest temperature point (hotter than table)
-    if (adc_meas <= thermistor_temp_lut[THERMISTOR_LUT_TABLE_SIZE - 1].voltage_uV) {
+    if (thermistor_uV <= thermistor_temp_lut[THERMISTOR_LUT_TABLE_SIZE - 1].voltage_uV) {
         return thermistor_temp_lut[THERMISTOR_LUT_TABLE_SIZE - 1].temperature_mC;
     }
 
-    // 2. Linear Interpolation Search
+    // 2. Iterate temperature look up table to find a match for the measured thermistor voltage
     for (uint16_t i = 0; i < THERMISTOR_LUT_TABLE_SIZE - 1; i++) {
         // Find the bounding ADC values (remember: voltage_uV is descending)
-        if (adc_meas <= thermistor_temp_lut[i].voltage_uV && adc_meas >= thermistor_temp_lut[i + 1].voltage_uV) {
+        if (thermistor_uV <= thermistor_temp_lut[i].voltage_uV && thermistor_uV >= thermistor_temp_lut[i + 1].voltage_uV) {
             
             int32_t adc1 = thermistor_temp_lut[i].voltage_uV;     // Higher ADC (Colder)
             int32_t t1   = thermistor_temp_lut[i].temperature_mC;       // Lower Temp
@@ -213,12 +222,12 @@ int32_t ThermistorVoltToTemp_(uint16_t adc_meas) {
             int32_t adc2 = thermistor_temp_lut[i + 1].voltage_uV; // Lower ADC (Hotter)
             int32_t t2   = thermistor_temp_lut[i + 1].temperature_mC;   // Higher Temp
 
-            // 3. Integer Interpolation Math
-            // Formula: T = T1 + ( (T2 - T1) * (ADC1 - ADC_meas) ) / (ADC1 - ADC2)
+            // 3. Linear interpolation between the two values
+            // Formula: T = T1 + ( (T2 - T1) * (ADC1 - thermistor_uV) ) / (ADC1 - ADC2)
             // Note: We arrange the subtraction to keep values positive before division
             int32_t temp_diff = t2 - t1;
             int32_t adc_diff = adc1 - adc2;
-            int32_t meas_diff = adc1 - adc_meas;
+            int32_t meas_diff = adc1 - thermistor_uV;
 
             // Multiply before dividing to preserve precision. 
             // Max temp_diff (e.g., 10000 mC) * Max meas_diff (e.g., 10000 ADC) = 100,000,000.
@@ -249,6 +258,8 @@ void GetTemperatureForRegister_(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack
 
     uint8_t rx_data[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
     memset(rx_data, 0, sizeof(rx_data));
+    // TODO: remove test-only wakeup
+    Slave_WakeUp();
     Slave_Status_t status = Slave_ReadRegisterGroup(current_cmd, rx_data);
     if (status.error != Slave_OK) {
         LOG_ERROR("SPI comm error getting temp. Err: %d, Dev: %d", status.error, status.device_num);
@@ -293,4 +304,8 @@ void ComputePackStatistics(module_t pack_modules[NUM_MODULES], pack_state_t *pac
     pack_state->total_voltage_mV = total_voltage_mV;
     pack_state->avg_voltage_mV = total_voltage_mV / NUM_MODULES;
     pack_state->avg_temp_mC = total_temp_mC / NUM_MODULES;
+}
+
+void SetTempMuxState(slave_t slaves[SLAVE_NUM_DEVICES], unsigned new_state) {
+    
 }

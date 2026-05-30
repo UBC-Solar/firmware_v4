@@ -91,5 +91,6 @@ typedef struct
 typedef struct
 {
     int32_t temperature_mC;
+    uint32_t resistance_Ohm;
     uint32_t voltage_uV;
 } thermistor_mapping_t;

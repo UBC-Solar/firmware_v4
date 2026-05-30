@@ -22,7 +22,7 @@ void SetBalancingForModule_(int slave_num, int bal_reg_num, int module_offset, b
     int reg_offset = module_offset / 2;
     int reg_bitshift_bits = (module_offset % 2) * 4;
 
-    uint8_t mask = (uint8_t)(0x0F << reg_bitshift_bits);
+    uint8_t mask = (uint8_t)(0x08 << reg_bitshift_bits);
 
     if (if_balance) {
         s_ctrl_regs[bal_reg_num][slave_num][reg_offset / 2] |= mask;
@@ -42,15 +42,15 @@ void DoBalancing(pack_state_t *pack_state, module_t pack_modules[NUM_MODULES], s
         for (int j = 0; j < SLAVE_NUM_BAL_REG; j++) {
             for (int k = 0; k < SLAVE_NUM_MODULE_PER_BAL_REG; k++) {
 
-                int module_num = slaves[i].bal_mappings[j][k];
-                if (module_num < 0) {
+                int module_idx = slaves[i].bal_mappings[j][k];
+                if (module_idx < 0 || module_idx >= NUM_MODULES) {
                     continue;
                 }
     
                 // Absolute difference in mV of this module's voltage vs the average pack voltage
-                uint32_t voltage_diff_mv = (pack_modules[module_num].voltage_mv > pack_state->avg_voltage_mV)
-                    ? (pack_modules[module_num].voltage_mv - pack_state->avg_voltage_mV)
-                    : (pack_state->avg_voltage_mV - pack_modules[module_num].voltage_mv);
+                uint32_t voltage_diff_mv = (pack_modules[module_idx].voltage_mv > pack_state->avg_voltage_mV)
+                    ? (pack_modules[module_idx].voltage_mv - pack_state->avg_voltage_mV)
+                    : (pack_state->avg_voltage_mV - pack_modules[module_idx].voltage_mv);
                 
                 bool if_balance = voltage_diff_mv >= MIN_BALANCE_VOLT_DIFF_MV;
         
@@ -63,12 +63,12 @@ void DoBalancing(pack_state_t *pack_state, module_t pack_modules[NUM_MODULES], s
     Slave_WriteRegisterGroup(CMD_WRPSB, s_ctrl_regs[1]);
 }
 
-void PauseAllBalancing(module_t *pack_modules) {
+void PauseAllBalancing() {
     Slave_WakeUp();
     Slave_SendCmd(CMD_MUTE);
 }
 
-void ResumeAllBalancing(module_t *pack_modules) {
+void ResumeAllBalancing() {
     Slave_WakeUp();
     Slave_SendCmd(CMD_UNMUTE);
 }
@@ -80,12 +80,12 @@ void Debug_DoBalancing(slave_t slaves[SLAVE_NUM_DEVICES], bool enable) {
         for (int j = 0; j < SLAVE_NUM_BAL_REG; j++) {
             for (int k = 0; k < SLAVE_NUM_MODULE_PER_BAL_REG; k++) {
 
-                int module_num = slaves[i].bal_mappings[j][k];
-                if (module_num < 0) {
+                int module_idx = slaves[i].bal_mappings[j][k];
+                if (module_idx < 0 || module_idx >= NUM_MODULES) {
                     continue;
                 }
     
-        
+
                 SetBalancingForModule_(i, j, k, enable);
             }
         }

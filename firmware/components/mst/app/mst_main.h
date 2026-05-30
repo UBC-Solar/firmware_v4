@@ -46,5 +46,6 @@ void Debug_IsoSpiTestCycle();
 #if (UNIT_TEST_SLAVE == RUN)
 void Debug_SlaveTestCommsCycle();
 void Debug_SlaveTestBalanceCycle();
+void Debug_SlaveTestMuxCycle();
 #endif // UNIT_TEST_ISOSPI
 

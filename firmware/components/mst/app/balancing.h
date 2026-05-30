@@ -6,8 +6,8 @@
 
 void Balancing_Init(slave_t slaves[SLAVE_NUM_DEVICES]);
 void DoBalancing(pack_state_t *pack_state, module_t pack_modules[NUM_MODULES], slave_t slaves[SLAVE_NUM_DEVICES]);
-void PauseAllBalancing(module_t *pack_modules);
-void ResumeAllBalancing(module_t *pack_modules);
+void PauseAllBalancing();
+void ResumeAllBalancing();
 #if (UNIT_TEST_SLAVE == RUN)
 void Debug_DoBalancing(slave_t slaves[SLAVE_NUM_DEVICES], bool enable);
 #endif // UNIT_TEST_ISOSPI

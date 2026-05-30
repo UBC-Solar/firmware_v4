@@ -21,7 +21,6 @@
 #include "can.h"
 #include "crc.h"
 #include "dma.h"
-#include "gpio_driver.h"
 #include "spi.h"
 #include "usart.h"
 #include "gpio.h"
@@ -30,6 +29,7 @@
 /* USER CODE BEGIN Includes */
 #include "mst_defs.h"
 #include "mst_main.h"
+#include "gpio_driver.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -137,7 +137,7 @@ int main(void)
     #endif // UNIT_TEST_ISOSPI
 
     #if (UNIT_TEST_SLAVE == RUN)
-    // Debug_SlaveTestCommsCycle();
+    Debug_SlaveTestCommsCycle();
     Debug_SlaveTestBalanceCycle();
     #endif // UNIT_TEST_SLAVE
     /* USER CODE END WHILE */

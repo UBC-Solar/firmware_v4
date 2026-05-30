@@ -19,6 +19,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
+#include "cmsis_os2.h"
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
@@ -61,9 +62,36 @@ const osThreadAttr_t TasksIMU_attributes = {
   .cb_size = sizeof(TasksIMUControlBlock),
   .stack_mem = &TasksIMUBuffer[0],
   .stack_size = sizeof(TasksIMUBuffer),
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityLow,
 };
 
+/* Definitions for TasksDiagnostics */
+osThreadId_t TasksDiagnosticsHandle;
+uint32_t TasksDiagnosticsBuffer[128];
+osStaticThreadDef_t TasksDiagnosticsControlBlock;
+
+const osThreadAttr_t TasksDiagnostics_attributes = {
+  .name = "TasksDiagnostics",
+  .cb_mem = &TasksDiagnosticsControlBlock,
+  .cb_size = sizeof(TasksDiagnosticsControlBlock),
+  .stack_mem = &TasksDiagnosticsBuffer[0],
+  .stack_size = sizeof(TasksDiagnosticsBuffer),
+  .priority = (osPriority_t) osPriorityHigh,
+};
+
+/* Definitions for TasksTimeSinceStartup */
+osThreadId_t TasksTimeSinceStartupHandle;
+uint32_t TasksTimeSinceStartupBuffer[128];
+osStaticThreadDef_t TasksTimeSinceStartupControlBlock;
+
+const osThreadAttr_t TasksTimeSinceStartup_attributes = {
+  .name = "TasksTimeSinceStartup",
+  .cb_mem = &TasksTimeSinceStartupControlBlock,
+  .cb_size = sizeof(TasksTimeSinceStartupControlBlock),
+  .stack_mem = &TasksTimeSinceStartupBuffer[0],
+  .stack_size = sizeof(TasksTimeSinceStartupBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
 
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
@@ -119,6 +147,11 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of TasksIMU */
   TasksIMUHandle = osThreadNew(TasksIMU, NULL, &TasksIMU_attributes);
+  /* creation of TasksDiagnostics */
+  TasksDiagnosticsHandle = osThreadNew(TasksDiagnostics, NULL, &TasksDiagnostics_attributes);
+  /* creation of TasksTimeSinceStartup*/
+  TasksTimeSinceStartupHandle = osThreadNew(TimeSinceStartup, NULL, &TasksTimeSinceStartup_attributes);
+
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */

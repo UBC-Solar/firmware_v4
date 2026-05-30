@@ -27,6 +27,8 @@ typedef struct {
    uint32_t successful_telemetry_tx;
 } telemetry_diagnostics_t;
 
+
+/* TODO: SEND THIS OVER CAN AND SEE ON GRAFANA NUMBER */
 extern telemetry_diagnostics_t telemetry_diagnostic;
 extern osSemaphoreId_t usart1_tx_semaphore;
 

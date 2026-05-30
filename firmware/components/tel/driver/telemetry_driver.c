@@ -14,19 +14,3 @@ void UART_telemetry_transmit(TEL_Msg_TypeDef* can_tel_msg)
         telemetry_diagnostic.successful_telemetry_tx++;
     }
 }
-
-/**
- * @brief  Tx Transfer completed callback for UART. Triggered by DMA when final byte is sent
- * 
- * If the uart is USART1, set the done_uart_tx flag to true so that next transmit over radio can occur
- * 
- * @param  huart: UART handle
- * 
- */
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
-{ 
-    if (huart->Instance == USART1)
-    {
-        osSemaphoreRelease(usart1_tx_semaphore);
-    }
-}

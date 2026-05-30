@@ -8,13 +8,12 @@
  * Pack state 
  * MARK: globals
  */
-// extern module_t pack_modules[NUM_MODULES];
-// extern faults_t pack_faults;
-// extern warnings_t pack_warnings;
-// extern pack_state_t pack_state;
+extern module_t pack_modules[NUM_MODULES];
+extern faults_t pack_faults;
+extern warnings_t pack_warnings;
+extern pack_state_t pack_state;
 
-// extern slave_t slaves[SLAVE_NUM_DEVICES];
-
+extern slave_t slaves[SLAVE_NUM_DEVICES];
 
 /**
  * Function definitions
@@ -28,24 +27,24 @@ void DriveOutputs();
 void SendCanMessages();
 
 #if (UNIT_TEST_MCU == RUN)
-void Debug_McuTestCycle();
+void Debug_McuTestCycle(void);
 #endif // UNIT_TEST_MCU
 
 #if (UNIT_TEST_IO == RUN)
-void Debug_DigitalIoTestCycle();
+void Debug_DigitalIoTestCycle(void);
 #endif // UNIT_TEST_IO
 
 #if (UNIT_TEST_CAN == RUN)
-void Debug_CanTestCycle();
+void Debug_CanTestCycle(void);
 #endif // UNIT_TEST_CAN
 
 #if (UNIT_TEST_ISOSPI == RUN)
-void Debug_IsoSpiTestCycle();
+void Debug_IsoSpiTestCycle(void);
 #endif // UNIT_TEST_ISOSPI
 
 #if (UNIT_TEST_SLAVE == RUN)
-void Debug_SlaveTestCommsCycle();
-void Debug_SlaveTestBalanceCycle();
-void Debug_SlaveTestMuxCycle();
-#endif // UNIT_TEST_ISOSPI
+void Debug_SlaveTestCommsCycle(void);
+void Debug_SlaveTestBalanceCycle(void);
+void Debug_SlaveTestMuxCycle(void);
+#endif // UNIT_TEST_SLAVE
 

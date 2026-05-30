@@ -11,7 +11,7 @@
 #include "stm32f1xx_hal_spi.h"
 #include <string.h>
 
-Slave_Data_t slave_controller;
+SPI_HandleTypeDef *slave_spi_handle;
 
 /**
  * Lookup table for PEC (Packet Error Code) CRC (Cyclic Redundancy Check) calculation
@@ -138,7 +138,7 @@ void WriteCS_(CS_state_t cs_state)
 		/* After releasing CS, clock a few SPI cycles into an unused buffer to
 		   ensure downstream devices see the clocks. */
 		uint8_t unused_rx[4] = {0};
-		HAL_SPI_Receive(slave_controller.SPI_handle, unused_rx, 4, SLAVE_TIMEOUT_MS);
+		HAL_SPI_Receive(slave_spi_handle, unused_rx, 4, SLAVE_TIMEOUT_MS);
 	}
 }
 
@@ -162,7 +162,7 @@ void SendCommand_(Slave_Command_t command)
 	tx_message[3] = (uint8_t) pec_value;
 
 	// size parameter is number of bytes to transmit - here it's 4 8bit frames
-    HAL_SPI_Transmit(slave_controller.SPI_handle, tx_message, 4, SLAVE_TIMEOUT_MS);
+    HAL_SPI_Transmit(slave_spi_handle, tx_message, 4, SLAVE_TIMEOUT_MS);
 }
 
 Slave_Status_t Poll_()
@@ -177,7 +177,7 @@ Slave_Status_t Poll_()
     // Must send at least SLAVE_NUM_DEVICES clock pulses before response is valid
 	// That's why there's an extra read initially - it's slight overkill but that's ok
 	rx_buffer = 0;
-    status_HAL = HAL_SPI_Receive(slave_controller.SPI_handle, &rx_buffer, 1, SLAVE_TIMEOUT_MS);
+    status_HAL = HAL_SPI_Receive(slave_spi_handle, &rx_buffer, 1, SLAVE_TIMEOUT_MS);
     status_slave = ProcessHalStatus_(status_HAL, 0);
     if (status_slave.error != Slave_OK) {
         return status_slave;
@@ -192,7 +192,7 @@ Slave_Status_t Poll_()
         }
 
 		rx_buffer = 0;
-		status_HAL = HAL_SPI_Receive(slave_controller.SPI_handle, &rx_buffer, 1, SLAVE_TIMEOUT_MS);
+		status_HAL = HAL_SPI_Receive(slave_spi_handle, &rx_buffer, 1, SLAVE_TIMEOUT_MS);
 		status_slave = ProcessHalStatus_(status_HAL, 0);
 		if (status_slave.error != Slave_OK)
             return status_slave;
@@ -231,34 +231,10 @@ void Slave_WakeUp(void)
  *
  * @param SPI_handle HAL SPI handle for the SPI peripheral used for communication to battery monitoring hardware
  */
-void Slave_Init(
-	SPI_HandleTypeDef *SPI_handle,
-	uint8_t config_val_a[SLAVE_REG_SIZE_BYTES],
-	uint8_t config_val_b[SLAVE_REG_SIZE_BYTES])
+void Slave_Init(SPI_HandleTypeDef *SPI_handle)
 {
-    slave_controller.SPI_handle = SPI_handle;
+    slave_spi_handle = SPI_handle;
 	init_PEC15_Table();
-
-    for(int ic_num = 0; ic_num < SLAVE_NUM_DEVICES; ic_num++)
-    {
-		for(int reg_num = 0; reg_num < SLAVE_REG_SIZE_BYTES; reg_num++)
-        {
-			slave_controller.config_registers.cfgra[ic_num][reg_num] = config_val_a[reg_num];
-			slave_controller.config_registers.cfgrb[ic_num][reg_num] = config_val_b[reg_num];
-        }
-    }
-
-#if (UNIT_TEST_ISOSPI == RUN)
-	return;
-#endif // UNIT_TEST_ISOSPI
-
-    Slave_WakeUp(); // Wake up all ADBMS1818 devices in the chain
-    Slave_WriteRegisterGroup(CMD_WRCFGA, slave_controller.config_registers.cfgra); // Write to Config. Reg. Group A
-    Slave_WriteRegisterGroup(CMD_WRCFGB, slave_controller.config_registers.cfgrb); // Write to Config. Reg. Group B
-}
-
-Slave_ConfigRegisters_t* Slave_GetConfigRegisters() {
-	return &slave_controller.config_registers;
 }
 
 /**
@@ -338,7 +314,7 @@ void Slave_WriteRegisterGroup(Slave_Command_t command, uint8_t tx_data[SLAVE_NUM
 		pec_value = CalculatePec15_(tx_message, SLAVE_REG_SIZE_BYTES);
 		tx_message[6] = (uint8_t) (pec_value >> 8);
 		tx_message[7] = (uint8_t) pec_value;
-		HAL_SPI_Transmit(slave_controller.SPI_handle, tx_message, 8, SLAVE_TIMEOUT_MS);
+		HAL_SPI_Transmit(slave_spi_handle, tx_message, 8, SLAVE_TIMEOUT_MS);
 	}
 
 	WriteCS_(CS_HIGH);
@@ -374,7 +350,7 @@ Slave_Status_t Slave_ReadRegisterGroup(Slave_Command_t command, uint8_t rx_data[
 	for (int ic_num = 0; ic_num < SLAVE_NUM_DEVICES; ic_num++)
 	{
 		// 6 data bytes + 2 PEC bytes = 8 bytes
-		status_HAL = HAL_SPI_Receive(slave_controller.SPI_handle, rx_message, 8, SLAVE_TIMEOUT_MS);
+		status_HAL = HAL_SPI_Receive(slave_spi_handle, rx_message, 8, SLAVE_TIMEOUT_MS);
 		status_slave = ProcessHalStatus_(status_HAL, ic_num);
 		if (status_slave.error != Slave_OK) return status_slave;
 

@@ -23,7 +23,7 @@ const Slave_Command_t cell_voltage_commands_lut[SLAVE_NUM_VOLT_REG] = {
  * second value is resistance (computed at initialization time),
  * third value is thermistor resistance.
  */
-const thermistor_mapping_t thermistor_temp_lut[THERMISTOR_LUT_TABLE_SIZE] = {
+thermistor_mapping_t thermistor_temp_lut[THERMISTOR_LUT_TABLE_SIZE] = {
     { -30000, 0, 175200 },
     {      0, 0, 32554  },
     {  10000, 0, 19872  },
@@ -133,13 +133,35 @@ void Module_Init(
     };
     #endif // SLAVE_NUM_DEVICES > 1
 
-    // for (int i = 0; i < THERMISTOR_LUT_TABLE_SIZE; i++) {
-    //     thermistor_temp_lut[i]
-    // }
+    // TODO: measure V_ref2 here instead of hard-coding 3V
+    for (int i = 0; i < THERMISTOR_LUT_TABLE_SIZE; i++) {
+        //V_T: thermistor voltage. R_T: thermistor resistance.
+        // V_T = V_ref2 * (R_T)/(10,000 + R_T)
+        uint64_t resistance_Ohm = (uint64_t) 3000000 * thermistor_temp_lut[i].resistance_Ohm / (10000 + thermistor_temp_lut[i].resistance_Ohm);
+        thermistor_temp_lut[i].voltage_uV = resistance_Ohm;
+    }
 
     Balancing_Init(slaves);
 
-    Slave_Init(SPI_handle, config_val_a, config_val_b);
+    for (int ic_num = 0; ic_num < SLAVE_NUM_DEVICES; ic_num++) {
+        memcpy(slaves[ic_num].config_a, config_val_a, SLAVE_REG_SIZE_BYTES);
+        memcpy(slaves[ic_num].config_b, config_val_b, SLAVE_REG_SIZE_BYTES);
+    }
+
+    Slave_Init(SPI_handle);
+
+#if (UNIT_TEST_ISOSPI != RUN)
+    uint8_t cfgra_2d[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
+    uint8_t cfgrb_2d[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
+    for (int ic_num = 0; ic_num < SLAVE_NUM_DEVICES; ic_num++) {
+        memcpy(cfgra_2d[ic_num], slaves[ic_num].config_a, SLAVE_REG_SIZE_BYTES);
+        memcpy(cfgrb_2d[ic_num], slaves[ic_num].config_b, SLAVE_REG_SIZE_BYTES);
+    }
+
+    Slave_WakeUp();
+    Slave_WriteRegisterGroup(CMD_WRCFGA, cfgra_2d);
+    Slave_WriteRegisterGroup(CMD_WRCFGB, cfgrb_2d);
+#endif
 }
 
 void RequestVoltageMeasurement(void) {
@@ -152,7 +174,6 @@ void GetVoltageForRegister_(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_mod
         LOG_ERROR("Voltage register %d is out of range!\r\n", reg_idx);
         Error_Handler();
     }
-    
 
     Slave_Command_t current_cmd = cell_voltage_commands_lut[reg_idx];
     
@@ -198,11 +219,11 @@ void RequestTemperatureMeasurement(void) {
 }
 
 /**
- * @brief Converts a 16-bit ADC value to Temperature in milli-Celsius using pure integer math
- * @param thermistor_uV The raw 16-bit ADC reading (0 - 65535)
+ * @brief Converts a voltage measurement to Temperature in milli-Celsius using pure integer math
+ * @param thermistor_uV The raw ADC reading in microvolts
  * @return Temperature in milli-Celsius (e.g., 25500 = 25.5 C)
  */
-int32_t ThermistorVoltToTemp_(uint16_t thermistor_uV) {
+int32_t ThermistorVoltToTemp_(uint32_t thermistor_uV) {
     // 1. Clamp to maximum or minimum values
     if (thermistor_uV >= thermistor_temp_lut[0].voltage_uV) {
         return thermistor_temp_lut[0].temperature_mC;
@@ -232,7 +253,7 @@ int32_t ThermistorVoltToTemp_(uint16_t thermistor_uV) {
             // Multiply before dividing to preserve precision. 
             // Max temp_diff (e.g., 10000 mC) * Max meas_diff (e.g., 10000 ADC) = 100,000,000.
             // This easily fits inside a signed 32-bit integer without overflowing.
-            int32_t temperature_mC = t1 + ((temp_diff * meas_diff) / adc_diff);
+            int64_t temperature_mC = (int64_t) t1 + (((int64_t)temp_diff * meas_diff) / adc_diff);
             
             return temperature_mC;
         }
@@ -271,14 +292,16 @@ void GetTemperatureForRegister_(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack
         int mux_state = slaves[slave_idx].temp_mux_state;
 
         for (int val_offset = 0; val_offset < SLAVE_NUM_VAL_PER_TEMP_REG; val_offset++) {
-            
-            uint16_t raw_temp_adc = (rx_data[slave_idx][val_offset * 2]) | 
-                                    (rx_data[slave_idx][val_offset * 2 + 1] << 8);
+            // Raw ADC value has LSB = 100 uV
+            uint32_t adc_raw_100uV =
+                (rx_data[slave_idx][val_offset * 2]) | 
+                (rx_data[slave_idx][val_offset * 2 + 1] << 8);
+            uint32_t adc_raw_uV = adc_raw_100uV * 100;
 
             int module_idx = slaves[slave_idx].temp_mappings[reg_idx][val_offset][mux_state];
             
             if (module_idx >= 0) {
-                pack_modules[module_idx].temperature_mC = ThermistorVoltToTemp_(raw_temp_adc);
+                pack_modules[module_idx].temperature_mC = ThermistorVoltToTemp_(adc_raw_uV);
             }
         }
     }
@@ -287,12 +310,15 @@ void GetTemperatureForRegister_(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack
 void RetrieveTemperatureMeasurement(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES]) {
     Slave_WakeUp();
 
-    Slave_SendCmdAndPoll(CMD_PLAUX);
+    Slave_SendCmdAndPoll(CMD_PLADC);
 
     for (int reg_idx = 0; reg_idx < SLAVE_NUM_TEMP_REG; reg_idx++) {
         GetTemperatureForRegister_(slaves, pack_modules, reg_idx);
     }
 }
+
+extern faults_t pack_faults;
+extern warnings_t pack_warnings;
 
 void ComputePackStatistics(module_t pack_modules[NUM_MODULES], pack_state_t *pack_state) {
     uint32_t total_voltage_mV = 0;
@@ -300,12 +326,47 @@ void ComputePackStatistics(module_t pack_modules[NUM_MODULES], pack_state_t *pac
     for (int i = 0; i < NUM_MODULES; i++) {
         total_voltage_mV += pack_modules[i].voltage_mv;
         total_temp_mC += pack_modules[i].temperature_mC;
+
+        LOG_DEBUG("Module %d - Voltage: %d.%02dV, Temp: %d.%02dC", 
+            i, 
+            pack_modules[i].voltage_mv / 1000, pack_modules[i].voltage_mv % 1000, 
+            pack_modules[i].temperature_mC / 1000, pack_modules[i].temperature_mC % 1000);
     }
     pack_state->total_voltage_mV = total_voltage_mV;
     pack_state->avg_voltage_mV = total_voltage_mV / NUM_MODULES;
     pack_state->avg_temp_mC = total_temp_mC / NUM_MODULES;
+
+    LOG_DEBUG("Pack statuses - Balancing Active: %d, Balancing Enable: %d, Scrutineering: %d", 
+              pack_state->balancing_active, pack_state->balancing_enable, pack_state->scrutineering_enable);
+    LOG_DEBUG("Pack statuses - LLIM: %d, HLIM: %d, Contactor: %d", 
+              pack_state->llim_enable, pack_state->hlim_enable, pack_state->contactor_enable);
+
+    LOG_DEBUG("Pack warnings - Raw: 0x%02X, Low V: %d, High V: %d, High T: %d", 
+              pack_warnings.raw, pack_warnings.bits.warn_low_voltage, pack_warnings.bits.warn_high_voltage, pack_warnings.bits.warn_high_temperature);
+
+    LOG_DEBUG("Pack faults - Raw: 0x%02X, UV: %d, OV: %d, OT: %d, UT: %d", 
+              pack_faults.raw, pack_faults.bits.fault_under_voltage, pack_faults.bits.fault_over_voltage, 
+              pack_faults.bits.fault_over_temperature, pack_faults.bits.fault_under_temperature);
 }
 
 void SetTempMuxState(slave_t slaves[SLAVE_NUM_DEVICES], unsigned new_state) {
-    
+    uint8_t cfgra_2d[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
+
+    // Extract the lowest 2 bits from new_state
+    uint8_t mux_bits = new_state & 0x03;
+
+    for (int ic_num = 0; ic_num < SLAVE_NUM_DEVICES; ic_num++) {
+        // Update the slave data structure with the new state
+        slaves[ic_num].temp_mux_state = mux_bits;
+
+        // Clear and set bits 3 and 4 in byte 0 of config_a
+        slaves[ic_num].config_a[0] &= ~(0x18);
+        slaves[ic_num].config_a[0] |= (mux_bits << 3);
+
+        // Copy updated config back to the 2D array for transmission
+        memcpy(cfgra_2d[ic_num], slaves[ic_num].config_a, SLAVE_REG_SIZE_BYTES);
+    }
+
+    Slave_WakeUp();
+    Slave_WriteRegisterGroup(CMD_WRCFGA, cfgra_2d);
 }

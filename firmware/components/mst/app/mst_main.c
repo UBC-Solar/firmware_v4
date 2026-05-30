@@ -86,9 +86,13 @@ void CollectModuleData() {
     }
 
     uint32_t temp_start_ms = HAL_GetTick();
-
-    RequestTemperatureMeasurement();
-    RetrieveTemperatureMeasurement(slaves, pack_modules);
+    
+    for (int mux_idx = 0; mux_idx < SLAVE_NUM_MODULES_PER_TEMP_VAL; mux_idx++) {
+        SetTempMuxState(slaves, mux_idx);
+        HAL_Delay(10); // Give the physical multiplexer chips time to settle
+        RequestTemperatureMeasurement();
+        RetrieveTemperatureMeasurement(slaves, pack_modules);
+    }
     
     uint32_t temp_end_ms = HAL_GetTick();
     
@@ -142,7 +146,7 @@ void SendCanMessages() {
 
 
 #if (UNIT_TEST_MCU == RUN)
-void Debug_McuTestCycle() {
+void Debug_McuTestCycle(void) {
     DEBUG_IO_PRINT("Debug_McuTestCycle start (debug IO)\r\n");
     UART_Transmit("Debug_McuTestCycle start (UART_Transmit)\r\n");
 
@@ -157,9 +161,8 @@ void Debug_McuTestCycle() {
 }
 #endif // UNIT_TEST_MCU
 
-
 #if (UNIT_TEST_IO == RUN)
-void Debug_DigitalIoTestCycle() {
+void Debug_DigitalIoTestCycle(void) {
     DEBUG_IO_PRINT("FAULT signal HIGH. Other signals should be LOW.\r\n");
     UART_Transmit("FAULT signal HIGH. Other signals should be LOW.\r\n");
     GPIO_Write(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin, GPIO_PIN_SET);
@@ -189,10 +192,9 @@ void Debug_DigitalIoTestCycle() {
 }
 #endif // UNIT_TEST_IO
 
-
 #if (UNIT_TEST_CAN == RUN)
-int canCyclecCount = 1;
-void Debug_CanTestCycle() {
+void Debug_CanTestCycle(void) {
+    static int canCyclecCount = 1;
     DEBUG_IO_PRINT("Debug_CanTestCycle round %d (debug IO)\r\n", canCyclecCount);
 
     CAN_SendMessgeDebug();
@@ -203,10 +205,9 @@ void Debug_CanTestCycle() {
 }
 #endif // UNIT_TEST_CAN
 
-
 #if (UNIT_TEST_ISOSPI == RUN)
-int isoSpiCycleCount = 1;
-void Debug_IsoSpiTestCycle() {
+void Debug_IsoSpiTestCycle(void) {
+    static int isoSpiCycleCount = 1;
     DEBUG_IO_PRINT("Debug_IsoSpiTestCycle round %d (debug IO)\r\n", isoSpiCycleCount);
 
     Slave_SendCmd(CMD_ADCV);
@@ -216,7 +217,6 @@ void Debug_IsoSpiTestCycle() {
     isoSpiCycleCount++;
 }
 #endif // UNIT_TEST_ISOSPI
-
 
 #if (UNIT_TEST_SLAVE == RUN)
 static bool DoesRegGroupMatch_(uint8_t reg_group1[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES],
@@ -233,7 +233,7 @@ static bool DoesRegGroupMatch_(uint8_t reg_group1[SLAVE_NUM_DEVICES][SLAVE_REG_S
     return true;
 }
 
-void Debug_SlaveTestCommsCycle() {
+void Debug_SlaveTestCommsCycle(void) {
     uint8_t test_data[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES] = {
         {0x55, 0x6E, 0x69, 0x42, 0x43, 0x20}
 #if SLAVE_NUM_DEVICES > 1U
@@ -263,8 +263,8 @@ void Debug_SlaveTestCommsCycle() {
     HAL_Delay(500);
 }
 
-bool balance_enabled = true;
-void Debug_SlaveTestBalanceCycle() {
+void Debug_SlaveTestBalanceCycle(void) {
+    static bool balance_enabled = true;
     Slave_WakeUp();
 
     ResumeAllBalancing();
@@ -273,24 +273,24 @@ void Debug_SlaveTestBalanceCycle() {
     if (balance_enabled) {
         // Refer to the ADBMS1818 datasheet pages 65, 68, 69 for 
         // format and content of configuration register groups A and B
-        uint8_t config_val_a[SLAVE_REG_SIZE_BYTES] =
-        {
-            0xF8 | (REFON << 2) | ADCOPT, // GPIO 1-5 pull-downs off, REFON, ADCOPT
-            (VUV & 0xFF), // VUV[7:0]
-            ((uint8_t) (VOV << 4)) | (((uint8_t) (VUV >> 8)) & 0x0F), // VOV[4:0] | VUV[11:8]
-            (VOV >> 4), // VOV[11:4]
-            0xFF, // Discharge off for cells 1 through 8
-            0x0F  // Discharge off for cells 9 through 12, Discharge timer disabled
-        };
-        uint8_t config_val_b[SLAVE_REG_SIZE_BYTES] =
-        {
-            0xFF, // Discharge off for cells 13 through 16, GPIO 6-9 = 1
-            0x00, // FDRF = 0, PS = 0, Discharge off for cells 17 and 18
-            0x00,
-            0x00,
-            0x00,
-            0x00
-        };
+        uint8_t config_val_a[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
+        uint8_t config_val_b[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
+
+        for (int i = 0; i < SLAVE_NUM_DEVICES; i++) {
+            config_val_a[i][0] = 0xF8 | (REFON << 2) | ADCOPT; // GPIO 1-5 pull-downs off, REFON, ADCOPT
+            config_val_a[i][1] = (VUV & 0xFF); // VUV[7:0]
+            config_val_a[i][2] = ((uint8_t) (VOV << 4)) | (((uint8_t) (VUV >> 8)) & 0x0F); // VOV[4:0] | VUV[11:8]
+            config_val_a[i][3] = (VOV >> 4); // VOV[11:4]
+            config_val_a[i][4] = 0xFF; // Discharge off for cells 1 through 8
+            config_val_a[i][5] = 0x0F; // Discharge off for cells 9 through 12, Discharge timer disabled
+
+            config_val_b[i][0] = 0xFF; // Discharge off for cells 13 through 16, GPIO 6-9 = 1
+            config_val_b[i][1] = 0x00; // FDRF = 0, PS = 0, Discharge off for cells 17 and 18
+            config_val_b[i][2] = 0x00;
+            config_val_b[i][3] = 0x00;
+            config_val_b[i][4] = 0x00;
+            config_val_b[i][5] = 0x00;
+        }
 
         Slave_WriteRegisterGroup(CMD_WRCFGA, config_val_a); // Write to Config. Reg. Group A
         Slave_WriteRegisterGroup(CMD_WRCFGB, config_val_b); // Write to Config. Reg. Group B
@@ -298,24 +298,24 @@ void Debug_SlaveTestBalanceCycle() {
     else {
         // Refer to the ADBMS1818 datasheet pages 65, 68, 69 for 
         // format and content of configuration register groups A and B
-        uint8_t config_val_a[SLAVE_REG_SIZE_BYTES] =
-        {
-            0xF8 | (REFON << 2) | ADCOPT, // GPIO 1-5 pull-downs off, REFON, ADCOPT
-            (VUV & 0xFF), // VUV[7:0]
-            ((uint8_t) (VOV << 4)) | (((uint8_t) (VUV >> 8)) & 0x0F), // VOV[4:0] | VUV[11:8]
-            (VOV >> 4), // VOV[11:4]
-            0x00, // Discharge off for cells 1 through 8
-            0x00  // Discharge off for cells 9 through 12, Discharge timer disabled
-        };
-        uint8_t config_val_b[SLAVE_REG_SIZE_BYTES] =
-        {
-            0x0F, // Discharge off for cells 13 through 16, GPIO 6-9 = 1
-            0x00, // FDRF = 0, PS = 0, Discharge off for cells 17 and 18
-            0x00,
-            0x00,
-            0x00,
-            0x00
-        };
+        uint8_t config_val_a[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
+        uint8_t config_val_b[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
+
+        for (int i = 0; i < SLAVE_NUM_DEVICES; i++) {
+            config_val_a[i][0] = 0xF8 | (REFON << 2) | ADCOPT; // GPIO 1-5 pull-downs off, REFON, ADCOPT
+            config_val_a[i][1] = (VUV & 0xFF); // VUV[7:0]
+            config_val_a[i][2] = ((uint8_t) (VOV << 4)) | (((uint8_t) (VUV >> 8)) & 0x0F); // VOV[4:0] | VUV[11:8]
+            config_val_a[i][3] = (VOV >> 4); // VOV[11:4]
+            config_val_a[i][4] = 0x00; // Discharge off for cells 1 through 8
+            config_val_a[i][5] = 0x00; // Discharge off for cells 9 through 12, Discharge timer disabled
+
+            config_val_b[i][0] = 0x0F; // Discharge off for cells 13 through 16, GPIO 6-9 = 1
+            config_val_b[i][1] = 0x00; // FDRF = 0, PS = 0, Discharge off for cells 17 and 18
+            config_val_b[i][2] = 0x00;
+            config_val_b[i][3] = 0x00;
+            config_val_b[i][4] = 0x00;
+            config_val_b[i][5] = 0x00;
+        }
         
         Slave_WriteRegisterGroup(CMD_WRCFGA, config_val_a); // Write to Config. Reg. Group A
         Slave_WriteRegisterGroup(CMD_WRCFGB, config_val_b); // Write to Config. Reg. Group B
@@ -327,7 +327,18 @@ void Debug_SlaveTestBalanceCycle() {
     HAL_Delay(500);
 }
 
-void Debug_SlaveTestMuxCycle() {
-    
+void Debug_SlaveTestMuxCycle(void) {
+    static unsigned current_mux_state = 0;
+
+    LOG_INFO("Set temp mux state to %u (SEL2 = %d, SEL1 = %d)\r\n", current_mux_state, (current_mux_state & 0x02) ? 1 : 0, (current_mux_state & 0x01) ? 1 : 0);
+
+
+    int wait_time_ms = 10000;
+    for (int i = 0; i < wait_time_ms / 100; i++) {
+        SetTempMuxState(slaves, current_mux_state);
+        HAL_Delay(100);
+    }
+
+    current_mux_state = (current_mux_state + 1) % 4;
 }
 #endif

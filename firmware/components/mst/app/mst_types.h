@@ -86,11 +86,14 @@ typedef struct
     int volt_mappings[SLAVE_NUM_VOLT_REG][SLAVE_NUM_MODULES_PER_VOLT_REG];
     int temp_mappings[SLAVE_NUM_TEMP_REG][SLAVE_NUM_VAL_PER_TEMP_REG][SLAVE_NUM_MODULES_PER_TEMP_VAL];
     int bal_mappings[SLAVE_NUM_BAL_REG][SLAVE_NUM_MODULE_PER_BAL_REG];
+
+    uint8_t config_a[SLAVE_REG_SIZE_BYTES];
+    uint8_t config_b[SLAVE_REG_SIZE_BYTES];
 } slave_t;
 
 typedef struct
 {
     int32_t temperature_mC;
-    uint32_t resistance_Ohm;
     uint32_t voltage_uV;
+    uint32_t resistance_Ohm;
 } thermistor_mapping_t;

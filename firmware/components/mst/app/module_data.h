@@ -15,3 +15,4 @@ void RetrieveVoltageMeasurement(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack
 void RequestTemperatureMeasurement(void);
 void RetrieveTemperatureMeasurement(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES]);
 void ComputePackStatistics(module_t pack_modules[NUM_MODULES], pack_state_t *pack_state);
+void SetTempMuxState(slave_t slaves[SLAVE_NUM_DEVICES], unsigned new_state);

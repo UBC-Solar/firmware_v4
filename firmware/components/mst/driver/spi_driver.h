@@ -16,18 +16,6 @@
 #include "mst_defs.h"
 #include "mst_types.h"
 
-typedef struct {
-    uint8_t cfgra[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES]; // Record of Configuration Register Group A for each device
-
-    uint8_t cfgrb[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES]; // Record of Configuration Register Group B for each device
-} Slave_ConfigRegisters_t;
-
-typedef struct {
-    SPI_HandleTypeDef *SPI_handle;
-    Slave_ConfigRegisters_t config_registers;
-
-} Slave_Data_t;
-
 enum Slave_Error {
     Slave_OK = 0,
     Slave_ERROR_PEC,
@@ -198,7 +186,6 @@ typedef enum {
     CMD_CLRAUX  = 0x0712,       // Clear Auxiliary Register Groups
     CMD_CLRSTAT = 0x0713,       // Clear Status Register Groups
     CMD_PLADC   = 0x0714,       // Poll ADC Conversion Status
-    CMD_PLAUX   = 0x0715,       // Poll AUX Conversion Status
     CMD_DIAGN   = 0x0715,       // Diagnose MUX and Poll Status
     CMD_WRCOMM  = 0x0721,       // Write COMM Register Group
     CMD_RDCOMM  = 0x0722,       // Read COMM Register Group
@@ -207,11 +194,7 @@ typedef enum {
     CMD_UNMUTE  = 0x0029        // Unmute discharge
 } Slave_Command_t;
 
-void Slave_Init(
-	SPI_HandleTypeDef *SPI_handle,
-	uint8_t config_val_a[SLAVE_REG_SIZE_BYTES],
-	uint8_t config_val_b[SLAVE_REG_SIZE_BYTES]);
-Slave_ConfigRegisters_t* Slave_GetConfigRegisters();
+void Slave_Init(SPI_HandleTypeDef *SPI_handle);
 void Slave_WakeUp(void);
 void Slave_SendCmd(Slave_Command_t command);
 Slave_Status_t Slave_SendCmdAndPoll(Slave_Command_t command);

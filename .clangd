@@ -21,7 +21,13 @@ If:
   PathMatch: "firmware/components/hvc/.*"
 CompileFlags:
   CompilationDatabase: firmware/components/hvc/build/Debug
-  
+
+  ---
+If:
+  PathMatch: "firmware/components/dist/.*"
+CompileFlags:
+  CompilationDatabase: firmware/components/dist/build/Debug
+
 ---
 If:
   PathMatch: "firmware/common/.*"

@@ -1,20 +1,18 @@
 ## Pull Request Description
 <!-- Describe your PR here -->
 
-
 ## Monday Link
 <!-- Copy related Monday issue here -->
 
 ## Effected Components
 <!-- Check which components are affected -->
-- [ ] BMS
-- [ ] DRD
-- [ ] ECU
 - [ ] MDI
-- [ ] STR
 - [ ] TEL
+- [ ] DRD
+- [ ] HVC
+- [ ] MST
+- [ ] STR
 - [ ] CI/CD
-
 
 ## Testing
 <!-- Check which testing was done -->
@@ -28,9 +26,9 @@
 
 ## Sanity check
 <!-- Check box if all steps complete (check even if not applicable) -->
-- CAN ID table updated
-- IOC updated and commited
-- gitignore updated and commited
+- [ ]CAN ID table updated
+- [ ] IOC updated and commited
+- [ ] gitignore updated and commited
 - [ ] Steps confirmed
 
 ## Sources

@@ -34,7 +34,7 @@ When to call: Once during system startup, after SPI is initialized.
 
 ### 2. RtdDriverGetTemp()
 
-RtdStatus RtdDriverGetTemp(uint32_t* temperature);
+Rtd_status_t RtdDriverGetTemp(uint32_t* temperature);
 
 Description: Reads the current temperature from the RTD sensor.
 
@@ -100,10 +100,7 @@ The library converts the 15-bit resistance ratio from the MAX31865 into temperat
 1. Resistance = (ratio / 32768) × 4300Ω
 2. Temperature = (Resistance - 1000Ω) / 3.85
 
-Example: If raw value = 8340, then resistance = 1094.8Ω, and temperature = 25°C
-
-**Important Note on Data Format:**
-Unlike the Adafruit MAX31865 library which shifts the 16-bit register data right by 1 bit (to isolate the 15-bit ADC value from the fault bit), this driver does NOT perform the shift. Testing on our hardware configuration shows the data is already in the correct format for calculation without shifting, but we are uncertain as to why this is. The division by 32768 (2^15) is applied directly to the raw 16-bit value read from the registers.
+Example: If resistance = 1038.5Ω, then temperature = 10°C
 
 ### SPI Communication
 - Chip select (CS) is controlled automatically
@@ -115,4 +112,3 @@ Unlike the Adafruit MAX31865 library which shifts the 16-bit register data right
 - Temperature readings are continuous in the background (using auto-conversion mode)
 - Temperature is returned as an integer (no decimal places)
 - Fault detection uses the simple fault bit from the RTD data register (bit 0), which indicates basic sensor faults
-- The raw 16-bit value is used directly in calculations without bit-shifting, unlike some other MAX31865 implementations

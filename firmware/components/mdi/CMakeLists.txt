@@ -35,7 +35,7 @@ enable_language(C ASM)
 add_executable(${CMAKE_PROJECT_NAME})
 
 # Add STM32CubeMX generated sources
-add_subdirectory(cmake/stm32cubemx)
+add_subdirectory(cube/cmake/stm32cubemx)
 
 # Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
@@ -45,17 +45,22 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/CAN_comms/CAN_comms.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/evan.c
-    #TODO: make this a symbolic reference to avoid hardcoding
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/can_app.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/diagnostic.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/rtd_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/can_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/mdi_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/tasks.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/debug_io/debug_io.c
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
-     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/CAN_comms
-     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/cyclic_data
-      #TODO: make this a symbolic reference to avoid hardcoding ie (${COMMON_SOURCE_DIR})
+    ${CMAKE_CURRENT_SOURCE_DIR}/app
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver
+    ${CMAKE_CURRENT_SOURCE_DIR}/runtime
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/debug_io
 )
 
 # Add project symbols (macros)

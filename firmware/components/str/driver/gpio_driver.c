@@ -24,27 +24,36 @@ void LightState(void)
 
 void CruiseState(uint32_t velocity)
 {
-    uint32_t cruise_set_velocity_kmh = ReadCruiseSetVelocity();
-    bool cruise_status = (velocity > 0) && gpio_pin_state.cruise_state.cruise_en;
+    static bool last_cruise_inc = false;
+    static bool last_cruise_dec = false;
 
-    if (!cruise_status)
+    uint32_t cruise_set_velocity_kmh = ReadCruiseSetVelocity();
+
+    bool cruise_inc_now = (HAL_GPIO_ReadPin(CRUISE_INC_GPIO_Port, CRUISE_INC_Pin) == GPIO_PIN_RESET);
+    bool cruise_dec_now = (HAL_GPIO_ReadPin(CRUISE_DEC_GPIO_Port, CRUISE_DEC_Pin) == GPIO_PIN_RESET);
+
+    if (!gpio_pin_state.cruise_state.cruise_en || (velocity == 0U))
     {
-        GetCruiseSetVelocity(velocity);
+        last_cruise_inc = cruise_inc_now;
+        last_cruise_dec = cruise_dec_now;
         return;
     }
 
-    if (cruise_status && gpio_pin_state.cruise_state.cruise_inc)
-    {
-        cruise_set_velocity_kmh++;
-    }
-
-    if (cruise_status && gpio_pin_state.cruise_state.cruise_dec)
+    if (cruise_inc_now && !last_cruise_inc)
     {
         if (cruise_set_velocity_kmh > 0U)
         {
             cruise_set_velocity_kmh--;
         }
     }
+
+    if (cruise_dec_now && !last_cruise_dec)
+    {
+        cruise_set_velocity_kmh++;
+    }
+
+    last_cruise_inc = cruise_inc_now;
+    last_cruise_dec = cruise_dec_now;
 
     GetCruiseSetVelocity(cruise_set_velocity_kmh);
 }

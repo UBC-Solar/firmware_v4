@@ -71,24 +71,27 @@ void GpioPollState(void)
     } else {
         gpio_pin_state.next_page = false;
     }
+
+    if (HAL_GPIO_ReadPin(REGEN_GPIO_Port, REGEN_Pin))
+    {
+        gpio_pin_state.regen_en = true;
+    } else {
+        gpio_pin_state.regen_en = false;
+    }
 }
 
 void StrInterruptHandler(uint16_t toggle)
 {
+    if (toggle != CRUISE_CONTROL_Pin)
+    {
+        return;
+    }
+
     HAL_GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
 
-    switch (toggle)
+    gpio_pin_state.cruise_state.cruise_en = !gpio_pin_state.cruise_state.cruise_en;
+    if (gpio_pin_state.cruise_state.cruise_en)
     {
-    case CRUISE_CONTROL_Pin:
-        gpio_pin_state.cruise_state.cruise_en = !gpio_pin_state.cruise_state.cruise_en;
-        if (gpio_pin_state.cruise_state.cruise_en)
-        {
-            GetCruiseSetVelocity(ReadCurrentVelocity());
-        }
-        break;
-
-    case REGEN_Pin:
-        gpio_pin_state.regen_en = true;
-        break;
+        GetCruiseSetVelocity(ReadCurrentVelocity());
     }
 }

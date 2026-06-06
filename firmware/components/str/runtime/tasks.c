@@ -23,22 +23,11 @@ void StartSteeringOutputsTask(void *argument)
 
 void StartHexDisplayTask(void *argument)
 {
-    uint32_t display_velocity_kmh = 0U;
-
     HexDisplayInit();
 
     for(;;)
     {
-        if (gpio_pin_state.cruise_state.cruise_en)
-        {
-            display_velocity_kmh = ReadCruiseSetVelocity();
-        }
-        else
-        {
-            display_velocity_kmh = ReadCurrentVelocity();
-        }
-
-        HexDisplayWriteDecimal((uint8_t)display_velocity_kmh);
+        HexDisplayWriteDecimal((uint8_t)ReadCurrentVelocity());
         osDelay(HEX_TASK_DELAY);
     }
 }

@@ -76,7 +76,7 @@ void DiagnosticSendTimeSinceBootup(void)
 
 void DiagnosticSendRtdTemp(void)
 {
-	uint32_t rtd_temp_c = 0;
+	int32_t rtd_temp_c = 0;
 	RtdStatus rtd_status = RtdDriverGetTemp(&rtd_temp_c);
 	bool rtd_read_success = (rtd_status == RtdStatusOk);
 	if (rtd_read_success)
@@ -91,12 +91,13 @@ void DiagnosticSendRtdTemp(void)
 		}
 	}
 
+	uint32_t rtd_temp_raw = (uint32_t)rtd_temp_c;
 	uint8_t data[5];
 	data[0] = (uint8_t)(rtd_read_success);
-	data[1] = (uint8_t)(rtd_temp_c & 0xFFU);
-	data[2] = (uint8_t)((rtd_temp_c >> 8) & 0xFFU);
-	data[3] = (uint8_t)((rtd_temp_c >> 16) & 0xFFU);
-	data[4] = (uint8_t)((rtd_temp_c >> 24) & 0xFFU);
+	data[1] = (uint8_t)(rtd_temp_raw & 0xFFU);
+	data[2] = (uint8_t)((rtd_temp_raw >> 8) & 0xFFU);
+	data[3] = (uint8_t)((rtd_temp_raw >> 16) & 0xFFU);
+	data[4] = (uint8_t)((rtd_temp_raw >> 24) & 0xFFU);
 
 	CanDriverSend(&mdi_motor_temp_header, data);
 }

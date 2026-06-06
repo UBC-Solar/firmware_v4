@@ -27,7 +27,7 @@ typedef enum
  * @returns		status of the RTD as an enumerator (RtdStatusOk, RtdStatusFault, or
  * RtdStatusHalError).
  */
-RtdStatus RtdDriverGetTemp(uint32_t* temperature);
+RtdStatus RtdDriverGetTemp(int32_t* temperature);
 
 /*
  * @brief:      Initializes the MAX31865 RTD interface.

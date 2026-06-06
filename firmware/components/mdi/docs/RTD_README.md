@@ -34,7 +34,7 @@ When to call: Once during system startup, after SPI is initialized.
 
 ### 2. RtdDriverGetTemp()
 
-Rtd_status_t RtdDriverGetTemp(uint32_t* temperature);
+RtdStatus RtdDriverGetTemp(int32_t* temperature);
 
 Description: Reads the current temperature from the RTD sensor.
 
@@ -64,7 +64,7 @@ Step 4: Check if return status is RtdStatusOk, then use the temperature value
 ### Example
 
 ```c
-#include "rtd.h"
+#include "rtd_driver.h"
 
 int main(void){
     HAL_Init();
@@ -74,11 +74,11 @@ int main(void){
 
     RtdDriverInit();
     
-    uint32_t temperature;
+    int32_t temperature;
     
     while (1) {
         if (RtdDriverGetTemp(&temperature) == RtdStatusOk) {
-            printf("Temperature: %lu°C\n", temperature);
+            printf("Temperature: %ld°C\n", (long)temperature);
         } else {
             printf("Error reading temperature\n");
         }
@@ -110,5 +110,5 @@ Example: If resistance = 1038.5Ω, then temperature = 10°C
 ## Additional Notes
 
 - Temperature readings are continuous in the background (using auto-conversion mode)
-- Temperature is returned as an integer (no decimal places)
+- Temperature is returned as an integer (no decimal places) and may be negative
 - Fault detection uses the simple fault bit from the RTD data register (bit 0), which indicates basic sensor faults

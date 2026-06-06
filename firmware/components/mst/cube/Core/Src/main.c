@@ -139,7 +139,7 @@ int main(void)
     #if (UNIT_TEST_SLAVE == RUN)
     Debug_SlaveTestCommsCycle();
     // Debug_SlaveTestBalanceCycle();
-    Debug_SlaveTestMuxCycle();
+    // Debug_SlaveTestMuxCycle();
     #endif // UNIT_TEST_SLAVE
     /* USER CODE END WHILE */
 

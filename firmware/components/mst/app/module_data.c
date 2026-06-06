@@ -47,13 +47,27 @@ thermistor_mapping_t thermistor_temp_lut[THERMISTOR_LUT_TABLE_SIZE] = {
 
 void Module_Init(
 	SPI_HandleTypeDef *SPI_handle,
-	slave_t slaves[SLAVE_NUM_DEVICES],
-	uint8_t config_val_a[SLAVE_REG_SIZE_BYTES],
-	uint8_t config_val_b[SLAVE_REG_SIZE_BYTES]) {
-    
+	slave_t slaves[SLAVE_NUM_DEVICES]) {
+
     // --- Slave 0 Topology Mappings ---
     slaves[0] = (slave_t) 
     {
+        .config_a = {
+            0xF8 | (REFON << 2) | ADCOPT, // GPIO 1-5 pull-downs off, REFON, ADCOPT
+            (VUV & 0xFF), // VUV[7:0]
+            ((uint8_t) (VOV << 4)) | (((uint8_t) (VUV >> 8)) & 0x0F), // VOV[4:0] | VUV[11:8]
+            (VOV >> 4), // VOV[11:4]
+            0x00, // Discharge off for cells 1 through 8
+            0x00  // Discharge off for cells 9 through 12, Discharge timer disabled
+        },
+        .config_b = {
+            0x0F, // Discharge off for cells 13 through 16, GPIO 6-9 = 1
+            0x00, // FDRF = 0, PS = 0, Discharge off for cells 17 and 18
+            0x00,
+            0x00,
+            0x00,
+            0x00
+        },
         // 2 bytes per module value, so each register group (6 bytes total) holds data of 3 modules.
         .volt_mappings = {
             // Cell Voltage Register Group A (C1, C2, C3)
@@ -78,16 +92,14 @@ void Module_Init(
             // Auxiliary Register Group B (GPIO4, GPIO5, GPIO6)
             { { 4,  5,  6,  7}, { 8,  9, 10, 11}, {-1, -1, -1, -1} },
             // Auxiliary Register Group C (...)
-            { {12, 13, 14, 15}, {-1, -1, -1, -1}, {-1, -1, -1, -1} },
-            // Auxiliary Register Group D
-            { {-1, -1, -1, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1} }
+            { {12, 13, 14, 15}, {-1, -1, -1, -1}, {-1, -1, -1, -1} }
         },
-        // 4 bits per module value, so each 
+        // 4 bits per module value, so each register group (6 bytes total) holds data for 12 modules.
         .bal_mappings = {
             // S Control Register Group
-            { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11},
+            { 0,  1,  2,  3,  4,  5,  6,  7 },
             // PWM/S Control Register Group B
-            {-1, -1, -1, -1, -1, -1, 12, 13, 14, 15, -1, -1}
+            {-1, -1, -1, -1, -1, -1, 12, 13 }
         }
     };
 
@@ -95,6 +107,22 @@ void Module_Init(
     // --- Slave 1 Topology Mappings ---
     slaves[1] = (slave_t)
     {
+        .config_a = {
+            0xF8 | (REFON << 2) | ADCOPT, // GPIO 1-5 pull-downs off, REFON, ADCOPT
+            (VUV & 0xFF), // VUV[7:0]
+            ((uint8_t) (VOV << 4)) | (((uint8_t) (VUV >> 8)) & 0x0F), // VOV[4:0] | VUV[11:8]
+            (VOV >> 4), // VOV[11:4]
+            0x00, // Discharge off for cells 1 through 8
+            0x00  // Discharge off for cells 9 through 12, Discharge timer disabled
+        },
+        .config_b = {
+            0x0F, // Discharge off for cells 13 through 16, GPIO 6-9 = 1
+            0x00, // FDRF = 0, PS = 0, Discharge off for cells 17 and 18
+            0x00,
+            0x00,
+            0x00,
+            0x00
+        },
         // 2 bytes per module value, so each register group (6 bytes total) holds data of 3 modules.
         .volt_mappings = {
             // Cell Voltage Register Group A
@@ -119,8 +147,6 @@ void Module_Init(
             // Auxiliary Register Group B
             { {20, 21, 22, 23}, {24, 25, 26, 27}, {28, 29, 30, 31} },
             // Auxiliary Register Group C
-            { {-1, -1, -1, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1} },
-            // Auxiliary Register Group D
             { {-1, -1, -1, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1} }
         },
         // 4 bits per module value, so each 
@@ -142,12 +168,6 @@ void Module_Init(
     }
 
     Balancing_Init(slaves);
-
-    for (int ic_num = 0; ic_num < SLAVE_NUM_DEVICES; ic_num++) {
-        memcpy(slaves[ic_num].config_a, config_val_a, SLAVE_REG_SIZE_BYTES);
-        memcpy(slaves[ic_num].config_b, config_val_b, SLAVE_REG_SIZE_BYTES);
-    }
-
     Slave_Init(SPI_handle);
 
 #if (UNIT_TEST_ISOSPI != RUN)
@@ -171,7 +191,7 @@ void RequestVoltageMeasurement(void) {
 
 void GetVoltageForRegister_(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES], int reg_idx) {
     if (reg_idx >= SLAVE_NUM_VOLT_REG) {
-        LOG_ERROR("Voltage register %d is out of range!\r\n", reg_idx);
+        LOG_ERROR("Voltage register %d is out of range!", reg_idx);
         Error_Handler();
     }
 
@@ -265,15 +285,14 @@ int32_t ThermistorVoltToTemp_(uint32_t thermistor_uV) {
 
 void GetTemperatureForRegister_(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES], int reg_idx) {
     if (reg_idx >= SLAVE_NUM_TEMP_REG) {
-        LOG_ERROR("Temperature register %d is out of range!\r\n", reg_idx);
+        LOG_ERROR("Temperature register %d is out of range!", reg_idx);
         Error_Handler();
     }
 
     const Slave_Command_t aux_commands[SLAVE_NUM_TEMP_REG] = {
         CMD_RDAUXA,
         CMD_RDAUXB,
-        CMD_RDAUXC,
-        CMD_RDAUXD
+        CMD_RDAUXC
     };
     Slave_Command_t current_cmd = aux_commands[reg_idx];
 

@@ -67,7 +67,7 @@ SOFTWARE.
 uint16_t CRC15_POLY = 0x4599;
 void init_PEC15_Table()
 {
-	LOG_INFO("PEC Init\r\n");
+	LOG_INFO("PEC Init");
 	for (int i = 0; i < 256; i++)
 	{
 		uint16_t remainder = i << 7;
@@ -84,7 +84,7 @@ void init_PEC15_Table()
 			}
 		}
 		if (pec_15_table[i] != (remainder&0xFFFF)) {
-			LOG_ERROR("PEC table at index %d mismatch!\r\n", i);
+			LOG_ERROR("PEC table at index %d mismatch!", i);
 		}
 	}
 }

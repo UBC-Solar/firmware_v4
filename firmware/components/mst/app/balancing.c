@@ -37,7 +37,6 @@ void DoBalancing(pack_state_t *pack_state, module_t pack_modules[NUM_MODULES], s
         return;
     }
 
-    // Omg...
     for (int i = 0; i < SLAVE_NUM_DEVICES; i++) {
         for (int j = 0; j < SLAVE_NUM_BAL_REG; j++) {
             for (int k = 0; k < SLAVE_NUM_MODULE_PER_BAL_REG; k++) {
@@ -52,7 +51,7 @@ void DoBalancing(pack_state_t *pack_state, module_t pack_modules[NUM_MODULES], s
                     ? (pack_modules[module_idx].voltage_mv - pack_state->avg_voltage_mV)
                     : (pack_state->avg_voltage_mV - pack_modules[module_idx].voltage_mv);
                 
-                bool if_balance = voltage_diff_mv >= MIN_BALANCE_VOLT_DIFF_MV;
+                bool if_balance = MIN_BALANCE_VOLT_DIFF_MV <= voltage_diff_mv && voltage_diff_mv <= MAX_BALANCE_VOLT_DIFF_MV;
         
                 SetBalancingForModule_(i, j, k, if_balance);
             }

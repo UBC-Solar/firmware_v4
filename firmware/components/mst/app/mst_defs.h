@@ -41,18 +41,19 @@
 #define SLAVE_NUM_VOLT_REG 6
 #define SLAVE_NUM_MODULES_PER_VOLT_REG 3
 
-#define SLAVE_NUM_TEMP_REG 4
+#define SLAVE_NUM_TEMP_REG 3 // there are actually 4 totall auxillary registers, but we only ever use 2 of them
 #define SLAVE_NUM_VAL_PER_TEMP_REG 3
 #define SLAVE_NUM_MODULES_PER_TEMP_VAL 4
 
 #define SLAVE_NUM_BAL_REG 2
-#define SLAVE_NUM_MODULE_PER_BAL_REG 12
+#define SLAVE_NUM_MODULE_PER_BAL_REG 8
 
 #define SLAVE_TIMEOUT_MS 100U // ms - safety timeout threshold for Slave functions
 
 #define THERMISTOR_LUT_TABLE_SIZE 17
 
-#define MIN_BALANCE_VOLT_DIFF_MV 150U
+#define MIN_BALANCE_VOLT_DIFF_MV 100U
+#define MAX_BALANCE_VOLT_DIFF_MV 300U
 
 /* Configuration Register Group Parameters */
 

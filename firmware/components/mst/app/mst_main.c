@@ -35,30 +35,9 @@ void Initialize() {
     UART_Init(&huart1);
     CAN_Init(&hcan);
 
-    // Refer to the ADBMS1818 datasheet pages 65, 68, 69 for 
-    // format and content of configuration register groups A and B
-    uint8_t config_val_a[SLAVE_REG_SIZE_BYTES] =
-    {
-        0xF8 | (REFON << 2) | ADCOPT, // GPIO 1-5 pull-downs off, REFON, ADCOPT
-        (VUV & 0xFF), // VUV[7:0]
-		((uint8_t) (VOV << 4)) | (((uint8_t) (VUV >> 8)) & 0x0F), // VOV[4:0] | VUV[11:8]
-        (VOV >> 4), // VOV[11:4]
-		0x00, // Discharge off for cells 1 through 8
-        0x00  // Discharge off for cells 9 through 12, Discharge timer disabled
-    };
-	uint8_t config_val_b[SLAVE_REG_SIZE_BYTES] =
-    {
-        0x0F, // Discharge off for cells 13 through 16, GPIO 6-9 = 1
-        0x00, // FDRF = 0, PS = 0, Discharge off for cells 17 and 18
-        0x00,
-        0x00,
-        0x00,
-        0x00
-    };
-
     // Includes Slave_Init (SPI perhiperal initialization)
-    Module_Init(&hspi2, slaves, config_val_a, config_val_b);
-    LOG_INFO("MST initialization complete.\r\n");
+    Module_Init(&hspi2, slaves);
+    LOG_INFO("MST initialization complete.");
 }
 
 void CollectBoardData() {
@@ -107,23 +86,23 @@ void AnalyzeModuleData() {
     CheckForEmergency(pack_modules, &pack_faults, &pack_warnings);
 
     if (pack_faults.raw != 0) {
-        LOG_ERROR("Pack fault bits were not zero\r\n");
+        LOG_ERROR("Pack fault bits were not zero");
         Fault();
     }
     
     if (pack_warnings.raw != 0) {
-        LOG_INFO("Pack warnings present: 0x%X\r\n", pack_warnings.raw);
+        LOG_INFO("Pack warnings present: 0x%X", pack_warnings.raw);
     }
 
     ComputePackStatistics(pack_modules, &pack_state);
-    LOG_INFO("Pack stats - Total V: %lu mV, Avg T: %ld mC\r\n", pack_state.total_voltage_mV, pack_state.avg_temp_mC);
+    LOG_INFO("Pack stats - Total V: %lu mV, Avg T: %ld mC", pack_state.total_voltage_mV, pack_state.avg_temp_mC);
 }
 
 void DriveOutputs() {
     GPIO_Write(HLIM_EN_OUT_GPIO_Port, HLIM_EN_OUT_Pin, pack_state.hlim_enable);
     GPIO_Write(LLIM_EN_OUT_GPIO_Port, LLIM_EN_OUT_Pin, pack_state.llim_enable);
     
-    LOG_INFO("Outputs driven - HLIM: %d, LLIM: %d\r\n", pack_state.hlim_enable, pack_state.llim_enable);
+    LOG_INFO("Outputs driven - HLIM: %d, LLIM: %d", pack_state.hlim_enable, pack_state.llim_enable);
 
     uint32_t balancing_start_ms = HAL_GetTick();
     DoBalancing(&pack_state, pack_modules, slaves);
@@ -141,7 +120,7 @@ void SendCanMessages() {
     // CAN_SendMessage0x627();
     // CAN_SendMessage0x628();
     // CAN_SendMessage0x629();
-    LOG_DEBUG("All CAN messages queued for transmission.\r\n");
+    LOG_DEBUG("All CAN messages queued for transmission.");
 }
 
 
@@ -234,6 +213,8 @@ static bool DoesRegGroupMatch_(uint8_t reg_group1[SLAVE_NUM_DEVICES][SLAVE_REG_S
 }
 
 void Debug_SlaveTestCommsCycle(void) {
+    static bool scrutineering_enabled = true;
+    static int loop_count = 0;
     uint8_t test_data[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES] = {
         {0x55, 0x6E, 0x69, 0x42, 0x43, 0x20}
 #if SLAVE_NUM_DEVICES > 1U
@@ -252,14 +233,41 @@ void Debug_SlaveTestCommsCycle(void) {
 
     (void) reg_group_match;
 
-    //HAL_Delay(100);
-    //Slave_WakeUp();
+    // Refer to the ADBMS1818 datasheet pages 65, 68, 69 for 
+    // format and content of configuration register groups A and B
+    uint8_t config_val_a[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
+    uint8_t config_val_b[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
+
+    for (int i = 0; i < SLAVE_NUM_DEVICES; i++) {
+        config_val_a[i][0] = 0xF8 | (REFON << 2) | ADCOPT; // GPIO 1-5 pull-downs off, REFON, ADCOPT
+        config_val_a[i][1] = (VUV & 0xFF); // VUV[7:0]
+        config_val_a[i][2] = ((uint8_t) (VOV << 4)) | (((uint8_t) (VUV >> 8)) & 0x0F); // VOV[4:0] | VUV[11:8]
+        config_val_a[i][3] = (VOV >> 4); // VOV[11:4]
+        config_val_a[i][4] = 0x00; // Discharge off for cells 1 through 8
+        config_val_a[i][5] = 0x00; // Discharge off for cells 9 through 12, Discharge timer disabled
+
+        config_val_b[i][0] = 0x0F ^ (!scrutineering_enabled << 1); // Discharge off for cells 13 through 16, GPIO 6-9 = 1
+        config_val_b[i][1] = 0x00; // FDRF = 0, PS = 0, Discharge off for cells 17 and 18
+        config_val_b[i][2] = 0x00;
+        config_val_b[i][3] = 0x00;
+        config_val_b[i][4] = 0x00;
+        config_val_b[i][5] = 0x00;
+    }
+    
+    if (++loop_count % 4 == 0) {
+        scrutineering_enabled = !scrutineering_enabled;
+        GPIO_Write(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin, scrutineering_enabled);
+    }
+
+    Slave_WriteRegisterGroup(CMD_WRCFGA, config_val_a); // Write to Config. Reg. Group A
+    Slave_WriteRegisterGroup(CMD_WRCFGB, config_val_b); // Write to Config. Reg. Group B
+
     comm_status = Slave_ReadRegisterGroup(CMD_RDCOMM, test_data_rx);
     reg_group_match = DoesRegGroupMatch_(test_data, test_data_rx);
     
     GPIO_Write(LED_OUT_GPIO_Port, LED_OUT_Pin, reg_group_match);
 
-    LOG_INFO("Reg group match: %d. Comm error: %d\r\n", reg_group_match, comm_status.error);
+    LOG_INFO("Reg group match: %d. Comm error: %d. Config B first byte: %02X", reg_group_match, comm_status.error, config_val_b[0][0]);
     HAL_Delay(500);
 }
 
@@ -320,7 +328,7 @@ void Debug_SlaveTestBalanceCycle(void) {
         Slave_WriteRegisterGroup(CMD_WRCFGA, config_val_a); // Write to Config. Reg. Group A
         Slave_WriteRegisterGroup(CMD_WRCFGB, config_val_b); // Write to Config. Reg. Group B
     }
-    LOG_INFO("Turned all balancing pins %s\r\n", balance_enabled ? "ON" : "OFF");
+    LOG_INFO("Turned all balancing pins %s", balance_enabled ? "ON" : "OFF");
     balance_enabled = !balance_enabled;
 
 
@@ -330,7 +338,7 @@ void Debug_SlaveTestBalanceCycle(void) {
 void Debug_SlaveTestMuxCycle(void) {
     static unsigned current_mux_state = 0;
 
-    LOG_INFO("Set temp mux state to %u (SEL2 = %d, SEL1 = %d)\r\n", current_mux_state, (current_mux_state & 0x02) ? 1 : 0, (current_mux_state & 0x01) ? 1 : 0);
+    LOG_INFO("Set temp mux state to %u (SEL2 = %d, SEL1 = %d)", current_mux_state, (current_mux_state & 0x02) ? 1 : 0, (current_mux_state & 0x01) ? 1 : 0);
 
 
     int wait_time_ms = 10000;

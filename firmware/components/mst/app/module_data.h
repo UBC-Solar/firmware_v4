@@ -7,9 +7,7 @@
 
 void Module_Init(
 	SPI_HandleTypeDef *SPI_handle,
-	slave_t slaves[SLAVE_NUM_DEVICES],
-	uint8_t config_val_a[SLAVE_REG_SIZE_BYTES],
-	uint8_t config_val_b[SLAVE_REG_SIZE_BYTES]);
+	slave_t slaves[SLAVE_NUM_DEVICES]);
 void RequestVoltageMeasurement(void);
 void RetrieveVoltageMeasurement(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES]);
 void RequestTemperatureMeasurement(void);

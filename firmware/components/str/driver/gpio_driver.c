@@ -1,5 +1,6 @@
 #include "gpio_driver.h"
 
+#include "gpio_app.h"
 #include "main.h"
 
 volatile StrGpioCtx gpio_pin_state = {0};
@@ -23,17 +24,29 @@ void LightState(void)
 
 void CruiseState(uint32_t velocity)
 {
+    uint32_t cruise_set_velocity_kmh = ReadCruiseSetVelocity();
     bool cruise_status = (velocity > 0) && gpio_pin_state.cruise_state.cruise_en;
+
+    if (!cruise_status)
+    {
+        GetCruiseSetVelocity(velocity);
+        return;
+    }
 
     if (cruise_status && gpio_pin_state.cruise_state.cruise_inc)
     {
-        velocity++;
+        cruise_set_velocity_kmh++;
     }
 
     if (cruise_status && gpio_pin_state.cruise_state.cruise_dec)
     {
-        velocity--;
+        if (cruise_set_velocity_kmh > 0U)
+        {
+            cruise_set_velocity_kmh--;
+        }
     }
+
+    GetCruiseSetVelocity(cruise_set_velocity_kmh);
 }
 
 void GpioPollState(void)
@@ -52,7 +65,7 @@ void GpioPollState(void)
         gpio_pin_state.ptt_en = false;
     }
 
-    if (!!HAL_GPIO_ReadPin(NEXT_PAGE_GPIO_Port, NEXT_PAGE_Pin))
+    if (!HAL_GPIO_ReadPin(NEXT_PAGE_GPIO_Port, NEXT_PAGE_Pin))
     {
         gpio_pin_state.next_page = true;
     } else {
@@ -62,12 +75,16 @@ void GpioPollState(void)
 
 void StrInterruptHandler(uint16_t toggle)
 {
-    ToggleLedPin(DEBUG_LED0_PORT, DEBUG_LED0_PIN);
+    HAL_GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
 
     switch (toggle)
     {
     case CRUISE_CONTROL_Pin:
         gpio_pin_state.cruise_state.cruise_en = !gpio_pin_state.cruise_state.cruise_en;
+        if (gpio_pin_state.cruise_state.cruise_en)
+        {
+            GetCruiseSetVelocity(ReadCurrentVelocity());
+        }
         break;
 
     case REGEN_Pin:

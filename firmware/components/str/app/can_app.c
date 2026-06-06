@@ -2,16 +2,21 @@
 
 #include "CAN_comms.h"
 #include "can_driver.h"
+#include "gpio_driver.h"
 #include "hex_app.h"
 #include "main.h"
 #include "gpio_app.h"
 #include "stm32f1xx_hal_gpio.h"
 
+#include <string.h>
+
 #define STR_DISPLAY_MAX 99U
 #define STR_WHEEL_RADIUS_M 0.283f
 #define M_PI 3.14159
 
-void CanTasksInit(void)
+static void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg);
+
+void CanAppInit(void)
 {
     CAN_comms_config_t CAN_comms_config_str = {0};
     CAN_FilterTypeDef can_filter = {0};
@@ -40,7 +45,8 @@ void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 	{
 		CAN_ID = CAN_comms_Rx_msg->header.StdId; // Get CAN ID
 	}
-    void SteeringCanRxHandler(uint32_t msg_id, uint8_t* data);
+
+    SteeringCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
 }
 
 void SteeringCanRxHandler(uint32_t msg_id, uint8_t* data)
@@ -65,26 +71,32 @@ void SteeringVelocityCanMsgHandler(uint8_t* data)
     GetVelocity(velocity_kmh);
 }
 
-void TurnSignalHornPtt(bool turn_left, bool turn_right, bool horn, bool ptt, bool regen, bool next_page, bool cruise, uint16_t set_velocity_kmh)
+void TransmitDriveControlState(void)
 {
     CAN_comms_Tx_msg_t msg;
-    msg.header = drive_control_header;
+    uint16_t cruise_set_velocity_kmh = 0U;
+
+    msg.header = steering_header;
     msg.header.DLC = (uint8_t)CAN_DATA_SIZE;
 
     uint8_t data[CAN_DATA_SIZE] = {0};
 
-    data[0] =
-        (regen      ? (1U << 0) : 0U) |
-        (cruise     ? (1U << 1) : 0U) |
-        (next_page  ? (1U << 2) : 0U) |
-        (turn_left  ? (1U << 3) : 0U) |
-        (turn_right ? (1U << 4) : 0U) |
-        (horn       ? (1U << 5) : 0U) |
-        (ptt        ? (1U << 6) : 0U);
+    if (gpio_pin_state.cruise_state.cruise_en)
+    {
+        cruise_set_velocity_kmh = (uint16_t)ReadCruiseSetVelocity();
+    }
 
-    /* pack set velocity (km/h) into data[1..2] little-endian */
-    data[1] = (uint8_t)(set_velocity_kmh & 0xFF);
-    data[2] = (uint8_t)((set_velocity_kmh >> 8) & 0xFF);
+    data[0] =
+        ((uint8_t)gpio_pin_state.regen_en << 0) |
+        ((uint8_t)gpio_pin_state.cruise_state.cruise_en << 1) |
+        ((uint8_t)gpio_pin_state.next_page << 2) |
+        ((uint8_t)gpio_pin_state.lights_state.lts_en << 3) |
+        ((uint8_t)gpio_pin_state.lights_state.rts_en << 4) |
+        ((uint8_t)gpio_pin_state.horn_en << 5) |
+        ((uint8_t)gpio_pin_state.ptt_en << 6);
+
+    data[1] = (uint8_t)(cruise_set_velocity_kmh & 0xFFU);
+    data[2] = (uint8_t)((cruise_set_velocity_kmh >> 8) & 0xFFU);
 
     memcpy(msg.data, data, CAN_DATA_SIZE);
 

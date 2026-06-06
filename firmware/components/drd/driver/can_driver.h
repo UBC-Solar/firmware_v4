@@ -42,7 +42,7 @@
 
 
 /* CAN HEADERS */
-extern const CAN_TxHeaderTypeDef drive_control_header;
+extern const CAN_TxHeaderTypeDef steering_header;
 extern const CAN_TxHeaderTypeDef mdu_request_header;
 extern const CAN_TxHeaderTypeDef drd_diagnostic_header;
 extern const CAN_TxHeaderTypeDef time_since_bootup_can_header;

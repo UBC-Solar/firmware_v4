@@ -1,6 +1,8 @@
 #ifndef __INTERRUPTS_H__
 #define __INTERRUPTS_H__
 
+#include <stdint.h>
+
 /**
  * @brief GPIO external interrupt callback handler.
  *

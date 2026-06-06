@@ -14,7 +14,7 @@
 /**
  *  CAN Message Header for drive control
  */
-const CAN_TxHeaderTypeDef drive_control_header = {.StdId = MOTOR_DRIVE_CONTROL_ADDRESS,
+const CAN_TxHeaderTypeDef steering_header = {.StdId = MOTOR_DRIVE_CONTROL_ADDRESS,
                                                   .ExtId = 0x0000,
                                                   .IDE = CAN_ID_STD,
                                                   .RTR = CAN_RTR_DATA,

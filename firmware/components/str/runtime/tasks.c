@@ -1,6 +1,8 @@
 #include "tasks.h"
 
+#include "cmsis_os.h"
 #include "can_app.h"
+#include "gpio_app.h"
 #include "hex_driver.h"
 #include "hex_app.h"
 #include "main.h"
@@ -13,6 +15,7 @@ void StartSteeringOutputsTask(void *argument)
     for(;;)
     {
         StrState();
+        TransmitDriveControlState();
         osDelay(STEERING_TASK_DELAY);
     }
 }

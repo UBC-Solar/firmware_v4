@@ -57,7 +57,7 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-
+extern CAN_HandleTypeDef hcan;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -183,17 +183,31 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief This function handles EXTI line[9:5] interrupts.
+  * @brief This function handles USB high priority or CAN TX interrupts.
   */
-void EXTI9_5_IRQHandler(void)
+void USB_HP_CAN1_TX_IRQHandler(void)
 {
-  /* USER CODE BEGIN EXTI9_5_IRQn 0 */
+  /* USER CODE BEGIN USB_HP_CAN1_TX_IRQn 0 */
 
-  /* USER CODE END EXTI9_5_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(HORN_MCU_Pin);
-  /* USER CODE BEGIN EXTI9_5_IRQn 1 */
+  /* USER CODE END USB_HP_CAN1_TX_IRQn 0 */
+  HAL_CAN_IRQHandler(&hcan);
+  /* USER CODE BEGIN USB_HP_CAN1_TX_IRQn 1 */
 
-  /* USER CODE END EXTI9_5_IRQn 1 */
+  /* USER CODE END USB_HP_CAN1_TX_IRQn 1 */
+}
+
+/**
+  * @brief This function handles USB low priority or CAN RX0 interrupts.
+  */
+void USB_LP_CAN1_RX0_IRQHandler(void)
+{
+  /* USER CODE BEGIN USB_LP_CAN1_RX0_IRQn 0 */
+
+  /* USER CODE END USB_LP_CAN1_RX0_IRQn 0 */
+  HAL_CAN_IRQHandler(&hcan);
+  /* USER CODE BEGIN USB_LP_CAN1_RX0_IRQn 1 */
+
+  /* USER CODE END USB_LP_CAN1_RX0_IRQn 1 */
 }
 
 /**
@@ -204,8 +218,6 @@ void EXTI15_10_IRQHandler(void)
   /* USER CODE BEGIN EXTI15_10_IRQn 0 */
 
   /* USER CODE END EXTI15_10_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(PTT_MCU_Pin);
-  HAL_GPIO_EXTI_IRQHandler(REGEN_Pin);
   HAL_GPIO_EXTI_IRQHandler(CRUISE_CONTROL_Pin);
   /* USER CODE BEGIN EXTI15_10_IRQn 1 */
 

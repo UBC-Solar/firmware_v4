@@ -3,6 +3,7 @@
 #include "cmsis_os.h"
 #include "can_app.h"
 #include "gpio_app.h"
+#include "gpio_driver.h"
 #include "hex_driver.h"
 #include "hex_app.h"
 #include "main.h"
@@ -22,11 +23,22 @@ void StartSteeringOutputsTask(void *argument)
 
 void StartHexDisplayTask(void *argument)
 {
+    uint32_t display_velocity_kmh = 0U;
+
     HexDisplayInit();
 
     for(;;)
     {
-        HexDisplayWriteDecimal((uint8_t)ReadCurrentVelocity());
+        if (gpio_pin_state.cruise_state.cruise_en)
+        {
+            display_velocity_kmh = ReadCruiseSetVelocity();
+        }
+        else
+        {
+            display_velocity_kmh = ReadCurrentVelocity();
+        }
+
+        HexDisplayWriteDecimal((uint8_t)display_velocity_kmh);
         osDelay(HEX_TASK_DELAY);
     }
 }

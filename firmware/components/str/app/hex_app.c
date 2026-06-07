@@ -1,6 +1,12 @@
 /**
  * @file    hex_app.c
- * @brief   Hex display application implementation for the UBC Solar STR board.
+ * @brief   Hex display application implementation for UBC Solar STR board
+ *
+ * This file implements display formatting logic for clamping and writing vehicle speed values
+ * to the steering wheel hex display.
+ *
+ * @author  Tony Chen
+ * @date    Jun 7, 2026
  */
 
 /* INCLUDES */

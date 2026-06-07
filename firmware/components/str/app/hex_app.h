@@ -1,6 +1,12 @@
 /**
  * @file    hex_app.h
- * @brief   Hex display application interface for the UBC Solar STR board.
+ * @brief   Hex display application interface for UBC Solar STR board
+ *
+ * This file declares the application functions for parsing vehicle speed data and writing it
+ * to the steering wheel hex display.
+ *
+ * @author  Tony Chen
+ * @date    Jun 7, 2026
  */
 
 #ifndef __HEX__APP__H__

@@ -1,6 +1,8 @@
 /**
  * @file    hex_driver.c
- * @brief   AS1115 hex display driver implementation for the UBC Solar STR board.
+ * @brief   AS1115 hex display driver implementation for UBC Solar STR board
+ * @author  Tony Chen
+ * @date    Jun 7, 2026
  */
 
 /* INCLUDES */

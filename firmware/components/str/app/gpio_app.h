@@ -1,6 +1,12 @@
 /**
  * @file    gpio_app.h
- * @brief   GPIO application state interface for the UBC Solar STR board.
+ * @brief   GPIO application state interface for UBC Solar STR board
+ *
+ * This file declares the application functions for tracking current vehicle speed and cruise
+ * control set speed from STR board state.
+ *
+ * @author  Tony Chen
+ * @date    Jun 7, 2026
  */
 
 #ifndef GPIO_APP_H

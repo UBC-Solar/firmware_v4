@@ -1,6 +1,12 @@
 /**
  * @file    gpio_app.c
- * @brief   GPIO application state implementation for the UBC Solar STR board.
+ * @brief   GPIO application state implementation for UBC Solar STR board
+ *
+ * This file implements STR application state updates for GPIO inputs, vehicle speed, and cruise
+ * control set speed.
+ *
+ * @author  Tony Chen
+ * @date    Jun 7, 2026
  */
 
 /* INCLUDES */

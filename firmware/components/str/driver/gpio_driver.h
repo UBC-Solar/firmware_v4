@@ -1,6 +1,8 @@
 /**
  * @file    gpio_driver.h
- * @brief   GPIO driver interface for the UBC Solar STR board.
+ * @brief   GPIO driver interface for UBC Solar STR board
+ * @author  Tony Chen
+ * @date    Jun 7, 2026
  */
 
 #ifndef __GPIO_DRIVER_H__

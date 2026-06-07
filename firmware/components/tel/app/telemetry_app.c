@@ -92,7 +92,17 @@ static bool filter(uint32_t can_id)
 
 void TelAppTransmitMsg(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 {
-    // Not filtered yet??? TODO
+    if (CAN_comms_Rx_msg == NULL)
+    {
+        return;
+    }
+
+    uint32_t can_id = (CAN_comms_Rx_msg->header.IDE == CAN_ID_STD) ? CAN_comms_Rx_msg->header.StdId : CAN_comms_Rx_msg->header.ExtId;
+    if (!CELLULAR && !filter(can_id))
+    {
+        return;
+    }
+
     osSemaphoreAcquire(usart1_tx_semaphore, osWaitForever);   // Dont Tx until previous Tx is done
     TelAppSetMsg(&(CAN_comms_Rx_msg->header), CAN_comms_Rx_msg->data, &tel_msg);
     UART_telemetry_transmit(&tel_msg);
@@ -101,6 +111,17 @@ void TelAppTransmitMsg(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 // Change name of this to gps, imu send or something???
 void TelAppTransmitInternalMsg(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
 {
+    if (CAN_comms_Tx_msg == NULL)
+    {
+        return;
+    }
+
+    uint32_t can_id = (CAN_comms_Tx_msg->header.IDE == CAN_ID_STD) ? CAN_comms_Tx_msg->header.StdId : CAN_comms_Tx_msg->header.ExtId;
+    if (!CELLULAR && !filter(can_id))
+    {
+        return;
+    }
+
     osSemaphoreAcquire(usart1_tx_semaphore, osWaitForever);   // Dont Tx until previous Tx is done
     TelAppSetMsg_tx(&(CAN_comms_Tx_msg->header), CAN_comms_Tx_msg->data, &tel_msg);
     UART_telemetry_transmit(&tel_msg);

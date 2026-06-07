@@ -19,13 +19,13 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
-#include "cmsis_os2.h"
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "can_app.h"
 #include "tasks.h"
 #include "telemetry_driver.h"
 /* USER CODE END Includes */
@@ -136,6 +136,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+  CanAppInit();
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */

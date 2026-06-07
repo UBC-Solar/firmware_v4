@@ -1,8 +1,6 @@
 /**
  * @file    can_app.c
  * @brief   CAN application implementation for the UBC Solar STR board.
- *
- * Receives MDU velocity frames and transmits steering wheel control state.
  */
 
 /* INCLUDES */

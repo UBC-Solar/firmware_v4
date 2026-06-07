@@ -1,3 +1,11 @@
+/**
+ * @file    can_app.c
+ * @brief   CAN application implementation for the UBC Solar STR board.
+ *
+ * Receives MDU velocity frames and transmits steering wheel control state.
+ */
+
+/* INCLUDES */
 #include "can_app.h"
 
 #include "CAN_comms.h"
@@ -10,12 +18,19 @@
 
 #include <string.h>
 
+/* DEFINES */
 #define STR_DISPLAY_MAX 99U
 #define STR_WHEEL_RADIUS_M 0.283f
 #define M_PI 3.14159
 
+/* FUNCTION PROTOTYPES */
+/**
+ * @brief Callback for processing received CAN messages.
+ * @param CAN_comms_Rx_msg Pointer to the received CAN message structure.
+ */
 static void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg);
 
+/* CAN INIT */
 void CanAppInit(void)
 {
     CAN_comms_config_t CAN_comms_config_str = {0};
@@ -29,7 +44,8 @@ void CanAppInit(void)
     CAN_comms_init(&CAN_comms_config_str);
 }
 
-void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
+/* CAN RX */
+static void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 {
 	uint32_t CAN_ID = 0;
 	if (CAN_comms_Rx_msg == NULL)
@@ -49,6 +65,11 @@ void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
     SteeringCanRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
 }
 
+/**
+ * @brief Handles received steering-wheel CAN dependencies.
+ * @param msg_id Received CAN message ID.
+ * @param data Pointer to CAN payload bytes.
+ */
 void SteeringCanRxHandler(uint32_t msg_id, uint8_t* data)
 {
     if (msg_id == FRAME0)
@@ -57,6 +78,10 @@ void SteeringCanRxHandler(uint32_t msg_id, uint8_t* data)
     }
 }
 
+/**
+ * @brief Converts MDU wheel speed data into vehicle speed for STR state.
+ * @param data Pointer to the MDU velocity CAN payload.
+ */
 void SteeringVelocityCanMsgHandler(uint8_t* data)
 {
     if (data == NULL)
@@ -71,6 +96,7 @@ void SteeringVelocityCanMsgHandler(uint8_t* data)
     GetVelocity(velocity_kmh);
 }
 
+/* CAN TX */
 void TransmitDriveControlState(void)
 {
     CAN_comms_Tx_msg_t msg;

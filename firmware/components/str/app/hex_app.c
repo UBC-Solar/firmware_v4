@@ -1,9 +1,17 @@
+/**
+ * @file    hex_app.c
+ * @brief   Hex display application implementation for the UBC Solar STR board.
+ */
+
+/* INCLUDES */
 #include "hex_app.h"
 
 #include <math.h>
 
+/* DEFINES */
 #define STR_DISPLAY_MAX 99
 
+/* DISPLAY OUTPUT */
 void HexDisplayWriteDecimal(uint8_t num)
 {
     if (num > STR_DISPLAY_MAX) // display is limited to 2 decimal places

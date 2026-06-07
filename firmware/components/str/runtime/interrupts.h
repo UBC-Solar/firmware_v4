@@ -1,8 +1,15 @@
+/**
+ * @file    interrupts.h
+ * @brief   Interrupt callback interface for the UBC Solar STR board.
+ */
+
 #ifndef __INTERRUPTS_H__
 #define __INTERRUPTS_H__
 
+/* INCLUDES */
 #include <stdint.h>
 
+/* FUNCTION PROTOTYPES */
 /**
  * @brief GPIO external interrupt callback handler.
  *

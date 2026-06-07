@@ -1,10 +1,18 @@
+/**
+ * @file    gpio_driver.c
+ * @brief   GPIO driver implementation for the UBC Solar STR board.
+ */
+
+/* INCLUDES */
 #include "gpio_driver.h"
 
 #include "gpio_app.h"
 #include "main.h"
 
+/* GLOBAL VARIABLES */
 volatile StrGpioCtx gpio_pin_state = {0};
 
+/* GPIO POLLING */
 void LightState(void)
 {
     if (!HAL_GPIO_ReadPin(RTS_IN_GPIO_Port, RTS_IN_Pin))
@@ -22,6 +30,10 @@ void LightState(void)
     }
 }
 
+/**
+ * @brief Updates cruise set speed on switch edges while cruise is enabled.
+ * @param velocity Current vehicle velocity in km/h.
+ */
 void CruiseState(uint32_t velocity)
 {
     static bool last_cruise_inc = false;
@@ -89,6 +101,7 @@ void GpioPollState(void)
     }
 }
 
+/* GPIO INTERRUPTS */
 void StrInterruptHandler(uint16_t toggle)
 {
     if (toggle != CRUISE_CONTROL_Pin)

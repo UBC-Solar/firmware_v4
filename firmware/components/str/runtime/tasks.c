@@ -1,3 +1,9 @@
+/**
+ * @file    tasks.c
+ * @brief   FreeRTOS task implementation for the UBC Solar STR board.
+ */
+
+/* INCLUDES */
 #include "tasks.h"
 
 #include "cmsis_os.h"
@@ -8,9 +14,11 @@
 #include "hex_app.h"
 #include "main.h"
 
+/* DEFINES */
 #define STEERING_TASK_DELAY 100
 #define HEX_TASK_DELAY 100 // adjust
 
+/* RTOS TASKS */
 void StartSteeringOutputsTask(void *argument)
 {
     for(;;)

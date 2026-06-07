@@ -1,5 +1,12 @@
+/**
+ * @file    hex_driver.c
+ * @brief   AS1115 hex display driver implementation for the UBC Solar STR board.
+ */
+
+/* INCLUDES */
 #include "hex_driver.h"
 
+/* DEFINES */
 #define AS1115_ADDR_7BIT       0x00
 #define AS1115_ADDR_HAL        (AS1115_ADDR_7BIT << 1)
 
@@ -9,8 +16,10 @@
 #define AS1115_REG_SHUTDOWN    0x0C
 #define AS1115_REG_TEST        0x0F
 
+/* EXTERNAL VARIABLES */
 extern I2C_HandleTypeDef hi2c1;
 
+/* DISPLAY INIT */
 bool HexDisplayInit(void)
 {
     // Disable display test mode
@@ -46,6 +55,7 @@ bool HexDisplayInit(void)
     return true;
 }
 
+/* DISPLAY IO */
 HAL_StatusTypeDef HexDisplayWriteReg(uint8_t reg, uint8_t data)
 {
     uint8_t i2c_buf[2] = {reg, data};

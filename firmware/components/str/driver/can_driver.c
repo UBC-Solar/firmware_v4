@@ -1,5 +1,12 @@
+/**
+ * @file    can_driver.c
+ * @brief   CAN driver implementation for the UBC Solar STR board.
+ */
+
+/* INCLUDES */
 #include "can_driver.h"
 
+/* GLOBAL VARIABLES */
 const CAN_TxHeaderTypeDef steering_header = {
 	.StdId = STR_CAN_MSG_ID,
 	.ExtId = 0x0000,
@@ -8,6 +15,7 @@ const CAN_TxHeaderTypeDef steering_header = {
 	.DLC = 8U,
 };
 
+/* CAN FILTERS */
 void CanFilterInit(CAN_FilterTypeDef* can_filter)
 {
 	can_filter->FilterIdHigh = 0x0000;
@@ -20,4 +28,3 @@ void CanFilterInit(CAN_FilterTypeDef* can_filter)
 	can_filter->FilterScale = CAN_FILTERSCALE_32BIT;
 	can_filter->FilterActivation = CAN_FILTER_ENABLE;
 }
-

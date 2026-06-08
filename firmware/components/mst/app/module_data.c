@@ -192,7 +192,7 @@ void RequestVoltageMeasurement(void) {
 void GetVoltageForRegister_(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES], int reg_idx) {
     if (reg_idx >= SLAVE_NUM_VOLT_REG) {
         LOG_ERROR("Voltage register %d is out of range!", reg_idx);
-        Error_Handler();
+        ERROR_HANDLER_LOGGED();
     }
 
     Slave_Command_t current_cmd = cell_voltage_commands_lut[reg_idx];
@@ -204,7 +204,7 @@ void GetVoltageForRegister_(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_mod
     Slave_Status_t status = Slave_ReadRegisterGroup(current_cmd, rx_data);
     if (status.error != Slave_OK) {
         LOG_ERROR("SPI comm error getting voltage. Err: %d, Dev: %d", status.error, status.device_num);
-        Error_Handler();
+        ERROR_HANDLER_LOGGED();
     }
 
     for (int slave_idx = 0; slave_idx < SLAVE_NUM_DEVICES; slave_idx++) {
@@ -234,8 +234,11 @@ void RetrieveVoltageMeasurement(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack
 }
 
 void RequestTemperatureMeasurement(void) {
+    uint32_t start_ms = HAL_GetTick();
     Slave_WakeUp();
     Slave_SendCmd(CMD_ADAX_ALL);
+    uint32_t end_ms = HAL_GetTick();
+    LOG_DEBUG("RequestTemperatureMeasurement driver interact time: %lu ms", end_ms - start_ms);
 }
 
 /**
@@ -286,7 +289,7 @@ int32_t ThermistorVoltToTemp_(uint32_t thermistor_uV) {
 void GetTemperatureForRegister_(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES], int reg_idx) {
     if (reg_idx >= SLAVE_NUM_TEMP_REG) {
         LOG_ERROR("Temperature register %d is out of range!", reg_idx);
-        Error_Handler();
+        ERROR_HANDLER_LOGGED();
     }
 
     const Slave_Command_t aux_commands[SLAVE_NUM_TEMP_REG] = {
@@ -299,13 +302,18 @@ void GetTemperatureForRegister_(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack
     uint8_t rx_data[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
     memset(rx_data, 0, sizeof(rx_data));
     // TODO: remove test-only wakeup
+    
+    uint32_t driver_start_ms = HAL_GetTick();
     Slave_WakeUp();
     Slave_Status_t status = Slave_ReadRegisterGroup(current_cmd, rx_data);
+    uint32_t driver_end_ms = HAL_GetTick();
+    
     if (status.error != Slave_OK) {
         LOG_ERROR("SPI comm error getting temp. Err: %d, Dev: %d", status.error, status.device_num);
-        Error_Handler();
+        ERROR_HANDLER_LOGGED();
     }
 
+    uint32_t compute_start_ms = HAL_GetTick();
     for (int slave_idx = 0; slave_idx < SLAVE_NUM_DEVICES; slave_idx++) {
         
         int mux_state = slaves[slave_idx].temp_mux_state;
@@ -324,16 +332,27 @@ void GetTemperatureForRegister_(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack
             }
         }
     }
+    uint32_t compute_end_ms = HAL_GetTick();
+
+    LOG_DEBUG("GetTemperatureForRegister reg %d - Driver read: %lu ms, Compute: %lu ms", 
+        reg_idx, driver_end_ms - driver_start_ms, compute_end_ms - compute_start_ms);
 }
 
 void RetrieveTemperatureMeasurement(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES]) {
-    Slave_WakeUp();
+    uint32_t start_ms = HAL_GetTick();
 
+    Slave_WakeUp();
     Slave_SendCmdAndPoll(CMD_PLADC);
+    
+    uint32_t poll_end_ms = HAL_GetTick();
 
     for (int reg_idx = 0; reg_idx < SLAVE_NUM_TEMP_REG; reg_idx++) {
         GetTemperatureForRegister_(slaves, pack_modules, reg_idx);
     }
+    
+    uint32_t ret_end_ms = HAL_GetTick();
+    LOG_DEBUG("RetrieveTemperatureMeasurement total: %lu ms (Poll: %lu ms, Read loop: %lu ms)",
+               ret_end_ms - start_ms, poll_end_ms - start_ms, ret_end_ms - poll_end_ms);
 }
 
 extern faults_t pack_faults;
@@ -345,15 +364,12 @@ void ComputePackStatistics(module_t pack_modules[NUM_MODULES], pack_state_t *pac
     for (int i = 0; i < NUM_MODULES; i++) {
         total_voltage_mV += pack_modules[i].voltage_mv;
         total_temp_mC += pack_modules[i].temperature_mC;
-
-        LOG_DEBUG("Module %d - Voltage: %d.%02dV, Temp: %d.%02dC", 
-            i, 
-            pack_modules[i].voltage_mv / 1000, pack_modules[i].voltage_mv % 1000, 
-            pack_modules[i].temperature_mC / 1000, pack_modules[i].temperature_mC % 1000);
     }
-    pack_state->total_voltage_mV = total_voltage_mV;
-    pack_state->avg_voltage_mV = total_voltage_mV / NUM_MODULES;
-    pack_state->avg_temp_mC = total_temp_mC / NUM_MODULES;
+    pack_state->total_voltage_mV = (uint32_t) total_voltage_mV;
+    pack_state->avg_voltage_mV = (uint32_t) total_voltage_mV / NUM_MODULES;
+    pack_state->avg_temp_mC = (int32_t ) total_temp_mC / NUM_MODULES;
+
+    LOG_DEBUG("Pack stats - Total V: %lu mV, Avg V: %lu mV, Total T: %ld mC, Avg T: %ld mC", pack_state->total_voltage_mV, pack_state->avg_voltage_mV, total_temp_mC, pack_state->avg_temp_mC);
 
     LOG_DEBUG("Pack statuses - Balancing Active: %d, Balancing Enable: %d, Scrutineering: %d", 
               pack_state->balancing_active, pack_state->balancing_enable, pack_state->scrutineering_enable);
@@ -366,6 +382,22 @@ void ComputePackStatistics(module_t pack_modules[NUM_MODULES], pack_state_t *pac
     LOG_DEBUG("Pack faults - Raw: 0x%02X, UV: %d, OV: %d, OT: %d, UT: %d", 
               pack_faults.raw, pack_faults.bits.fault_under_voltage, pack_faults.bits.fault_over_voltage, 
               pack_faults.bits.fault_over_temperature, pack_faults.bits.fault_under_temperature);
+
+    
+    for (int i = 0; i < NUM_MODULES; i++) {
+
+        bool is_module_outlier = 
+            pack_modules[i].voltage_mv < (pack_state->avg_voltage_mV * 0.7) || 
+            pack_modules[i].voltage_mv > (pack_state->avg_voltage_mV * 1.3) ||
+            pack_modules[i].temperature_mC < (pack_state->avg_temp_mC - 1000) ||
+            pack_modules[i].temperature_mC > (pack_state->avg_temp_mC + 1000);
+
+        LOG_DEBUG("Module %d - Voltage: %d.%02dV, Temp: %d.%02dC %s", 
+            i, 
+            pack_modules[i].voltage_mv / 1000, pack_modules[i].voltage_mv % 1000, 
+            pack_modules[i].temperature_mC / 1000, pack_modules[i].temperature_mC % 1000,
+            is_module_outlier ? " <-- OUTLIER" : "");
+    }
 }
 
 void SetTempMuxState(slave_t slaves[SLAVE_NUM_DEVICES], unsigned new_state) {

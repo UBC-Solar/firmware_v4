@@ -34,7 +34,7 @@ typedef union {
 } warnings_t;
 
 
-typedef union {
+typedef struct {
     bool balancing_active : 1;
     bool balancing_enable : 1;
     bool scrutineering_enable : 1;

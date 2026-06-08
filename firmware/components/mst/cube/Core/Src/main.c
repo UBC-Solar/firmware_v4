@@ -106,7 +106,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    #if (UNIT_TEST_MCU != RUN) && (UNIT_TEST_IO != RUN) && (UNIT_TEST_CAN != RUN) && (UNIT_TEST_ISOSPI != RUN) && (UNIT_TEST_SLAVE != RUN)
+    // #if (UNIT_TEST_MCU != RUN) && (UNIT_TEST_IO != RUN) && (UNIT_TEST_CAN != RUN) && (UNIT_TEST_ISOSPI != RUN) && (UNIT_TEST_SLAVE != RUN)
     /**
      * Mainloop
      */
@@ -115,7 +115,8 @@ int main(void)
     AnalyzeModuleData();
     DriveOutputs();
     SendCanMessages();
-    #endif
+    HAL_Delay(1000);
+    // #endif
 
     /**
      * Tests
@@ -137,8 +138,8 @@ int main(void)
     #endif // UNIT_TEST_ISOSPI
 
     #if (UNIT_TEST_SLAVE == RUN)
-    Debug_SlaveTestCommsCycle();
-    // Debug_SlaveTestBalanceCycle();
+    // Debug_SlaveTestCommsCycle();
+    Debug_SlaveTestBalanceScrutCycle();
     // Debug_SlaveTestMuxCycle();
     #endif // UNIT_TEST_SLAVE
     /* USER CODE END WHILE */
@@ -212,7 +213,17 @@ void Error_Handler(void)
 
   while (1)
   {
-    HAL_Delay(200);
+    uint32_t clockFreq = HAL_RCC_GetSysClockFreq();
+    // Scale factor between repetitions and clock frequency is related to
+    // number of clock cycles needed to execute loop - determined imperically
+    uint32_t repetitions = clockFreq / (9U * 8U); // 9 clock cycles per loop, 1s / 125ms = 8
+    for (uint32_t i = 0; i < repetitions; i++)
+    {
+      asm volatile (
+        "NOP\n"
+      );
+    }
+
     GPIO_Toggle(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin);
   }
   /* USER CODE END Error_Handler_Debug */

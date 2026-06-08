@@ -63,22 +63,29 @@ void CollectModuleData() {
     if (pack_state.balancing_active) {
         ResumeAllBalancing();
     }
+    
+    uint32_t voltage_end_ms = HAL_GetTick();
 
     uint32_t temp_start_ms = HAL_GetTick();
     
     for (int mux_idx = 0; mux_idx < SLAVE_NUM_MODULES_PER_TEMP_VAL; mux_idx++) {
         SetTempMuxState(slaves, mux_idx);
-        HAL_Delay(10); // Give the physical multiplexer chips time to settle
+        for (int i = 0; i < 10; i++) {
+            HAL_Delay(100); // Give the physical multiplexer chips time to settle
+            GPIO_Toggle(LED_OUT_GPIO_Port, LED_OUT_Pin);
+        }
         RequestTemperatureMeasurement();
         RetrieveTemperatureMeasurement(slaves, pack_modules);
     }
     
     uint32_t temp_end_ms = HAL_GetTick();
     
+    uint32_t voltage_duration = voltage_end_ms - voltage_start_ms;
+    uint32_t temp_duration = temp_end_ms - temp_start_ms;
+    uint32_t total_duration = temp_end_ms - voltage_start_ms;
+    
     LOG_DEBUG("Voltage measurement: %lu ms, Temperature measurement: %lu ms, Total: %lu ms", 
-              temp_start_ms - voltage_start_ms, 
-              temp_end_ms - temp_start_ms, 
-              temp_end_ms - voltage_start_ms);
+              voltage_duration, temp_duration, total_duration);
 }
 
 
@@ -95,7 +102,7 @@ void AnalyzeModuleData() {
     }
 
     ComputePackStatistics(pack_modules, &pack_state);
-    LOG_INFO("Pack stats - Total V: %lu mV, Avg T: %ld mC", pack_state.total_voltage_mV, pack_state.avg_temp_mC);
+    LOG_INFO("Pack stats - Total V: %lu mV, Avg V: %lu mV, Avg T: %ld mC", pack_state.total_voltage_mV, pack_state.avg_voltage_mV, pack_state.avg_temp_mC);
 }
 
 void DriveOutputs() {
@@ -105,10 +112,11 @@ void DriveOutputs() {
     LOG_INFO("Outputs driven - HLIM: %d, LLIM: %d", pack_state.hlim_enable, pack_state.llim_enable);
 
     uint32_t balancing_start_ms = HAL_GetTick();
-    DoBalancing(&pack_state, pack_modules, slaves);
+    // DoBalancing(&pack_state, pack_modules, slaves);
     uint32_t balancing_end_ms = HAL_GetTick();
 
-    LOG_DEBUG("Balancing commands: %lu ms", balancing_end_ms - balancing_start_ms);
+    uint32_t balancing_duration = balancing_end_ms - balancing_start_ms;
+    LOG_DEBUG("Balancing commands: %lu ms", balancing_duration);
 }
 
 
@@ -271,68 +279,47 @@ void Debug_SlaveTestCommsCycle(void) {
     HAL_Delay(500);
 }
 
-void Debug_SlaveTestBalanceCycle(void) {
-    static bool balance_enabled = true;
+void Debug_SlaveTestBalanceScrutCycle(void) {
+    bool balance_enabled = pack_state.balancing_enable;
+    bool scrutineering_enabled = pack_state.scrutineering_enable;
     Slave_WakeUp();
 
     ResumeAllBalancing();
-    Debug_DoBalancing(slaves, balance_enabled);
 
-    if (balance_enabled) {
-        // Refer to the ADBMS1818 datasheet pages 65, 68, 69 for 
-        // format and content of configuration register groups A and B
-        uint8_t config_val_a[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
-        uint8_t config_val_b[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
+    // Refer to the ADBMS1818 datasheet pages 65, 68, 69 for 
+    // format and content of configuration register groups A and B
+    uint8_t config_val_a[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
+    uint8_t config_val_b[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
 
-        for (int i = 0; i < SLAVE_NUM_DEVICES; i++) {
-            config_val_a[i][0] = 0xF8 | (REFON << 2) | ADCOPT; // GPIO 1-5 pull-downs off, REFON, ADCOPT
-            config_val_a[i][1] = (VUV & 0xFF); // VUV[7:0]
-            config_val_a[i][2] = ((uint8_t) (VOV << 4)) | (((uint8_t) (VUV >> 8)) & 0x0F); // VOV[4:0] | VUV[11:8]
-            config_val_a[i][3] = (VOV >> 4); // VOV[11:4]
-            config_val_a[i][4] = 0xFF; // Discharge off for cells 1 through 8
-            config_val_a[i][5] = 0x0F; // Discharge off for cells 9 through 12, Discharge timer disabled
+    for (int i = 0; i < SLAVE_NUM_DEVICES; i++) {
+        config_val_a[i][0] = 0xF8 | (REFON << 2) | ADCOPT; // GPIO 1-5 pull-downs off, REFON, ADCOPT
+        config_val_a[i][1] = (VUV & 0xFF); // VUV[7:0]
+        config_val_a[i][2] = ((uint8_t) (VOV << 4)) | (((uint8_t) (VUV >> 8)) & 0x0F); // VOV[4:0] | VUV[11:8]
+        config_val_a[i][3] = (VOV >> 4); // VOV[11:4]
+        config_val_a[i][4] = balance_enabled ? 0xFF : 0x00; // Discharge off for cells 1 through 8
+        config_val_a[i][5] = balance_enabled ? 0x0F : 0x00; // Discharge off for cells 9 through 12, Discharge timer disabled
 
-            config_val_b[i][0] = 0xFF; // Discharge off for cells 13 through 16, GPIO 6-9 = 1
-            config_val_b[i][1] = 0x00; // FDRF = 0, PS = 0, Discharge off for cells 17 and 18
-            config_val_b[i][2] = 0x00;
-            config_val_b[i][3] = 0x00;
-            config_val_b[i][4] = 0x00;
-            config_val_b[i][5] = 0x00;
-        }
+        config_val_b[i][0] = balance_enabled ? 0xFF : 0x0F;
+        config_val_b[i][0] = config_val_b[i][0] ^ (scrutineering_enabled << 1); // GPIO 6-9 = 1 when scrutineering enabled
+        config_val_b[i][1] = 0x00; // FDRF = 0, PS = 0, Discharge off for cells 17 and 18
+        config_val_b[i][2] = 0x00;
+        config_val_b[i][3] = 0x00;
+        config_val_b[i][4] = 0x00;
+        config_val_b[i][5] = 0x00;
+    }
 
+    Slave_WriteRegisterGroup(CMD_WRCFGA, config_val_a); // Write to Config. Reg. Group A
+    Slave_WriteRegisterGroup(CMD_WRCFGB, config_val_b); // Write to Config. Reg. Group B
+
+    LOG_INFO("Balancing pins %s, Scrutineering mode %s", balance_enabled ? "ON" : "OFF", scrutineering_enabled ? "ON" : "OFF");
+    // balance_enabled = !balance_enabled;
+
+    for (int i = 0; i < 5; i++) {
+        HAL_Delay(500);
         Slave_WriteRegisterGroup(CMD_WRCFGA, config_val_a); // Write to Config. Reg. Group A
         Slave_WriteRegisterGroup(CMD_WRCFGB, config_val_b); // Write to Config. Reg. Group B
+        HAL_Delay(500);
     }
-    else {
-        // Refer to the ADBMS1818 datasheet pages 65, 68, 69 for 
-        // format and content of configuration register groups A and B
-        uint8_t config_val_a[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
-        uint8_t config_val_b[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
-
-        for (int i = 0; i < SLAVE_NUM_DEVICES; i++) {
-            config_val_a[i][0] = 0xF8 | (REFON << 2) | ADCOPT; // GPIO 1-5 pull-downs off, REFON, ADCOPT
-            config_val_a[i][1] = (VUV & 0xFF); // VUV[7:0]
-            config_val_a[i][2] = ((uint8_t) (VOV << 4)) | (((uint8_t) (VUV >> 8)) & 0x0F); // VOV[4:0] | VUV[11:8]
-            config_val_a[i][3] = (VOV >> 4); // VOV[11:4]
-            config_val_a[i][4] = 0x00; // Discharge off for cells 1 through 8
-            config_val_a[i][5] = 0x00; // Discharge off for cells 9 through 12, Discharge timer disabled
-
-            config_val_b[i][0] = 0x0F; // Discharge off for cells 13 through 16, GPIO 6-9 = 1
-            config_val_b[i][1] = 0x00; // FDRF = 0, PS = 0, Discharge off for cells 17 and 18
-            config_val_b[i][2] = 0x00;
-            config_val_b[i][3] = 0x00;
-            config_val_b[i][4] = 0x00;
-            config_val_b[i][5] = 0x00;
-        }
-        
-        Slave_WriteRegisterGroup(CMD_WRCFGA, config_val_a); // Write to Config. Reg. Group A
-        Slave_WriteRegisterGroup(CMD_WRCFGB, config_val_b); // Write to Config. Reg. Group B
-    }
-    LOG_INFO("Turned all balancing pins %s", balance_enabled ? "ON" : "OFF");
-    balance_enabled = !balance_enabled;
-
-
-    HAL_Delay(500);
 }
 
 void Debug_SlaveTestMuxCycle(void) {
@@ -342,8 +329,11 @@ void Debug_SlaveTestMuxCycle(void) {
 
 
     int wait_time_ms = 10000;
+    bool debug_led = true;
     for (int i = 0; i < wait_time_ms / 100; i++) {
         SetTempMuxState(slaves, current_mux_state);
+        GPIO_Write(LED_OUT_GPIO_Port, LED_OUT_Pin, debug_led ? GPIO_PIN_SET : GPIO_PIN_RESET);
+        debug_led = !debug_led;
         HAL_Delay(100);
     }
 

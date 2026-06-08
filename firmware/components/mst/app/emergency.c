@@ -18,12 +18,12 @@ void CheckForEmergency(module_t *pack_modules, faults_t *pack_faults, warnings_t
 
         module->faults.bits.fault_over_voltage = module->voltage_mv >= MAX_VOLTAGE_mV;
         module->faults.bits.fault_under_voltage = module->voltage_mv <= MIN_VOLTAGE_mV;
-        module->faults.bits.fault_over_temperature = module->temperature_mC >= MAX_TEMP_degC;
-        module->faults.bits.fault_under_temperature = module->temperature_mC <= MIN_TEMP_degC;
+        module->faults.bits.fault_over_temperature = module->temperature_mC >= (MAX_TEMP_degC*1000);
+        module->faults.bits.fault_under_temperature = module->temperature_mC <= (MIN_TEMP_degC*1000);
 
         module->warnings.bits.warn_low_voltage = module->voltage_mv <= WARN_LOW_VOLTAGE_mV;
         module->warnings.bits.warn_high_voltage = module->voltage_mv >= WARN_HIGH_VOLTAGE_mV;
-        module->warnings.bits.warn_high_temperature = module->temperature_mC >= WARN_HIGH_TEMP_degC;
+        module->warnings.bits.warn_high_temperature = module->temperature_mC >= (WARN_HIGH_TEMP_degC*1000);
 
         // Sum up all faults and warnings across each module
         pack_faults->raw |= module->faults.raw;

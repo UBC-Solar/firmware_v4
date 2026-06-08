@@ -24,7 +24,7 @@
  */
 // The number of modules used by the pack depends on
 // whether scrutineering is enabled.
-#define NUM_MODULES 32U
+#define NUM_MODULES 16U
 #define NUM_CELLS_PER_MODULE 13U
 
 // Slave(board)s
@@ -101,4 +101,4 @@
 #define UNIT_TEST_IO SKIP
 #define UNIT_TEST_CAN SKIP
 #define UNIT_TEST_ISOSPI SKIP
-#define UNIT_TEST_SLAVE SKIP
+#define UNIT_TEST_SLAVE RUN

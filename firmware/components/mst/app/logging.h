@@ -19,4 +19,4 @@
     do { if (CURRENT_LOG_LEVEL <= LOG_LEVEL_ERROR) DEBUG_IO_PRINT("[ERROR] " fmt "\r\n", ##__VA_ARGS__); } while(0)
 
 #define ERROR_HANDLER_LOGGED() \
-    do { LOG_ERROR("Entering Error_Handler from %s:%d.", __FILE__, __LINE__); Error_Handler(); } while (0)
+    do { LOG_ERROR("Entering Error_Handler from %s:%d.", __FILE_NAME__, __LINE__); Error_Handler(); } while (0)

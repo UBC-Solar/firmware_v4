@@ -54,6 +54,8 @@ void HVC_TestShuntCycle() {
 
 #if (INT_TEST_CAN == RUN)
 void HVC_TestCanCycle() {
+    GPIO_Write(DIST_CTRL_GPIO_Port, DIST_CTRL_Pin, GPIO_PIN_SET);
     CAN_SendMessgeDebug();
 }
 #endif // (INT_TEST_CAN == RUN)
+

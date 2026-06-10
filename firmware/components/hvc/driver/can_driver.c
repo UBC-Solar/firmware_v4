@@ -187,6 +187,24 @@ void CAN_SendMessageXXX()
 }
 
 
+/**
+ * @brief TEMPLATE function for sending CAN messages
+ *
+ * @param pack pack data structure that data will be read from
+ */
+void CAN_SendMessage323()
+{
+    CAN_TxMessage_t txMessage = {0};
+
+    // Note: replace with actual values
+    txMessage.tx_header.StdId = 0x323U;
+    txMessage.tx_header.DLC = 8;
+    txMessage.data[0] = 1U;
+
+    CAN_QueueTxMessage(&txMessage);
+}
+
+
 #if (INT_TEST_CAN == RUN)
 /**
  * @brief Send DEBUG CAN message intended for hardware unit tests
@@ -229,14 +247,16 @@ void CAN_RecievedMessageCallback(uint32_t fifo_num)
 
     new_rx_message.timestamp = HAL_GetTick();
 
-    /**
-     * TODO: do something with the new_rx_message!
-     *  Do you want to add it to some global data structure for futur processing?
-     *  Or do you want to call your own functions here to parse into it right away?
-     */
-    if (new_rx_message.rx_header.StdId == TEL_HEARTBEAT_ID) {
-        tel_heartbeat_received = true;
-}
+    switch (new_rx_message.rx_header.StdId) {
+        case TEL_HEARTBEAT_ID:
+            tel_heartbeat_received = true;
+            break;
+        case MST_HEARTBEAT_ID:
+            mst_heartbeat_received = true;
+            break;
+        default:
+            break;
+    }
     GPIO_Toggle(DEBUG_LED_GPIO_Port, DEBUG_LED_Pin);
     
     DEBUG_IO_PRINT("Received new CAN message: ID=%d, data=[%02X %02X %02X %02X %02X %02X %02X %02X]\r\n",

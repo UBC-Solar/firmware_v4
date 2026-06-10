@@ -48,10 +48,14 @@ typedef enum
 /* CONTACTOR ACTIVE LEVELS — TODO: verify polarity from schematic */
 #define HVC_CONTACTOR_CLOSE         GPIO_PIN_SET
 #define HVC_CONTACTOR_OPEN          GPIO_PIN_RESET
-#define TEL_HEARTBEAT_ID            300U          
+#define TEL_HEARTBEAT_ID            0x300          
+#define MST_HEARTBEAT_ID            0x301
 #define MVP_LV_POWERUP_TIMEOUT_MS   5000U    
-#define MST_READY_TIMEOUT_MS        5000U    
+#define MST_READY_TIMEOUT_MS        5000U   
+#define LV_POWERUP_MAX_RETRY        5U 
+#define LV_POWERUP_INTERVAL_MS      500U 
 
+#define MAX_STATE_NAME_LEN          20U
 
 /*============================================================================*/
 /* INTERNAL TYPE DEFS */
@@ -62,6 +66,7 @@ typedef struct
     uint32_t fault_led;
     uint32_t neg_contactor;
     uint32_t pos_contactor;
+    uint32_t lv_msg;
 } HVC_Ticks_t;
 
 /*============================================================================*/
@@ -71,6 +76,8 @@ extern volatile HVC_State_t hvc_state;
 extern HVC_Ticks_t ticks;
 extern bool startup_complete;
 extern bool tel_heartbeat_received;
+extern bool mst_heartbeat_received;
+extern int32_t mst_pack_voltage_mv;
 
 /*============================================================================*/
 /* INTERNAL HELPERS — implemented in hvc_fsm.c */
@@ -78,14 +85,16 @@ extern bool tel_heartbeat_received;
 bool   timer_elapsed(uint32_t interval, uint32_t *last_tick);
 void   open_all_contactors(void);
 void   check_supp_voltage(void);
+const char* state_to_string(HVC_State_t state_in);
+void    log_state_change(HVC_State_t new_state, HVC_State_t old_state);
 
 /*============================================================================*/
 /* STATE FUNCTION PROTOTYPES — implemented in hvc_fsm_states.c */
 
 void Reset(void);
 void MvpLvPowerup(void);
-void MSTready(void);
-void MSTcheck(void);
+void MST_Ready(void);
+void MST_Check(void);
 void Fans_Powerup(void);
 void HV_Connect(void);
 void MotorPrecharge(void);

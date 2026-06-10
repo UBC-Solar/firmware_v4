@@ -4,6 +4,8 @@
  */
 
 #include "hvc_fsm.h"
+#include "can_driver.h"
+#include "stm32f1xx_hal.h"
 
 /*============================================================================*/
 /* STATES */
@@ -97,8 +99,20 @@ void MST_Ready(void)
  */
 void MST_Check(void)
 {
+    DEBUG_IO_print("HVC: STATE_MST_CHECK\r\n");
 
+    if (mst_heartbeat_received) {
+        mst_heartbeat_received = false;
+        ticks.generic = HAL_GetTick();
+        hvc_state = FANS_POWERUP;
+        return;
+    }
 
+    if (timer_elapsed(MST_READY_TIMEOUT_MS, &ticks.generic)) {
+        DEBUG_IO_print("HVC: MVP_LV_POWERUP timeout\r\n");
+        hvc_state = FAULT;
+        return;
+    }
 
 }
 
@@ -177,13 +191,14 @@ void MotorPrecharge(void)
     }
 
     // TODO: compare motor_precharge ADC voltage to HV bus voltage
-    // ADC_Voltages adc = ADC_GetVoltages();
-    // if (adc.motor_precharge >= hv_bus_mv * HVC_PC_COMPLETE_RATIO / 100) {
-    //     pc_started = false;
-    //     ticks.generic = HAL_GetTick();
-    //     hvc_state = MPPT_PRECHARGE;
-    // }
+    ADC_Voltages adc = ADC_GetVoltages();
+    if (adc.motor_precharge >= mst_pack_voltage_mv * HVC_PC_COMPLETE_RATIO / 100) {
+        pc_started = false;
+        ticks.generic = HAL_GetTick();
+        hvc_state = MPPT_PRECHARGE;
+    }
 }
+
 /**
  * @brief Closes MPPT precharge contactor and waits for bus voltage to reach threshold.
  *
@@ -212,12 +227,12 @@ void MpptPrecharge(void)
     }
 
     // TODO: compare mppt_precharge ADC voltage to HV bus voltage
-    // ADC_Voltages adc = ADC_GetVoltages();
-    // if (adc.mppt_precharge >= hv_bus_mv * HVC_PC_COMPLETE_RATIO / 100) {
-    //     pc_started = false;
-    //     ticks.generic = HAL_GetTick();
-    //     hvc_state = CLOSE_LLIM;
-    // }
+    ADC_Voltages adc = ADC_GetVoltages();
+    if (adc.mppt_precharge >= mst_pack_voltage_mv * HVC_PC_COMPLETE_RATIO / 100) {
+        pc_started = false;
+        ticks.generic = HAL_GetTick();
+        hvc_state = CLOSE_LLIM;
+    }
 }
 
 /**
@@ -270,6 +285,23 @@ void CloseHLIM(void)
  */
 void LvPowerup(void)
 {
+    DEBUG_IO_print("HVC: STATE_LV_POWERUP\r\n");
+    static uint32_t num_can_msg_retries = 0;
+
+    if (num_can_msg_retries < LV_POWERUP_MAX_RETRY && 
+        timer_elapsed(LV_POWERUP_INTERVAL_MS, &ticks.generic))
+    {
+        CAN_SendMessage323();
+        num_can_msg_retries++;
+        ticks.generic = HAL_GetTick();
+    }
+
+    if (num_can_msg_retries > LV_POWERUP_MAX_RETRY) {
+        num_can_msg_retries = 0;
+        hvc_state = FAULT;
+    }
+
+
 }
 
 /**
@@ -300,7 +332,10 @@ void Monitoring(void)
     check_supp_voltage();
 }
 
-void MotorDischarge();
+void MotorDischarge() {
+
+}
+
 /**
  * @brief Safe fault state. Opens all contactors, disables loads, blinks FAULT_LED.
  *        Remains here until power cycle.

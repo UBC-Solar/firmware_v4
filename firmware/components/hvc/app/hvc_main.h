@@ -13,7 +13,10 @@
 // Integration tests (INT_...) to verify functionality with rest of MST.
 // A test is either set to RUN or SKIP.
 #define UNIT_TEST_SHUNT SKIP
-#define INT_TEST_CAN RUN
+#define INT_TEST_CAN SKIP
+// Integration test June 11th, 2026: TEL and MST will not be connected.
+// relevant TEL and MST input data must be faked
+#define INT_TEST_JUNE_11TH RUN 
 
 
 void HVC_Init(UART_HandleTypeDef *_huart2, ADC_HandleTypeDef *_hadc1, TIM_HandleTypeDef *_htim3, I2C_HandleTypeDef *_hi2c1, CAN_HandleTypeDef *_hcan);

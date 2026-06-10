@@ -4,7 +4,7 @@
 #include "main.h"
 #include "stm32f1xx_hal_def.h"
 #include "debug_io.h"
-#include "hvc_fsm_private.h"
+#include "hvc_fsm.h"
 
 CAN_Driver_t CAN_driver;
 

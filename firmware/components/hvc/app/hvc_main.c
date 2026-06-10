@@ -1,3 +1,4 @@
+#include "hvc_fsm.h"
 #include "hvc_main.h"
 
 #include "stm32f1xx_hal.h"
@@ -24,9 +25,15 @@ void HVC_Init(UART_HandleTypeDef *_huart2, ADC_HandleTypeDef *_hadc1, TIM_Handle
 }
 
 void HVC_Main(void) {
+#if (UNIT_TEST_SHUNT == RUN)
     if (HAL_GetTick() - previous_time_ms >= 100) {
         DEBUG_IO_print("100 ms elapsed, reading shunt voltage.\n");
         previous_time_ms = HAL_GetTick();
         INA228_Read_Shunt_Voltage();
+    }
+#endif // (UNIT_TEST_SHUNT == RUN)
+
+    while (true) {
+        HVC_FSM_Run();
     }
 }

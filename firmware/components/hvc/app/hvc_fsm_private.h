@@ -46,11 +46,15 @@ void   check_supp_voltage(void);
 /*============================================================================*/
 /* STATE FUNCTION PROTOTYPES — implemented in hvc_fsm_states.c */
 
-void HVC_State_Reset(void);
-void HVC_State_HVConnect(void);
-void HVC_State_MotorPrecharge(void);
-void HVC_State_CloseMotorBus(void);
-void HVC_State_MpptPrecharge(void);
-void HVC_State_CloseMpptBus(void);
-void HVC_State_Monitoring(void);
-void HVC_State_Fault(void);
+void Reset(void);
+void MvpLvPowerup(void);
+void HV_Connect(void);
+void BMS_Ready(void);
+void Fans_Powerup(void);
+void MotorPrecharge(void);
+void CloseLLIM(void);
+void MpptPrecharge(void);
+void CloseHLIM(void);
+void LvPowerup(void);
+void Monitoring(void);
+void Fault(void);

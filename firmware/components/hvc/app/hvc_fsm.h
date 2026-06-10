@@ -13,14 +13,19 @@
 
 typedef enum
 {
-    HVC_STATE_RESET = 0,
-    HVC_STATE_HV_CONNECT,
-    HVC_STATE_MOTOR_PRECHARGE,
-    HVC_STATE_CLOSE_MOTOR_BUS,
-    HVC_STATE_MPPT_PRECHARGE,
-    HVC_STATE_CLOSE_MPPT_BUS,
-    HVC_STATE_MONITORING,
-    HVC_STATE_FAULT,
+    HVC_RESET = 0,
+    MVP_LV_POWERUP,
+    BMS_READY,
+    BMS_CHECK,
+    FANS_POWERUP,
+    HV_CONNECT,
+    MOTOR_PRECHARGE,
+    MPPT_PRECHARGE,
+    CLOSE_LLIM,
+    CLOSE_HLIM,
+    LV_POWERUP,
+    MONITORING,
+    FAULT,
 } HVC_State_t;
 
 /*============================================================================*/

@@ -11,9 +11,9 @@
 /**
  * @brief Opens all contactors and disables load outputs.
  *
- * Exit State: HVC_STATE_HV_CONNECT
+ * Exit State: HV_CONNECT
  */
-void HVC_State_Reset(void)
+void Reset(void)
 {
     DEBUG_IO_print("HVC: STATE_RESET\r\n");
 
@@ -27,16 +27,50 @@ void HVC_State_Reset(void)
     check_supp_voltage();
 
     ticks.generic = HAL_GetTick();
-    hvc_state = HVC_STATE_HV_CONNECT;
+    hvc_state = HV_CONNECT;
+}
+
+/**
+ * @brief Powers DIST to bring up telemetry LV systems.
+ *
+ * Exit Condition: Telemetry CAN message received (TEL present build), or
+ *                 immediate/alternate handling for TEL-absent build.
+ * Exit State: BMS_READY
+ */
+void MvpLvPowerup(void)
+{
+}
+
+/**
+ * @brief Waits for master board fault line handshake (HIGH then LOW).
+ *
+ * Exit Condition: MASTERBOARD_FAULT observed high then low.
+ * Exit State: FANS_POWERUP
+ */
+void BMS_Ready(void)
+{
+}
+
+/**
+ * @brief Powers pack cooling fans prior to HV sequence.
+ *
+ * Exit Condition: Fan power-up complete.
+ * Exit State: HV_CONNECT
+ *
+ * Exit Condition: Fault detected during fan power-up.
+ * Exit State: FAULT
+ */
+void Fans_Powerup(void)
+{
 }
 
 /**
  * @brief Closes NEG then POS contactors with a settling delay between each step.
  *
  * Exit Condition: POS closed and settling delay elapsed.
- * Exit State: HVC_STATE_MOTOR_PRECHARGE
+ * Exit State: MOTOR_PRECHARGE
  */
-void HVC_State_HVConnect(void)
+void HV_Connect(void)
 {
     DEBUG_IO_print("HVC: STATE_HV_CONNECT\r\n");
 
@@ -59,7 +93,7 @@ void HVC_State_HVConnect(void)
         neg_closed = false;
         pos_closed = false;
         ticks.generic = HAL_GetTick();
-        hvc_state = HVC_STATE_MOTOR_PRECHARGE;
+        hvc_state = MOTOR_PRECHARGE;
     }
 }
 
@@ -67,12 +101,12 @@ void HVC_State_HVConnect(void)
  * @brief Closes motor precharge contactor and waits for bus voltage to reach threshold.
  *
  * Exit Condition: motor_precharge ADC >= HVC_PC_COMPLETE_RATIO% of HV bus voltage.
- * Exit State: HVC_STATE_CLOSE_MOTOR_BUS
+ * Exit State: CLOSE_LLIM
  *
  * Exit Condition: Timeout (HVC_MOTOR_PC_TIMEOUT_MS).
- * Exit State: HVC_STATE_FAULT
+ * Exit State: FAULT
  */
-void HVC_State_MotorPrecharge(void)
+void MotorPrecharge(void)
 {
     DEBUG_IO_print("HVC: STATE_MOTOR_PRECHARGE\r\n");
 
@@ -86,7 +120,7 @@ void HVC_State_MotorPrecharge(void)
 
     if (timer_elapsed(HVC_MOTOR_PC_TIMEOUT_MS, &ticks.generic)) {
         pc_started = false;
-        hvc_state = HVC_STATE_FAULT;
+        hvc_state = FAULT;
         return;
     }
 
@@ -95,7 +129,7 @@ void HVC_State_MotorPrecharge(void)
     // if (adc.motor_precharge >= hv_bus_mv * HVC_PC_COMPLETE_RATIO / 100) {
     //     pc_started = false;
     //     ticks.generic = HAL_GetTick();
-    //     hvc_state = HVC_STATE_CLOSE_MOTOR_BUS;
+    //     hvc_state = CLOSE_LLIM;
     // }
 }
 
@@ -103,9 +137,9 @@ void HVC_State_MotorPrecharge(void)
  * @brief Closes LLIM contactor then opens motor precharge contactor.
  *
  * Exit Condition: Settling delay elapsed.
- * Exit State: HVC_STATE_MPPT_PRECHARGE
+ * Exit State: MPPT_PRECHARGE
  */
-void HVC_State_CloseMotorBus(void)
+void CloseLLIM(void)
 {
     DEBUG_IO_print("HVC: STATE_CLOSE_MOTOR_BUS\r\n");
 
@@ -114,7 +148,7 @@ void HVC_State_CloseMotorBus(void)
     if (timer_elapsed(HVC_CONTACTOR_DELAY_MS, &ticks.generic)) {
         GPIO_Write(MOTOR_PC_CTRL_GPIO_Port, MOTOR_PC_CTRL_Pin, HVC_CONTACTOR_OPEN);
         ticks.generic = HAL_GetTick();
-        hvc_state = HVC_STATE_MPPT_PRECHARGE;
+        hvc_state = MPPT_PRECHARGE;
     }
 }
 
@@ -122,12 +156,12 @@ void HVC_State_CloseMotorBus(void)
  * @brief Closes MPPT precharge contactor and waits for bus voltage to reach threshold.
  *
  * Exit Condition: mppt_precharge ADC >= HVC_PC_COMPLETE_RATIO% of HV bus voltage.
- * Exit State: HVC_STATE_CLOSE_MPPT_BUS
+ * Exit State: CLOSE_HLIM
  *
  * Exit Condition: Timeout (HVC_MPPT_PC_TIMEOUT_MS).
- * Exit State: HVC_STATE_FAULT
+ * Exit State: FAULT
  */
-void HVC_State_MpptPrecharge(void)
+void MpptPrecharge(void)
 {
     DEBUG_IO_print("HVC: STATE_MPPT_PRECHARGE\r\n");
 
@@ -141,7 +175,7 @@ void HVC_State_MpptPrecharge(void)
 
     if (timer_elapsed(HVC_MPPT_PC_TIMEOUT_MS, &ticks.generic)) {
         pc_started = false;
-        hvc_state = HVC_STATE_FAULT;
+        hvc_state = FAULT;
         return;
     }
 
@@ -150,7 +184,7 @@ void HVC_State_MpptPrecharge(void)
     // if (adc.mppt_precharge >= hv_bus_mv * HVC_PC_COMPLETE_RATIO / 100) {
     //     pc_started = false;
     //     ticks.generic = HAL_GetTick();
-    //     hvc_state = HVC_STATE_CLOSE_MPPT_BUS;
+    //     hvc_state = CLOSE_HLIM;
     // }
 }
 
@@ -158,11 +192,11 @@ void HVC_State_MpptPrecharge(void)
  * @brief Closes HLIM contactor, opens MPPT precharge, then enables MPPT and DIST.
  *
  * Exit Condition: Settling delay elapsed after HLIM close.
- * Exit State: HVC_STATE_MONITORING
+ * Exit State: MONITORING
  */
-void HVC_State_CloseMpptBus(void)
+void CloseHLIM(void)
 {
-    DEBUG_IO_print("HVC: STATE_CLOSE_MPPT_BUS\r\n");
+    DEBUG_IO_print("HVC: STATE_CLOSE_HLIM\r\n");
 
     GPIO_Write(HLIM_CTRL_GPIO_Port, HLIM_CTRL_Pin, HVC_CONTACTOR_CLOSE);
 
@@ -172,27 +206,37 @@ void HVC_State_CloseMpptBus(void)
         GPIO_Write(DIST_CTRL_GPIO_Port,    DIST_CTRL_Pin,    GPIO_PIN_SET);
         startup_complete = true;
         ticks.generic = HAL_GetTick();
-        hvc_state = HVC_STATE_MONITORING;
+        hvc_state = MONITORING;
     }
+}
+
+/**
+ * @brief Powers remaining LV systems after HV path is established.
+ *
+ * Exit Condition: LV power-up sequence complete.
+ * Exit State: MONITORING
+ */
+void LvPowerup(void)
+{
 }
 
 /**
  * @brief Normal operating state. Polls fault inputs and sends CAN heartbeat.
  *
  * Exit Condition: IMD fault, masterboard fault, or DCDC dropout.
- * Exit State: HVC_STATE_FAULT
+ * Exit State: FAULT
  */
-void HVC_State_Monitoring(void)
+void Monitoring(void)
 {
     if (GPIO_Read(IMD_GPIO_IN_GPIO_Port, IMD_GPIO_IN_Pin) == GPIO_PIN_RESET) {
         DEBUG_IO_print("HVC: IMD fault\r\n");
-        hvc_state = HVC_STATE_FAULT;
+        hvc_state = FAULT;
         return;
     }
 
     if (GPIO_Read(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin) == GPIO_PIN_SET) {
         DEBUG_IO_print("HVC: masterboard fault\r\n");
-        hvc_state = HVC_STATE_FAULT;
+        hvc_state = FAULT;
         return;
     }
 
@@ -208,7 +252,7 @@ void HVC_State_Monitoring(void)
  * @brief Safe fault state. Opens all contactors, disables loads, blinks FAULT_LED.
  *        Remains here until power cycle.
  */
-void HVC_State_Fault(void)
+void Fault(void)
 {
     open_all_contactors();
     GPIO_Write(MPPT_CTRL_GPIO_Port, MPPT_CTRL_Pin, GPIO_PIN_RESET);

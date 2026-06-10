@@ -3,21 +3,10 @@
  * @brief HVC FSM core — init, dispatch, helpers, and interrupt callbacks
  */
 
+#include "hvc_fsm.h"
 #include "hvc_fsm_private.h"
+#include "main.h"
 
-/*============================================================================*/
-/* STATE TABLE */
-
-static void (*const HVC_state_table[])(void) = {
-    HVC_State_Reset,
-    HVC_State_HVConnect,
-    HVC_State_MotorPrecharge,
-    HVC_State_CloseMotorBus,
-    HVC_State_MpptPrecharge,
-    HVC_State_CloseMpptBus,
-    HVC_State_Monitoring,
-    HVC_State_Fault,
-};
 
 /*============================================================================*/
 /* SHARED VARIABLES */
@@ -37,9 +26,9 @@ void HVC_FSM_Init(void)
     if (RCC->CSR & RCC_CSR_IWDGRSTF) {
         __HAL_RCC_CLEAR_RESET_FLAGS();
         DEBUG_IO_print("HVC: watchdog reset\r\n");
-        hvc_state = HVC_STATE_FAULT;
+        hvc_state = FAULT;
     } else {
-        hvc_state = HVC_STATE_RESET;
+        hvc_state = RESET;
     }
 }
 
@@ -48,7 +37,48 @@ void HVC_FSM_Init(void)
  */
 void HVC_FSM_Run(void)
 {
-    HVC_state_table[hvc_state]();
+    switch (hvc_state) {
+        case HVC_RESET:
+            Reset();
+            break;
+        case MVP_LV_POWERUP:
+            MVP_LV_Powerup();
+            break;
+        case BMS_READY:
+            BMS_Ready();
+            break;
+        case BMS_READY:
+            BMS_Ready();
+            break;
+        case FANS_POWERUP:
+            Fans_Powerup();
+            break;
+        case HV_CONNECT:
+            HV_Connect();
+            break;  
+        case MOTOR_PRECHARGE:
+            MotorPrecharge();
+            break;
+        case CLOSE_LLIM:
+            CloseLLIM();
+            break;
+        case MPPT_PRECHARGE:
+            MpptPrecharge();
+            break;
+        case CLOSE_HLIM:
+            CloseHLIM();
+            break;
+        case LV_POWERUP:
+            LvPowerup();
+            break;
+        case MONITORING:
+            Monitoring();
+            break;
+        case FAULT:
+        default:
+            Fault();
+            break;
+    }
 }
 
 /*============================================================================*/
@@ -58,28 +88,28 @@ void HVC_ESTOPCallback(void)
 {
     GPIO_Write(ESTOP_LED_GPIO_Port, ESTOP_LED_Pin, GPIO_PIN_SET);
     // TODO: set ESTOP flag in CAN data struct
-    hvc_state = HVC_STATE_FAULT;
+    hvc_state = FAULT;
     HVC_FSM_Run();
 }
 
 void HVC_IMDFaultCallback(void)
 {
     // TODO: set IMD fault flag in CAN data struct
-    hvc_state = HVC_STATE_FAULT;
+    hvc_state = FAULT;
     HVC_FSM_Run();
 }
 
 void HVC_MasterboardFaultCallback(void)
 {
     // TODO: set masterboard fault flag in CAN data struct
-    hvc_state = HVC_STATE_FAULT;
+    hvc_state = FAULT;
     HVC_FSM_Run();
 }
 
 void HVC_HVCurrentAlertCallback(void)
 {
     // TODO: read INA228 DIAG_ALRT register to distinguish over/under current
-    hvc_state = HVC_STATE_FAULT;
+    hvc_state = FAULT;
     HVC_FSM_Run();
 }
 

@@ -91,7 +91,7 @@ void MST_Ready(void)
 }
 
 /**
- * @brief Confirms CAN Communication and Healthy Cell-State 
+ * @brief Confirms CAN Communication with MST and Healthy Cell-State of Battery-Pack 
 
  *
  * Exit Condition: Recieves MST CAN message with healthy cell state
@@ -184,18 +184,19 @@ void MotorPrecharge(void)
         ticks.generic = HAL_GetTick();
     }
 
-    if (timer_elapsed(HVC_MOTOR_PC_TIMEOUT_MS, &ticks.generic)) {
-        pc_started = false;
-        hvc_state = FAULT;
-        return;
-    }
-
     // TODO: compare motor_precharge ADC voltage to HV bus voltage
     ADC_Voltages adc = ADC_GetVoltages();
     if (adc.motor_precharge >= mst_pack_voltage_mv * HVC_PC_COMPLETE_RATIO / 100) {
         pc_started = false;
         ticks.generic = HAL_GetTick();
         hvc_state = MPPT_PRECHARGE;
+        return;
+    }
+
+    if (timer_elapsed(HVC_MOTOR_PC_TIMEOUT_MS, &ticks.generic)) {
+        pc_started = false;
+        hvc_state = FAULT;
+        return;
     }
 }
 
@@ -220,18 +221,19 @@ void MpptPrecharge(void)
         ticks.generic = HAL_GetTick();
     }
 
-    if (timer_elapsed(HVC_MPPT_PC_TIMEOUT_MS, &ticks.generic)) {
-        pc_started = false;
-        hvc_state = FAULT;
-        return;
-    }
-
     // TODO: compare mppt_precharge ADC voltage to HV bus voltage
     ADC_Voltages adc = ADC_GetVoltages();
     if (adc.mppt_precharge >= mst_pack_voltage_mv * HVC_PC_COMPLETE_RATIO / 100) {
         pc_started = false;
         ticks.generic = HAL_GetTick();
         hvc_state = CLOSE_LLIM;
+        return;
+    }
+
+    if (timer_elapsed(HVC_MPPT_PC_TIMEOUT_MS, &ticks.generic)) {
+        pc_started = false;
+        hvc_state = FAULT;
+        return;
     }
 }
 
@@ -294,6 +296,7 @@ void LvPowerup(void)
         CAN_SendMessage323();
         num_can_msg_retries++;
         ticks.generic = HAL_GetTick();
+        hvc_state = Monitoring;
     }
 
     if (num_can_msg_retries > LV_POWERUP_MAX_RETRY) {
@@ -325,15 +328,23 @@ void Monitoring(void)
     }
 
     // TODO: check DCDC_ACTIVE dropout
+    if (GPIO_Read(DCDC_ACTIVE_GPIO_Port, DCDC_ACTIVE_Pin) == GPIO_PIN_RESET) {
+        DEBUG_IO_print("HVC: DCDC dropout fault\r\n");
+        hvc_state = FAULT;
+        return;
+}
     // TODO: check THERMISTOR over-temperature via ADC_GetVoltages()
+    ADC_Voltages adc = ADC_GetVoltages();
+    if (adc.dcdc_thermistor > Thermistor_MAX_THRESHOLD_MV) {
+        DEBUG_IO_print("HVC: thermistor over-temperature\r\n");
+        hvc_state = FAULT;
+        return;
+    }
+
     // TODO: send CAN status on interval
-    // if (timer_elapsed(HVC_CAN_TX_INTERVAL_MS, &ticks.generic)) { CAN_SendStatusMsg(); }
+    if (timer_elapsed(HVC_CAN_TX_INTERVAL_MS, &ticks.generic)) { CAN_SendStatusMsg(); }
 
     check_supp_voltage();
-}
-
-void MotorDischarge() {
-
 }
 
 /**

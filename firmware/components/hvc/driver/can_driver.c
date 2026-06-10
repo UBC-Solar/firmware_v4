@@ -265,6 +265,16 @@ void CAN_RecievedMessageCallback(uint32_t fifo_num)
                    new_rx_message.data[4], new_rx_message.data[5], new_rx_message.data[6], new_rx_message.data[7]);
 }
 
+void CAN_SendStatusMsg() 
+{
+    CAN_TxMessage_t txMessage = {0};
+    // Note: replace with actual values
+    txMessage.tx_header.StdId = 0x0U;
+    txMessage.tx_header.DLC = 0;
+
+    // Note: modify txMessage.data
+    CAN_QueueTxMessage(&txMessage);
+}
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {

@@ -34,13 +34,19 @@ typedef enum
 } HVC_State_t;
 
 /*============================================================================*/
-/* CONSTANTS */
+/* CONSTANTS — TODO: Verify all constants*/
 
-#define HVC_CONTACTOR_DELAY_MS        200
-#define HVC_MOTOR_PC_TIMEOUT_MS      2000
-#define HVC_MPPT_PC_TIMEOUT_MS       2000
-#define HVC_CAN_TX_INTERVAL_MS        200
-#define HVC_FAULT_LED_BLINK_MS        200
+#define HVC_CONTACTOR_DELAY_MS        200U
+#define HVC_MOTOR_PC_TIMEOUT_MS      2000U
+#define HVC_MPPT_PC_TIMEOUT_MS       2000U
+#define HVC_CAN_TX_INTERVAL_MS        200U
+#define HVC_FAULT_LED_BLINK_MS        200U
+#define MVP_LV_POWERUP_TIMEOUT_MS   5000U    
+#define MST_READY_TIMEOUT_MS        5000U   
+#define LV_POWERUP_MAX_RETRY        5U 
+#define LV_POWERUP_INTERVAL_MS      500U
+#define Thermistor_MAX_THRESHOLD_MV   5000
+
 
 #define HVC_SUPP_LOW_THRESHOLD_MV   10500
 #define HVC_PC_COMPLETE_RATIO          90   // % of HV bus voltage for precharge complete
@@ -48,13 +54,12 @@ typedef enum
 /* CONTACTOR ACTIVE LEVELS — TODO: verify polarity from schematic */
 #define HVC_CONTACTOR_CLOSE         GPIO_PIN_SET
 #define HVC_CONTACTOR_OPEN          GPIO_PIN_RESET
+
+/* CAN Message ID's — TODO: Set to specific message decided by user*/
 #define TEL_HEARTBEAT_ID            0x300          
 #define MST_HEARTBEAT_ID            0x301
-#define MVP_LV_POWERUP_TIMEOUT_MS   5000U    
-#define MST_READY_TIMEOUT_MS        5000U   
-#define LV_POWERUP_MAX_RETRY        5U 
-#define LV_POWERUP_INTERVAL_MS      500U 
-
+#define HVC_STATUS_ID               0x302
+ 
 #define MAX_STATE_NAME_LEN          20U
 
 /*============================================================================*/
@@ -112,7 +117,7 @@ void Fault(void);
 void HVC_FSM_Init(void);
 void HVC_FSM_Run(void);
 
-void HVC_ESTOPCallback(void);
-void HVC_IMDFaultCallback(void);
-void HVC_MasterboardFaultCallback(void);
-void HVC_HVCurrentAlertCallback(void);
+void ESTOPCallback(void);
+void IMDFaultCallback(void);
+void MasterboardFaultCallback(void);
+void HVCurrentAlertCallback(void);

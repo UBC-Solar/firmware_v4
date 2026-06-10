@@ -104,7 +104,7 @@ void HVC_FSM_Run(void)
 /*============================================================================*/
 /* INTERRUPT CALLBACKS */
 
-void HVC_ESTOPCallback(void)
+void ESTOPCallback(void)
 {
     GPIO_Write(ESTOP_LED_GPIO_Port, ESTOP_LED_Pin, GPIO_PIN_SET);
     // TODO: set ESTOP flag in CAN data struct
@@ -112,28 +112,30 @@ void HVC_ESTOPCallback(void)
     HVC_FSM_Run();
 }
 
-void HVC_IMDFaultCallback(void)
+void IMDFaultCallback(void)
 {
     // TODO: set IMD fault flag in CAN data struct
     hvc_state = FAULT;
     HVC_FSM_Run();
 }
 
-void HVC_MasterboardFaultCallback(void)
+void MasterboardFaultCallback(void)
 {
     // TODO: set masterboard fault flag in CAN data struct
     hvc_state = FAULT;
     HVC_FSM_Run();
 }
 
-void HVC_HVCurrentAlertCallback(void)
+void HVCurrentAlertCallback(void)
 {
     // TODO: read INA228 DIAG_ALRT register to distinguish over/under current
     hvc_state = FAULT;
     HVC_FSM_Run();
 }
-void HVC_DistFaultCallback(void){
+void DistFaultCallback(void){
     //TODO: Send CAN message to HVC
+    hvc_state = FAULT;
+    HVC_FSM_Run();
 }
 
 /*============================================================================*/

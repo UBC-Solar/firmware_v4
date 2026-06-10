@@ -57,6 +57,9 @@ void HVC_FSM_Run(void)
         case HV_CONNECT:
             HV_Connect();
             break;
+        case MOTOR_DISCHARGE:
+            MotorDischarge();
+            break;
         case MOTOR_PRECHARGE:
             MotorPrecharge();
             break;
@@ -74,9 +77,6 @@ void HVC_FSM_Run(void)
             break;
         case MONITORING:
             Monitoring();
-            break;
-        case MOTOR_DISCHARGE:
-            MotorDischarge();
             break;
         case FAULT:
         default:

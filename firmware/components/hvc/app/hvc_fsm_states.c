@@ -68,37 +68,36 @@ void MvpLvPowerup(void) {
  * @brief Waits for master board fault line handshake (HIGH then LOW).
  *
  * Exit Condition: MASTERBOARD_FAULT observed high then low.
- * Exit State: FANS_POWERUP
+ * Exit State: MST_CHECK
  */
 void MST_Ready(void)
 {
     DEBUG_IO_print("HVC: STATE_MST_READY\r\n");
-    
-    GPIO_PinState mst_fault = GPIO_Read(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin);    
-    if(mst_fault == GPIO_PIN_SET) {
+
+    GPIO_PinState mst_fault = GPIO_Read(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin);
+
+    if (mst_fault == GPIO_PIN_SET) {
+        ticks.generic = HAL_GetTick();
         hvc_state = MST_CHECK;
-    } 
-    if (timer_elapsed(HVC_MST_READY_TIMEOUT_MS, &ticks.generic)) {
+        return;
+    }
+
+    if (timer_elapsed(MST_READY_TIMEOUT_MS, &ticks.generic)) {
         DEBUG_IO_print("HVC: MST_READY timeout\r\n");
         hvc_state = FAULT;
         return;
-}    
     }
+}
 
-    if (tel_heartbeat_received) {
-        tel_heartbeat_received = false;
-        dist_powered = false;
-        ticks.generic = HAL_GetTick();
-        hvc_state = MST_READY;
-        return;
-    }
+/**
+ * @brief Confirms CAN Communication and Healthy Cell-State 
 
-    if (timer_elapsed(MVP_LV_POWERUP_TIMEOUT_MS, &ticks.generic)) {
-        dist_powered = false;
-        DEBUG_IO_print("HVC: MVP_LV_POWERUP timeout\r\n");
-        hvc_state = FAULT;
-        return;
-    }    
+ *
+ * Exit Condition: Recieves MST CAN message with healthy cell state
+ * Exit State: FANS_POWERUP
+ */
+void MST_Check(void)
+{
 
 
 
@@ -302,6 +301,7 @@ void Monitoring(void)
     check_supp_voltage();
 }
 
+void MotorDischarge();
 /**
  * @brief Safe fault state. Opens all contactors, disables loads, blinks FAULT_LED.
  *        Remains here until power cycle.

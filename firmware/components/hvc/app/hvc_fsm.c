@@ -18,7 +18,9 @@ HVC_Ticks_t ticks;
 bool startup_complete = false;
 bool tel_heartbeat_received = false;
 bool mst_heartbeat_received = false;
+bool mst_status_healthy = false;
 int32_t mst_pack_voltage_mv = 0;
+bool lv_powerup_received = false;
 
 /*============================================================================*/
 /* PUBLIC API */
@@ -33,7 +35,7 @@ void HVC_FSM_Init(void)
         DEBUG_IO_print("HVC: watchdog reset\r\n");
         hvc_state = FAULT;
     } else {
-        hvc_state = RESET;
+        hvc_state = HVC_RESET;
     }
 
     #if (INT_TEST_JUNE_11TH == RUN)
@@ -49,7 +51,7 @@ void HVC_FSM_Init(void)
  */
 void HVC_FSM_Run(void)
 {
-    static HVC_State_t prev_hvc_state = RESET;
+    static HVC_State_t prev_hvc_state = HVC_RESET;
     log_state_change(hvc_state, prev_hvc_state);
 
     switch (hvc_state) {
@@ -132,6 +134,7 @@ void HVCurrentAlertCallback(void)
     hvc_state = FAULT;
     HVC_FSM_Run();
 }
+
 void DistFaultCallback(void){
     //TODO: Send CAN message to HVC
     hvc_state = FAULT;

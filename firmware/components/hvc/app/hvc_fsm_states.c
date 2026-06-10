@@ -6,6 +6,7 @@
 #include "hvc_fsm.h"
 #include "can_driver.h"
 #include "stm32f1xx_hal.h"
+#include "tim.h"
 
 /*============================================================================*/
 /* STATES */
@@ -29,7 +30,7 @@ void Reset(void)
     check_supp_voltage();
 
     ticks.generic = HAL_GetTick();
-    hvc_state = HV_CONNECT;
+    hvc_state = MVP_LV_POWERUP;
 }
 
 /**
@@ -101,20 +102,22 @@ void MST_Check(void)
 {
     DEBUG_IO_print("HVC: STATE_MST_CHECK\r\n");
 
-    if (mst_heartbeat_received) {
-        mst_heartbeat_received = false;
+    if (mst_status_healthy) {
         ticks.generic = HAL_GetTick();
         hvc_state = FANS_POWERUP;
         return;
     }
 
     if (timer_elapsed(MST_READY_TIMEOUT_MS, &ticks.generic)) {
-        DEBUG_IO_print("HVC: MVP_LV_POWERUP timeout\r\n");
+        DEBUG_IO_print("HVC: MST_CHECK timeout\r\n");
         hvc_state = FAULT;
         return;
     }
 
-}
+#if (INT_TEST_JUNE_11TH == RUN)
+    mst_status_healthy = true;
+#endif // (INT_TEST_JUNE_11TH == RUN)
+}   
 
 /**
  * @brief Powers pack cooling fans prior to HV sequence.
@@ -127,7 +130,24 @@ void MST_Check(void)
  */
 void Fans_Powerup(void)
 {
+    DEBUG_IO_print("HVC: STATE_FANS_POWERUP\r\n");
     
+    static bool full_speed_started = false;
+    
+    if(!full_speed_started) {
+        __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_3, FANS_FULL_SPEED);
+        full_speed_started = true;
+        ticks.generic = HAL_GetTick();
+
+    }
+
+    if (timer_elapsed(FANS_FULL_SPEED_DURATION_MS, &ticks.generic)) {
+        __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_3, FANS_HALF_SPEED);
+        full_speed_started = false;
+        ticks.generic = HAL_GetTick();
+        hvc_state = HV_CONNECT;
+        return;
+    }
 }
 
 /**
@@ -163,6 +183,12 @@ void HV_Connect(void)
     }
 }
 
+
+
+void MotorDischarge() 
+{
+
+}
 /**
  * @brief Closes motor precharge contactor and waits for bus voltage to reach threshold.
  *
@@ -288,23 +314,29 @@ void CloseHLIM(void)
 void LvPowerup(void)
 {
     DEBUG_IO_print("HVC: STATE_LV_POWERUP\r\n");
-    static uint32_t num_can_msg_retries = 0;
 
-    if (num_can_msg_retries < LV_POWERUP_MAX_RETRY && 
-        timer_elapsed(LV_POWERUP_INTERVAL_MS, &ticks.generic))
-    {
+    static bool msg_sent = false;
+
+    if (!msg_sent) {
         CAN_SendMessage323();
-        num_can_msg_retries++;
+        msg_sent = true;
         ticks.generic = HAL_GetTick();
-        hvc_state = Monitoring;
     }
 
-    if (num_can_msg_retries > LV_POWERUP_MAX_RETRY) {
-        num_can_msg_retries = 0;
+    if (lv_powerup_received) {
+        lv_powerup_received = false;
+        msg_sent = false;
+        ticks.generic = HAL_GetTick();
+        hvc_state = MONITORING;
+        return;
+    }
+
+    if (timer_elapsed(LV_POWERUP_TIMEOUT_MS, &ticks.generic)) {
+        msg_sent = false;
+        DEBUG_IO_print("HVC: LV_POWERUP timeout\r\n");
         hvc_state = FAULT;
+        return;
     }
-
-
 }
 
 /**
@@ -326,13 +358,12 @@ void Monitoring(void)
         hvc_state = FAULT;
         return;
     }
-
     // TODO: check DCDC_ACTIVE dropout
     if (GPIO_Read(DCDC_ACTIVE_GPIO_Port, DCDC_ACTIVE_Pin) == GPIO_PIN_RESET) {
         DEBUG_IO_print("HVC: DCDC dropout fault\r\n");
         hvc_state = FAULT;
         return;
-}
+    }
     // TODO: check THERMISTOR over-temperature via ADC_GetVoltages()
     ADC_Voltages adc = ADC_GetVoltages();
     if (adc.dcdc_thermistor > Thermistor_MAX_THRESHOLD_MV) {
@@ -340,8 +371,7 @@ void Monitoring(void)
         hvc_state = FAULT;
         return;
     }
-
-    // TODO: send CAN status on interval
+    //TODO: Send CAN Status Message
     if (timer_elapsed(HVC_CAN_TX_INTERVAL_MS, &ticks.generic)) { CAN_SendStatusMsg(); }
 
     check_supp_voltage();
@@ -361,8 +391,7 @@ void Fault(void)
         GPIO_Toggle(FAULT_LED_GPIO_Port, FAULT_LED_Pin);
     }
 
-    // TODO: send CAN fault message on interval
-    // if (timer_elapsed(HVC_CAN_TX_INTERVAL_MS, &ticks.generic)) { CAN_SendStatusMsg(); }
+    if (timer_elapsed(HVC_CAN_TX_INTERVAL_MS, &ticks.generic)) { CAN_SendStatusMsg(); }
 
     check_supp_voltage();
 }

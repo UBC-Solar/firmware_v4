@@ -36,17 +36,20 @@ typedef enum
 /*============================================================================*/
 /* CONSTANTS — TODO: Verify all constants*/
 
-#define HVC_CONTACTOR_DELAY_MS        200U
-#define HVC_MOTOR_PC_TIMEOUT_MS      2000U
-#define HVC_MPPT_PC_TIMEOUT_MS       2000U
-#define HVC_CAN_TX_INTERVAL_MS        200U
-#define HVC_FAULT_LED_BLINK_MS        200U
+#define HVC_CONTACTOR_DELAY_MS      200U
+#define HVC_MOTOR_PC_TIMEOUT_MS     2000U
+#define HVC_MPPT_PC_TIMEOUT_MS      2000U
+#define HVC_CAN_TX_INTERVAL_MS      200U
+#define HVC_FAULT_LED_BLINK_MS      200U
 #define MVP_LV_POWERUP_TIMEOUT_MS   5000U    
 #define MST_READY_TIMEOUT_MS        5000U   
 #define LV_POWERUP_MAX_RETRY        5U 
 #define LV_POWERUP_INTERVAL_MS      500U
-#define Thermistor_MAX_THRESHOLD_MV   5000
-
+#define Thermistor_MAX_THRESHOLD_MV 5000U
+#define LV_POWERUP_TIMEOUT_MS       5000U
+#define FANS_FULL_SPEED             1000U
+#define FANS_HALF_SPEED             500U
+#define FANS_FULL_SPEED_DURATION_MS 2000U
 
 #define HVC_SUPP_LOW_THRESHOLD_MV   10500
 #define HVC_PC_COMPLETE_RATIO          90   // % of HV bus voltage for precharge complete
@@ -59,6 +62,8 @@ typedef enum
 #define TEL_HEARTBEAT_ID            0x300          
 #define MST_HEARTBEAT_ID            0x301
 #define HVC_STATUS_ID               0x302
+#define LV_POWERUP_ID               0x303
+#define MST_STATUS_ID               0x622
  
 #define MAX_STATE_NAME_LEN          20U
 
@@ -82,7 +87,10 @@ extern HVC_Ticks_t ticks;
 extern bool startup_complete;
 extern bool tel_heartbeat_received;
 extern bool mst_heartbeat_received;
+extern bool mst_status_healthy;
 extern int32_t mst_pack_voltage_mv;
+extern bool lv_powerup_received;
+
 
 /*============================================================================*/
 /* INTERNAL HELPERS — implemented in hvc_fsm.c */

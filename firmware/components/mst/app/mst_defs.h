@@ -38,6 +38,8 @@
 #define SLAVE_NUM_CELL_INPUTS_PER_DEVICE 18
 #define SLAVE_REG_SIZE_BYTES 6 // All of the ADBMS1818 register groups consist of 6 bytes
 
+#define SLAVE_NUM_CONFIG_REG 2
+
 #define SLAVE_NUM_VOLT_REG 6
 #define SLAVE_NUM_MODULES_PER_VOLT_REG 3
 
@@ -46,7 +48,8 @@
 #define SLAVE_NUM_MODULES_PER_TEMP_VAL 4
 
 #define SLAVE_NUM_BAL_REG 2
-#define SLAVE_NUM_MODULE_PER_BAL_REG 8
+#define SLAVE_NUM_VAL_PER_BAL_REG 12
+#define SLAVE_NUM_MODULES_PER_BAL_VAL 4
 
 #define SLAVE_TIMEOUT_MS 100U // ms - safety timeout threshold for Slave functions
 
@@ -89,16 +92,19 @@
 
 
 /**
- * Hardware unit tests. 
+ * Tests. 
  */
-//These hold no meaning outside the context of hardware unit tests.
+//These hold no meaning outside the context of hardware unit tests and integration.
 #define RUN 1
 #define SKIP 0
 
-// Hardware unit tests to verify that the hardware works properly.
+// Hardware unit tests (UNIT_...) to verify that the hardware works properly.
+// Integration tests (INT_...) to verify functionality with rest of BMS.
 // A test is either set to RUN or SKIP.
 #define UNIT_TEST_MCU SKIP
 #define UNIT_TEST_IO SKIP
 #define UNIT_TEST_CAN SKIP
 #define UNIT_TEST_ISOSPI SKIP
-#define UNIT_TEST_SLAVE RUN
+#define INT_TEST_SLAVE SKIP
+#define INT_TEST_SLAVE_BAL_SCRUT SKIP
+#define INT_TEST_SLAVE_MUX SKIP

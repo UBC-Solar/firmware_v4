@@ -1,34 +1,42 @@
 #include "balancing.h"
+#include "module_data.h"
 #include "mst_defs.h"
 #include "mst_types.h"
 #include "spi_driver.h"
 
-uint8_t s_ctrl_regs[SLAVE_NUM_BAL_REG][SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES] = {0};
 
-void Balancing_Init(slave_t slaves[SLAVE_NUM_DEVICES]) {
-    (void)slaves;
+void SetBalancingForModuleGroup_(
+    pack_state_t *pack_state, module_t pack_modules[NUM_MODULES], slave_t slaves[SLAVE_NUM_DEVICES],
+    int slave_num, int reg_num, int val_offset, int module_start_idx) 
+{
 
-    // The first 3 bytes of s_ctrl_reg2 (PWM/S register) is 
-    // intended for S-pin PWM values. Since we want PWM (duty cycle) to always be
-    // 100%, we'll write all 1's to these bytes to make sure of it.
-    for (int i = 0; i < SLAVE_NUM_DEVICES; i++) {
-        for (int j = 0; j < 3; j++) {
-            s_ctrl_regs[1][j][i] = 0xFF;
-        }
+    uint8_t module_balance_enables = 0;
+    for (int module_offset = 0; module_offset < SLAVE_NUM_MODULES_PER_BAL_VAL; module_offset++)
+    {
+        int module_idx = module_start_idx + module_offset;
+
+        // Absolute difference in mV of this module's voltage vs the average pack voltage
+        uint32_t voltage_diff_mv = (pack_modules[module_idx].voltage_mv > pack_state->avg_voltage_mV)
+            ? (pack_modules[module_idx].voltage_mv - pack_state->avg_voltage_mV)
+            : (pack_state->avg_voltage_mV - pack_modules[module_idx].voltage_mv);
+        
+        bool if_balance = MIN_BALANCE_VOLT_DIFF_MV <= voltage_diff_mv && voltage_diff_mv <= MAX_BALANCE_VOLT_DIFF_MV;
+        module_balance_enables |= if_balance < module_offset;
     }
-}
+    
 
-void SetBalancingForModule_(int slave_num, int bal_reg_num, int module_offset, bool if_balance) {
-    int reg_offset = module_offset / 2;
-    int reg_bitshift_bits = (module_offset % 2) * 4;
+    int reg_offset = val_offset / 2;
+    int reg_bitshift_bits = (val_offset % 2) * SLAVE_NUM_MODULES_PER_BAL_VAL;
 
-    uint8_t mask = (uint8_t)(0x08 << reg_bitshift_bits);
 
-    if (if_balance) {
-        s_ctrl_regs[bal_reg_num][slave_num][reg_offset / 2] |= mask;
+    uint8_t mask = (uint8_t)(module_balance_enables << reg_bitshift_bits);
+
+    if (mask) {
+        slaves[slave_num].config_regs[reg_num][reg_offset] |= mask;
+        
     }
     else {
-        s_ctrl_regs[bal_reg_num][slave_num][reg_offset / 2] &= (uint8_t)(~mask);
+        slaves[slave_num].config_regs[reg_num][reg_offset] &= (uint8_t)(~mask);
     }
 }
 
@@ -37,29 +45,23 @@ void DoBalancing(pack_state_t *pack_state, module_t pack_modules[NUM_MODULES], s
         return;
     }
 
-    for (int i = 0; i < SLAVE_NUM_DEVICES; i++) {
-        for (int j = 0; j < SLAVE_NUM_BAL_REG; j++) {
-            for (int k = 0; k < SLAVE_NUM_MODULE_PER_BAL_REG; k++) {
+    for (int dev_num = 0; dev_num < SLAVE_NUM_DEVICES; dev_num++) {
+        for (int reg_num = 0; reg_num < SLAVE_NUM_BAL_REG; reg_num++) {
+            for (int val_offset = 0; val_offset < SLAVE_NUM_VAL_PER_BAL_REG; val_offset++) {
 
-                int module_idx = slaves[i].bal_mappings[j][k];
-                if (module_idx < 0 || module_idx >= NUM_MODULES) {
+                int module_start_idx = slaves[dev_num].bal_mappings[reg_num][val_offset];
+                if (module_start_idx < 0 || module_start_idx >= NUM_MODULES) {
                     continue;
                 }
-    
-                // Absolute difference in mV of this module's voltage vs the average pack voltage
-                uint32_t voltage_diff_mv = (pack_modules[module_idx].voltage_mv > pack_state->avg_voltage_mV)
-                    ? (pack_modules[module_idx].voltage_mv - pack_state->avg_voltage_mV)
-                    : (pack_state->avg_voltage_mV - pack_modules[module_idx].voltage_mv);
-                
-                bool if_balance = MIN_BALANCE_VOLT_DIFF_MV <= voltage_diff_mv && voltage_diff_mv <= MAX_BALANCE_VOLT_DIFF_MV;
-        
-                SetBalancingForModule_(i, j, k, if_balance);
+
+                SetBalancingForModuleGroup_(
+                    pack_state, pack_modules, slaves,
+                    dev_num, reg_num, val_offset, module_start_idx);
             }
         }
     }
 
-    Slave_WriteRegisterGroup(CMD_WRSCTRL, s_ctrl_regs[0]);
-    Slave_WriteRegisterGroup(CMD_WRPSB, s_ctrl_regs[1]);
+    WriteConfigRegisters(slaves);
 }
 
 void PauseAllBalancing() {
@@ -72,25 +74,21 @@ void ResumeAllBalancing() {
     Slave_SendCmd(CMD_UNMUTE);
 }
 
-#if (UNIT_TEST_SLAVE == RUN)
+#if (INT_TEST_SLAVE == RUN)
 void Debug_DoBalancing(slave_t slaves[SLAVE_NUM_DEVICES], bool enable) {
 
-    for (int i = 0; i < SLAVE_NUM_DEVICES; i++) {
-        for (int j = 0; j < SLAVE_NUM_BAL_REG; j++) {
-            for (int k = 0; k < SLAVE_NUM_MODULE_PER_BAL_REG; k++) {
-
-                int module_idx = slaves[i].bal_mappings[j][k];
-                if (module_idx < 0 || module_idx >= NUM_MODULES) {
-                    continue;
-                }
-    
-
-                SetBalancingForModule_(i, j, k, enable);
-            }
+    for (int device_num = 0; device_num < SLAVE_NUM_DEVICES; device_num++) {
+        if (enable) {
+            slaves[device_num].config_regs[0][4] = 0xFF;
+            slaves[device_num].config_regs[0][5] = 0x0F;
+            slaves[device_num].config_regs[1][0] |= 0xF0;
+        }
+        else {
+            slaves[device_num].config_regs[0][4] = 0x00;
+            slaves[device_num].config_regs[0][5] = 0x00;
+            slaves[device_num].config_regs[1][0] &= (uint8_t)(~0xF0);
         }
     }
-
-    Slave_WriteRegisterGroup(CMD_WRSCTRL, s_ctrl_regs[0]);
-    Slave_WriteRegisterGroup(CMD_WRPSB, s_ctrl_regs[1]);
+    WriteConfigRegisters(slaves);
 }
 #endif // UNIT_TEST_ISOSPI

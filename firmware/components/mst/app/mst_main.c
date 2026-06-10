@@ -121,13 +121,13 @@ void DriveOutputs() {
 
 
 void SendCanMessages() {
-    // CAN_SendMessage0x622();
-    // CAN_SendMessage0x623();
-    // CAN_SendMessage0x625();
-    // CAN_SendMessage0x626();
-    // CAN_SendMessage0x627();
-    // CAN_SendMessage0x628();
-    // CAN_SendMessage0x629();
+    CAN_SendMessage0x622();
+    CAN_SendMessage0x623();
+    CAN_SendMessage0x625();
+    CAN_SendMessage0x626();
+    CAN_SendMessage0x627();
+    CAN_SendMessage0x628();
+    CAN_SendMessage0x629();
     LOG_DEBUG("All CAN messages queued for transmission.");
 }
 
@@ -205,7 +205,7 @@ void Debug_IsoSpiTestCycle(void) {
 }
 #endif // UNIT_TEST_ISOSPI
 
-#if (UNIT_TEST_SLAVE == RUN)
+#if (INT_TEST_SLAVE == RUN)
 static bool DoesRegGroupMatch_(uint8_t reg_group1[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES],
                               uint8_t reg_group2[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES])
 {
@@ -221,8 +221,6 @@ static bool DoesRegGroupMatch_(uint8_t reg_group1[SLAVE_NUM_DEVICES][SLAVE_REG_S
 }
 
 void Debug_SlaveTestCommsCycle(void) {
-    static bool scrutineering_enabled = true;
-    static int loop_count = 0;
     uint8_t test_data[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES] = {
         {0x55, 0x6E, 0x69, 0x42, 0x43, 0x20}
 #if SLAVE_NUM_DEVICES > 1U
@@ -238,47 +236,20 @@ void Debug_SlaveTestCommsCycle(void) {
 
     Slave_WakeUp();
     Slave_WriteRegisterGroup(CMD_WRCOMM, test_data);
+    HAL_Delay(500);
 
     (void) reg_group_match;
-
-    // Refer to the ADBMS1818 datasheet pages 65, 68, 69 for 
-    // format and content of configuration register groups A and B
-    uint8_t config_val_a[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
-    uint8_t config_val_b[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
-
-    for (int i = 0; i < SLAVE_NUM_DEVICES; i++) {
-        config_val_a[i][0] = 0xF8 | (REFON << 2) | ADCOPT; // GPIO 1-5 pull-downs off, REFON, ADCOPT
-        config_val_a[i][1] = (VUV & 0xFF); // VUV[7:0]
-        config_val_a[i][2] = ((uint8_t) (VOV << 4)) | (((uint8_t) (VUV >> 8)) & 0x0F); // VOV[4:0] | VUV[11:8]
-        config_val_a[i][3] = (VOV >> 4); // VOV[11:4]
-        config_val_a[i][4] = 0x00; // Discharge off for cells 1 through 8
-        config_val_a[i][5] = 0x00; // Discharge off for cells 9 through 12, Discharge timer disabled
-
-        config_val_b[i][0] = 0x0F ^ (!scrutineering_enabled << 1); // Discharge off for cells 13 through 16, GPIO 6-9 = 1
-        config_val_b[i][1] = 0x00; // FDRF = 0, PS = 0, Discharge off for cells 17 and 18
-        config_val_b[i][2] = 0x00;
-        config_val_b[i][3] = 0x00;
-        config_val_b[i][4] = 0x00;
-        config_val_b[i][5] = 0x00;
-    }
-    
-    if (++loop_count % 4 == 0) {
-        scrutineering_enabled = !scrutineering_enabled;
-        GPIO_Write(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin, scrutineering_enabled);
-    }
-
-    Slave_WriteRegisterGroup(CMD_WRCFGA, config_val_a); // Write to Config. Reg. Group A
-    Slave_WriteRegisterGroup(CMD_WRCFGB, config_val_b); // Write to Config. Reg. Group B
 
     comm_status = Slave_ReadRegisterGroup(CMD_RDCOMM, test_data_rx);
     reg_group_match = DoesRegGroupMatch_(test_data, test_data_rx);
     
     GPIO_Write(LED_OUT_GPIO_Port, LED_OUT_Pin, reg_group_match);
-
-    LOG_INFO("Reg group match: %d. Comm error: %d. Config B first byte: %02X", reg_group_match, comm_status.error, config_val_b[0][0]);
+    LOG_INFO("Reg group match: %d. Comm error: %d. Config B first byte: %02X", reg_group_match, comm_status.error, slaves[0].config_regs[0][0]);
     HAL_Delay(500);
 }
+#endif // (INT_TEST_SLAVE == RUN)
 
+#if (INT_TEST_SLAVE_BAL_SCRUT == RUN)
 void Debug_SlaveTestBalanceScrutCycle(void) {
     bool balance_enabled = pack_state.balancing_enable;
     bool scrutineering_enabled = pack_state.scrutineering_enable;
@@ -286,42 +257,22 @@ void Debug_SlaveTestBalanceScrutCycle(void) {
 
     ResumeAllBalancing();
 
-    // Refer to the ADBMS1818 datasheet pages 65, 68, 69 for 
-    // format and content of configuration register groups A and B
-    uint8_t config_val_a[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
-    uint8_t config_val_b[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
-
-    for (int i = 0; i < SLAVE_NUM_DEVICES; i++) {
-        config_val_a[i][0] = 0xF8 | (REFON << 2) | ADCOPT; // GPIO 1-5 pull-downs off, REFON, ADCOPT
-        config_val_a[i][1] = (VUV & 0xFF); // VUV[7:0]
-        config_val_a[i][2] = ((uint8_t) (VOV << 4)) | (((uint8_t) (VUV >> 8)) & 0x0F); // VOV[4:0] | VUV[11:8]
-        config_val_a[i][3] = (VOV >> 4); // VOV[11:4]
-        config_val_a[i][4] = balance_enabled ? 0xFF : 0x00; // Discharge off for cells 1 through 8
-        config_val_a[i][5] = balance_enabled ? 0x0F : 0x00; // Discharge off for cells 9 through 12, Discharge timer disabled
-
-        config_val_b[i][0] = balance_enabled ? 0xFF : 0x0F;
-        config_val_b[i][0] = config_val_b[i][0] ^ (scrutineering_enabled << 1); // GPIO 6-9 = 1 when scrutineering enabled
-        config_val_b[i][1] = 0x00; // FDRF = 0, PS = 0, Discharge off for cells 17 and 18
-        config_val_b[i][2] = 0x00;
-        config_val_b[i][3] = 0x00;
-        config_val_b[i][4] = 0x00;
-        config_val_b[i][5] = 0x00;
-    }
-
-    Slave_WriteRegisterGroup(CMD_WRCFGA, config_val_a); // Write to Config. Reg. Group A
-    Slave_WriteRegisterGroup(CMD_WRCFGB, config_val_b); // Write to Config. Reg. Group B
+    SetScrutineeringMode(slaves, scrutineering_enabled);
+    Debug_DoBalancing(slaves, balance_enabled);
 
     LOG_INFO("Balancing pins %s, Scrutineering mode %s", balance_enabled ? "ON" : "OFF", scrutineering_enabled ? "ON" : "OFF");
-    // balance_enabled = !balance_enabled;
 
     for (int i = 0; i < 5; i++) {
         HAL_Delay(500);
-        Slave_WriteRegisterGroup(CMD_WRCFGA, config_val_a); // Write to Config. Reg. Group A
-        Slave_WriteRegisterGroup(CMD_WRCFGB, config_val_b); // Write to Config. Reg. Group B
+        PauseAllBalancing();
         HAL_Delay(500);
+        ResumeAllBalancing();
     }
+    HAL_Delay(500);
 }
+#endif // (INT_TEST_SLAVE_BAL_SCRUT == RUN)
 
+#if (INT_TEST_SLAVE_MUX == RUN)
 void Debug_SlaveTestMuxCycle(void) {
     static unsigned current_mux_state = 0;
 
@@ -339,4 +290,4 @@ void Debug_SlaveTestMuxCycle(void) {
 
     current_mux_state = (current_mux_state + 1) % 4;
 }
-#endif
+#endif // (INT_TEST_SLAVE_MUX == RUN)

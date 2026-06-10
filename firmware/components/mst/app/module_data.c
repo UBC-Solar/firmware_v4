@@ -3,18 +3,8 @@
 #include "mst_defs.h"
 #include "mst_types.h"
 #include "spi_driver.h"
-#include "balancing.h"
 #include <string.h>
 
-// Look-up table (LUT) to index cell voltage commands
-const Slave_Command_t cell_voltage_commands_lut[SLAVE_NUM_VOLT_REG] = {
-    CMD_RDCVA,
-    CMD_RDCVB,
-    CMD_RDCVC,
-    CMD_RDCVD,
-    CMD_RDCVE,
-    CMD_RDCVF
-};
 
 /**
  * Thermistor voltage-to-temperature look-up table.
@@ -52,21 +42,23 @@ void Module_Init(
     // --- Slave 0 Topology Mappings ---
     slaves[0] = (slave_t) 
     {
-        .config_a = {
-            0xF8 | (REFON << 2) | ADCOPT, // GPIO 1-5 pull-downs off, REFON, ADCOPT
-            (VUV & 0xFF), // VUV[7:0]
-            ((uint8_t) (VOV << 4)) | (((uint8_t) (VUV >> 8)) & 0x0F), // VOV[4:0] | VUV[11:8]
-            (VOV >> 4), // VOV[11:4]
-            0x00, // Discharge off for cells 1 through 8
-            0x00  // Discharge off for cells 9 through 12, Discharge timer disabled
-        },
-        .config_b = {
-            0x0F, // Discharge off for cells 13 through 16, GPIO 6-9 = 1
-            0x00, // FDRF = 0, PS = 0, Discharge off for cells 17 and 18
-            0x00,
-            0x00,
-            0x00,
-            0x00
+        .config_regs = {
+            {
+                0xF8 | (REFON << 2) | ADCOPT, // GPIO 1-5 pull-downs off, REFON, ADCOPT
+                (VUV & 0xFF), // VUV[7:0]
+                ((uint8_t) (VOV << 4)) | (((uint8_t) (VUV >> 8)) & 0x0F), // VOV[4:0] | VUV[11:8]
+                (VOV >> 4), // VOV[11:4]
+                0x00, // Discharge off for cells 1 through 8
+                0x00  // Discharge off for cells 9 through 12, Discharge timer disabled
+            },
+            {
+                0x0F, // Discharge off for cells 13 through 16, GPIO 6-9 = 1
+                0x00, // FDRF = 0, PS = 0, Discharge off for cells 17 and 18
+                0x00,
+                0x00,
+                0x00,
+                0x00
+            }
         },
         // 2 bytes per module value, so each register group (6 bytes total) holds data of 3 modules.
         .volt_mappings = {
@@ -94,12 +86,13 @@ void Module_Init(
             // Auxiliary Register Group C (...)
             { {12, 13, 14, 15}, {-1, -1, -1, -1}, {-1, -1, -1, -1} }
         },
-        // 4 bits per module value, so each register group (6 bytes total) holds data for 12 modules.
+        // 4 bits per value, each value holds data for 4 continuous modules at once (e.g. value == 0 --> data for modules 0 to 3)
+        // so each register group holds data for 12 modules
         .bal_mappings = {
-            // S Control Register Group
-            { 0,  1,  2,  3,  4,  5,  6,  7 },
-            // PWM/S Control Register Group B
-            {-1, -1, -1, -1, -1, -1, 12, 13 }
+            // Configuration Register group A
+            { -1, -1, -1, -1, -1, -1, -1, -1,  0,  4,  8, -1 },
+            // Configuration Register Group B
+            { -1, 12, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }
         }
     };
 
@@ -107,7 +100,7 @@ void Module_Init(
     // --- Slave 1 Topology Mappings ---
     slaves[1] = (slave_t)
     {
-        .config_a = {
+        .config_regs = {{
             0xF8 | (REFON << 2) | ADCOPT, // GPIO 1-5 pull-downs off, REFON, ADCOPT
             (VUV & 0xFF), // VUV[7:0]
             ((uint8_t) (VOV << 4)) | (((uint8_t) (VUV >> 8)) & 0x0F), // VOV[4:0] | VUV[11:8]
@@ -115,14 +108,14 @@ void Module_Init(
             0x00, // Discharge off for cells 1 through 8
             0x00  // Discharge off for cells 9 through 12, Discharge timer disabled
         },
-        .config_b = {
+        {
             0x0F, // Discharge off for cells 13 through 16, GPIO 6-9 = 1
             0x00, // FDRF = 0, PS = 0, Discharge off for cells 17 and 18
             0x00,
             0x00,
             0x00,
             0x00
-        },
+        }},
         // 2 bytes per module value, so each register group (6 bytes total) holds data of 3 modules.
         .volt_mappings = {
             // Cell Voltage Register Group A
@@ -149,12 +142,13 @@ void Module_Init(
             // Auxiliary Register Group C
             { {-1, -1, -1, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1} }
         },
-        // 4 bits per module value, so each 
+        // 4 bits per value, each value holds data for 4 continuous modules at once (e.g. value == 0 --> data for modules 0 to 3)
+        // so each register group holds data for 12 modules
         .bal_mappings = {
-            // S Control Register Group
-            {16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
-            // PWM/S Control Register Group B
-            {-1, -1, -1, -1, -1, -1, 28, 29, 30, 31, -1, -1}
+            // Configuration Register group A
+            { -1, -1, -1, -1, -1, -1, -1, -1, 16, 20, 24, -1 },
+            // Configuration Register Group B
+            { -1, 28, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }
         }
     };
     #endif // SLAVE_NUM_DEVICES > 1
@@ -167,22 +161,28 @@ void Module_Init(
         thermistor_temp_lut[i].voltage_uV = resistance_Ohm;
     }
 
-    Balancing_Init(slaves);
     Slave_Init(SPI_handle);
 
 #if (UNIT_TEST_ISOSPI != RUN)
+    WriteConfigRegisters(slaves);
+#endif
+}
+
+
+void WriteConfigRegisters(slave_t slaves[SLAVE_NUM_DEVICES])
+{
     uint8_t cfgra_2d[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
     uint8_t cfgrb_2d[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
     for (int ic_num = 0; ic_num < SLAVE_NUM_DEVICES; ic_num++) {
-        memcpy(cfgra_2d[ic_num], slaves[ic_num].config_a, SLAVE_REG_SIZE_BYTES);
-        memcpy(cfgrb_2d[ic_num], slaves[ic_num].config_b, SLAVE_REG_SIZE_BYTES);
+        memcpy(cfgra_2d[ic_num], slaves[ic_num].config_regs[0], SLAVE_REG_SIZE_BYTES);
+        memcpy(cfgrb_2d[ic_num], slaves[ic_num].config_regs[1], SLAVE_REG_SIZE_BYTES);
     }
 
     Slave_WakeUp();
     Slave_WriteRegisterGroup(CMD_WRCFGA, cfgra_2d);
     Slave_WriteRegisterGroup(CMD_WRCFGB, cfgrb_2d);
-#endif
 }
+
 
 void RequestVoltageMeasurement(void) {
     Slave_WakeUp();
@@ -190,12 +190,22 @@ void RequestVoltageMeasurement(void) {
 }
 
 void GetVoltageForRegister_(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES], int reg_idx) {
+    
+    const Slave_Command_t cell_voltage_commands[SLAVE_NUM_VOLT_REG] = {
+        CMD_RDCVA,
+        CMD_RDCVB,
+        CMD_RDCVC,
+        CMD_RDCVD,
+        CMD_RDCVE,
+        CMD_RDCVF
+    };
+
     if (reg_idx >= SLAVE_NUM_VOLT_REG) {
         LOG_ERROR("Voltage register %d is out of range!", reg_idx);
         ERROR_HANDLER_LOGGED();
     }
 
-    Slave_Command_t current_cmd = cell_voltage_commands_lut[reg_idx];
+    Slave_Command_t current_cmd = cell_voltage_commands[reg_idx];
     
     uint8_t rx_data[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
     memset(rx_data, 0, sizeof(rx_data));
@@ -401,7 +411,6 @@ void ComputePackStatistics(module_t pack_modules[NUM_MODULES], pack_state_t *pac
 }
 
 void SetTempMuxState(slave_t slaves[SLAVE_NUM_DEVICES], unsigned new_state) {
-    uint8_t cfgra_2d[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES];
 
     // Extract the lowest 2 bits from new_state
     uint8_t mux_bits = new_state & 0x03;
@@ -410,14 +419,26 @@ void SetTempMuxState(slave_t slaves[SLAVE_NUM_DEVICES], unsigned new_state) {
         // Update the slave data structure with the new state
         slaves[ic_num].temp_mux_state = mux_bits;
 
-        // Clear and set bits 3 and 4 in byte 0 of config_a
-        slaves[ic_num].config_a[0] &= ~(0x18);
-        slaves[ic_num].config_a[0] |= (mux_bits << 3);
-
-        // Copy updated config back to the 2D array for transmission
-        memcpy(cfgra_2d[ic_num], slaves[ic_num].config_a, SLAVE_REG_SIZE_BYTES);
+        // Clear and set bits 3 and 4 in byte 0 of configuration register group A
+        uint8_t *config_a = slaves[ic_num].config_regs[0];
+        config_a[0] &= ~(0x18);
+        config_a[0] |= (mux_bits << 3);
     }
 
     Slave_WakeUp();
-    Slave_WriteRegisterGroup(CMD_WRCFGA, cfgra_2d);
+    WriteConfigRegisters(slaves);
+}
+
+void SetScrutineeringMode(slave_t slaves[SLAVE_NUM_DEVICES], bool enable) {
+    // config_val_b[i][0] ^ (scrutineering_enabled << 1)
+    
+    for (int ic_num = 0; ic_num < SLAVE_NUM_DEVICES; ic_num++) {
+        // Clear and set bit 1 in byte 0 of configuration register group B
+        uint8_t *config_b = slaves[ic_num].config_regs[1];
+        config_b[0] &= ~(0x02);
+        config_b[0] |= (!enable << 1); // GPIO (and thus scrutineering circuitry) is active-LOW
+    }
+
+    Slave_WakeUp();
+    WriteConfigRegisters(slaves);
 }

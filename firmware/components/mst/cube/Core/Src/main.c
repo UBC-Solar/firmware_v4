@@ -106,42 +106,47 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    // #if (UNIT_TEST_MCU != RUN) && (UNIT_TEST_IO != RUN) && (UNIT_TEST_CAN != RUN) && (UNIT_TEST_ISOSPI != RUN) && (UNIT_TEST_SLAVE != RUN)
     /**
      * Mainloop
      */
-    CollectBoardData();
-    CollectModuleData();
-    AnalyzeModuleData();
-    DriveOutputs();
-    SendCanMessages();
-    HAL_Delay(1000);
-    // #endif
+    // CollectBoardData();
+    // CollectModuleData();
+    // AnalyzeModuleData();
+    // DriveOutputs();
+    // SendCanMessages();
+    // HAL_Delay(1000);
 
     /**
      * Tests
      */
     #if (UNIT_TEST_MCU == RUN)
     Debug_McuTestCycle();
-    #endif // UNIT_TEST_MCU
+    #endif // (UNIT_TEST_MCU == RUN)
 
     #if (UNIT_TEST_IO == RUN)
     Debug_DigitalIoTestCycle();
-    #endif // UNIT_TEST_IO
+    #endif // (UNIT_TEST_IO == RUN)
 
     #if (UNIT_TEST_CAN == RUN)
     Debug_CanTestCycle();
-    #endif // UNIT_TEST_CAN
+    #endif // (UNIT_TEST_CAN == RUN)
     
     #if (UNIT_TEST_ISOSPI == RUN)
     Debug_IsoSpiTestCycle();
-    #endif // UNIT_TEST_ISOSPI
+    #endif // (UNIT_TEST_ISOSPI == RUN)
 
-    #if (UNIT_TEST_SLAVE == RUN)
-    // Debug_SlaveTestCommsCycle();
+    #if (INT_TEST_SLAVE == RUN)
+    Debug_SlaveTestCommsCycle();
+    #endif // (INT_TEST_SLAVE == RUN)
+
+    #if (INT_TEST_SLAVE_BAL_SCRUT == RUN)
     Debug_SlaveTestBalanceScrutCycle();
-    // Debug_SlaveTestMuxCycle();
-    #endif // UNIT_TEST_SLAVE
+    #endif // (INT_TEST_SLAVE_BAL_SCRUT == RUN)
+
+    #if (INT_TEST_SLAVE_MUX == RUN)
+    Debug_SlaveTestMuxCycle();
+    #endif // (INT_TEST_SLAVE_MUX == RUN)
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

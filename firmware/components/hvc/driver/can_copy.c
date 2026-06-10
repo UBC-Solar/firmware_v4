@@ -1,9 +1,7 @@
 #include "can_driver.h"
-
-#include "gpio_driver.h"
-#include "main.h"
-#include "stm32f1xx_hal_def.h"
 #include "debug_io.h"
+
+#include "stm32f1xx_hal_def.h"
 
 CAN_Driver_t CAN_driver;
 
@@ -18,14 +16,14 @@ static void tryTransmitFromQueue()
 
     CAN_TxMessage_t *next_message = (CAN_TxMessage_t *) &CAN_driver.tx_queue[CAN_driver.tx_queue_pop_index];
     HAL_StatusTypeDef canStatus = HAL_CAN_AddTxMessage(
-        CAN_driver.can_handle, 
-        &next_message->tx_header, 
-        next_message->data, 
+        CAN_driver.can_handle,
+        &next_message->tx_header,
+        next_message->data,
         &mailbox);
 
     if (HAL_OK != canStatus)
     {
-        Error_Handler();
+        return;
     }
     CAN_driver.tx_queue_pop_index = (CAN_driver.tx_queue_pop_index + 1U) % CAN_TX_QUEUE_CAPACITY;
 }
@@ -145,7 +143,7 @@ void CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size
 /**
  * @brief Initialize CAN data, configures interrupts, and starts the CAN hardware
  * NOTE: filters should be configured before calling this function
- * 
+ *
  * Call this function once before sending any CAN messages
  */
 void CAN_Init(CAN_HandleTypeDef *handle)
@@ -154,11 +152,11 @@ void CAN_Init(CAN_HandleTypeDef *handle)
 
     CAN_driver.can_handle = handle;
 
-    // Activate interrupt for completion of message transmission
+    // Activate TX and both RX FIFO interrupts
     if (HAL_CAN_ActivateNotification(CAN_driver.can_handle,
-                                      CAN_IT_TX_MAILBOX_EMPTY |
-                                      CAN_IT_RX_FIFO0_MSG_PENDING |
-                                      CAN_IT_RX_FIFO1_MSG_PENDING) != HAL_OK)
+            CAN_IT_TX_MAILBOX_EMPTY |
+            CAN_IT_RX_FIFO0_MSG_PENDING |
+            CAN_IT_RX_FIFO1_MSG_PENDING) != HAL_OK)
     {
         Error_Handler();
     }
@@ -186,7 +184,7 @@ void CAN_SendMessageXXX()
 }
 
 
-#if (INT_TEST_CAN == RUN)
+#if (UNIT_TEST_CAN == RUN)
 /**
  * @brief Send DEBUG CAN message intended for hardware unit tests
  *
@@ -196,78 +194,95 @@ void CAN_SendMessgeDebug()
 {
     CAN_TxMessage_t txMessage = {0};
 
-    txMessage.tx_header.StdId = 323;
+    txMessage.tx_header.StdId = 0x42U;
     txMessage.tx_header.DLC = 8;
-    txMessage.data[0] = 1;
+
+    // Data contains alternating bytes of all 0's and all 1's
+    for (int i = 0; i < 8; i++)
+    {
+        txMessage.data[i] = (i % 2) ? 0x00U : 0xFFU;
+    }
 
     CAN_QueueTxMessage(&txMessage);
-    DEBUG_IO_PRINT("Sent DEBUG CAN message\r\n");
 }
-#endif // UNIT_TEST_CAN 
+#endif // UNIT_TEST_CAN
 
 
-/**
- * @brief TEMPLATE function to be registered for receiving CAN messages
- * 
- * TODO: register this function to be called inside the appropriate "Rx FIFO pending callback"
- * as determined by the filter configuration. I.e. one of:
- *  - HAL_CAN_RxFifo0MsgPendingCallback()
- *  - HAL_CAN_RxFifo1MsgPendingCallback()
- */
-void CAN_RecievedMessageCallback(uint32_t fifo_num)
+static void process_rx(uint32_t fifo)
 {
-    CAN_RxMessage_t new_rx_message;
+    CAN_RxMessage_t msg;
     if (HAL_CAN_GetRxMessage(
-        CAN_driver.can_handle, 
-        fifo_num, 
-        (CAN_RxHeaderTypeDef *) &new_rx_message.rx_header, 
-        (uint8_t *) new_rx_message.data) != HAL_OK)
+        CAN_driver.can_handle,
+        fifo,
+        (CAN_RxHeaderTypeDef *) &msg.rx_header,
+        (uint8_t *) msg.data) != HAL_OK)
     {
         Error_Handler();
     }
+    msg.timestamp = HAL_GetTick();
 
-    new_rx_message.timestamp = HAL_GetTick();
+    // Visual indicator — toggles DEBUG LED on every received frame
+    HAL_GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
 
-    /**
-     * TODO: do something with the new_rx_message!
-     *  Do you want to add it to some global data structure for futur processing?
-     *  Or do you want to call your own functions here to parse into it right away?
-     */
-    GPIO_Toggle(DEBUG_LED_GPIO_Port, DEBUG_LED_Pin);
-    
-    DEBUG_IO_PRINT("Received new CAN message: ID=%d, data=[%02X %02X %02X %02X %02X %02X %02X %02X]\r\n",
-                   new_rx_message.rx_header.StdId,
-                   new_rx_message.data[0], new_rx_message.data[1], new_rx_message.data[2], new_rx_message.data[3],
-                   new_rx_message.data[4], new_rx_message.data[5], new_rx_message.data[6], new_rx_message.data[7]);
+    DEBUG_IO_PRINT("CAN RX: ID=0x%03lX data[0]=0x%02X\r\n",
+                   msg.rx_header.StdId, msg.data[0]);
+
+    if (msg.rx_header.StdId == 0x323U && (msg.data[0] & 0x01U))
+    {
+        CAN_driver.startup_received = 1U;
+    }
 }
-
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
-    CAN_RecievedMessageCallback(CAN_FILTER_FIFO0);
+    process_rx(CAN_FILTER_FIFO0);
 }
-
 
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
-    CAN_RecievedMessageCallback(CAN_FILTER_FIFO1);
+    process_rx(CAN_FILTER_FIFO1);
 }
 
+uint8_t CAN_Startup_Received(void)
+{
+    return CAN_driver.startup_received;
+}
+
+void CAN_Send_Startup_Test(void)
+{
+    CAN_TxMessage_t msg = {0};
+    msg.tx_header.StdId = 0x324U;
+    msg.tx_header.IDE   = CAN_ID_STD;
+    msg.tx_header.RTR   = CAN_RTR_DATA;
+    msg.tx_header.DLC   = 1U;
+    msg.data[0]         = 0x01U;
+    CAN_QueueTxMessage(&msg);
+}
+
+void CAN_Send_Fault_0x324(void)
+{
+    CAN_TxMessage_t msg = {0};
+    msg.tx_header.StdId = 0x324U;
+    msg.tx_header.IDE   = CAN_ID_STD;
+    msg.tx_header.RTR   = CAN_RTR_DATA;
+    msg.tx_header.DLC   = 1U;
+    msg.data[0]         = 0x01U;
+    CAN_QueueTxMessage(&msg);
+}
 
 void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan) {
     CAN_TxCompleteCallback();
 }
 
-
 void HAL_CAN_TxMailbox1CompleteCallback(CAN_HandleTypeDef *hcan) {
     CAN_TxCompleteCallback();
 }
-
 
 void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan) {
     CAN_TxCompleteCallback();
 }
 
+// Arbitration lost — treat as complete so the queue doesn't deadlock
 void HAL_CAN_TxMailbox0AbortCallback(CAN_HandleTypeDef *hcan) {
     CAN_TxCompleteCallback();
 }
@@ -282,7 +297,7 @@ void HAL_CAN_TxMailbox2AbortCallback(CAN_HandleTypeDef *hcan) {
 
 /**
  * @brief Handle a CAN TX complete interrupt for any of the 3 CAN TX mailboxes
- * 
+ *
  * TODO: register this function to be called inside all of the following:
  *  - HAL_CAN_TxMailbox0CompleteCallback()
  *  - HAL_CAN_TxMailbox1CompleteCallback()
@@ -299,9 +314,9 @@ void CAN_TxCompleteCallback()
 
 /**
  * @brief Handle a CAN TX complete interrupt with error for any of the 3 CAN TX mailboxes
- * 
+ *
  * TODO: register this function to be called from HAL_CAN_ErrorCallback()
- * 
+ *
  * @note This function assumes auto retransmission is ENABLED!
  */
 void CAN_ErrorCallback()

@@ -122,6 +122,7 @@ int main(void)
 
       #if (INT_TEST_CAN == RUN)
       HVC_TestCanCycle();
+      HAL_Delay(2000);
       continue;
       #endif // (INT_TEST_CAN == RUN)
 

@@ -25,6 +25,9 @@ void HVC_Init(
     UART_Init(_huart2);
     ADC_Init(_hadc1, _htim3);
     I2C_Init(_hi2c1);
+    
+    uint16_t filter_ids[] = {0x42, 0x323, 0x324};
+    CAN_InitFilterList(_hcan, filter_ids, 3);
     CAN_Init(_hcan);
 
     DEBUG_IO_print("UART and ADC and I2C initialized.\n");

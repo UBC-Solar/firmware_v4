@@ -65,7 +65,7 @@ void CAN_SendMessageXXX();
 void CAN_SendMessgeDebug();
 #endif // UNIT_TEST_CAN
 
-void CAN_RecievedMessageCallback();
+void CAN_RecievedMessageCallback(uint32_t fifo_num);
 
 void CAN_TxCompleteCallback();
 void CAN_ErrorCallback();

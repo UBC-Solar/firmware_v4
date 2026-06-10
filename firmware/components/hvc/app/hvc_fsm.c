@@ -14,6 +14,7 @@
 volatile HVC_State_t hvc_state;
 HVC_Ticks_t ticks;
 bool startup_complete = false;
+bool tel_heartbeat_received = false;
 
 /*============================================================================*/
 /* PUBLIC API */

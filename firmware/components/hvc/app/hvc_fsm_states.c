@@ -38,9 +38,30 @@ void Reset(void)
  *                 immediate/alternate handling for TEL-absent build.
  * Exit State: MST_READY
  */
-void MvpLvPowerup(void)
-{
+void MvpLvPowerup(void) {
+    DEBUG_IO_print("HVC: STATE_MVP_LV_POWERUP\r\n");
+    
+    static bool dist_powered = false;
+    if (!dist_powered) {
+        GPIO_Write(DIST_CTRL_GPIO_Port, DIST_CTRL_Pin, GPIO_PIN_SET);
+        dist_powered = true;
+        ticks.generic = HAL_GetTick();
+    }
 
+    if (tel_heartbeat_received) {
+        tel_heartbeat_received = false;
+        dist_powered = false;
+        ticks.generic = HAL_GetTick();
+        hvc_state = MST_READY;
+        return;
+    }
+
+    if (timer_elapsed(MVP_LV_POWERUP_TIMEOUT_MS, &ticks.generic)) {
+        dist_powered = false;
+        DEBUG_IO_print("HVC: MVP_LV_POWERUP timeout\r\n");
+        hvc_state = FAULT;
+        return;
+    }
 }
 
 /**
@@ -51,6 +72,35 @@ void MvpLvPowerup(void)
  */
 void MST_Ready(void)
 {
+    DEBUG_IO_print("HVC: STATE_MST_READY\r\n");
+    
+    GPIO_PinState mst_fault = GPIO_Read(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin);    
+    if(mst_fault == GPIO_PIN_SET) {
+        hvc_state = MST_CHECK;
+    } 
+    if (timer_elapsed(HVC_MST_READY_TIMEOUT_MS, &ticks.generic)) {
+        DEBUG_IO_print("HVC: MST_READY timeout\r\n");
+        hvc_state = FAULT;
+        return;
+}    
+    }
+
+    if (tel_heartbeat_received) {
+        tel_heartbeat_received = false;
+        dist_powered = false;
+        ticks.generic = HAL_GetTick();
+        hvc_state = MST_READY;
+        return;
+    }
+
+    if (timer_elapsed(MVP_LV_POWERUP_TIMEOUT_MS, &ticks.generic)) {
+        dist_powered = false;
+        DEBUG_IO_print("HVC: MVP_LV_POWERUP timeout\r\n");
+        hvc_state = FAULT;
+        return;
+    }    
+
+
 
 }
 

@@ -4,6 +4,7 @@
 #include "main.h"
 #include "stm32f1xx_hal_def.h"
 #include "debug_io.h"
+#include "hvc_fsm_private.h"
 
 CAN_Driver_t CAN_driver;
 
@@ -233,6 +234,9 @@ void CAN_RecievedMessageCallback(uint32_t fifo_num)
      *  Do you want to add it to some global data structure for futur processing?
      *  Or do you want to call your own functions here to parse into it right away?
      */
+    if (new_rx_message.rx_header.StdId == TEL_HEARTBEAT_ID) {
+        tel_heartbeat_received = true;
+}
     GPIO_Toggle(DEBUG_LED_GPIO_Port, DEBUG_LED_Pin);
     
     DEBUG_IO_PRINT("Received new CAN message: ID=%d, data=[%02X %02X %02X %02X %02X %02X %02X %02X]\r\n",

@@ -15,8 +15,11 @@
 /*============================================================================*/
 /* CONTACTOR ACTIVE LEVELS — TODO: verify polarity from schematic */
 
-#define HVC_CONTACTOR_CLOSE  GPIO_PIN_SET
-#define HVC_CONTACTOR_OPEN   GPIO_PIN_RESET
+#define HVC_CONTACTOR_CLOSE         GPIO_PIN_SET
+#define HVC_CONTACTOR_OPEN          GPIO_PIN_RESET
+#define TEL_HEARTBEAT_ID            300U          
+#define MVP_LV_POWERUP_TIMEOUT_MS   5000U    
+#define MST_READY_TIMEOUT_MS        5000U    
 
 /*============================================================================*/
 /* INTERNAL TYPE DEFS */
@@ -35,6 +38,7 @@ typedef struct
 extern volatile HVC_State_t hvc_state;
 extern HVC_Ticks_t ticks;
 extern bool startup_complete;
+extern bool tel_heartbeat_received;
 
 /*============================================================================*/
 /* INTERNAL HELPERS — implemented in hvc_fsm.c */

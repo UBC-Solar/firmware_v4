@@ -1,6 +1,7 @@
 #include "can_driver.h"
 
 #include "stm32f1xx_hal_def.h"
+#include "debug_io.h"
 
 CAN_Driver_t CAN_driver;
 
@@ -180,7 +181,7 @@ void CAN_SendMessageXXX()
 }
 
 
-#if (UNIT_TEST_CAN == RUN)
+#if (INT_TEST_CAN == RUN)
 /**
  * @brief Send DEBUG CAN message intended for hardware unit tests
  *
@@ -190,16 +191,12 @@ void CAN_SendMessgeDebug()
 {
     CAN_TxMessage_t txMessage = {0};
 
-    txMessage.tx_header.StdId = 0x42U;
+    txMessage.tx_header.StdId = 323;
     txMessage.tx_header.DLC = 8;
-
-    // Data contains alternating bytes of all 0's and all 1's
-    for (int i = 0; i < 8; i++)
-    {
-        txMessage.data[i] = (i % 2) ? 0x00U : 0xFFU;
-    }
+    txMessage.data[0] = 1;
 
     CAN_QueueTxMessage(&txMessage);
+    DEBUG_IO_PRINT("Sent DEBUG CAN message\r\n");
 }
 #endif // UNIT_TEST_CAN 
 
@@ -231,6 +228,11 @@ void CAN_RecievedMessageCallback()
      *  Do you want to add it to some global data structure for futur processing?
      *  Or do you want to call your own functions here to parse into it right away?
      */
+    
+    DEBUG_IO_PRINT("Received new CAN message: ID=%d, data=[%02X %02X %02X %02X %02X %02X %02X %02X]\r\n",
+                   new_rx_message.rx_header.StdId,
+                   new_rx_message.data[0], new_rx_message.data[1], new_rx_message.data[2], new_rx_message.data[3],
+                   new_rx_message.data[4], new_rx_message.data[5], new_rx_message.data[6], new_rx_message.data[7]);
 }
 
 void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan) {

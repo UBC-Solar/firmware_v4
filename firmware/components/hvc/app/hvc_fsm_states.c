@@ -3,6 +3,7 @@
  * @brief HVC FSM state implementations
  */
 
+#include "hvc_fsm.h"
 #include "hvc_fsm_private.h"
 
 /*============================================================================*/
@@ -35,10 +36,11 @@ void Reset(void)
  *
  * Exit Condition: Telemetry CAN message received (TEL present build), or
  *                 immediate/alternate handling for TEL-absent build.
- * Exit State: BMS_READY
+ * Exit State: MST_READY
  */
 void MvpLvPowerup(void)
 {
+
 }
 
 /**
@@ -47,8 +49,9 @@ void MvpLvPowerup(void)
  * Exit Condition: MASTERBOARD_FAULT observed high then low.
  * Exit State: FANS_POWERUP
  */
-void BMS_Ready(void)
+void MST_Ready(void)
 {
+
 }
 
 /**
@@ -62,6 +65,7 @@ void BMS_Ready(void)
  */
 void Fans_Powerup(void)
 {
+    
 }
 
 /**
@@ -101,7 +105,7 @@ void HV_Connect(void)
  * @brief Closes motor precharge contactor and waits for bus voltage to reach threshold.
  *
  * Exit Condition: motor_precharge ADC >= HVC_PC_COMPLETE_RATIO% of HV bus voltage.
- * Exit State: CLOSE_LLIM
+ * Exit State: MPPT_PRECHARGE
  *
  * Exit Condition: Timeout (HVC_MOTOR_PC_TIMEOUT_MS).
  * Exit State: FAULT
@@ -129,34 +133,14 @@ void MotorPrecharge(void)
     // if (adc.motor_precharge >= hv_bus_mv * HVC_PC_COMPLETE_RATIO / 100) {
     //     pc_started = false;
     //     ticks.generic = HAL_GetTick();
-    //     hvc_state = CLOSE_LLIM;
+    //     hvc_state = MPPT_PRECHARGE;
     // }
 }
-
-/**
- * @brief Closes LLIM contactor then opens motor precharge contactor.
- *
- * Exit Condition: Settling delay elapsed.
- * Exit State: MPPT_PRECHARGE
- */
-void CloseLLIM(void)
-{
-    DEBUG_IO_print("HVC: STATE_CLOSE_MOTOR_BUS\r\n");
-
-    GPIO_Write(LLIM_CTRL_GPIO_Port, LLIM_CTRL_Pin, HVC_CONTACTOR_CLOSE);
-
-    if (timer_elapsed(HVC_CONTACTOR_DELAY_MS, &ticks.generic)) {
-        GPIO_Write(MOTOR_PC_CTRL_GPIO_Port, MOTOR_PC_CTRL_Pin, HVC_CONTACTOR_OPEN);
-        ticks.generic = HAL_GetTick();
-        hvc_state = MPPT_PRECHARGE;
-    }
-}
-
 /**
  * @brief Closes MPPT precharge contactor and waits for bus voltage to reach threshold.
  *
  * Exit Condition: mppt_precharge ADC >= HVC_PC_COMPLETE_RATIO% of HV bus voltage.
- * Exit State: CLOSE_HLIM
+ * Exit State: CLOSE_LLIM
  *
  * Exit Condition: Timeout (HVC_MPPT_PC_TIMEOUT_MS).
  * Exit State: FAULT
@@ -184,9 +168,29 @@ void MpptPrecharge(void)
     // if (adc.mppt_precharge >= hv_bus_mv * HVC_PC_COMPLETE_RATIO / 100) {
     //     pc_started = false;
     //     ticks.generic = HAL_GetTick();
-    //     hvc_state = CLOSE_HLIM;
+    //     hvc_state = CLOSE_LLIM;
     // }
 }
+
+/**
+ * @brief Closes LLIM contactor then opens motor precharge contactor.
+ *
+ * Exit Condition: Settling delay elapsed.
+ * Exit State: CLOSE_HLIM
+ */
+void CloseLLIM(void)
+{
+    DEBUG_IO_print("HVC: STATE_CLOSE_MOTOR_BUS\r\n");
+
+    GPIO_Write(LLIM_CTRL_GPIO_Port, LLIM_CTRL_Pin, HVC_CONTACTOR_CLOSE);
+
+    if (timer_elapsed(HVC_CONTACTOR_DELAY_MS, &ticks.generic)) {
+        GPIO_Write(MOTOR_PC_CTRL_GPIO_Port, MOTOR_PC_CTRL_Pin, HVC_CONTACTOR_OPEN);
+        ticks.generic = HAL_GetTick();
+        hvc_state = CLOSE_HLIM;
+    }
+}
+
 
 /**
  * @brief Closes HLIM contactor, opens MPPT precharge, then enables MPPT and DIST.

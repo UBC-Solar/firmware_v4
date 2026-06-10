@@ -42,29 +42,29 @@ void HVC_FSM_Run(void)
             Reset();
             break;
         case MVP_LV_POWERUP:
-            MVP_LV_Powerup();
+            MvpLvPowerup();
             break;
-        case BMS_READY:
-            BMS_Ready();
+        case MST_READY:
+            MSTready();
             break;
-        case BMS_READY:
-            BMS_Ready();
+        case MST_CHECK:
+            MSTcheck();
             break;
         case FANS_POWERUP:
             Fans_Powerup();
             break;
         case HV_CONNECT:
             HV_Connect();
-            break;  
+            break;
         case MOTOR_PRECHARGE:
             MotorPrecharge();
-            break;
-        case CLOSE_LLIM:
-            CloseLLIM();
             break;
         case MPPT_PRECHARGE:
             MpptPrecharge();
             break;
+        case CLOSE_LLIM:
+            CloseLLIM();
+            break;  
         case CLOSE_HLIM:
             CloseHLIM();
             break;
@@ -73,6 +73,9 @@ void HVC_FSM_Run(void)
             break;
         case MONITORING:
             Monitoring();
+            break;
+        case MOTOR_DISCHARGE:
+            MotorDischarge();
             break;
         case FAULT:
         default:
@@ -112,6 +115,9 @@ void HVC_HVCurrentAlertCallback(void)
     hvc_state = FAULT;
     HVC_FSM_Run();
 }
+void HVC_DistFaultCallback(void){
+    //TODO: Send CAN message to HVC
+}
 
 /*============================================================================*/
 /* HELPERS */
@@ -138,8 +144,8 @@ void open_all_contactors(void)
 void check_supp_voltage(void)
 {
     // TODO: convert ADC supp_sense to mV and drive SUPP_LOW_LED
-    // ADC_Voltages adc = ADC_GetVoltages();
-    // GPIO_PinState state = (adc.supp_sense < HVC_SUPP_LOW_THRESHOLD_MV)
-    //                       ? GPIO_PIN_SET : GPIO_PIN_RESET;
-    // GPIO_Write(SUPP_LOW_LED_GPIO_Port, SUPP_LOW_LED_Pin, state);
+    ADC_Voltages adc = ADC_GetVoltages();
+    GPIO_PinState state = (adc.supp_sense < HVC_SUPP_LOW_THRESHOLD_MV)
+                           ? GPIO_PIN_SET : GPIO_PIN_RESET;
+    GPIO_Write(SUPP_LOW_LED_GPIO_Port, SUPP_LOW_LED_Pin, state);
 }

@@ -48,12 +48,14 @@ void   check_supp_voltage(void);
 
 void Reset(void);
 void MvpLvPowerup(void);
-void HV_Connect(void);
-void BMS_Ready(void);
+void MSTready(void);
+void MSTcheck(void);
 void Fans_Powerup(void);
+void HV_Connect(void);
 void MotorPrecharge(void);
-void CloseLLIM(void);
 void MpptPrecharge(void);
+void MotorDischarge(void);
+void CloseLLIM(void);
 void CloseHLIM(void);
 void LvPowerup(void);
 void Monitoring(void);

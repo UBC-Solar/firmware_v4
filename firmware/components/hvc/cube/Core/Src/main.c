@@ -103,7 +103,7 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
-  HVC_Init(&huart2, &hadc1, &htim3, &hi2c1);
+  HVC_Init(&huart2, &hadc1, &htim3, &hi2c1, &hcan);
 
   /* USER CODE END 2 */
 
@@ -114,6 +114,16 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+      #if (UNIT_TEST_SHUNT == RUN)
+      HVC_TestShuntCycle();
+      continue;
+      #endif // (UNIT_TEST_SHUNT == RUN)
+
+      #if (INT_TEST_CAN == RUN)
+      HVC_TestCanCycle();
+      continue;
+      #endif // (INT_TEST_CAN == RUN)
 
       HVC_Main();
     }

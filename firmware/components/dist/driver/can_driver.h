@@ -1,0 +1,85 @@
+#pragma once
+
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
+#include "stm32f1xx_hal.h"
+#include "can.h"
+
+/*============================================================================*/
+/* CONSTANTS */
+
+#define CAN_MAX_DATAFRAME_BYTES  8U
+#define NUM_CAN_TX_MAILBOXES     3U
+#define CAN_FILTER_NUM_BANKS     14U   // STM32F103 has 14 configurable filter banks
+#define CAN_FILTER_NUM_ID_PER_BANK 2U  // two 32-bit ID slots per bank in list mode
+
+/** Depth of the software TX queue. Size to the peak simultaneous message count. */
+#define CAN_TX_QUEUE_CAPACITY    32U
+
+/*============================================================================*/
+/* TYPES */
+
+typedef struct {
+    CAN_TxHeaderTypeDef tx_header;
+    uint8_t data[CAN_MAX_DATAFRAME_BYTES];
+} CAN_TxMessage_t;
+
+typedef struct {
+    CAN_RxHeaderTypeDef rx_header;
+    uint8_t data[CAN_MAX_DATAFRAME_BYTES];
+    uint32_t timestamp; // HAL tick at time of reception
+} CAN_RxMessage_t;
+
+typedef struct {
+    CAN_HandleTypeDef *can_handle;
+    volatile CAN_TxMessage_t tx_queue[CAN_TX_QUEUE_CAPACITY];
+    volatile uint32_t tx_queue_push_index;
+    volatile uint32_t tx_queue_pop_index;
+    volatile uint8_t startup_received; // set when 0x323 with bit 0 is received
+} CAN_Driver_t;
+
+/*============================================================================*/
+/* INIT */
+
+/**
+ * @brief Configure bxCAN hardware ID-list filters for a set of standard 11-bit IDs.
+ *        Must be called before CAN_Init().
+ */
+void CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size_t count);
+
+/**
+ * @brief Activate TX/RX interrupts and start the CAN peripheral.
+ *        Filters must be configured before calling this.
+ */
+void CAN_Init(CAN_HandleTypeDef *handle);
+
+/*============================================================================*/
+/* TX */
+
+/**
+ * @brief Copy a message into the TX queue and transmit immediately if a
+ *        mailbox is free, otherwise it will be sent from the TX-complete ISR.
+ */
+void CAN_QueueTxMessage(CAN_TxMessage_t *message);
+
+/** @brief Send the dist board fault message (ID 0x324, data[0] bit 0 set). */
+void CAN_Send_Fault_0x324(void);
+
+/*============================================================================*/
+/* RX / STATUS */
+
+/** @return 1 if a valid startup authorisation (0x323, bit 0) has been received. */
+uint8_t CAN_Startup_Received(void);
+
+/*============================================================================*/
+/* ISR CALLBACKS — called from HAL weak-function overrides in can_driver.c */
+
+void CAN_TxCompleteCallback(void);
+void CAN_ErrorCallback(void);
+
+#if (UNIT_TEST_CAN == RUN)
+void CAN_SendMessgeDebug(void);
+#endif

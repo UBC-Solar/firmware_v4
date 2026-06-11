@@ -57,7 +57,7 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(DEBUG_GPIO_Port, DEBUG_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, SPARE_MUX_CTRL_Pin|SPARE_CTRL_Pin|MDI_CTRL_Pin|DRD_CTRL_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, SPARE_CTRL_Pin|MDI_CTRL_Pin|DRD_CTRL_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : BOOT0_Pin DRD_FUSE_Pin MDI_FUSE_Pin SPARE_CTRL_FUSE_Pin
                            SPARE_FUSE_Pin MUX_STATUS_Pin */
@@ -87,8 +87,8 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(DEBUG_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : SPARE_MUX_CTRL_Pin SPARE_CTRL_Pin MDI_CTRL_Pin DRD_CTRL_Pin */
-  GPIO_InitStruct.Pin = SPARE_MUX_CTRL_Pin|SPARE_CTRL_Pin|MDI_CTRL_Pin|DRD_CTRL_Pin;
+  /*Configure GPIO pins : SPARE_CTRL_Pin MDI_CTRL_Pin DRD_CTRL_Pin */
+  GPIO_InitStruct.Pin = SPARE_CTRL_Pin|MDI_CTRL_Pin|DRD_CTRL_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

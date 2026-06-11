@@ -78,6 +78,13 @@ typedef struct
     uint32_t lv_msg;
 } HVC_Ticks_t;
 
+typedef struct {
+    bool estop;
+    bool imd_fault;
+    bool masterboard_fault;
+    bool overcurrent;
+    bool undercurrent;
+} HVC_FaultFlags_t;
 /*============================================================================*/
 /* SHARED STATE — defined in hvc_fsm.c */
 
@@ -88,7 +95,7 @@ extern bool tel_heartbeat_received;
 extern bool mst_status_healthy;
 extern int32_t mst_pack_voltage_mv;
 extern bool lv_powerup_received;
-
+extern HVC_FaultFlags_t fault_flags;
 
 /*============================================================================*/
 /* INTERNAL HELPERS — implemented in hvc_fsm.c */
@@ -127,4 +134,3 @@ void ESTOPCallback(void);
 void IMDFaultCallback(void);
 void MasterboardFaultCallback(void);
 void HVCurrentAlertCallback(void);
-void DistFaultCallback(void); 

@@ -15,12 +15,13 @@
 
 volatile HVC_State_t hvc_state;
 HVC_Ticks_t ticks;
+HVC_FaultFlags_t fault_flags; 
 bool startup_complete = false;
 bool tel_heartbeat_received = false;
-bool  = false;
 bool mst_status_healthy = false;
 int32_t mst_pack_voltage_mv = 0;
 bool lv_powerup_received = false;
+
 
 /*============================================================================*/
 /* PUBLIC API */
@@ -40,7 +41,6 @@ void HVC_FSM_Init(void)
 
     #if (INT_TEST_JUNE_11TH == RUN)
     mst_pack_voltage_mv = 115 * 1000;
-     = true;
 
     #endif // (INT_TEST_CAN == RUN)
 
@@ -109,34 +109,34 @@ void HVC_FSM_Run(void)
 void ESTOPCallback(void)
 {
     GPIO_Write(ESTOP_LED_GPIO_Port, ESTOP_LED_Pin, GPIO_PIN_SET);
-    // TODO: set ESTOP flag in CAN data struct
+    fault_flags.estop = true;
     hvc_state = FAULT;
     HVC_FSM_Run();
 }
 
 void IMDFaultCallback(void)
 {
-    // TODO: set IMD fault flag in CAN data struct
+    fault_flags.imd_fault = true;
     hvc_state = FAULT;
     HVC_FSM_Run();
 }
 
 void MasterboardFaultCallback(void)
 {
-    // TODO: set masterboard fault flag in CAN data struct
+    fault_flags.masterboard_fault = true;
     hvc_state = FAULT;
     HVC_FSM_Run();
 }
 
 void HVCurrentAlertCallback(void)
 {
-    // TODO: read INA228 DIAG_ALRT register to distinguish over/under current
-    hvc_state = FAULT;
-    HVC_FSM_Run();
-}
-
-void DistFaultCallback(void){
-    //TODO: Send CAN message to HVC
+    // TODO: read INA228 DIAG_ALRT register --> Make function INA228_IsOvercurrent()
+    if (INA228_IsOvercurrent()) {
+        fault_flags.overcurrent = true;
+    } 
+    else {
+        fault_flags.undercurrent = true;
+    }
     hvc_state = FAULT;
     HVC_FSM_Run();
 }

@@ -1,6 +1,7 @@
 #include "gpio_driver.h"
 #include "uart_driver.h"
 #include "main.h"
+#include "hvc_fsm.h"  
 
 /**
  * @brief Read the current logic state of a GPIO pin.
@@ -46,7 +47,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
             if (level == GPIO_PIN_SET) {
                 // ESTOP is high (rising edge or already high when sampled)
             } else {
-                // ESTOP is low (falling edge or already low when sampled)
+                ESTOPCallback();// ESTOP is low (falling edge or already low when sampled)
             }
             break;
 
@@ -54,7 +55,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
             level = HAL_GPIO_ReadPin(IMD_GPIO_IN_GPIO_Port, IMD_GPIO_IN_Pin);
             if (level == GPIO_PIN_SET) {
                 UART_Printf("High!\n\r");
-                // IMD_GPIO_IN is high
+                IMDFaultCallback();// IMD_GPIO_IN is high
             } else {
                 UART_Printf("Low!\n\r");
                 // IMD_GPIO_IN is low
@@ -64,7 +65,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
         case MASTERBOARD_FAULT_Pin:
             level = HAL_GPIO_ReadPin(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin);
             if (level == GPIO_PIN_SET) {
-                // MASTERBOARD_FAULT is high
+                MasterboardFaultCallback();// MASTERBOARD_FAULT is high
             } else {
                 // MASTERBOARD_FAULT is low
             }
@@ -91,7 +92,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
         case HV_CURRENT_ALERT_Pin:
             level = HAL_GPIO_ReadPin(HV_CURRENT_ALERT_GPIO_Port, HV_CURRENT_ALERT_Pin);
             if (level == GPIO_PIN_SET) {
-                // HV_CURRENT_ALERT is high
+                HVCurrentAlertCallback();// HV_CURRENT_ALERT is high
             } else {
                 // HV_CURRENT_ALERT is low
             }

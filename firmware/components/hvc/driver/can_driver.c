@@ -279,6 +279,12 @@ void CAN_SendStatusMsg()
     txMessage.tx_header.StdId = HVC_HEARTBEAT_ID;
     txMessage.tx_header.DLC = 8;
     txMessage.data[0] = (uint8_t)hvc_state; // TODO: what do we actually put into this message??
+    // TODO: confirm byte positions with team
+    txMessage.data[1] = (uint8_t)fault_flags.estop;
+    txMessage.data[2] = (uint8_t)fault_flags.imd_fault;
+    txMessage.data[3] = (uint8_t)fault_flags.masterboard_fault;
+    txMessage.data[4] = (uint8_t)fault_flags.overcurrent;
+    txMessage.data[5] = (uint8_t)fault_flags.undercurrent;
     // Note: modify txMessage.data
     CAN_QueueTxMessage(&txMessage);
 }

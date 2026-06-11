@@ -19,7 +19,14 @@
 #define INT_TEST_JUNE_11TH RUN 
 
 
-void HVC_Init(UART_HandleTypeDef *_huart2, ADC_HandleTypeDef *_hadc1, TIM_HandleTypeDef *_htim3, I2C_HandleTypeDef *_hi2c1, CAN_HandleTypeDef *_hcan);
+
+void HVC_Init(
+    UART_HandleTypeDef *_huart2, 
+    ADC_HandleTypeDef *_hadc1, 
+    TIM_HandleTypeDef *_htim3, 
+    TIM_HandleTypeDef *_htim4, 
+    I2C_HandleTypeDef *_hi2c1, 
+    CAN_HandleTypeDef *_hcan);
 void HVC_Main(void);
 
 #if (UNIT_TEST_SHUNT == RUN)

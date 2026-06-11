@@ -3,9 +3,12 @@
  * @brief HVC FSM state implementations
  */
 
+#include "gpio_driver.h"
 #include "hvc_fsm.h"
 #include "can_driver.h"
+#include "main.h"
 #include "stm32f1xx_hal.h"
+#include "stm32f1xx_hal_gpio.h"
 #include "tim.h"
 
 /*============================================================================*/
@@ -18,10 +21,9 @@
  */
 void Reset(void)
 {
-    DEBUG_IO_print("HVC: STATE_RESET\r\n");
 
     open_all_contactors();
-    GPIO_Write(DISCHARGE_TOGGLE_OFF_GPIO_Port, DISCHARGE_TOGGLE_OFF_Pin, GPIO_PIN_RESET);
+    GPIO_Write(DISCHARGE_TOGGLE_OFF_GPIO_Port, DISCHARGE_TOGGLE_OFF_Pin, GPIO_PIN_SET);
     GPIO_Write(FAN_CTRL_GPIO_Port,             FAN_CTRL_Pin,             GPIO_PIN_RESET);
     GPIO_Write(MPPT_CTRL_GPIO_Port,            MPPT_CTRL_Pin,            GPIO_PIN_RESET);
     GPIO_Write(DIST_CTRL_GPIO_Port,            DIST_CTRL_Pin,            GPIO_PIN_RESET);
@@ -41,7 +43,6 @@ void Reset(void)
  * Exit State: MST_READY
  */
 void MvpLvPowerup(void) {
-    DEBUG_IO_print("HVC: STATE_MVP_LV_POWERUP\r\n");
     
     static bool dist_powered = false;
     if (!dist_powered) {
@@ -74,7 +75,6 @@ void MvpLvPowerup(void) {
  */
 void MST_Ready(void)
 {
-    DEBUG_IO_print("HVC: STATE_MST_READY\r\n");
 
     GPIO_PinState mst_fault = GPIO_Read(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin);
 
@@ -100,7 +100,6 @@ void MST_Ready(void)
  */
 void MST_Check(void)
 {
-    DEBUG_IO_print("HVC: STATE_MST_CHECK\r\n");
 
     if (mst_status_healthy) {
         ticks.generic = HAL_GetTick();
@@ -113,10 +112,6 @@ void MST_Check(void)
         hvc_state = FAULT;
         return;
     }
-
-#if (INT_TEST_JUNE_11TH == RUN)
-    mst_status_healthy = true;
-#endif // (INT_TEST_JUNE_11TH == RUN)
 }   
 
 /**
@@ -130,7 +125,6 @@ void MST_Check(void)
  */
 void Fans_Powerup(void)
 {
-    DEBUG_IO_print("HVC: STATE_FANS_POWERUP\r\n");
     
     static bool full_speed_started = false;
     
@@ -158,7 +152,6 @@ void Fans_Powerup(void)
  */
 void HV_Connect(void)
 {
-    DEBUG_IO_print("HVC: STATE_HV_CONNECT\r\n");
 
     static bool neg_closed = false;
     static bool pos_closed = false;
@@ -179,16 +172,28 @@ void HV_Connect(void)
         neg_closed = false;
         pos_closed = false;
         ticks.generic = HAL_GetTick();
+        hvc_state = MOTOR_DISCHARGE;
+    }
+}
+
+
+void MotorDischarge() 
+{
+    static bool dc_started = false;
+
+    if (!dc_started) {
+        GPIO_Write(DISCHARGE_TOGGLE_OFF_GPIO_Port, DISCHARGE_TOGGLE_OFF_Pin, GPIO_PIN_RESET);
+        dc_started = true;
+        ticks.generic = HAL_GetTick();
+    }
+
+    if (timer_elapsed(MC_DC_WAIT_TIME_MS, &ticks.generic)) {
+        dc_started = false;
         hvc_state = MOTOR_PRECHARGE;
     }
 }
 
 
-
-void MotorDischarge() 
-{
-
-}
 /**
  * @brief Closes motor precharge contactor and waits for bus voltage to reach threshold.
  *
@@ -200,7 +205,6 @@ void MotorDischarge()
  */
 void MotorPrecharge(void)
 {
-    DEBUG_IO_print("HVC: STATE_MOTOR_PRECHARGE\r\n");
 
     static bool pc_started = false;
 
@@ -237,7 +241,6 @@ void MotorPrecharge(void)
  */
 void MpptPrecharge(void)
 {
-    DEBUG_IO_print("HVC: STATE_MPPT_PRECHARGE\r\n");
 
     static bool pc_started = false;
 
@@ -271,7 +274,6 @@ void MpptPrecharge(void)
  */
 void CloseLLIM(void)
 {
-    DEBUG_IO_print("HVC: STATE_CLOSE_MOTOR_BUS\r\n");
 
     GPIO_Write(LLIM_CTRL_GPIO_Port, LLIM_CTRL_Pin, HVC_CONTACTOR_CLOSE);
 
@@ -291,7 +293,6 @@ void CloseLLIM(void)
  */
 void CloseHLIM(void)
 {
-    DEBUG_IO_print("HVC: STATE_CLOSE_HLIM\r\n");
 
     GPIO_Write(HLIM_CTRL_GPIO_Port, HLIM_CTRL_Pin, HVC_CONTACTOR_CLOSE);
 
@@ -313,7 +314,6 @@ void CloseHLIM(void)
  */
 void LvPowerup(void)
 {
-    DEBUG_IO_print("HVC: STATE_LV_POWERUP\r\n");
 
     static bool msg_sent = false;
 

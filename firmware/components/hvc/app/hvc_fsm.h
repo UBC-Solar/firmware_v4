@@ -60,10 +60,9 @@ typedef enum
 
 /* CAN Message ID's — TODO: Set to specific message decided by user*/
 #define TEL_HEARTBEAT_ID            0x300          
-#define MST_HEARTBEAT_ID            0x301
-#define HVC_STATUS_ID               0x302
+#define HVC_HEARTBEAT_ID            0x302
 #define LV_POWERUP_ID               0x303
-#define MST_STATUS_ID               0x622
+#define MST_HEARTBEAT_ID            0x622
  
 #define MAX_STATE_NAME_LEN          20U
 
@@ -86,7 +85,6 @@ extern volatile HVC_State_t hvc_state;
 extern HVC_Ticks_t ticks;
 extern bool startup_complete;
 extern bool tel_heartbeat_received;
-extern bool mst_heartbeat_received;
 extern bool mst_status_healthy;
 extern int32_t mst_pack_voltage_mv;
 extern bool lv_powerup_received;
@@ -129,3 +127,4 @@ void ESTOPCallback(void);
 void IMDFaultCallback(void);
 void MasterboardFaultCallback(void);
 void HVCurrentAlertCallback(void);
+void DistFaultCallback(void); 

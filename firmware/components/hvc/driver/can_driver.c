@@ -251,13 +251,10 @@ void CAN_RecievedMessageCallback(uint32_t fifo_num)
         case TEL_HEARTBEAT_ID:
             tel_heartbeat_received = true;
             break;
-        case MST_HEARTBEAT_ID:
-            mst_heartbeat_received = true;
-            break;
         case LV_POWERUP_ID:
             lv_powerup_received = true;
             break;
-        case MST_STATUS_ID:
+        case MST_HEARTBEAT_ID:
             mst_status_healthy =
                 (new_rx_message.data[0] == 0) && (new_rx_message.data[1] == 0) &&
                 (new_rx_message.data[2] == 0) && (new_rx_message.data[3] == 0) &&
@@ -279,7 +276,7 @@ void CAN_SendStatusMsg()
 {
     CAN_TxMessage_t txMessage = {0};
 
-    txMessage.tx_header.StdId = HVC_STATUS_ID;
+    txMessage.tx_header.StdId = HVC_HEARTBEAT_ID;
     txMessage.tx_header.DLC = 8;
     txMessage.data[0] = (uint8_t)hvc_state; // TODO: what do we actually put into this message??
     // Note: modify txMessage.data

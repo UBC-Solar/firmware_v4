@@ -17,7 +17,7 @@ volatile HVC_State_t hvc_state;
 HVC_Ticks_t ticks;
 bool startup_complete = false;
 bool tel_heartbeat_received = false;
-bool mst_heartbeat_received = false;
+bool  = false;
 bool mst_status_healthy = false;
 int32_t mst_pack_voltage_mv = 0;
 bool lv_powerup_received = false;
@@ -40,7 +40,7 @@ void HVC_FSM_Init(void)
 
     #if (INT_TEST_JUNE_11TH == RUN)
     mst_pack_voltage_mv = 115 * 1000;
-    mst_heartbeat_received = true;
+     = true;
 
     #endif // (INT_TEST_CAN == RUN)
 
@@ -165,7 +165,6 @@ void open_all_contactors(void)
 
 void check_supp_voltage(void)
 {
-    // TODO: convert ADC supp_sense to mV and drive SUPP_LOW_LED
     ADC_Voltages adc = ADC_GetVoltages();
     GPIO_PinState state = (adc.supp_sense < HVC_SUPP_LOW_THRESHOLD_MV)
                            ? GPIO_PIN_SET : GPIO_PIN_RESET;

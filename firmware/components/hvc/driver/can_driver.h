@@ -67,6 +67,7 @@ void CAN_SendMessage323();
 void CAN_SendMessgeDebug();
 #endif // UNIT_TEST_CAN
 
+
 void CAN_RecievedMessageCallback(uint32_t fifo_num);
 
 void CAN_TxCompleteCallback();

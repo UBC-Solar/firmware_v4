@@ -209,3 +209,23 @@ int32_t INA228_Get_Shunt_Voltage_nV(void) {
 int32_t INA228_Get_Shunt_Current_mA(void) {
     return shunt_current_mA;
 }
+
+bool INA228_IsOvercurrent(void)
+{
+    uint8_t buffer[2] = {0};
+
+    // read DIAG_ALRT register — 2 bytes, big-endian
+    I2C_MemRead(INA228_I2C_ADDRESS, INA228_REG_DIAG_ALRT, buffer, 2, I2C_IDLE);
+
+    // reassemble big-endian bytes into 16-bit value
+    uint16_t diag_alrt = ((uint16_t)buffer[0] << 8) | buffer[1];
+
+    DEBUG_IO_print("INA228 DIAG_ALRT: 0x%04X\n\r", diag_alrt);
+
+    // check bit 11 — SOVL flag — overcurrent
+    if (diag_alrt & (1U << 11)) {
+        return true;
+    }
+    return false;  // bit 10 — SUVL flag — undercurrent
+}
+

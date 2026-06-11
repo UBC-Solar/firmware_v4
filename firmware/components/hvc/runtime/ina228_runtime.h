@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-
+#include <stdbool.h>
 // ---------------------------------------------------------------------------
 // I2C address
 // INA228 7-bit address with A1=GND, A0=GND is 0b1000000 = 0x40.
@@ -108,3 +108,9 @@ int32_t INA228_Get_Shunt_Voltage_nV(void);
  * @return Current in milliamps. Negative values indicate reverse current.
  */
 int32_t INA228_Get_Shunt_Current_mA(void);
+
+/**
+ * @brief Read DIAG_ALRT register and determine if overcurrent triggered the alert.
+ * @return true if overcurrent, false if undercurrent.
+ */
+bool INA228_IsOvercurrent(void);

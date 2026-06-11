@@ -7,6 +7,8 @@
 #include "debug_io.h"
 #include "main.h"
 #include "stm32f1xx.h"
+#include "ina228_runtime.h"
+
 
 
 
@@ -130,7 +132,6 @@ void MasterboardFaultCallback(void)
 
 void HVCurrentAlertCallback(void)
 {
-    // TODO: read INA228 DIAG_ALRT register --> Make function INA228_IsOvercurrent()
     if (INA228_IsOvercurrent()) {
         fault_flags.overcurrent = true;
     } 

@@ -18,13 +18,15 @@
 void HVC_Init(
     UART_HandleTypeDef *_huart2, 
     ADC_HandleTypeDef *_hadc1, 
-    TIM_HandleTypeDef *_htim3, 
+    TIM_HandleTypeDef *_htim3,
+    TIM_HandleTypeDef *_htim4, 
     I2C_HandleTypeDef *_hi2c1, 
     CAN_HandleTypeDef *_hcan) 
 {
     UART_Init(_huart2);
     ADC_Init(_hadc1, _htim3);
     I2C_Init(_hi2c1);
+    HAL_TIM_PWM_Start(_htim4, TIM_CHANNEL_3);
     
     uint16_t filter_ids[] = {0x42, 0x323, 0x324, 0x622};
     CAN_InitFilterList(_hcan, filter_ids, 4);
@@ -36,6 +38,7 @@ void HVC_Init(
 }
 
 void HVC_Main(void) {
+    HVC_FSM_Init();
     while (true) {
         HVC_FSM_Run();
     }

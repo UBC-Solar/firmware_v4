@@ -47,8 +47,8 @@ typedef enum
 #define LV_POWERUP_INTERVAL_MS      500U
 #define Thermistor_MAX_THRESHOLD_MV 5000U
 #define LV_POWERUP_TIMEOUT_MS       5000U
-#define FANS_FULL_SPEED             1000U
-#define FANS_HALF_SPEED             500U
+#define FANS_FULL_SPEED             65535U
+#define FANS_HALF_SPEED             32767U  
 #define FANS_FULL_SPEED_DURATION_MS 2000U
 
 #define HVC_SUPP_LOW_THRESHOLD_MV   10500

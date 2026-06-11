@@ -358,20 +358,20 @@ void Monitoring(void)
         hvc_state = FAULT;
         return;
     }
-    // TODO: check DCDC_ACTIVE dropout
+
     if (GPIO_Read(DCDC_ACTIVE_GPIO_Port, DCDC_ACTIVE_Pin) == GPIO_PIN_RESET) {
         DEBUG_IO_print("HVC: DCDC dropout fault\r\n");
         hvc_state = FAULT;
         return;
     }
-    // TODO: check THERMISTOR over-temperature via ADC_GetVoltages()
+
     ADC_Voltages adc = ADC_GetVoltages();
     if (adc.dcdc_thermistor > Thermistor_MAX_THRESHOLD_MV) {
         DEBUG_IO_print("HVC: thermistor over-temperature\r\n");
         hvc_state = FAULT;
         return;
     }
-    //TODO: Send CAN Status Message
+
     if (timer_elapsed(HVC_CAN_TX_INTERVAL_MS, &ticks.generic)) { CAN_SendStatusMsg(); }
 
     check_supp_voltage();

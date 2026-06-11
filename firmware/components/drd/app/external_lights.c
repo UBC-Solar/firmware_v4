@@ -149,8 +149,8 @@ void ExternalLightsCanRxHandle(uint32_t can_id, uint8_t* data)
 
     if (can_id == STR_CAN_MSG_ID)
     {
-        rts = (data[0] & (1 << 0));
-        lts = (data[0] & (1 << 1));
+        rts = (data[0] & (1 << 4));
+        lts = (data[0] & (1 << 3));
 
         if (lts)
         {

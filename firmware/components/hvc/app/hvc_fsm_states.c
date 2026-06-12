@@ -75,7 +75,6 @@ void MvpLvPowerup(void) {
  */
 void MST_Ready(void)
 {
-
     GPIO_PinState mst_fault = GPIO_Read(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin);
 
     if (mst_fault == GPIO_PIN_SET) {

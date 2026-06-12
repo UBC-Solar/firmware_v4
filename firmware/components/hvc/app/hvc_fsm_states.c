@@ -3,6 +3,7 @@
  * @brief HVC FSM state implementations
  */
 
+#include "debug_io.h"
 #include "gpio_driver.h"
 #include "hvc_fsm.h"
 #include "can_driver.h"
@@ -77,6 +78,10 @@ void MST_Ready(void)
 {
     GPIO_PinState mst_fault = GPIO_Read(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin);
 
+#if (INT_TEST_JUNE_11TH == RUN) 
+    mst_fault = GPIO_PIN_SET;
+#endif
+
     if (mst_fault == GPIO_PIN_SET) {
         ticks.generic = HAL_GetTick();
         hvc_state = MST_CHECK;
@@ -128,6 +133,7 @@ void Fans_Powerup(void)
     static bool full_speed_started = false;
     
     if(!full_speed_started) {
+        GPIO_Write(FAN_CTRL_GPIO_Port, FAN_CTRL_Pin, GPIO_PIN_SET);
         __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_3, FANS_FULL_SPEED);
         full_speed_started = true;
         ticks.generic = HAL_GetTick();
@@ -213,9 +219,8 @@ void MotorPrecharge(void)
         ticks.generic = HAL_GetTick();
     }
 
-    // TODO: compare motor_precharge ADC voltage to HV bus voltage
     ADC_Voltages adc = ADC_GetVoltages();
-    if (adc.motor_precharge >= mst_pack_voltage_mv * HVC_PC_COMPLETE_RATIO / 100) {
+    if ((int64_t) adc.motor_precharge >= (int64_t) mst_pack_voltage_mv * HVC_PC_COMPLETE_RATIO / 100) {
         pc_started = false;
         ticks.generic = HAL_GetTick();
         hvc_state = MPPT_PRECHARGE;
@@ -249,9 +254,8 @@ void MpptPrecharge(void)
         ticks.generic = HAL_GetTick();
     }
 
-    // TODO: compare mppt_precharge ADC voltage to HV bus voltage
     ADC_Voltages adc = ADC_GetVoltages();
-    if (adc.mppt_precharge >= mst_pack_voltage_mv * HVC_PC_COMPLETE_RATIO / 100) {
+    if ((int64_t) adc.mppt_precharge >= (int64_t) mst_pack_voltage_mv * HVC_PC_COMPLETE_RATIO / 100) {
         pc_started = false;
         ticks.generic = HAL_GetTick();
         hvc_state = CLOSE_LLIM;
@@ -298,7 +302,6 @@ void CloseHLIM(void)
     if (timer_elapsed(HVC_CONTACTOR_DELAY_MS, &ticks.generic)) {
         GPIO_Write(MPPT_PC_CTRL_GPIO_Port, MPPT_PC_CTRL_Pin, HVC_CONTACTOR_OPEN);
         GPIO_Write(MPPT_CTRL_GPIO_Port,    MPPT_CTRL_Pin,    GPIO_PIN_SET);
-        GPIO_Write(DIST_CTRL_GPIO_Port,    DIST_CTRL_Pin,    GPIO_PIN_SET);
         startup_complete = true;
         ticks.generic = HAL_GetTick();
         hvc_state = MONITORING;
@@ -346,7 +349,7 @@ void LvPowerup(void)
  */
 void Monitoring(void)
 {
-    if (GPIO_Read(IMD_GPIO_IN_GPIO_Port, IMD_GPIO_IN_Pin) == GPIO_PIN_RESET) {
+    if (GPIO_Read(IMD_GPIO_IN_GPIO_Port, IMD_GPIO_IN_Pin) == GPIO_PIN_SET) {
         DEBUG_IO_print("HVC: IMD fault\r\n");
         hvc_state = FAULT;
         return;
@@ -367,6 +370,12 @@ void Monitoring(void)
     ADC_Voltages adc = ADC_GetVoltages();
     if (adc.dcdc_thermistor > Thermistor_MAX_THRESHOLD_MV) {
         DEBUG_IO_print("HVC: thermistor over-temperature\r\n");
+        hvc_state = FAULT;
+        return;
+    }
+
+    if (fault_flags.estop == GPIO_PIN_SET) {
+        DEBUG_IO_PRINT("HVC: ESTOP pressed\r\n");
         hvc_state = FAULT;
         return;
     }

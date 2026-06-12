@@ -44,7 +44,7 @@ void HVC_FSM_Init(void)
     #if (INT_TEST_JUNE_11TH == RUN)
     mst_pack_voltage_mv = 115 * 1000;
     mst_status_healthy = true;
-
+    tel_heartbeat_received = true;
     #endif // (INT_TEST_CAN == RUN)
 
 }
@@ -55,7 +55,7 @@ void HVC_FSM_Init(void)
 void HVC_FSM_Run(void)
 {
 #ifdef DEBUG
-    static HVC_State_t prev_hvc_state = HVC_RESET;
+    static HVC_State_t prev_hvc_state = UNKNOWN;
     log_state_change(hvc_state, prev_hvc_state);
 #endif // DEBUG
 
@@ -204,5 +204,5 @@ void log_state_change(HVC_State_t new_state, HVC_State_t old_state) {
     const char *new_state_str = state_to_string(new_state);
     const char *old_state_str = state_to_string(old_state);
 
-    DEBUG_IO_PRINT("HVC State change: new=%s <-- old=%s", new_state_str, old_state_str);
+    DEBUG_IO_PRINT("HVC State change: %s --> %s\r\n", old_state_str, new_state_str);
 }

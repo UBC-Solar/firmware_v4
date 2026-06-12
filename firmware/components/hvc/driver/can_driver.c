@@ -5,6 +5,7 @@
 #include "stm32f1xx_hal_def.h"
 #include "debug_io.h"
 #include "hvc_fsm.h"
+#include <stdint.h>
 
 CAN_Driver_t CAN_driver;
 
@@ -261,15 +262,11 @@ void CAN_RecievedMessageCallback(uint32_t fifo_num)
                 (new_rx_message.data[4] == 0) && (new_rx_message.data[5] == 0) &&
                 (new_rx_message.data[6] == 0) && (new_rx_message.data[7] == 0);
             break;
+        case DIST_FAULT_ID:
+            fault_flags.dist_fault = true;
         default:
             break;
     }
-    GPIO_Toggle(DEBUG_LED_GPIO_Port, DEBUG_LED_Pin);
-    
-    DEBUG_IO_PRINT("Received new CAN message: ID=%d, data=[%02X %02X %02X %02X %02X %02X %02X %02X]\r\n",
-                   new_rx_message.rx_header.StdId,
-                   new_rx_message.data[0], new_rx_message.data[1], new_rx_message.data[2], new_rx_message.data[3],
-                   new_rx_message.data[4], new_rx_message.data[5], new_rx_message.data[6], new_rx_message.data[7]);
 }
 
 void CAN_SendStatusMsg() 
@@ -285,6 +282,7 @@ void CAN_SendStatusMsg()
     txMessage.data[3] = (uint8_t)fault_flags.masterboard_fault;
     txMessage.data[4] = (uint8_t)fault_flags.overcurrent;
     txMessage.data[5] = (uint8_t)fault_flags.undercurrent;
+    txMessage.data[6] = (uint8_t)fault_flags.dist_fault;
     // Note: modify txMessage.data
     CAN_QueueTxMessage(&txMessage);
 }

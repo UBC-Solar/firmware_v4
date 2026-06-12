@@ -31,6 +31,8 @@ typedef enum
     LV_POWERUP,
     MONITORING,
     FAULT,
+
+    UNKNOWN,
 } HVC_State_t;
 
 /*============================================================================*/
@@ -64,7 +66,8 @@ typedef enum
 #define HVC_HEARTBEAT_ID            0x302
 #define LV_POWERUP_ID               0x303
 #define MST_HEARTBEAT_ID            0x622
- 
+#define DIST_FAULT_ID               0x324
+
 #define MAX_STATE_NAME_LEN          20U
 
 /*============================================================================*/
@@ -83,6 +86,7 @@ typedef struct {
     bool estop;
     bool imd_fault;
     bool masterboard_fault;
+    bool dist_fault;
     bool overcurrent;
     bool undercurrent;
 } HVC_FaultFlags_t;

@@ -46,11 +46,14 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     ${CMAKE_CURRENT_SOURCE_DIR}/app/can_app.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/diagnostic_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/gpio_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/hex_app.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/iwdg_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/can_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/gpio_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/hex_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/iwdg_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/tasks.c
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/interrupts.c
 )

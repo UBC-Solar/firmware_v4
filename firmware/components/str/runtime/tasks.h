@@ -6,11 +6,7 @@
 #ifndef __TASKS_H__
 #define __TASKS_H__
 
-/* FUNCTION PROTOTYPES */
-/**
- * @brief STR application entry point.
- */
-void AppMain(void);
+#define DIAGNOSTIC_TASK_DELAY 100
 
 /**
  * @brief FreeRTOS task for updating the steering wheel display.
@@ -23,5 +19,11 @@ void StartHexDisplayTask(void *argument);
  * @param argument Task argument provided by the RTOS.
  */
 void StartSteeringOutputsTask(void *argument);
+
+/**
+ * @brief FreeRTOS task for watchdog feed and heartbeat check.
+ * @param argument Task argument provided by the RTOS.
+ */
+void TasksDiagnostic(void *argument);
 
 #endif /* __TASKS_H__ */

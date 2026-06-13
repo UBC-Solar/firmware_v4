@@ -11,10 +11,13 @@
 
 /* DEFINES */
 #define STR_CAN_MSG_ID 0x580U
+#define TIME_SINCE_BOOTUP_CAN_ID 0x404U
+#define TIME_SINCE_BOOTUP_CAN_DATA_LENGTH 4U
 
 /* EXTERNAL VARIABLES */
 extern CAN_HandleTypeDef hcan;
 extern const CAN_TxHeaderTypeDef steering_header;
+extern const CAN_TxHeaderTypeDef time_since_bootup_can_header;
 
 /* FUNCTION PROTOTYPES */
 /**

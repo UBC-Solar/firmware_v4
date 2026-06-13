@@ -15,6 +15,14 @@ const CAN_TxHeaderTypeDef steering_header = {
 	.DLC = 8U,
 };
 
+const CAN_TxHeaderTypeDef time_since_bootup_can_header = {
+	.StdId = TIME_SINCE_BOOTUP_CAN_ID,
+	.ExtId = 0x0000,
+	.IDE = CAN_ID_STD,
+	.RTR = CAN_RTR_DATA,
+	.DLC = TIME_SINCE_BOOTUP_CAN_DATA_LENGTH,
+};
+
 /* CAN FILTERS */
 void CanFilterInit(CAN_FilterTypeDef* can_filter)
 {

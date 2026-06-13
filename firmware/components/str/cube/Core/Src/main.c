@@ -48,6 +48,8 @@ CAN_HandleTypeDef hcan;
 
 I2C_HandleTypeDef hi2c1;
 
+IWDG_HandleTypeDef hiwdg;
+
 UART_HandleTypeDef huart5;
 
 /* Definitions for defaultTask */
@@ -91,6 +93,20 @@ const osThreadAttr_t TasksSteeringOutputs_attributes = {
   .stack_size = sizeof(TasksSteeringOutputsBuffer),
   .priority = (osPriority_t) osPriorityLow,
 };
+
+/* Definitions for TasksDiagnostic */
+osThreadId_t TasksDiagnosticHandle;
+uint32_t TasksDiagnosticBuffer[128];
+osStaticThreadDef_t TasksDiagnosticControlBlock;
+
+const osThreadAttr_t TasksDiagnostic_attributes = {
+  .name = "TasksDiagnostic",
+  .cb_mem = &TasksDiagnosticControlBlock,
+  .cb_size = sizeof(TasksDiagnosticControlBlock),
+  .stack_mem = &TasksDiagnosticBuffer[0],
+  .stack_size = sizeof(TasksDiagnosticBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -99,6 +115,7 @@ static void MX_GPIO_Init(void);
 static void MX_CAN_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_UART5_Init(void);
+static void MX_IWDG_Init(void);
 void StartDefaultTask(void *argument);
 
 /* USER CODE BEGIN PFP */
@@ -142,6 +159,7 @@ int main(void)
   MX_CAN_Init();
   MX_I2C1_Init();
   MX_UART5_Init();
+  MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -177,6 +195,9 @@ int main(void)
 
   /* Initialization for TasksSteeringOutputs */
   TasksSteeringOutputsHandle = osThreadNew(StartSteeringOutputsTask, NULL, &TasksSteeringOutputs_attributes);
+
+  /* Initialization for TasksDiagnostic */
+  TasksDiagnosticHandle = osThreadNew(TasksDiagnostic, NULL, &TasksDiagnostic_attributes);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -211,10 +232,11 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
@@ -306,6 +328,34 @@ static void MX_I2C1_Init(void)
   /* USER CODE BEGIN I2C1_Init 2 */
 
   /* USER CODE END I2C1_Init 2 */
+
+}
+
+/**
+  * @brief IWDG Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_IWDG_Init(void)
+{
+
+  /* USER CODE BEGIN IWDG_Init 0 */
+
+  /* USER CODE END IWDG_Init 0 */
+
+  /* USER CODE BEGIN IWDG_Init 1 */
+
+  /* USER CODE END IWDG_Init 1 */
+  hiwdg.Instance = IWDG;
+  hiwdg.Init.Prescaler = IWDG_PRESCALER_4;
+  hiwdg.Init.Reload = 4095;
+  if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN IWDG_Init 2 */
+
+  /* USER CODE END IWDG_Init 2 */
 
 }
 

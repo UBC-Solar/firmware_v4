@@ -12,6 +12,8 @@
 #include "gpio_driver.h"
 #include "hex_driver.h"
 #include "hex_app.h"
+#include "iwdg_app.h"
+#include "diagnostic_app.h"
 #include "main.h"
 
 /* DEFINES */
@@ -37,5 +39,18 @@ void StartHexDisplayTask(void *argument)
     {
         HexDisplayWriteDecimal((uint8_t)ReadCurrentVelocity());
         osDelay(HEX_TASK_DELAY);
+    }
+}
+
+void TasksDiagnostic(void *argument)
+{
+    IwdgAppResetHandle();
+
+    for (;;)
+    {
+        // Refresh the watchdog timer to prevent reset and transmit diagnostics over CAN
+        IwdgAppRefresh(&hiwdg);
+        DiagnosticTimeSinceBootup();
+        osDelay(DIAGNOSTIC_TASK_DELAY);
     }
 }

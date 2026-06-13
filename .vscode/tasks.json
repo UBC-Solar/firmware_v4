@@ -1,40 +1,13 @@
 {
     "version": "2.0.0",
-    "windows": {
-        "options": {
-            "shell": {
-                "executable": "cmd.exe",
-                "args": ["/d", "/c"]
-            }
-        }
-    },
     "tasks": [
         {
+            "label": "J-Link Release Flash",
             "type": "shell",
-            "label": "CubeProg: Flash project (SWD)",
-            "command": "cube",
-            "args": [
-                "programmer",
-                "--connect",
-                "port=swd",
-                "--download",
-                "${command:cmake.launchTargetPath}",
-                "-hardRst",
-                "-rst",
-                "--start"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
-            "problemMatcher": [],
-        },
-        {
-            "type": "shell",
-            "label": "J-Link: Flash project (SWD)",
             "command": "sh",
             "args": [
                 "-c",
-                "echo -e \"r\\nloadfile ${command:cmake.launchTargetPath}\\ng\" | JLinkExe -device STM32F103RC -if SWD -speed 4000"
+                "printf \"erase 0x08000000 0x0803FFFF\\nloadfile ${command:cmake.launchTargetPath}\\nr\\ng\\nq\\n\" | JLinkExe -device STM32F103RC -if SWD -speed 4000"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -42,36 +15,6 @@
             "problemMatcher": [],
             "presentation": {
                 "showReuseMessage": false
-            }
-        },
-        {
-            "label": "Build + Flash",
-            "dependsOrder": "sequence",
-            "dependsOn": [
-                "CMake: clean rebuild",
-                "CubeProg: Flash project (SWD)"
-            ],
-            "problemMatcher": [
-                "$gcc"
-            ],
-            "presentation": {
-              "showReuseMessage": false
-            }
-        },
-        {
-            "type": "cmake",
-            "label": "CMake: clean rebuild",
-            "command": "cleanRebuild",
-            "targets": [
-                "all"
-            ],
-            "preset": "${command:cmake.activeBuildPresetName}",
-            "group": "build",
-            "problemMatcher": [],
-            "detail": "CMake template clean rebuild task",
-            "presentation": {
-              "clear": true,
-              "showReuseMessage": false
             }
         }
     ]

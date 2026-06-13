@@ -275,12 +275,23 @@ class DRDTest:
         send_message(0x623, [safe_value & 0xFF,(safe_value >> 8) & 0xFF,0,0,0,0,0,0]) # clear
 
 
+def send_rpm_zeros(can_bus):
+    """Continuously send messages to CAN ID 0x08850225 with RPM bytes zeroed every 100 ms."""
+    payload = [0, 0, 0, 0, 0, 0, 0, 0]
+    try:
+        while True:
+            send_message(0x08850225, payload, isextended_id=True)
+            time.sleep(0.1)
+    except KeyboardInterrupt:
+        print("send_rpm_zeros: stopped by user")
+
+
 if(__name__ == "__main__"):
     with can.interface.Bus(channel='can0', interface='socketcan', bitrate=500000) as bus:
         print("CAN bus initialized")
         drd_test = DRDTest(bus)
-        drd_test.clearbus(bus)
-        drd_test.test_fault_page()
-        drd_test.run_test()
+        #drd_test.clearbus(bus)
+        
         # drd_test.run_test()
+        send_rpm_zeros(bus)
         print("Test completed")

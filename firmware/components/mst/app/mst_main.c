@@ -121,13 +121,13 @@ void DriveOutputs() {
 
 
 void SendCanMessages() {
-    CAN_SendMessage0x622();
-    CAN_SendMessage0x623();
-    CAN_SendMessage0x625();
-    CAN_SendMessage0x626();
-    CAN_SendMessage0x627();
-    CAN_SendMessage0x628();
-    CAN_SendMessage0x629();
+    CAN_SendHeartbeatMessage();
+    CAN_SendVoltageSummaryMessage();
+    CAN_SendTempSummaryMessage();
+    CAN_SendModuleVoltMessage();
+    CAN_SendModuleTempMessage();
+    CAN_SendModuleStatusMessage();
+    CAN_SendBalanceStatusMessage();
     LOG_DEBUG("All CAN messages queued for transmission.");
 }
 

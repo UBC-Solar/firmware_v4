@@ -89,10 +89,10 @@ BITS:
 
 */
 
-void CAN_SendMessage0x622(void);
-void CAN_SendMessage0x623(void);
-void CAN_SendMessage0x625(void);
-void CAN_SendMessage0x626(void);
-void CAN_SendMessage0x627(void);
-void CAN_SendMessage0x628(void);
-void CAN_SendMessage0x629(void);
+void CAN_SendHeartbeatMessage(void);
+void CAN_SendVoltageSummaryMessage(void);
+void CAN_SendTempSummaryMessage(void);
+void CAN_SendModuleVoltMessage(void);
+void CAN_SendModuleTempMessage(void);
+void CAN_SendModuleStatusMessage(void);
+void CAN_SendBalanceStatusMessage(void);

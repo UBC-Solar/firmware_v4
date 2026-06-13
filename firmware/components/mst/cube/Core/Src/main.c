@@ -109,12 +109,11 @@ int main(void)
     /**
      * Mainloop
      */
-    // CollectBoardData();
-    // CollectModuleData();
-    // AnalyzeModuleData();
-    // DriveOutputs();
-    // SendCanMessages();
-    // HAL_Delay(1000);
+    CollectBoardData();
+    CollectModuleData();
+    AnalyzeModuleData();
+    DriveOutputs();
+    SendCanMessages();
 
     /**
      * Tests

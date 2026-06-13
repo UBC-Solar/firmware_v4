@@ -1,52 +1,57 @@
 #include "can_messages.h"
 #include "can_driver.h"
+#include "mst_defs.h"
 #include "mst_main.h"
+#include "stm32f1xx_hal.h"
 
 extern module_t pack_modules[NUM_MODULES];
 extern faults_t pack_faults;
 extern warnings_t pack_warnings;
 extern pack_state_t pack_state;
 
-void CAN_SendMessage0x622(void) {
+void CAN_SendHeartbeatMessage(void) {
     CAN_TxMessage_t msg = {0};
-    msg.tx_header.StdId = 0x622;
+    msg.tx_header.StdId = CAN_STATUS_ID;
     msg.tx_header.IDE = CAN_ID_STD;
     msg.tx_header.RTR = CAN_RTR_DATA;
     msg.tx_header.DLC = 4;
 
-    uint32_t payload = 0;
+    uint32_t status = 0;
     
     // Bits 0-4 Faults
-    payload |= (pack_state.error_comm_fail                     ? 1 : 0) << 0;
-    payload |= (pack_state.error_self_test                     ? 1 : 0) << 1;
-    payload |= (pack_faults.bits.fault_over_temperature             ? 1 : 0) << 2;
-    payload |= (pack_faults.bits.fault_under_voltage                ? 1 : 0) << 3;
-    payload |= (pack_faults.bits.fault_over_voltage                 ? 1 : 0) << 4;
-    // Bit 5 is Isolation Loss Fault, not tracked here
-    // Bit 6 is Voltage Out of Range (Short)
-    payload |= (pack_faults.bits.fault_under_temperature            ? 1 : 0) << 7;
-    payload |= (pack_state.balancing_active                    ? 1 : 0) << 8;
-    payload |= (pack_state.llim_enable                         ? 1 : 0) << 9;
-    payload |= (pack_state.hlim_enable                         ? 1 : 0) << 10;
-    // payload |= (pack_warnings.bits.trip_charge_over_temperature     ? 1 : 0) << 11;
-    payload |= (pack_warnings.bits.warn_low_voltage                 ? 1 : 0) << 12;
-    payload |= (pack_warnings.bits.warn_high_voltage                ? 1 : 0) << 13;
-    // payload |= (pack_warnings.bits.warn_discharge_high_temperature  ? 1 : 0) << 14;
-    payload |= (pack_warnings.bits.warn_high_temperature     ? 1 : 0) << 15;
-    payload |= (pack_state.balancing_enable                    ? 1 : 0) << 16;
-    payload |= (pack_state.scrutineering_enable                ? 1 : 0) << 17;
+    status |= (pack_state.error_comm_fail                   ? 1 : 0) << 0;
+    status |= (pack_state.error_self_test                   ? 1 : 0) << 1;
+    status |= (pack_faults.bits.fault_over_temperature      ? 1 : 0) << 2;
+    status |= (pack_faults.bits.fault_under_voltage         ? 1 : 0) << 3;
+    status |= (pack_faults.bits.fault_over_voltage          ? 1 : 0) << 4;
+    status |= (pack_faults.bits.fault_under_temperature     ? 1 : 0) << 5;
+    status |= (pack_state.balancing_active                  ? 1 : 0) << 6;
+    status |= (pack_state.llim_enable                       ? 1 : 0) << 7;
+    status |= (pack_state.hlim_enable                       ? 1 : 0) << 8;
+    status |= (pack_warnings.bits.warn_low_voltage          ? 1 : 0) << 9;
+    status |= (pack_warnings.bits.warn_high_voltage         ? 1 : 0) << 10;
+    status |= (pack_warnings.bits.warn_high_temperature     ? 1 : 0) << 11;
+    status |= (pack_state.balancing_enable                  ? 1 : 0) << 12;
+    status |= (pack_state.scrutineering_enable              ? 1 : 0) << 13;
 
-    msg.data[0] = payload & 0xFF;
-    msg.data[1] = (payload >> 8) & 0xFF;
-    msg.data[2] = (payload >> 16) & 0xFF;
-    msg.data[3] = (payload >> 24) & 0xFF;
+    msg.data[0] = status & 0xFF;
+    msg.data[1] = (status >> 8) & 0xFF;
+    msg.data[2] = (status >> 16) & 0xFF;
+    msg.data[3] = (status >> 24) & 0xFF;
+
+    uint32_t current_time = HAL_GetTick();
+    msg.data[4] = current_time & 0xFF;
+    msg.data[5] = (current_time >> 8) & 0xFF;
+    msg.data[6] = (current_time >> 16) & 0xFF;
+    msg.data[7] = (current_time >> 24) & 0xFF;
+    
 
     CAN_QueueTxMessage(&msg);
 }
 
-void CAN_SendMessage0x623(void) {
+void CAN_SendVoltageSummaryMessage(void) {
     CAN_TxMessage_t msg = {0};
-    msg.tx_header.StdId = 0x623;
+    msg.tx_header.StdId = CAN_MODULE_VOLT_SUMMARY_ID;
     msg.tx_header.IDE = CAN_ID_STD;
     msg.tx_header.RTR = CAN_RTR_DATA;
     msg.tx_header.DLC = 6;
@@ -74,9 +79,9 @@ void CAN_SendMessage0x623(void) {
     CAN_QueueTxMessage(&msg);
 }
 
-void CAN_SendMessage0x625(void) {
+void CAN_SendTempSummaryMessage(void) {
     CAN_TxMessage_t msg = {0};
-    msg.tx_header.StdId = 0x625;
+    msg.tx_header.StdId = CAN_MODULE_TEMP_SUMMARY_ID;
     msg.tx_header.IDE = CAN_ID_STD;
     msg.tx_header.RTR = CAN_RTR_DATA;
     msg.tx_header.DLC = 5;
@@ -110,36 +115,36 @@ void CAN_SendMessage0x625(void) {
     CAN_QueueTxMessage(&msg);
 }
 
-void CAN_SendMessage0x626(void) {
+void CAN_SendModuleVoltMessage(void) {
     // We have 8 multiplex groups, sending 4 module readouts per group
     for (int mux_group = 0; mux_group < 8; mux_group++) {
         CAN_TxMessage_t msg = {0};
-        msg.tx_header.StdId = 0x626;
+        msg.tx_header.StdId = CAN_MODULE_VOLT_DATA_ID;
         msg.tx_header.IDE = CAN_ID_STD;
         msg.tx_header.RTR = CAN_RTR_DATA;
         msg.tx_header.DLC = 5;
 
-        msg.data[0] = mux_group & 0x07;
+        msg.data[0] = mux_group & 0x0F;
         
         int start_idx = mux_group * 4;
         for (int i = 0; i < 4; i++) {
             int module_idx = start_idx + i;
-            if (module_idx < NUM_MODULES) {
-                // Taking 8 MSB as specified by docs. voltage_mv is mV, 
-                // wait, "take the 8 MSB of voltage values". E.g., (voltage_mv >> 8).
-                msg.data[1 + i] = (pack_modules[module_idx].voltage_mv >> 8) & 0xFF;
-            } else {
-                msg.data[1 + i] = 0;
+            if (module_idx >= NUM_MODULES) {
+                continue;
             }
+
+            // Taking 8 MSB as specified by docs. voltage_mv is mV, 
+            // wait, "take the 8 MSB of voltage values". E.g., (voltage_mv >> 8).
+            msg.data[1 + i] = (pack_modules[module_idx].voltage_mv >> 8) & 0xFF;
         }
         CAN_QueueTxMessage(&msg);
     }
 }
 
-void CAN_SendMessage0x627(void) {
+void CAN_SendModuleTempMessage(void) {
     for (int mux_group = 0; mux_group < 8; mux_group++) {
         CAN_TxMessage_t msg = {0};
-        msg.tx_header.StdId = 0x627;
+        msg.tx_header.StdId = CAN_MODULE_TEMP_DATA_ID;
         msg.tx_header.IDE = CAN_ID_STD;
         msg.tx_header.RTR = CAN_RTR_DATA;
         msg.tx_header.DLC = 5;
@@ -166,10 +171,10 @@ void CAN_SendMessage0x627(void) {
     }
 }
 
-void CAN_SendMessage0x628(void) {
+void CAN_SendModuleStatusMessage(void) {
     for (int mux_group = 0; mux_group < 8; mux_group++) {
         CAN_TxMessage_t msg = {0};
-        msg.tx_header.StdId = 0x628;
+        msg.tx_header.StdId = CAN_MODULE_STATUS_ID;
         msg.tx_header.IDE = CAN_ID_STD;
         msg.tx_header.RTR = CAN_RTR_DATA;
         msg.tx_header.DLC = 5;
@@ -192,9 +197,9 @@ void CAN_SendMessage0x628(void) {
     }
 }
 
-void CAN_SendMessage0x629(void) {
+void CAN_SendBalanceStatusMessage(void) {
     CAN_TxMessage_t msg = {0};
-    msg.tx_header.StdId = 0x629;
+    msg.tx_header.StdId = CAN_BALANCE_DATA_ID;
     msg.tx_header.IDE = CAN_ID_STD;
     msg.tx_header.RTR = CAN_RTR_DATA;
     msg.tx_header.DLC = 4;

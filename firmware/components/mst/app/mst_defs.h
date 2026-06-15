@@ -42,11 +42,11 @@
  */
 // The number of modules used by the pack depends on
 // whether scrutineering is enabled.
-#define NUM_MODULES 16U
+#define NUM_MODULES 32U
 #define NUM_CELLS_PER_MODULE 13U
 
 // Slave(board)s
-#define SLAVE_NUM_DEVICES 1U // Number of ADBMS1818 ICs daisy chained
+#define SLAVE_NUM_DEVICES 2U // Number of ADBMS1818 ICs daisy chained
 #define SLAVEBOARD_REV 1
 
 /**
@@ -124,6 +124,7 @@
 #define UNIT_TEST_ISOSPI SKIP
 #define INT_TEST_SLAVE SKIP
 #define INT_TEST_SLAVE_BAL_SCRUT SKIP
-#define INT_TEST_SLAVE_MUX RUN
+#define INT_TEST_SLAVE_MUX SKIP
+#define INT_TEST_JUNE_16th RUN
 
-#define MAIN_LOOP SKIP
+#define MAIN_LOOP RUN

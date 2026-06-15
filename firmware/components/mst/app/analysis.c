@@ -3,6 +3,7 @@
 #include "mst_main.h"
 #include "main.h"
 #include "gpio_driver.h"
+#include <stdbool.h>
 
 
 void ComputePackStatistics(module_t pack_modules[NUM_MODULES], pack_state_t *pack_state) {
@@ -65,6 +66,12 @@ void CheckForEmergency(module_t *pack_modules, faults_t *pack_faults, warnings_t
         pack_faults->raw |= module->faults.raw;
         pack_warnings->raw |= module->warnings.raw;
     }
+
+    #if (INT_TEST_JUNE_16th == RUN)
+    // Then ignore temperature-related faults. Temperature circuitry on slaveboard is not working at the moment...
+    pack_faults->bits.fault_over_temperature = false;
+    pack_faults->bits.fault_under_temperature = false;
+    #endif // (INT_TEST_JUNE_16th == RUN)
 }
 
 

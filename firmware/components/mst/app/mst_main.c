@@ -89,7 +89,9 @@ void CollectModuleData() {
         PauseAllBalancing();
     }
     RequestVoltageMeasurement();
-    RetrieveVoltageMeasurement(slaves, pack_modules);
+    if (RetrieveVoltageMeasurement(slaves, pack_modules) != Slave_OK) {
+        IncrementCommError();
+    }
     if (pack_state.balancing_active) {
         ResumeAllBalancing();
     }
@@ -100,12 +102,15 @@ void CollectModuleData() {
     
     for (int mux_idx = 0; mux_idx < SLAVE_NUM_MODULES_PER_TEMP_VAL; mux_idx++) {
         SetTempMuxState(slaves, mux_idx);
-        for (int i = 0; i < 10; i++) {
-            HAL_Delay(100); // Give the physical multiplexer chips time to settle
-            GPIO_Toggle(LED_OUT_GPIO_Port, LED_OUT_Pin);
-        }
+        // for (int i = 0; i < 10; i++) {
+        //     HAL_Delay(100); // Give the physical multiplexer chips time to settle
+        //     GPIO_Toggle(LED_OUT_GPIO_Port, LED_OUT_Pin);
+        // }
+        HAL_Delay(50);
         RequestTemperatureMeasurement();
-        RetrieveTemperatureMeasurement(slaves, pack_modules);
+        if (RetrieveTemperatureMeasurement(slaves, pack_modules) != Slave_OK) {
+            IncrementCommError();
+        }
     }
     
     uint32_t temp_end_ms = HAL_GetTick();

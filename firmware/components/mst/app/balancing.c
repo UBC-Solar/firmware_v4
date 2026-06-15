@@ -9,8 +9,9 @@ void SetBalancingForModuleGroup_(
     pack_state_t *pack_state, module_t pack_modules[NUM_MODULES], slave_t slaves[SLAVE_NUM_DEVICES],
     int slave_num, int reg_num, int val_offset, int module_start_idx) 
 {
-
     uint8_t module_balance_enables = 0;
+    pack_state->balancing_active = false; // clear status before accumulating balancing status of each module
+
     for (int module_offset = 0; module_offset < SLAVE_NUM_MODULES_PER_BAL_VAL; module_offset++)
     {
         int module_idx = module_start_idx + module_offset;
@@ -20,20 +21,22 @@ void SetBalancingForModuleGroup_(
             ? (pack_modules[module_idx].voltage_mv - pack_state->avg_voltage_mV)
             : (pack_state->avg_voltage_mV - pack_modules[module_idx].voltage_mv);
         
-        bool if_balance = MIN_BALANCE_VOLT_DIFF_MV <= voltage_diff_mv && voltage_diff_mv <= MAX_BALANCE_VOLT_DIFF_MV;
+        // Store status in pack data structs and balancing mask for ADBMS
+        bool if_balance = 
+            pack_state->balancing_enable && 
+            MIN_BALANCE_VOLT_DIFF_MV <= voltage_diff_mv && 
+            voltage_diff_mv <= MAX_BALANCE_VOLT_DIFF_MV;
+        pack_modules[module_idx].is_balancing = if_balance;
+        pack_state->balancing_active |= if_balance;
         module_balance_enables |= if_balance < module_offset;
     }
-    
 
+    // Find the corresponding "DCC" (discharge cell) bits inside ADBMS' config registers, and set them
     int reg_offset = val_offset / 2;
     int reg_bitshift_bits = (val_offset % 2) * SLAVE_NUM_MODULES_PER_BAL_VAL;
-
-
     uint8_t mask = (uint8_t)(module_balance_enables << reg_bitshift_bits);
-
     if (mask) {
         slaves[slave_num].config_regs[reg_num][reg_offset] |= mask;
-        
     }
     else {
         slaves[slave_num].config_regs[reg_num][reg_offset] &= (uint8_t)(~mask);
@@ -42,9 +45,13 @@ void SetBalancingForModuleGroup_(
 
 void DoBalancing(pack_state_t *pack_state, module_t pack_modules[NUM_MODULES], slave_t slaves[SLAVE_NUM_DEVICES]) {
     if (!pack_state->balancing_enable) {
+        pack_state->balancing_active = false;
         return;
     }
 
+    // Note from module_data's bal_mappings initialization that each "value" here is 4 bits. So, each register holds 
+    // 6(bytes) * 2(value-per-byte) = 12(values)
+    // Here we iterate through all available "values".
     for (int dev_num = 0; dev_num < SLAVE_NUM_DEVICES; dev_num++) {
         for (int reg_num = 0; reg_num < SLAVE_NUM_BAL_REG; reg_num++) {
             for (int val_offset = 0; val_offset < SLAVE_NUM_VAL_PER_BAL_REG; val_offset++) {

@@ -4,11 +4,6 @@
 #include "mst_main.h"
 #include "stm32f1xx_hal.h"
 
-extern module_t pack_modules[NUM_MODULES];
-extern faults_t pack_faults;
-extern warnings_t pack_warnings;
-extern pack_state_t pack_state;
-
 void CAN_SendHeartbeatMessage(void) {
     CAN_TxMessage_t msg = {0};
     msg.tx_header.StdId = CAN_STATUS_ID;
@@ -207,7 +202,7 @@ void CAN_SendBalanceStatusMessage(void) {
     uint32_t payload = 0;
     
     for (int i = 0; i < NUM_MODULES; i++) {
-        if (pack_modules[i].should_balance) {
+        if (pack_modules[i].is_balancing) {
             payload |= (1 << i);
         }
     }

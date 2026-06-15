@@ -45,9 +45,9 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/analysis.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/balancing.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/can_messages.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/app/emergency.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/module_data.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/mst_main.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/can_driver.c

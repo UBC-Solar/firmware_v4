@@ -3,6 +3,7 @@
 #include "mst_defs.h"
 #include "mst_types.h"
 #include "logging.h"
+#include "spi_driver.h"
 #include "stm32f1xx_hal.h"
 
 void Module_Init(
@@ -11,12 +12,10 @@ void Module_Init(
 void WriteConfigRegisters(slave_t slaves[SLAVE_NUM_DEVICES]);
 
 void RequestVoltageMeasurement(void);
-void RetrieveVoltageMeasurement(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES]);
+Slave_Error_t RetrieveVoltageMeasurement(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES]);
 
 void RequestTemperatureMeasurement(void);
-void RetrieveTemperatureMeasurement(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES]);
-
-void ComputePackStatistics(module_t pack_modules[NUM_MODULES], pack_state_t *pack_state);
+Slave_Error_t RetrieveTemperatureMeasurement(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES]);
 
 void SetTempMuxState(slave_t slaves[SLAVE_NUM_DEVICES], unsigned new_state);
 void SetScrutineeringMode(slave_t slaves[SLAVE_NUM_DEVICES], bool enable);

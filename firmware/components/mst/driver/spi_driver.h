@@ -16,7 +16,7 @@
 #include "mst_defs.h"
 #include "mst_types.h"
 
-enum Slave_Error {
+typedef enum {
     Slave_OK = 0,
     Slave_ERROR_PEC,
     Slave_ERROR_TIMEOUT,
@@ -24,10 +24,10 @@ enum Slave_Error {
     Slave_ERROR_HAL,
     Slave_ERROR_HAL_BUSY,
     Slave_ERROR_HAL_TIMEOUT
-};
+} Slave_Error_t;
 
 typedef struct {
-    enum Slave_Error error;
+    Slave_Error_t error;
     unsigned int device_num; // Device at which error occurred, if applicable.
     // 0 = N/A, 1 = first device in chain, 2 = second device...
     // If there is no error (error == Slave_OK), device_num should be 0.

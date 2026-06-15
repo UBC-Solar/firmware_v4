@@ -109,11 +109,13 @@ int main(void)
     /**
      * Mainloop
      */
+    #if (MAIN_LOOP == RUN)
     CollectBoardData();
     CollectModuleData();
     AnalyzeModuleData();
     DriveOutputs();
     SendCanMessages();
+    #endif // (MAIN_LOOP == RUN)
 
     /**
      * Tests

@@ -18,6 +18,13 @@
 
 #define WARN_HIGH_TEMP_degC 55U
 
+/**
+ * SPI interface error handling
+ */
+// SPI interface should not have too manny
+// consecutive fails within a specified timeframe
+#define NUM_CONSECUTIVE_COMM_ERR 3
+#define CONSECUTIVE_TIMEFRAME_MS 1000
 
 /**
  * CAN messages
@@ -40,13 +47,12 @@
 
 // Slave(board)s
 #define SLAVE_NUM_DEVICES 1U // Number of ADBMS1818 ICs daisy chained
-
+#define SLAVEBOARD_REV 1
 
 /**
  * Slaveboards configuration and ADBMS1818 options
  */
 
-#define SLAVE_NUM_CELL_INPUTS_PER_DEVICE 18
 #define SLAVE_REG_SIZE_BYTES 6 // All of the ADBMS1818 register groups consist of 6 bytes
 
 #define SLAVE_NUM_CONFIG_REG 2
@@ -99,7 +105,7 @@
  */
 // Set current logging level - users can adjust this to filter log output
 // This affects which logging function are allowed to print in logging.h
-#define CURRENT_LOG_LEVEL LOG_LEVEL_DEBUG
+#define CURRENT_LOG_LEVEL LOG_LEVEL_INFO
 
 
 /**
@@ -118,4 +124,6 @@
 #define UNIT_TEST_ISOSPI SKIP
 #define INT_TEST_SLAVE SKIP
 #define INT_TEST_SLAVE_BAL_SCRUT SKIP
-#define INT_TEST_SLAVE_MUX SKIP
+#define INT_TEST_SLAVE_MUX RUN
+
+#define MAIN_LOOP SKIP

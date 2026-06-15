@@ -3,6 +3,7 @@
 #include "mst_defs.h"
 #include "mst_types.h"
 #include "spi_driver.h"
+#include "stm32f1xx_hal.h"
 #include <string.h>
 
 
@@ -189,7 +190,8 @@ void RequestVoltageMeasurement(void) {
     Slave_SendCmd(CMD_ADCV);
 }
 
-void GetVoltageForRegister_(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES], int reg_idx) {
+
+Slave_Error_t GetVoltageForRegister_(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES], int reg_idx) {
     
     const Slave_Command_t cell_voltage_commands[SLAVE_NUM_VOLT_REG] = {
         CMD_RDCVA,
@@ -214,7 +216,7 @@ void GetVoltageForRegister_(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_mod
     Slave_Status_t status = Slave_ReadRegisterGroup(current_cmd, rx_data);
     if (status.error != Slave_OK) {
         LOG_ERROR("SPI comm error getting voltage. Err: %d, Dev: %d", status.error, status.device_num);
-        ERROR_HANDLER_LOGGED();
+        return status.error;
     }
 
     for (int slave_idx = 0; slave_idx < SLAVE_NUM_DEVICES; slave_idx++) {
@@ -230,18 +232,24 @@ void GetVoltageForRegister_(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_mod
             }
         }
     }
+    return Slave_OK;
 }
 
-void RetrieveVoltageMeasurement(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES]) {
+
+Slave_Error_t RetrieveVoltageMeasurement(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES]) {
     Slave_WakeUp();
     
     Slave_SendCmdAndPoll(CMD_PLADC);
 
     for (int reg_idx = 0; reg_idx < SLAVE_NUM_VOLT_REG; reg_idx++) {
-        GetVoltageForRegister_(slaves, pack_modules, reg_idx);
+        Slave_Error_t err = GetVoltageForRegister_(slaves, pack_modules, reg_idx);
+        if (err != Slave_OK) {
+            return err;
+        }
     }
-    
+    return Slave_OK;
 }
+
 
 void RequestTemperatureMeasurement(void) {
     uint32_t start_ms = HAL_GetTick();
@@ -296,7 +304,7 @@ int32_t ThermistorVoltToTemp_(uint32_t thermistor_uV) {
     return -273150; 
 }
 
-void GetTemperatureForRegister_(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES], int reg_idx) {
+Slave_Error_t GetTemperatureForRegister_(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES], int reg_idx) {
     if (reg_idx >= SLAVE_NUM_TEMP_REG) {
         LOG_ERROR("Temperature register %d is out of range!", reg_idx);
         ERROR_HANDLER_LOGGED();
@@ -320,7 +328,7 @@ void GetTemperatureForRegister_(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack
     
     if (status.error != Slave_OK) {
         LOG_ERROR("SPI comm error getting temp. Err: %d, Dev: %d", status.error, status.device_num);
-        ERROR_HANDLER_LOGGED();
+        return status.error;
     }
 
     uint32_t compute_start_ms = HAL_GetTick();
@@ -346,9 +354,10 @@ void GetTemperatureForRegister_(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack
 
     LOG_DEBUG("GetTemperatureForRegister reg %d - Driver read: %lu ms, Compute: %lu ms", 
         reg_idx, driver_end_ms - driver_start_ms, compute_end_ms - compute_start_ms);
+    return Slave_OK;
 }
 
-void RetrieveTemperatureMeasurement(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES]) {
+Slave_Error_t RetrieveTemperatureMeasurement(slave_t slaves[SLAVE_NUM_DEVICES], module_t pack_modules[NUM_MODULES]) {
     uint32_t start_ms = HAL_GetTick();
 
     Slave_WakeUp();
@@ -357,57 +366,16 @@ void RetrieveTemperatureMeasurement(slave_t slaves[SLAVE_NUM_DEVICES], module_t 
     uint32_t poll_end_ms = HAL_GetTick();
 
     for (int reg_idx = 0; reg_idx < SLAVE_NUM_TEMP_REG; reg_idx++) {
-        GetTemperatureForRegister_(slaves, pack_modules, reg_idx);
+        Slave_Error_t err = GetTemperatureForRegister_(slaves, pack_modules, reg_idx);
+        if (err != Slave_OK) {
+            return err;
+        }
     }
     
     uint32_t ret_end_ms = HAL_GetTick();
     LOG_DEBUG("RetrieveTemperatureMeasurement total: %lu ms (Poll: %lu ms, Read loop: %lu ms)",
                ret_end_ms - start_ms, poll_end_ms - start_ms, ret_end_ms - poll_end_ms);
-}
-
-extern faults_t pack_faults;
-extern warnings_t pack_warnings;
-
-void ComputePackStatistics(module_t pack_modules[NUM_MODULES], pack_state_t *pack_state) {
-    uint32_t total_voltage_mV = 0;
-    int32_t total_temp_mC = 0;
-    for (int i = 0; i < NUM_MODULES; i++) {
-        total_voltage_mV += pack_modules[i].voltage_mv;
-        total_temp_mC += pack_modules[i].temperature_mC;
-    }
-    pack_state->total_voltage_mV = (uint32_t) total_voltage_mV;
-    pack_state->avg_voltage_mV = (uint32_t) total_voltage_mV / NUM_MODULES;
-    pack_state->avg_temp_mC = (int32_t ) total_temp_mC / NUM_MODULES;
-
-    LOG_DEBUG("Pack stats - Total V: %lu mV, Avg V: %lu mV, Total T: %ld mC, Avg T: %ld mC", pack_state->total_voltage_mV, pack_state->avg_voltage_mV, total_temp_mC, pack_state->avg_temp_mC);
-
-    LOG_DEBUG("Pack statuses - Balancing Active: %d, Balancing Enable: %d, Scrutineering: %d", 
-              pack_state->balancing_active, pack_state->balancing_enable, pack_state->scrutineering_enable);
-    LOG_DEBUG("Pack statuses - LLIM: %d, HLIM: %d, Contactor: %d", 
-              pack_state->llim_enable, pack_state->hlim_enable, pack_state->contactor_enable);
-
-    LOG_DEBUG("Pack warnings - Raw: 0x%02X, Low V: %d, High V: %d, High T: %d", 
-              pack_warnings.raw, pack_warnings.bits.warn_low_voltage, pack_warnings.bits.warn_high_voltage, pack_warnings.bits.warn_high_temperature);
-
-    LOG_DEBUG("Pack faults - Raw: 0x%02X, UV: %d, OV: %d, OT: %d, UT: %d", 
-              pack_faults.raw, pack_faults.bits.fault_under_voltage, pack_faults.bits.fault_over_voltage, 
-              pack_faults.bits.fault_over_temperature, pack_faults.bits.fault_under_temperature);
-
-    
-    for (int i = 0; i < NUM_MODULES; i++) {
-
-        bool is_module_outlier = 
-            pack_modules[i].voltage_mv < (pack_state->avg_voltage_mV * 0.7) || 
-            pack_modules[i].voltage_mv > (pack_state->avg_voltage_mV * 1.3) ||
-            pack_modules[i].temperature_mC < (pack_state->avg_temp_mC - 1000) ||
-            pack_modules[i].temperature_mC > (pack_state->avg_temp_mC + 1000);
-
-        LOG_DEBUG("Module %d - Voltage: %d.%02dV, Temp: %d.%02dC %s", 
-            i, 
-            pack_modules[i].voltage_mv / 1000, pack_modules[i].voltage_mv % 1000, 
-            pack_modules[i].temperature_mC / 1000, pack_modules[i].temperature_mC % 1000,
-            is_module_outlier ? " <-- OUTLIER" : "");
-    }
+    return Slave_OK;
 }
 
 void SetTempMuxState(slave_t slaves[SLAVE_NUM_DEVICES], unsigned new_state) {
@@ -436,7 +404,11 @@ void SetScrutineeringMode(slave_t slaves[SLAVE_NUM_DEVICES], bool enable) {
         // Clear and set bit 1 in byte 0 of configuration register group B
         uint8_t *config_b = slaves[ic_num].config_regs[1];
         config_b[0] &= ~(0x02);
-        config_b[0] |= (!enable << 1); // GPIO (and thus scrutineering circuitry) is active-LOW
+#if (SLAVEBOARD_REV == 1)
+        config_b[0] |= enable << 1; // Scrutineering circuitry is active-HIGH
+#else // (SLAVEBOARD_REV == 1)
+        config_b[0] |= (!enable) << 1; // Scrutineering circuitry is active-LOW
+#endif // (SLAVEBOARD_REV == 1)
     }
 
     Slave_WakeUp();

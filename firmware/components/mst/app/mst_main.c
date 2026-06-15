@@ -10,7 +10,7 @@
 #include "mst_types.h"
 #include "balancing.h"
 #include "can_messages.h"
-#include "emergency.h"
+#include "analysis.h"
 #include "module_data.h"
 #include "spi.h"
 #include "usart.h"
@@ -30,6 +30,29 @@ pack_state_t pack_state = {0};
 slave_t slaves[SLAVE_NUM_DEVICES] = {0};
 
 
+void Fault_() {
+    GPIO_Write(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin, GPIO_PIN_SET);
+    pack_state.hlim_enable = false;
+    pack_state.llim_enable = false;
+}
+
+
+void IncrementCommError() {
+    uint32_t current_time = HAL_GetTick();
+    LOG_ERROR("SPI communication error!");
+    if (current_time - pack_state.last_comm_fail_time >= CONSECUTIVE_TIMEFRAME_MS) {
+        pack_state.num_consecutive_comm_fails = 1;
+        pack_state.error_comm_fail = true;
+        Fault_();
+        return;
+    }
+
+    pack_state.num_consecutive_comm_fails++;
+    if (pack_state.num_consecutive_comm_fails >= NUM_CONSECUTIVE_COMM_ERR) {
+        ERROR_HANDLER_LOGGED();
+    }
+}
+
 
 void Initialize() {
     UART_Init(&huart1);
@@ -37,8 +60,14 @@ void Initialize() {
 
     // Includes Slave_Init (SPI perhiperal initialization)
     Module_Init(&hspi2, slaves);
-    LOG_INFO("MST initialization complete.");
+
+#if (SLAVEBOARD_REV == 1)
+    SetScrutineeringMode(slaves, false);
+#endif // (SLAVEBOARD_REV == 1)
+
+LOG_INFO("MST initialization complete.");
 }
+
 
 void CollectBoardData() {
     GPIO_PinState balancePinState = 
@@ -51,6 +80,7 @@ void CollectBoardData() {
 
     LOG_DEBUG("Balance enable: %d, Scrutineering mode: %d.", balancePinState, scrutineeringPinState);
 }
+
 
 void CollectModuleData() {
     uint32_t voltage_start_ms = HAL_GetTick();
@@ -94,7 +124,7 @@ void AnalyzeModuleData() {
 
     if (pack_faults.raw != 0) {
         LOG_ERROR("Pack fault bits were not zero");
-        Fault();
+        Fault_();
     }
     
     if (pack_warnings.raw != 0) {
@@ -102,8 +132,8 @@ void AnalyzeModuleData() {
     }
 
     ComputePackStatistics(pack_modules, &pack_state);
-    LOG_INFO("Pack stats - Total V: %lu mV, Avg V: %lu mV, Avg T: %ld mC", pack_state.total_voltage_mV, pack_state.avg_voltage_mV, pack_state.avg_temp_mC);
 }
+
 
 void DriveOutputs() {
     GPIO_Write(HLIM_EN_OUT_GPIO_Port, HLIM_EN_OUT_Pin, pack_state.hlim_enable);
@@ -112,8 +142,10 @@ void DriveOutputs() {
     LOG_INFO("Outputs driven - HLIM: %d, LLIM: %d", pack_state.hlim_enable, pack_state.llim_enable);
 
     uint32_t balancing_start_ms = HAL_GetTick();
-    // DoBalancing(&pack_state, pack_modules, slaves);
+    DoBalancing(&pack_state, pack_modules, slaves);
     uint32_t balancing_end_ms = HAL_GetTick();
+
+    SetScrutineeringMode(slaves, pack_state.scrutineering_enable); // scrutineering mode is active-low
 
     uint32_t balancing_duration = balancing_end_ms - balancing_start_ms;
     LOG_DEBUG("Balancing commands: %lu ms", balancing_duration);
@@ -121,13 +153,13 @@ void DriveOutputs() {
 
 
 void SendCanMessages() {
-    CAN_SendHeartbeatMessage();
-    CAN_SendVoltageSummaryMessage();
-    CAN_SendTempSummaryMessage();
-    CAN_SendModuleVoltMessage();
-    CAN_SendModuleTempMessage();
-    CAN_SendModuleStatusMessage();
-    CAN_SendBalanceStatusMessage();
+    // CAN_SendHeartbeatMessage();
+    // CAN_SendVoltageSummaryMessage();
+    // CAN_SendTempSummaryMessage();
+    // CAN_SendModuleVoltMessage();
+    // CAN_SendModuleTempMessage();
+    // CAN_SendModuleStatusMessage();
+    // CAN_SendBalanceStatusMessage();
     LOG_DEBUG("All CAN messages queued for transmission.");
 }
 

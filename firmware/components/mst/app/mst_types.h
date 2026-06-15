@@ -45,6 +45,8 @@ typedef struct {
 
     bool error_comm_fail : 1;
     bool error_self_test : 1;
+    uint32_t last_comm_fail_time : 32;
+    uint8_t num_consecutive_comm_fails : 8;
     
     uint32_t total_voltage_mV : 16;
     uint16_t avg_voltage_mV : 16;
@@ -59,7 +61,7 @@ typedef struct
 
     // Module should be discharged. This is only a suggestion to balance.
     // 
-    bool should_balance; 
+    bool is_balancing; 
 
     faults_t faults;
     warnings_t warnings;

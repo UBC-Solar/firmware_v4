@@ -64,7 +64,8 @@ void MX_ADC1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN ADC1_Init 2 */
-
+  /* Channel selection is handled dynamically by adc_driver.c before each read.
+   * No static channel override is needed here. */
   /* USER CODE END ADC1_Init 2 */
 
 }

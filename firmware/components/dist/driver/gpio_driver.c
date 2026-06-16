@@ -24,6 +24,10 @@ void GPIO_TogglePin(GPIO_TypeDef *port, uint16_t pin) {
  * enables the eFuse (output on); driving low disables it (output off).
  */
 
+void SPARE_MUX_CTRL_Toggle(void) {
+    GPIO_TogglePin(SPARE_MUX_CTRL_GPIO_Port, SPARE_MUX_CTRL_Pin);
+}
+
 void SPARE_CTRL_Toggle(void) {
     GPIO_TogglePin(SPARE_CTRL_GPIO_Port, SPARE_CTRL_Pin);
 }
@@ -72,10 +76,8 @@ GPIO_PinState SPARE_CTRL_FUSE_Read(void) {
     return GPIO_Read(SPARE_CTRL_FUSE_GPIO_Port, SPARE_CTRL_FUSE_Pin);
 }
 
-uint8_t Any_Fuse_Fault(void) {
-    return (DRD_FUSE_Read()        == GPIO_PIN_RESET ||
-            SPARE_FUSE_Read()      == GPIO_PIN_RESET ||
-            SPARE_CTRL_FUSE_Read() == GPIO_PIN_RESET) ? 1 : 0;
+GPIO_PinState MUX_STATUS_Read(void) {
+    return GPIO_Read(MUX_STATUS_GPIO_Port, MUX_STATUS_Pin);
 }
 
 /*============================================================================*/
@@ -89,9 +91,3 @@ void DEBUG_LED_Toggle(void) {
     GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
 }
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-    switch (GPIO_Pin) {
-        default:
-            break;
-    }
-}

@@ -1,6 +1,8 @@
 #include "fsm.h"
+#include "fault_handler.h"
 #include "gpio_driver.h"
 #include "i2c_driver.h"
+#include "adc_driver.h"
 #include "can_driver.h"
 #include "stm32f1xx_hal.h"
 #include "debug_io.h"
@@ -64,6 +66,7 @@ void FSM_Run(void)
             "NORMAL",
             "FAULT",
         };
+        ticks.state_tick = HAL_GetTick();
         DEBUG_IO_PRINT("FSM -> %s\r\n", state_names[FSM_state]);
         prev_state = FSM_state;
     }
@@ -75,23 +78,40 @@ void FSM_Run(void)
 /* STATE FUNCTION IMPLEMENTATIONS */
 
 /**
- * @brief Startup state. Runs immediately after power-on before enabling any outputs.
- *        Provides a visible indication that the board is booting.
+ * @brief Startup state. Waits for CAN authorisation from BMS before enabling
+ *        any outputs. ESTOP is monitored throughout; a low reading faults immediately.
+ *        eFuse fault pins are not checked here — eFuses are not yet enabled.
  *
- * Entry Condition: Power-on or reset.
- *
- * Exit Condition: CAN message 0x323 received with first bit = 1.
- * Exit Action:    None.
- * Exit State:     FSM_STATE_ACTIVATE_CTRL
+ * Exit: CAN 0x323 bit 0 → ACTIVATE_CTRL. ESTOP ADC < 700 → FAULT.
  */
 static void state_startup(void)
 {
-    if (timer_check(100, &ticks.blink_tick))
+    uint16_t estop_adc = ADC_Read_ESTOP();
+
+    if (estop_adc < 700U)
     {
-        DEBUG_LED_Toggle();
+        Fault_Set(FAULT_ESTOP_ADC);
     }
 
-    if (CAN_Startup_Received())
+    if (timer_check(100, &ticks.blink_tick))
+    {
+        AdcCurrentReadings currents = ADC_Read_Currents();
+        DEBUG_LED_Toggle();
+        DEBUG_IO_PRINT("MUX_STATUS: %d  ESTOP_ADC: %u\r\n", MUX_STATUS_Read(), estop_adc);
+        DEBUG_IO_PRINT("CURRENTS: DRD=%umA MDI=%umA SPARE_CTRL=%umA SPARE_MUX=%umA SPARE=%umA\r\n",
+                       (unsigned int)(currents.drd        * 1000.0f),
+                       (unsigned int)(currents.mdi        * 1000.0f),
+                       (unsigned int)(currents.spare_ctrl * 1000.0f),
+                       (unsigned int)(currents.spare_mux  * 1000.0f),
+                       (unsigned int)(currents.spare      * 1000.0f));
+    }
+
+    if (Fault_Get() & FAULT_ESTOP_ADC)
+    {
+        DEBUG_IO_PRINT("FAULT: ESTOP_ADC below threshold (%u) during STARTUP\r\n", estop_adc);
+        FSM_state = FSM_STATE_FAULT;
+    }
+    else if (CAN_Startup_Received())
     {
         DEBUG_IO_PRINT("CAN 0x323 received, exiting STARTUP\r\n");
         FSM_state = FSM_STATE_ACTIVATE_CTRL;
@@ -99,14 +119,10 @@ static void state_startup(void)
 }
 
 /**
- * @brief Activate control state. Enables all eFuse control signals.
- *        Runs once on entry to normal operation, then immediately transitions.
+ * @brief Activate control state. Enables all eFuse CTRL signals.
+ *        Single-cycle action state — transitions immediately to NORMAL.
  *
- * Entry Condition: Startup sequence complete (500ms elapsed).
- *
- * Exit Condition: Immediate (single-cycle action state).
- * Exit Action:    Enable all CTRL GPIO pins, turn DEBUG LED on solid.
- * Exit State:     FSM_STATE_NORMAL
+ * Exit: Immediate → NORMAL.
  */
 static void state_activate_ctrl(void)
 {
@@ -116,42 +132,68 @@ static void state_activate_ctrl(void)
 }
 
 /**
- * @brief Normal monitoring state. All eFuses are enabled. Continuously
- *        monitors fuse fault signals for any tripped eFuse.
+ * @brief Normal monitoring state. All eFuses are enabled. Continuously monitors
+ *        ESTOP (polled each cycle) and eFuse FAULT lines (EXTI-driven via fault
+ *        register) for fault conditions.
  *
- * Entry Condition: Startup complete and all eFuse CTRLs activated.
+ * ESTOP is checked before the eFuse grace period so it is never masked.
+ * eFuse faults are not acted on until 200 ms after entering this state to allow
+ * outputs to stabilise after CTRL_Enable_All().
  *
- * Exit Condition: Any fuse fault signal pulled low.
- * Exit Action:    None.
- * Exit State:     FSM_STATE_FAULT
+ * Exit: ESTOP ADC < 700 or any eFuse FAULT asserted → FAULT.
  */
 static void state_normal(void)
 {
-    // Allow eFuses time to stabilise before monitoring for faults
+    uint16_t estop_adc = ADC_Read_ESTOP();
+    FaultSource_t faults;
+
+    if (estop_adc < 700U)
+    {
+        Fault_Set(FAULT_ESTOP_ADC);
+    }
+
+    faults = Fault_Get();
+
+    if (faults & FAULT_ESTOP_ADC)
+    {
+        DEBUG_IO_PRINT("FAULT: ESTOP_ADC below threshold (%u)\r\n", estop_adc);
+        FSM_state = FSM_STATE_FAULT;
+        return;
+    }
+
+    // Allow eFuses time to stabilise before monitoring their FAULT lines
     if (HAL_GetTick() - ticks.state_tick < 200)
     {
         return;
     }
 
-    if (Any_Fuse_Fault())
+    if (timer_check(500, &ticks.blink_tick))
     {
-        if (DRD_FUSE_Read()        == GPIO_PIN_RESET) DEBUG_IO_PRINT("FAULT: DRD_FUSE tripped\r\n");
-        if (SPARE_FUSE_Read()      == GPIO_PIN_RESET) DEBUG_IO_PRINT("FAULT: SPARE_FUSE tripped\r\n");
-        if (SPARE_CTRL_FUSE_Read() == GPIO_PIN_RESET) DEBUG_IO_PRINT("FAULT: SPARE_CTRL_FUSE tripped\r\n");
+        AdcCurrentReadings currents = ADC_Read_Currents();
+        DEBUG_IO_PRINT("MUX_STATUS: %d  ESTOP_ADC: %u\r\n", MUX_STATUS_Read(), estop_adc);
+        DEBUG_IO_PRINT("CURRENTS: DRD=%umA MDI=%umA SPARE_CTRL=%umA SPARE_MUX=%umA SPARE=%umA\r\n",
+                       (unsigned int)(currents.drd        * 1000.0f),
+                       (unsigned int)(currents.mdi        * 1000.0f),
+                       (unsigned int)(currents.spare_ctrl * 1000.0f),
+                       (unsigned int)(currents.spare_mux  * 1000.0f),
+                       (unsigned int)(currents.spare      * 1000.0f));
+    }
 
+    if (faults & (FAULT_DRD_FUSE | FAULT_MDI_FUSE | FAULT_SPARE_FUSE | FAULT_SPARE_CTRL_FUSE))
+    {
+        if (faults & FAULT_DRD_FUSE)        DEBUG_IO_PRINT("FAULT: DRD_FUSE tripped\r\n");
+        if (faults & FAULT_MDI_FUSE)        DEBUG_IO_PRINT("FAULT: MDI_FUSE tripped\r\n");
+        if (faults & FAULT_SPARE_FUSE)      DEBUG_IO_PRINT("FAULT: SPARE_FUSE tripped\r\n");
+        if (faults & FAULT_SPARE_CTRL_FUSE) DEBUG_IO_PRINT("FAULT: SPARE_CTRL_FUSE tripped\r\n");
         FSM_state = FSM_STATE_FAULT;
     }
 }
 
 /**
- * @brief Fault state. Entered when any eFuse trips. Disables all control
- *        outputs and signals the fault visually and over CAN. Latching — requires reset.
+ * @brief Fault state. Disables all eFuse outputs and broadcasts a fault CAN frame.
+ *        Latching — requires a board reset to clear.
  *
- * Entry Condition: Any fuse fault signal pulled low during normal operation.
- *
- * Exit Condition: None (latching until board reset).
- * Exit Action:    None.
- * Exit State:     FSM_STATE_FAULT
+ * Exit: None.
  */
 static void state_fault(void)
 {
@@ -159,8 +201,16 @@ static void state_fault(void)
 
     if (timer_check(200, &ticks.blink_tick))
     {
+        AdcCurrentReadings currents = ADC_Read_Currents();
         DEBUG_LED_Toggle();
         CAN_Send_Fault_0x324();
+        DEBUG_IO_PRINT("MUX_STATUS: %d  ESTOP_ADC: %u\r\n", MUX_STATUS_Read(), ADC_Read_ESTOP());
+        DEBUG_IO_PRINT("CURRENTS: DRD=%umA MDI=%umA SPARE_CTRL=%umA SPARE_MUX=%umA SPARE=%umA\r\n",
+                       (unsigned int)(currents.drd        * 1000.0f),
+                       (unsigned int)(currents.mdi        * 1000.0f),
+                       (unsigned int)(currents.spare_ctrl * 1000.0f),
+                       (unsigned int)(currents.spare_mux  * 1000.0f),
+                       (unsigned int)(currents.spare      * 1000.0f));
 
         if (led_driver_ready)
         {
@@ -172,10 +222,6 @@ static void state_fault(void)
 /*============================================================================*/
 /* HELPER FUNCTIONS */
 
-/**
- * @brief Returns true if the given interval has elapsed since last_tick,
- *        and resets last_tick to the current time.
- */
 static bool timer_check(uint32_t interval, uint32_t *last_tick)
 {
     uint32_t now = HAL_GetTick();

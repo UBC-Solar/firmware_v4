@@ -1,6 +1,8 @@
 #include "dist_main.h"
 #include "fsm.h"
 #include "i2c_driver.h"
+#include "adc_driver.h"
+#include "fault_handler.h"
 #include "can.h"
 #include "can_driver.h"
 #include "stm32f1xx_hal.h"
@@ -29,6 +31,8 @@ static void init_can(void)
 void AppMain(void)
 {
     uint8_t led_ready = LED_Driver_Init();
+    ADC_Driver_Init();
+    Fault_Init();
     init_can();
     FSM_Init(led_ready);
 

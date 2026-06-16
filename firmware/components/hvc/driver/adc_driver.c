@@ -46,7 +46,7 @@ static void ADC1_ProcessReadings(int half) {
 
     // Store readings and voltages
     for (int channel = 0; channel < ADC1_NUM_CHANNELS; channel++) {
-        uint16_t voltage = (uint32_t)results[channel] * ADC_VOLTAGE_REFERENCE / ADC_RESOLUTION; // Convert to millivolts with uint32_t for no truncation
+        uint16_t voltage = (uint64_t)results[channel] * ADC_VOLTAGE_REFERENCE / ADC_RESOLUTION; // Convert to millivolts with uint32_t for no truncation
         switch (channel) {
             case 0:
                 adc1_readings.dcdc_thermistor = results[channel];

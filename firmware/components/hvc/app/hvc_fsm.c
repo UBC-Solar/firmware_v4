@@ -57,7 +57,15 @@ void HVC_FSM_Run(void)
 #ifdef DEBUG
     static HVC_State_t prev_hvc_state = UNKNOWN;
     log_state_change(hvc_state, prev_hvc_state);
+    prev_hvc_state = hvc_state;
 #endif // DEBUG
+
+    if (fault_flags.dist_fault || fault_flags.imd_fault || fault_flags.masterboard_fault ||
+        fault_flags.estop || 
+        fault_flags.overcurrent || fault_flags.undercurrent)
+    {
+        hvc_state = FAULT; // override with fault.
+    }
 
     switch (hvc_state) {
         case HVC_RESET:
@@ -104,9 +112,6 @@ void HVC_FSM_Run(void)
             Fault();
             break;
     }
-#ifdef DEBUG
-    prev_hvc_state = hvc_state;
-#endif // DEBUG
 }
 
 /*============================================================================*/
@@ -136,12 +141,13 @@ void MasterboardFaultCallback(void)
 
 void HVCurrentAlertCallback(void)
 {
-    if (INA228_IsOvercurrent()) {
-        fault_flags.overcurrent = true;
-    } 
-    else {
-        fault_flags.undercurrent = true;
-    }
+    // if (INA228_IsOvercurrent()) {
+    //     fault_flags.overcurrent = true;
+    // } 
+    // else {
+    //     fault_flags.undercurrent = true;
+    // }
+    DEBUG_IO_PRINT("bruh it happened...\r\n");
     hvc_state = FAULT;
     HVC_FSM_Run();
 }

@@ -46,8 +46,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
             level = HAL_GPIO_ReadPin(ESTOP_GPIO_Port, ESTOP_Pin);
             if (level == GPIO_PIN_SET) {
                 // ESTOP is high (rising edge or already high when sampled)
+                ESTOPCallback();
             } else {
-                ESTOPCallback();// ESTOP is low (falling edge or already low when sampled)
+                // ESTOP is low (falling edge or already low when sampled)
             }
             break;
 

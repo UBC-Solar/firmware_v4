@@ -187,12 +187,13 @@ void MotorDischarge()
     static bool dc_started = false;
 
     if (!dc_started) {
-        GPIO_Write(DISCHARGE_TOGGLE_OFF_GPIO_Port, DISCHARGE_TOGGLE_OFF_Pin, GPIO_PIN_RESET);
+        GPIO_Write(DISCHARGE_TOGGLE_OFF_GPIO_Port, DISCHARGE_TOGGLE_OFF_Pin, GPIO_PIN_SET);
         dc_started = true;
         ticks.generic = HAL_GetTick();
     }
 
     if (timer_elapsed(MC_DC_WAIT_TIME_MS, &ticks.generic)) {
+        GPIO_Write(DISCHARGE_TOGGLE_OFF_GPIO_Port, DISCHARGE_TOGGLE_OFF_Pin, GPIO_PIN_RESET);
         dc_started = false;
         hvc_state = MOTOR_PRECHARGE;
     }
@@ -220,7 +221,9 @@ void MotorPrecharge(void)
     }
 
     ADC_Voltages adc = ADC_GetVoltages();
-    if ((int64_t) adc.motor_precharge >= (int64_t) mst_pack_voltage_mv * HVC_PC_COMPLETE_RATIO / 100) {
+    if ((int64_t) adc.motor_precharge >= 
+        (int64_t) mst_pack_voltage_mv / HVC_MOTOR_PC_SCALE * HVC_PC_COMPLETE_RATIO / 100)
+    {
         pc_started = false;
         ticks.generic = HAL_GetTick();
         hvc_state = MPPT_PRECHARGE;
@@ -255,7 +258,9 @@ void MpptPrecharge(void)
     }
 
     ADC_Voltages adc = ADC_GetVoltages();
-    if ((int64_t) adc.mppt_precharge >= (int64_t) mst_pack_voltage_mv * HVC_PC_COMPLETE_RATIO / 100) {
+    if ((int64_t) adc.mppt_precharge >= 
+        (int64_t) mst_pack_voltage_mv / HVC_MOTOR_PC_SCALE * HVC_PC_COMPLETE_RATIO / 100)
+    {
         pc_started = false;
         ticks.generic = HAL_GetTick();
         hvc_state = CLOSE_LLIM;
@@ -292,7 +297,7 @@ void CloseLLIM(void)
  * @brief Closes HLIM contactor, opens MPPT precharge, then enables MPPT and DIST.
  *
  * Exit Condition: Settling delay elapsed after HLIM close.
- * Exit State: MONITORING
+ * Exit State: LV_POWERUP
  */
 void CloseHLIM(void)
 {
@@ -304,7 +309,7 @@ void CloseHLIM(void)
         GPIO_Write(MPPT_CTRL_GPIO_Port,    MPPT_CTRL_Pin,    GPIO_PIN_SET);
         startup_complete = true;
         ticks.generic = HAL_GetTick();
-        hvc_state = MONITORING;
+        hvc_state = LV_POWERUP;
     }
 }
 
@@ -361,7 +366,7 @@ void Monitoring(void)
         return;
     }
 
-    if (GPIO_Read(DCDC_ACTIVE_GPIO_Port, DCDC_ACTIVE_Pin) == GPIO_PIN_RESET) {
+    if (GPIO_Read(DCDC_ACTIVE_GPIO_Port, DCDC_ACTIVE_Pin) == GPIO_PIN_SET) {
         DEBUG_IO_print("HVC: DCDC dropout fault\r\n");
         hvc_state = FAULT;
         return;
@@ -380,6 +385,12 @@ void Monitoring(void)
         return;
     }
 
+    if (fault_flags.dist_fault == GPIO_PIN_SET) {
+        DEBUG_IO_PRINT("HVC: DIST faulted\r\n");
+        hvc_state = FAULT;
+        return;
+    }
+
     if (timer_elapsed(HVC_CAN_TX_INTERVAL_MS, &ticks.generic)) { CAN_SendStatusMsg(); }
 
     check_supp_voltage();
@@ -393,7 +404,7 @@ void Fault(void)
 {
     open_all_contactors();
     GPIO_Write(MPPT_CTRL_GPIO_Port, MPPT_CTRL_Pin, GPIO_PIN_RESET);
-    GPIO_Write(DIST_CTRL_GPIO_Port, DIST_CTRL_Pin, GPIO_PIN_RESET);
+    GPIO_Write(DIST_CTRL_GPIO_Port, DIST_CTRL_Pin, GPIO_PIN_SET);
 
     if (timer_elapsed(HVC_FAULT_LED_BLINK_MS, &ticks.fault_led)) {
         GPIO_Toggle(FAULT_LED_GPIO_Port, FAULT_LED_Pin);

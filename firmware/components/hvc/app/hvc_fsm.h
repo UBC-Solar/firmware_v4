@@ -39,23 +39,24 @@ typedef enum
 /* CONSTANTS — TODO: Verify all constants*/
 
 #define HVC_CONTACTOR_DELAY_MS      200U
-#define HVC_MOTOR_PC_TIMEOUT_MS     2000U
+#define HVC_MOTOR_PC_TIMEOUT_MS     20000U
 #define HVC_MPPT_PC_TIMEOUT_MS      2000U
 #define HVC_CAN_TX_INTERVAL_MS      200U
 #define HVC_FAULT_LED_BLINK_MS      200U
-#define MVP_LV_POWERUP_TIMEOUT_MS   5000U    
-#define MST_READY_TIMEOUT_MS        5000U   
-#define LV_POWERUP_MAX_RETRY        5U 
+#define MVP_LV_POWERUP_TIMEOUT_MS   5000U
+#define MST_READY_TIMEOUT_MS        5000U
+#define LV_POWERUP_MAX_RETRY        5U
 #define LV_POWERUP_INTERVAL_MS      500U
 #define Thermistor_MAX_THRESHOLD_MV 5000U
 #define LV_POWERUP_TIMEOUT_MS       5000U
 #define MC_DC_WAIT_TIME_MS          100U
 #define FANS_FULL_SPEED             65535U
-#define FANS_HALF_SPEED             32767U  
+#define FANS_HALF_SPEED             32767U
 #define FANS_FULL_SPEED_DURATION_MS 2000U
 
 #define HVC_SUPP_LOW_THRESHOLD_MV   10500
 #define HVC_PC_COMPLETE_RATIO          90   // % of HV bus voltage for precharge complete
+#define HVC_MOTOR_PC_SCALE       56
 
 /* CONTACTOR ACTIVE LEVELS — TODO: verify polarity from schematic */
 #define HVC_CONTACTOR_CLOSE         GPIO_PIN_SET

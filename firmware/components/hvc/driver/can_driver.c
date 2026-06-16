@@ -193,7 +193,7 @@ void CAN_SendMessageXXX()
  *
  * @param pack pack data structure that data will be read from
  */
-void CAN_SendMessage323()
+void CAN_LV_PowerupMessage()
 {
     CAN_TxMessage_t txMessage = {0};
 
@@ -203,8 +203,22 @@ void CAN_SendMessage323()
     txMessage.data[0] = 1U;
 
     CAN_QueueTxMessage(&txMessage);
+    DEBUG_IO_PRINT("Sent LV_Powerup CAN message\r\n");
+
 }
 
+void CAN_SendHeartbeat(void)
+{
+    CAN_TxMessage_t txMessage = {0};
+
+    txMessage.tx_header.StdId = HVC_HEARTBEAT_ID;
+    txMessage.tx_header.DLC = 8;
+    txMessage.data[0] = 1U;
+
+    CAN_QueueTxMessage(&txMessage);
+    DEBUG_IO_PRINT("Sent Hearbeat CAN message\r\n");
+    
+}
 
 #if (INT_TEST_CAN == RUN)
 /**
@@ -251,19 +265,25 @@ void CAN_RecievedMessageCallback(uint32_t fifo_num)
     switch (new_rx_message.rx_header.StdId) {
         case TEL_HEARTBEAT_ID:
             tel_heartbeat_received = true;
+            last_tel_heartbeat_ms = HAL_GetTick();
             break;
         case LV_POWERUP_ID:
             lv_powerup_received = true;
             break;
         case MST_HEARTBEAT_ID:
+            last_mst_heartbeat_ms = HAL_GetTick();
             mst_status_healthy =
                 (new_rx_message.data[0] == 0) && (new_rx_message.data[1] == 0) &&
                 (new_rx_message.data[2] == 0) && (new_rx_message.data[3] == 0) &&
                 (new_rx_message.data[4] == 0) && (new_rx_message.data[5] == 0) &&
                 (new_rx_message.data[6] == 0) && (new_rx_message.data[7] == 0);
             break;
+        case DIST_HEARTBEAT_ID:
+            last_dist_heartbeat_ms = HAL_GetTick();
+            break;
         case DIST_FAULT_ID:
             fault_flags.dist_fault = true;
+            break;
         default:
             break;
     }
@@ -273,16 +293,19 @@ void CAN_SendStatusMsg()
 {
     CAN_TxMessage_t txMessage = {0};
 
-    txMessage.tx_header.StdId = HVC_HEARTBEAT_ID;
+    txMessage.tx_header.StdId = HVC_STATUS_ID;
     txMessage.tx_header.DLC = 8;
-    txMessage.data[0] = (uint8_t)hvc_state; // TODO: what do we actually put into this message??
     // TODO: confirm byte positions with team
+    txMessage.data[0] = (uint8_t)hvc_state;
     txMessage.data[1] = (uint8_t)fault_flags.estop;
     txMessage.data[2] = (uint8_t)fault_flags.imd_fault;
     txMessage.data[3] = (uint8_t)fault_flags.masterboard_fault;
     txMessage.data[4] = (uint8_t)fault_flags.overcurrent;
     txMessage.data[5] = (uint8_t)fault_flags.undercurrent;
     txMessage.data[6] = (uint8_t)fault_flags.dist_fault;
+    txMessage.data[7] = (uint8_t)(fault_flags.tel_heartbeat_timeout | 
+                               fault_flags.mst_heartbeat_timeout | 
+                               fault_flags.dist_heartbeat_timeout);
     // Note: modify txMessage.data
     CAN_QueueTxMessage(&txMessage);
 }

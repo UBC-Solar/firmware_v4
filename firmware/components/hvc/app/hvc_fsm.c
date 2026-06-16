@@ -23,6 +23,9 @@ bool tel_heartbeat_received = false;
 bool mst_status_healthy = false;
 int32_t mst_pack_voltage_mv = 0;
 bool lv_powerup_received = false;
+uint32_t last_tel_heartbeat_ms = 0;
+uint32_t last_mst_heartbeat_ms = 0;
+uint32_t last_dist_heartbeat_ms = 0;
 
 
 /*============================================================================*/
@@ -112,6 +115,30 @@ void HVC_FSM_Run(void)
             Fault();
             break;
     }
+    //NEED TO SEND OUT HEARBEAT
+    static uint32_t last_heartbeat_tick = 0U;
+    if (timer_elapsed(HVC_HEARTBEAT_INTERVAL_MS, &last_heartbeat_tick))
+    {
+        CAN_SendHeartbeat();
+    }
+    if (startup_complete) 
+    {
+        if (HAL_GetTick() - last_tel_heartbeat_ms > HEARTBEAT_TIMEOUT_MS) {
+            DEBUG_IO_print("TEL heartbeat timeout\r\n");
+            fault_flags.tel_heartbeat_timeout = true;
+            hvc_state = FAULT;
+        }
+        if (HAL_GetTick() - last_mst_heartbeat_ms > HEARTBEAT_TIMEOUT_MS) {
+            DEBUG_IO_print("MST heartbeat timeout\r\n");
+            fault_flags.mst_heartbeat_timeout = true;
+            hvc_state = FAULT;
+        }
+        if (HAL_GetTick() - last_dist_heartbeat_ms > HEARTBEAT_TIMEOUT_MS) {
+            DEBUG_IO_print("DIST heartbeat timeout\r\n");
+            fault_flags.dist_heartbeat_timeout = true;
+            hvc_state = FAULT;
+        }
+    }
 }
 
 /*============================================================================*/
@@ -121,37 +148,43 @@ void ESTOPCallback(void)
 {
     GPIO_Write(ESTOP_LED_GPIO_Port, ESTOP_LED_Pin, GPIO_PIN_SET);
     fault_flags.estop = true;
+    DEBUG_IO_PRINT("ESTOP Pressed\r\n");
     hvc_state = FAULT;
-    HVC_FSM_Run();
 }
 
 void IMDFaultCallback(void)
 {
     fault_flags.imd_fault = true;
+    DEBUG_IO_PRINT("IMD Fault\r\n");
     hvc_state = FAULT;
-    HVC_FSM_Run();
 }
 
 void MasterboardFaultCallback(void)
 {
     fault_flags.masterboard_fault = true;
+    DEBUG_IO_PRINT("Masterboard Fault\r\n");
     hvc_state = FAULT;
-    HVC_FSM_Run();
 }
 
 void HVCurrentAlertCallback(void)
 {
-    // if (INA228_IsOvercurrent()) {
-    //     fault_flags.overcurrent = true;
-    // } 
-    // else {
-    //     fault_flags.undercurrent = true;
-    // }
-    DEBUG_IO_PRINT("bruh it happened...\r\n");
+    if (INA228_IsOvercurrent()) {
+        fault_flags.overcurrent = true;
+        DEBUG_IO_PRINT("Overcurrent Fault\r\n");
+    } else {
+        fault_flags.undercurrent = true;
+        DEBUG_IO_PRINT("Undercurrent Fault\r\n");
+
+    }
     hvc_state = FAULT;
-    HVC_FSM_Run();
 }
 
+void DCDCFaultCallback(void)
+{
+    fault_flags.dcdc_fault = true;
+    DEBUG_IO_PRINT("DCDC_Active Fault\r\n");
+    hvc_state = FAULT;
+}
 /*============================================================================*/
 /* HELPERS */
 

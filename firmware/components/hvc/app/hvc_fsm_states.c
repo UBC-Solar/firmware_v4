@@ -147,6 +147,12 @@ void Fans_Powerup(void)
         hvc_state = HV_CONNECT;
         return;
     }
+
+    if (timer_elapsed(FAN_POWERUP_TIMEOUT_MS, &ticks.generic)) {
+        DEBUG_IO_print("HVC: Fan Powerup timeout\r\n");
+        hvc_state = FAULT;
+        return;
+    }
 }
 
 /**
@@ -161,23 +167,28 @@ void HV_Connect(void)
     static bool neg_closed = false;
     static bool pos_closed = false;
 
-    if (!neg_closed && timer_elapsed(HVC_CONTACTOR_DELAY_MS, &ticks.generic)) {
+    if (!neg_closed && timer_elapsed(CONTACTOR_DELAY_MS, &ticks.generic)) {
         GPIO_Write(NEG_CTRL_GPIO_Port, NEG_CTRL_Pin, HVC_CONTACTOR_CLOSE);
         neg_closed = true;
         ticks.neg_contactor = HAL_GetTick();
     }
 
-    if (neg_closed && !pos_closed && timer_elapsed(HVC_CONTACTOR_DELAY_MS, &ticks.neg_contactor)) {
+    if (neg_closed && !pos_closed && timer_elapsed(CONTACTOR_DELAY_MS, &ticks.neg_contactor)) {
         GPIO_Write(POS_CTRL_GPIO_Port, POS_CTRL_Pin, HVC_CONTACTOR_CLOSE);
         pos_closed = true;
         ticks.pos_contactor = HAL_GetTick();
     }
 
-    if (pos_closed && timer_elapsed(HVC_CONTACTOR_DELAY_MS, &ticks.pos_contactor)) {
+    if (pos_closed && timer_elapsed(CONTACTOR_DELAY_MS, &ticks.pos_contactor)) {
         neg_closed = false;
         pos_closed = false;
         ticks.generic = HAL_GetTick();
         hvc_state = MOTOR_DISCHARGE;
+    }
+    if (timer_elapsed(HV_CONNECT_TIMEOUT_MS, &ticks.generic)) {
+        DEBUG_IO_print("HVC: Fan Powerup timeout\r\n");
+        hvc_state = FAULT;
+        return;
     }
 }
 
@@ -191,10 +202,12 @@ void MotorDischarge()
         dc_started = true;
         ticks.generic = HAL_GetTick();
     }
-
-    if (timer_elapsed(MC_DC_WAIT_TIME_MS, &ticks.generic)) {
+    
+    ADC_Voltages adc = ADC_GetVoltages();
+    if ((int64_t) adc.motor_precharge < DISCHARGE_COMPLETE_THRESHOLD_MV) {
         GPIO_Write(DISCHARGE_TOGGLE_OFF_GPIO_Port, DISCHARGE_TOGGLE_OFF_Pin, GPIO_PIN_RESET);
         dc_started = false;
+        DEBUG_IO_print("HVC: Motor-Discharge timeout\r\n");
         hvc_state = MOTOR_PRECHARGE;
     }
 }
@@ -206,7 +219,7 @@ void MotorDischarge()
  * Exit Condition: motor_precharge ADC >= HVC_PC_COMPLETE_RATIO% of HV bus voltage.
  * Exit State: MPPT_PRECHARGE
  *
- * Exit Condition: Timeout (HVC_MOTOR_PC_TIMEOUT_MS).
+ * Exit Condition: Timeout (MOTOR_PC_TIMEOUT_MS).
  * Exit State: FAULT
  */
 void MotorPrecharge(void)
@@ -230,8 +243,9 @@ void MotorPrecharge(void)
         return;
     }
 
-    if (timer_elapsed(HVC_MOTOR_PC_TIMEOUT_MS, &ticks.generic)) {
+    if (timer_elapsed(MOTOR_PC_TIMEOUT_MS, &ticks.generic)) {
         pc_started = false;
+        DEBUG_IO_print("Motor-Precharge timeout\r\n");
         hvc_state = FAULT;
         return;
     }
@@ -243,7 +257,7 @@ void MotorPrecharge(void)
  * Exit Condition: mppt_precharge ADC >= HVC_PC_COMPLETE_RATIO% of HV bus voltage.
  * Exit State: CLOSE_LLIM
  *
- * Exit Condition: Timeout (HVC_MPPT_PC_TIMEOUT_MS).
+ * Exit Condition: Timeout (MPPT_PC_TIMEOUT_MS).
  * Exit State: FAULT
  */
 void MpptPrecharge(void)
@@ -267,8 +281,9 @@ void MpptPrecharge(void)
         return;
     }
 
-    if (timer_elapsed(HVC_MPPT_PC_TIMEOUT_MS, &ticks.generic)) {
+    if (timer_elapsed(MPPT_PC_TIMEOUT_MS, &ticks.generic)) {
         pc_started = false;
+        DEBUG_IO_print("MPPT-Precharge timeout\r\n");
         hvc_state = FAULT;
         return;
     }
@@ -285,7 +300,7 @@ void CloseLLIM(void)
 
     GPIO_Write(LLIM_CTRL_GPIO_Port, LLIM_CTRL_Pin, HVC_CONTACTOR_CLOSE);
 
-    if (timer_elapsed(HVC_CONTACTOR_DELAY_MS, &ticks.generic)) {
+    if (timer_elapsed(CONTACTOR_DELAY_MS, &ticks.generic)) {
         GPIO_Write(MOTOR_PC_CTRL_GPIO_Port, MOTOR_PC_CTRL_Pin, HVC_CONTACTOR_OPEN);
         ticks.generic = HAL_GetTick();
         hvc_state = CLOSE_HLIM;
@@ -304,7 +319,7 @@ void CloseHLIM(void)
 
     GPIO_Write(HLIM_CTRL_GPIO_Port, HLIM_CTRL_Pin, HVC_CONTACTOR_CLOSE);
 
-    if (timer_elapsed(HVC_CONTACTOR_DELAY_MS, &ticks.generic)) {
+    if (timer_elapsed(CONTACTOR_DELAY_MS, &ticks.generic)) {
         GPIO_Write(MPPT_PC_CTRL_GPIO_Port, MPPT_PC_CTRL_Pin, HVC_CONTACTOR_OPEN);
         GPIO_Write(MPPT_CTRL_GPIO_Port,    MPPT_CTRL_Pin,    GPIO_PIN_SET);
         startup_complete = true;
@@ -325,7 +340,7 @@ void LvPowerup(void)
     static bool msg_sent = false;
 
     if (!msg_sent) {
-        CAN_SendMessage323();
+        CAN_LV_PowerupMessage();
         msg_sent = true;
         ticks.generic = HAL_GetTick();
     }
@@ -340,7 +355,7 @@ void LvPowerup(void)
 
     if (timer_elapsed(LV_POWERUP_TIMEOUT_MS, &ticks.generic)) {
         msg_sent = false;
-        DEBUG_IO_print("HVC: LV_POWERUP timeout\r\n");
+        DEBUG_IO_print("LV_POWERUP timeout\r\n");
         hvc_state = FAULT;
         return;
     }
@@ -355,43 +370,43 @@ void LvPowerup(void)
 void Monitoring(void)
 {
     if (GPIO_Read(IMD_GPIO_IN_GPIO_Port, IMD_GPIO_IN_Pin) == GPIO_PIN_SET) {
-        DEBUG_IO_print("HVC: IMD fault\r\n");
+        DEBUG_IO_print("Monitoring: IMD Fault\r\n");
         hvc_state = FAULT;
         return;
     }
 
     if (GPIO_Read(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin) == GPIO_PIN_SET) {
-        DEBUG_IO_print("HVC: masterboard fault\r\n");
+        DEBUG_IO_print("Monitoring: Masterboard Fault\r\n");
         hvc_state = FAULT;
         return;
     }
 
     if (GPIO_Read(DCDC_ACTIVE_GPIO_Port, DCDC_ACTIVE_Pin) == GPIO_PIN_SET) {
-        DEBUG_IO_print("HVC: DCDC dropout fault\r\n");
+        DEBUG_IO_print("Monitoring: DCDC dropout Fault\r\n");
         hvc_state = FAULT;
         return;
     }
 
     ADC_Voltages adc = ADC_GetVoltages();
     if (adc.dcdc_thermistor > Thermistor_MAX_THRESHOLD_MV) {
-        DEBUG_IO_print("HVC: thermistor over-temperature\r\n");
+        DEBUG_IO_print("Monitoring: DCDC Thermistor Over-Temperature Fault\r\n");
         hvc_state = FAULT;
         return;
     }
 
     if (fault_flags.estop == GPIO_PIN_SET) {
-        DEBUG_IO_PRINT("HVC: ESTOP pressed\r\n");
+        DEBUG_IO_PRINT("Monitoring: ESTOP Pressed\r\n");
         hvc_state = FAULT;
         return;
     }
 
     if (fault_flags.dist_fault == GPIO_PIN_SET) {
-        DEBUG_IO_PRINT("HVC: DIST faulted\r\n");
+        DEBUG_IO_PRINT("Monitoring: DIST Fault\r\n");
         hvc_state = FAULT;
         return;
     }
 
-    if (timer_elapsed(HVC_CAN_TX_INTERVAL_MS, &ticks.generic)) { CAN_SendStatusMsg(); }
+    if (timer_elapsed(CAN_TX_INTERVAL_MS, &ticks.generic)) { CAN_SendStatusMsg(); }
 
     check_supp_voltage();
 }
@@ -406,11 +421,11 @@ void Fault(void)
     GPIO_Write(MPPT_CTRL_GPIO_Port, MPPT_CTRL_Pin, GPIO_PIN_RESET);
     GPIO_Write(DIST_CTRL_GPIO_Port, DIST_CTRL_Pin, GPIO_PIN_SET);
 
-    if (timer_elapsed(HVC_FAULT_LED_BLINK_MS, &ticks.fault_led)) {
+    if (timer_elapsed(FAULT_LED_BLINK_MS, &ticks.fault_led)) {
         GPIO_Toggle(FAULT_LED_GPIO_Port, FAULT_LED_Pin);
     }
 
-    if (timer_elapsed(HVC_CAN_TX_INTERVAL_MS, &ticks.generic)) { CAN_SendStatusMsg(); }
+    if (timer_elapsed(CAN_TX_INTERVAL_MS, &ticks.generic)) { CAN_SendStatusMsg(); }
 
     check_supp_voltage();
 }

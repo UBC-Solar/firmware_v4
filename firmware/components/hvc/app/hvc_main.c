@@ -31,11 +31,11 @@ void HVC_Init(
     
     uint16_t filter_ids[] = {
         TEL_HEARTBEAT_ID,
-        HVC_HEARTBEAT_ID,
         LV_POWERUP_ID,
         MST_HEARTBEAT_ID,
-        DIST_FAULT_ID};
-
+        DIST_FAULT_ID,
+        [4]=DIST_HEARTBEAT_ID
+    };
     CAN_InitFilterList(_hcan, filter_ids, 5);
     CAN_Init(_hcan);
 

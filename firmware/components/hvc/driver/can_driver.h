@@ -61,8 +61,10 @@ void CAN_Init(CAN_HandleTypeDef *handle);
 void CAN_QueueTxMessage(CAN_TxMessage_t *message);
 
 void CAN_SendMessageXXX();
+void CAN_LV_PowerupMessage();
+void CAN_SendHeartbeat();
 void CAN_SendStatusMsg();
-void CAN_SendMessage323();
+
 
 #if (INT_TEST_CAN == RUN)
 void CAN_SendMessgeDebug();

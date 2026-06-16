@@ -38,11 +38,11 @@ typedef enum
 /*============================================================================*/
 /* CONSTANTS — TODO: Verify all constants*/
 
-#define HVC_CONTACTOR_DELAY_MS      200U
-#define HVC_MOTOR_PC_TIMEOUT_MS     20000U
-#define HVC_MPPT_PC_TIMEOUT_MS      2000U
-#define HVC_CAN_TX_INTERVAL_MS      200U
-#define HVC_FAULT_LED_BLINK_MS      200U
+#define CONTACTOR_DELAY_MS          200U
+#define MOTOR_PC_TIMEOUT_MS         20000U
+#define MPPT_PC_TIMEOUT_MS          2000U
+#define CAN_TX_INTERVAL_MS          200U
+#define FAULT_LED_BLINK_MS          200U
 #define MVP_LV_POWERUP_TIMEOUT_MS   5000U
 #define MST_READY_TIMEOUT_MS        5000U
 #define LV_POWERUP_MAX_RETRY        5U
@@ -53,10 +53,14 @@ typedef enum
 #define FANS_FULL_SPEED             65535U
 #define FANS_HALF_SPEED             32767U
 #define FANS_FULL_SPEED_DURATION_MS 2000U
-
+#define FAN_POWERUP_TIMEOUT_MS      5000U
+#define HVC_HEARTBEAT_INTERVAL_MS   200U
+#define HV_CONNECT_TIMEOUT_MS       10000U
+#define DISCHARGE_COMPLETE_THRESHOLD_MV 0U
 #define HVC_SUPP_LOW_THRESHOLD_MV   10500
-#define HVC_PC_COMPLETE_RATIO          90   // % of HV bus voltage for precharge complete
-#define HVC_MOTOR_PC_SCALE       56
+#define HVC_PC_COMPLETE_RATIO       90   // % of HV bus voltage for precharge complete
+#define HVC_MOTOR_PC_SCALE          56
+#define HEARTBEAT_TIMEOUT_MS        1000U
 
 /* CONTACTOR ACTIVE LEVELS — TODO: verify polarity from schematic */
 #define HVC_CONTACTOR_CLOSE         GPIO_PIN_SET
@@ -68,8 +72,9 @@ typedef enum
 #define LV_POWERUP_ID               0x303
 #define MST_HEARTBEAT_ID            0x622
 #define DIST_FAULT_ID               0x324
-
+#define HVC_STATUS_ID               0x305
 #define MAX_STATE_NAME_LEN          20U
+#define DIST_HEARTBEAT_ID           0x306  
 
 /*============================================================================*/
 /* INTERNAL TYPE DEFS */
@@ -88,8 +93,12 @@ typedef struct {
     bool imd_fault;
     bool masterboard_fault;
     bool dist_fault;
+    bool dcdc_fault;
     bool overcurrent;
     bool undercurrent;
+    bool tel_heartbeat_timeout;
+    bool mst_heartbeat_timeout;
+    bool dist_heartbeat_timeout;
 } HVC_FaultFlags_t;
 /*============================================================================*/
 /* SHARED STATE — defined in hvc_fsm.c */
@@ -102,6 +111,9 @@ extern bool mst_status_healthy;
 extern int32_t mst_pack_voltage_mv;
 extern bool lv_powerup_received;
 extern HVC_FaultFlags_t fault_flags;
+extern uint32_t last_tel_heartbeat_ms;
+extern uint32_t last_mst_heartbeat_ms;
+extern uint32_t last_dist_heartbeat_ms;
 
 /*============================================================================*/
 /* INTERNAL HELPERS — implemented in hvc_fsm.c */
@@ -140,3 +152,4 @@ void ESTOPCallback(void);
 void IMDFaultCallback(void);
 void MasterboardFaultCallback(void);
 void HVCurrentAlertCallback(void);
+void DCDCFaultCallback(void);

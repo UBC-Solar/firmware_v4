@@ -48,9 +48,15 @@ void HVC_Init(
     if (
         (HAL_GPIO_ReadPin(ESTOP_GPIO_Port, ESTOP_Pin) == GPIO_PIN_SET) ||
         (HAL_GPIO_ReadPin(IMD_GPIO_IN_GPIO_Port, IMD_GPIO_IN_Pin) == GPIO_PIN_SET) ||
-        (HAL_GPIO_ReadPin(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin) == GPIO_PIN_SET) ||
         (HAL_GPIO_ReadPin(HV_CURRENT_ALERT_GPIO_Port, HV_CURRENT_ALERT_Pin) == GPIO_PIN_SET))
     {
+        DEBUG_IO_PRINT(
+            "FAULTING from Init because: ESTOP_Pin: %d, IMD_GPIO_IN_Pin: %d, MASTERBOARD_FAULT_Pin: %d, HV_CURRENT_ALERT_Pin: %d \r\n",
+            HAL_GPIO_ReadPin(ESTOP_GPIO_Port, ESTOP_Pin),
+            HAL_GPIO_ReadPin(IMD_GPIO_IN_GPIO_Port, IMD_GPIO_IN_Pin),
+            HAL_GPIO_ReadPin(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin),
+            HAL_GPIO_ReadPin(HV_CURRENT_ALERT_GPIO_Port, HV_CURRENT_ALERT_Pin)
+        );
         hvc_state = FAULT; // conditionally overrides the value set by HVC_FSM_Init
     }
     DEBUG_IO_PRINT("HVC initialized\r\n");

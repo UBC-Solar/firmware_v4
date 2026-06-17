@@ -63,7 +63,7 @@ void HVC_FSM_Run(void)
     prev_hvc_state = hvc_state;
 #endif // DEBUG
 
-    if (fault_flags.dist_fault || fault_flags.imd_fault || fault_flags.masterboard_fault ||
+    if (fault_flags.dist_fault || fault_flags.imd_fault || 
         fault_flags.estop || 
         fault_flags.overcurrent || fault_flags.undercurrent)
     {
@@ -116,11 +116,11 @@ void HVC_FSM_Run(void)
             break;
     }
     //NEED TO SEND OUT HEARBEAT
-    static uint32_t last_heartbeat_tick = 0U;
-    if (timer_elapsed(HVC_HEARTBEAT_INTERVAL_MS, &last_heartbeat_tick))
-    {
-        CAN_SendHeartbeat();
-    }
+    //static uint32_t last_heartbeat_tick = 0U;
+    //if (timer_elapsed(HVC_HEARTBEAT_INTERVAL_MS, &last_heartbeat_tick))
+    //{
+    //     CAN_SendHeartbeat();
+    //}
 }
 
 /*============================================================================*/
@@ -141,11 +141,10 @@ void IMDFaultCallback(void)
     hvc_state = FAULT;
 }
 
-void MasterboardFaultCallback(void)
+void MasterboardFaultCallback(bool if_fault)
 {
-    fault_flags.masterboard_fault = true;
+    fault_flags.masterboard_fault = if_fault;
     DEBUG_IO_PRINT("Masterboard Fault\r\n");
-    hvc_state = FAULT;
 }
 
 void HVCurrentAlertCallback(void)

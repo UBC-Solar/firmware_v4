@@ -45,7 +45,7 @@ typedef enum
 #define CAN_TX_INTERVAL_MS          200U
 #define FAULT_LED_BLINK_MS          200U
 #define MVP_LV_POWERUP_TIMEOUT_MS   5000U
-#define MST_READY_TIMEOUT_MS        5000U
+#define MST_READY_TIMEOUT_MS        7000U
 #define LV_POWERUP_MAX_RETRY        5U
 #define LV_POWERUP_INTERVAL_MS      500U
 #define Thermistor_MAX_THRESHOLD_MV 5000U
@@ -72,7 +72,7 @@ typedef enum
 #define TEL_HEARTBEAT_ID            0x300          
 #define HVC_HEARTBEAT_ID            0x302
 #define LV_POWERUP_ID               0x303
-#define MST_HEARTBEAT_ID            0x622
+#define MST_HEARTBEAT_ID            0x601
 #define DIST_FAULT_ID               0x324
 #define HVC_STATUS_ID               0x305
 #define MAX_STATE_NAME_LEN          20U
@@ -152,6 +152,6 @@ void HVC_FSM_Run(void);
 
 void ESTOPCallback(void);
 void IMDFaultCallback(void);
-void MasterboardFaultCallback(void);
+void MasterboardFaultCallback(bool if_fault);
 void HVCurrentAlertCallback(void);
 void DCDCFaultCallback(void);

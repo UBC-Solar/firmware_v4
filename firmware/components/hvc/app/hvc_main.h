@@ -16,7 +16,7 @@
 #define INT_TEST_CAN SKIP
 // Integration test June 11th, 2026: TEL and MST will not be connected.
 // relevant TEL and MST input data must be faked
-#define INT_TEST_JUNE_11TH RUN 
+#define INT_TEST_JUNE_11TH SKIP
 
 
 

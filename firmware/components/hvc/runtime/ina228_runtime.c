@@ -141,7 +141,7 @@ void INA228_Write_Over_Voltage(void) {
 void INA228_Write_Under_Voltage(void) {
     // SUVL register (0x0D), 16-bit, reset = 0000h
     // Counts = (INA228_REVERSE_CURRENT_A (A) × SHUNT_RESISTANCE_NOHMS (nΩ) / fault_LSB_nV)
-    int16_t suvl = (int16_t)((uint32_t)INA228_REVERSE_CURRENT_A * SHUNT_RESISTANCE_NOHMS / INA228_FAULT_LSB_NV);
+    int16_t suvl = -(int16_t)((uint32_t)INA228_REVERSE_CURRENT_A * SHUNT_RESISTANCE_NOHMS / INA228_FAULT_LSB_NV);
 
     uint8_t buf[2];
     pack_buf(buf, (uint16_t)suvl, 2);

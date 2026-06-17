@@ -78,7 +78,7 @@ void MST_Ready(void)
 {
     GPIO_PinState mst_fault = GPIO_Read(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin);
 
-#if (INT_TEST_JUNE_11TH == RUN) 
+    #if (INT_TEST_JUNE_11TH == RUN) 
     mst_fault = GPIO_PIN_SET;
 #endif
 
@@ -184,17 +184,14 @@ void HV_Connect(void)
 
 void MotorDischarge() 
 {
-    static bool dc_started = false;
     ADC_Voltages adc = ADC_GetVoltages();
 
     if ((int64_t) adc.motor_precharge < DISCHARGE_COMPLETE_THRESHOLD_MV) {
         GPIO_Write(DISCHARGE_TOGGLE_OFF_GPIO_Port, DISCHARGE_TOGGLE_OFF_Pin, GPIO_PIN_SET);
-        dc_started = true;
         ticks.generic = HAL_GetTick();
     }
-    timer_elapsed(MOTOR_DISCHARGE_DELAY_MS, &ticks.generic) {
+    if (timer_elapsed(MOTOR_DISCHARGE_DELAY_MS, &ticks.generic)) {
         GPIO_Write(DISCHARGE_TOGGLE_OFF_GPIO_Port, DISCHARGE_TOGGLE_OFF_Pin, GPIO_PIN_RESET);
-        dc_started = false;
         DEBUG_IO_print("HVC: Motor-Discharge timeout\r\n");
         ticks.generic = HAL_GetTick();
         hvc_state = MOTOR_PRECHARGE;

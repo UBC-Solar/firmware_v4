@@ -8,7 +8,7 @@
 #include "gpio_driver.h"
 #include "adc_driver.h"
 #include "debug_io.h"
-#include "can_driver."
+#include "can_driver.h"
 #include "main.h"
 #include <stdbool.h>
 #include <stdint.h>

@@ -34,7 +34,7 @@ void HVC_Init(
         LV_POWERUP_ID,
         MST_HEARTBEAT_ID,
         DIST_FAULT_ID,
-        [4]=DIST_HEARTBEAT_ID
+        DIST_HEARTBEAT_ID
     };
     CAN_InitFilterList(_hcan, filter_ids, 5);
     CAN_Init(_hcan);

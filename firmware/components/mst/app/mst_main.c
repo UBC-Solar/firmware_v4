@@ -32,8 +32,6 @@ slave_t slaves[SLAVE_NUM_DEVICES] = {0};
 
 void Fault_() {
     GPIO_Write(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin, GPIO_PIN_SET);
-    pack_state.hlim_enable = false;
-    pack_state.llim_enable = false;
 }
 
 
@@ -43,7 +41,8 @@ void IncrementCommError() {
     if (current_time - pack_state.last_comm_fail_time >= CONSECUTIVE_TIMEFRAME_MS) {
         pack_state.num_consecutive_comm_fails = 1;
         pack_state.error_comm_fail = true;
-        Fault_();
+        pack_state.last_comm_fail_time = HAL_GetTick();
+        // Fault_();
         return;
     }
 
@@ -55,6 +54,9 @@ void IncrementCommError() {
 
 
 void Initialize() {
+    // HVC expects MST to pull Fault pin HIGH during initialization
+    // GPIO_Write(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin, GPIO_PIN_SET);
+
     UART_Init(&huart1);
     CAN_Init(&hcan);
 
@@ -65,7 +67,9 @@ void Initialize() {
     SetScrutineeringMode(slaves, false);
 #endif // (SLAVEBOARD_REV == 1)
 
-LOG_INFO("MST initialization complete.");
+    // HAL_Delay(5000);
+    // GPIO_Write(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin, GPIO_PIN_RESET);
+    LOG_INFO("MST initialization complete.");
 }
 
 
@@ -141,8 +145,12 @@ void AnalyzeModuleData() {
 
 
 void DriveOutputs() {
-    GPIO_Write(HLIM_EN_OUT_GPIO_Port, HLIM_EN_OUT_Pin, pack_state.hlim_enable);
-    GPIO_Write(LLIM_EN_OUT_GPIO_Port, LLIM_EN_OUT_Pin, pack_state.llim_enable);
+    pack_state.hlim_enable = !pack_warnings.bits.warn_high_voltage;
+    pack_state.llim_enable = !pack_warnings.bits.warn_low_voltage;
+    pack_state.contactor_enable = !pack_faults.raw;
+    GPIO_Write(HLIM_EN_OUT_GPIO_Port, HLIM_EN_OUT_Pin, !pack_state.hlim_enable);
+    GPIO_Write(LLIM_EN_OUT_GPIO_Port, LLIM_EN_OUT_Pin, !pack_state.llim_enable);
+    GPIO_Write(CONTACTOR_EN_OUT_GPIO_Port, CONTACTOR_EN_OUT_Pin, !pack_state.contactor_enable);
     
     LOG_INFO("Outputs driven - HLIM: %d, LLIM: %d", pack_state.hlim_enable, pack_state.llim_enable);
 
@@ -158,13 +166,13 @@ void DriveOutputs() {
 
 
 void SendCanMessages() {
-    // CAN_SendHeartbeatMessage();
-    // CAN_SendVoltageSummaryMessage();
-    // CAN_SendTempSummaryMessage();
-    // CAN_SendModuleVoltMessage();
-    // CAN_SendModuleTempMessage();
-    // CAN_SendModuleStatusMessage();
-    // CAN_SendBalanceStatusMessage();
+    CAN_SendHeartbeatMessage();
+    CAN_SendVoltageSummaryMessage();
+    CAN_SendTempSummaryMessage();
+    CAN_SendModuleVoltMessage();
+    CAN_SendModuleTempMessage();
+    CAN_SendModuleStatusMessage();
+    CAN_SendBalanceStatusMessage();
     LOG_DEBUG("All CAN messages queued for transmission.");
 }
 

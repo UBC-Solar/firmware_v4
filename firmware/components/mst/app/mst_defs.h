@@ -24,7 +24,7 @@
 // SPI interface should not have too manny
 // consecutive fails within a specified timeframe
 #define NUM_CONSECUTIVE_COMM_ERR 3
-#define CONSECUTIVE_TIMEFRAME_MS 1000
+#define CONSECUTIVE_TIMEFRAME_MS 2000
 
 /**
  * CAN messages

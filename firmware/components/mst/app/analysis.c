@@ -62,16 +62,19 @@ void CheckForEmergency(module_t *pack_modules, faults_t *pack_faults, warnings_t
         module->warnings.bits.warn_high_voltage = module->voltage_mv >= WARN_HIGH_VOLTAGE_mV;
         module->warnings.bits.warn_high_temperature = module->temperature_mC >= (WARN_HIGH_TEMP_degC*1000);
 
+        #if (INT_TEST_JUNE_16th == RUN)
+        // Then ignore temperature-related faults for slaveboard index 1. 
+        // Temperature circuitry on slaveboard 1 is not working at the moment...
+        if (i >= 24) {
+            module->faults.bits.fault_over_temperature = false;
+            module->faults.bits.fault_under_temperature = false;
+        }
+        #endif // (INT_TEST_JUNE_16th == RUN)
+
         // Sum up all faults and warnings across each module
         pack_faults->raw |= module->faults.raw;
         pack_warnings->raw |= module->warnings.raw;
     }
-
-    #if (INT_TEST_JUNE_16th == RUN)
-    // Then ignore temperature-related faults. Temperature circuitry on slaveboard is not working at the moment...
-    pack_faults->bits.fault_over_temperature = false;
-    pack_faults->bits.fault_under_temperature = false;
-    #endif // (INT_TEST_JUNE_16th == RUN)
 }
 
 

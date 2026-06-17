@@ -8,6 +8,7 @@
 #include "gpio_driver.h"
 #include "adc_driver.h"
 #include "debug_io.h"
+#include "can_driver.h"
 #include "main.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -61,6 +62,7 @@ typedef enum
 #define HVC_PC_COMPLETE_RATIO       90   // % of HV bus voltage for precharge complete
 #define HVC_MOTOR_PC_SCALE          56
 #define HEARTBEAT_TIMEOUT_MS        1000U
+#define MOTOR_DISCHARGE_DELAY_MS    100U
 
 /* CONTACTOR ACTIVE LEVELS — TODO: verify polarity from schematic */
 #define HVC_CONTACTOR_CLOSE         GPIO_PIN_SET

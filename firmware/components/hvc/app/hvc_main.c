@@ -40,8 +40,8 @@ void HVC_Init(
     CAN_Init(_hcan);
 
     DEBUG_IO_print("UART and ADC and I2C initialized.\n");
-    // INA228_Init();
-    // DEBUG_IO_print("INA228 initialized.\n");
+    INA228_Init();
+    DEBUG_IO_print("INA228 initialized.\n");
 
     HVC_FSM_Init(); // sets hvc_state
 

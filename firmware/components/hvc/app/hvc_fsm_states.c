@@ -147,12 +147,6 @@ void Fans_Powerup(void)
         hvc_state = HV_CONNECT;
         return;
     }
-
-    if (timer_elapsed(FAN_POWERUP_TIMEOUT_MS, &ticks.generic)) {
-        DEBUG_IO_print("HVC: Fan Powerup timeout\r\n");
-        hvc_state = FAULT;
-        return;
-    }
 }
 
 /**
@@ -185,29 +179,24 @@ void HV_Connect(void)
         ticks.generic = HAL_GetTick();
         hvc_state = MOTOR_DISCHARGE;
     }
-    if (timer_elapsed(HV_CONNECT_TIMEOUT_MS, &ticks.generic)) {
-        DEBUG_IO_print("HVC: Fan Powerup timeout\r\n");
-        hvc_state = FAULT;
-        return;
-    }
 }
 
 
 void MotorDischarge() 
 {
     static bool dc_started = false;
+    ADC_Voltages adc = ADC_GetVoltages();
 
-    if (!dc_started) {
+    if ((int64_t) adc.motor_precharge < DISCHARGE_COMPLETE_THRESHOLD_MV) {
         GPIO_Write(DISCHARGE_TOGGLE_OFF_GPIO_Port, DISCHARGE_TOGGLE_OFF_Pin, GPIO_PIN_SET);
         dc_started = true;
         ticks.generic = HAL_GetTick();
     }
-    
-    ADC_Voltages adc = ADC_GetVoltages();
-    if ((int64_t) adc.motor_precharge < DISCHARGE_COMPLETE_THRESHOLD_MV) {
+    timer_elapsed(MOTOR_DISCHARGE_DELAY_MS, &ticks.generic) {
         GPIO_Write(DISCHARGE_TOGGLE_OFF_GPIO_Port, DISCHARGE_TOGGLE_OFF_Pin, GPIO_PIN_RESET);
         dc_started = false;
         DEBUG_IO_print("HVC: Motor-Discharge timeout\r\n");
+        ticks.generic = HAL_GetTick();
         hvc_state = MOTOR_PRECHARGE;
     }
 }
@@ -404,6 +393,24 @@ void Monitoring(void)
         DEBUG_IO_PRINT("Monitoring: DIST Fault\r\n");
         hvc_state = FAULT;
         return;
+    }
+
+    //NEED TO RECIEVE HEARTBEAT
+
+    if (HAL_GetTick() - last_tel_heartbeat_ms > HEARTBEAT_TIMEOUT_MS) {
+        DEBUG_IO_print("TEL heartbeat timeout\r\n");
+        fault_flags.tel_heartbeat_timeout = true;
+        hvc_state = FAULT;
+    }
+    if (HAL_GetTick() - last_mst_heartbeat_ms > HEARTBEAT_TIMEOUT_MS) {
+        DEBUG_IO_print("MST heartbeat timeout\r\n");
+        fault_flags.mst_heartbeat_timeout = true;
+        hvc_state = FAULT;
+    }
+    if (HAL_GetTick() - last_dist_heartbeat_ms > HEARTBEAT_TIMEOUT_MS) {
+        DEBUG_IO_print("DIST heartbeat timeout\r\n");
+        fault_flags.dist_heartbeat_timeout = true;
+        hvc_state = FAULT;
     }
 
     if (timer_elapsed(CAN_TX_INTERVAL_MS, &ticks.generic)) { CAN_SendStatusMsg(); }

@@ -30,6 +30,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "can_app.h"
+#include "gps_driver.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,7 +51,10 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+volatile HAL_StatusTypeDef i2c2_ready = HAL_ERROR;
+volatile HAL_StatusTypeDef i2c2_read_status = HAL_ERROR;
+volatile uint32_t i2c2_error = HAL_I2C_ERROR_NONE;
+uint8_t receive_buffer[GPS_MESSAGE_LEN + 1];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -105,16 +109,21 @@ int main(void)
   MX_TIM2_Init();
   MX_UART5_Init();
   /* USER CODE BEGIN 2 */
-  CanAppInit();
+  // CanAppInit();
+
+  HAL_Delay(3000);
+
+  i2c2_ready = gps_check_ready();
+  i2c2_error = HAL_I2C_GetError(&hi2c2);
 
   /* USER CODE END 2 */
 
   /* Init scheduler */
-  osKernelInitialize();  /* Call init function for freertos objects (in cmsis_os2.c) */
-  MX_FREERTOS_Init();
+  // osKernelInitialize();  /* Call init function for freertos objects (in cmsis_os2.c) */
+  // MX_FREERTOS_Init();
 
   /* Start scheduler */
-  osKernelStart();
+  // osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
 
@@ -125,6 +134,12 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    i2c2_read_status = read_i2c_gps_module(receive_buffer);
+    receive_buffer[GPS_MESSAGE_LEN] = '\0';
+    i2c2_error = HAL_I2C_GetError(&hi2c2);
+
+    HAL_Delay(1000);
+    i2c2_ready = gps_check_ready();
   }
   /* USER CODE END 3 */
 }

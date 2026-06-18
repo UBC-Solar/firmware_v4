@@ -1,9 +1,9 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file    iwdg.h
+  * @file    gpio.h
   * @brief   This file contains all the function prototypes for
-  *          the iwdg.c file
+  *          the gpio.c file
   ******************************************************************************
   * @attention
   *
@@ -18,8 +18,8 @@
   */
 /* USER CODE END Header */
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __IWDG_H__
-#define __IWDG_H__
+#ifndef __GPIO_H__
+#define __GPIO_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,13 +32,11 @@ extern "C" {
 
 /* USER CODE END Includes */
 
-extern IWDG_HandleTypeDef hiwdg;
-
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
-void MX_IWDG_Init(void);
+void MX_GPIO_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 
@@ -47,6 +45,5 @@ void MX_IWDG_Init(void);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __IWDG_H__ */
+#endif /*__ GPIO_H__ */
 

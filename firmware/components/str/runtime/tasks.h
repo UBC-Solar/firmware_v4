@@ -8,6 +8,8 @@
 
 #define DIAGNOSTIC_TASK_DELAY 100
 
+#define TIME_SINCE_BOOTUP_DELAY 1000
+
 /**
  * @brief FreeRTOS task for updating the steering wheel display.
  * @param argument Task argument provided by the RTOS.
@@ -25,5 +27,7 @@ void StartSteeringOutputsTask(void *argument);
  * @param argument Task argument provided by the RTOS.
  */
 void TasksDiagnostic(void *argument);
+
+void TimeSinceBootUp(void *argument);
 
 #endif /* __TASKS_H__ */

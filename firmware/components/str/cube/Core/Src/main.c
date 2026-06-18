@@ -107,6 +107,20 @@ const osThreadAttr_t TasksDiagnostic_attributes = {
   .stack_size = sizeof(TasksDiagnosticBuffer),
   .priority = (osPriority_t) osPriorityLow,
 };
+
+/* Definitions for TasksTimeSinceBootUp */
+osThreadId_t TasksTimeSinceBootUpHandle;
+uint32_t TasksTimeSinceBootUpBuffer[128];
+osStaticThreadDef_t TasksTimeSinceBootUpControlBlock;
+
+const osThreadAttr_t TasksTimeSinceBootUp_attributes = {
+  .name = "TasksTimeSinceBootUp",
+  .cb_mem = &TasksTimeSinceBootUpControlBlock,
+  .cb_size = sizeof(TasksTimeSinceBootUpControlBlock),
+  .stack_mem = &TasksTimeSinceBootUpBuffer[0],
+  .stack_size = sizeof(TasksTimeSinceBootUpBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -198,6 +212,10 @@ int main(void)
 
   /* Initialization for TasksDiagnostic */
   TasksDiagnosticHandle = osThreadNew(TasksDiagnostic, NULL, &TasksDiagnostic_attributes);
+
+  /* Initialization for TasksTimeSinceBootUp*/
+  TasksTimeSinceBootUpHandle = osThreadNew(TimeSinceBootUp, NULL, &TasksTimeSinceBootUp_attributes);
+
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */

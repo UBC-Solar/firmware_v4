@@ -48,9 +48,19 @@ void TasksDiagnostic(void *argument)
 
     for (;;)
     {
-        // Refresh the watchdog timer to prevent reset and transmit diagnostics over CAN
+        // Refresh the watchdog PPtimer to prevent reset and transmit diagnostics over CAN
         IwdgAppRefresh(&hiwdg);
-        DiagnosticTimeSinceBootup();
+        
         osDelay(DIAGNOSTIC_TASK_DELAY);
+    }
+}
+
+void TimeSinceBootUp(void *argument)
+{
+    
+    for (;;)
+    {
+        DiagnosticTimeSinceBootup();
+        osDelay(TIME_SINCE_BOOTUP_DELAY);
     }
 }

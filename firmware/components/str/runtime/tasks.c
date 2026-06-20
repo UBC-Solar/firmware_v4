@@ -5,7 +5,7 @@
 
 /* INCLUDES */
 #include "tasks.h"
-
+#include "iwdg_app.h"
 #include "cmsis_os.h"
 #include "can_app.h"
 #include "gpio_app.h"

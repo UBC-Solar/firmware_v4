@@ -24,8 +24,9 @@
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
 
+/* USER CODE BEGIN Includes */
+#include "tasks.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,6 +48,62 @@ typedef StaticEventGroup_t osStaticEventGroupDef_t;
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
+
+/* Definitions for TasksHexDisplay */
+osThreadId_t TasksHexDisplayHandle;
+uint32_t TasksHexDisplayBuffer[256];
+osStaticThreadDef_t TasksHexDisplayControlBlock;
+
+const osThreadAttr_t TasksHexDisplay_attributes = {
+  .name = "TasksHexDisplay",
+  .cb_mem = &TasksHexDisplayControlBlock,
+  .cb_size = sizeof(TasksHexDisplayControlBlock),
+  .stack_mem = &TasksHexDisplayBuffer[0],
+  .stack_size = sizeof(TasksHexDisplayBuffer),
+  .priority = (osPriority_t) osPriorityNormal,
+};
+
+/* Definitions for TasksSteeringOutputs */
+osThreadId_t TasksSteeringOutputsHandle;
+uint32_t TasksSteeringOutputsBuffer[256];
+osStaticThreadDef_t TasksSteeringOutputsControlBlock;
+
+const osThreadAttr_t TasksSteeringOutputs_attributes = {
+  .name = "TasksSteeringOutputs",
+  .cb_mem = &TasksSteeringOutputsControlBlock,
+  .cb_size = sizeof(TasksSteeringOutputsControlBlock),
+  .stack_mem = &TasksSteeringOutputsBuffer[0],
+  .stack_size = sizeof(TasksSteeringOutputsBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
+
+/* Definitions for TasksDiagnostic */
+osThreadId_t TasksDiagnosticHandle;
+uint32_t TasksDiagnosticBuffer[128];
+osStaticThreadDef_t TasksDiagnosticControlBlock;
+
+const osThreadAttr_t TasksDiagnostic_attributes = {
+  .name = "TasksDiagnostic",
+  .cb_mem = &TasksDiagnosticControlBlock,
+  .cb_size = sizeof(TasksDiagnosticControlBlock),
+  .stack_mem = &TasksDiagnosticBuffer[0],
+  .stack_size = sizeof(TasksDiagnosticBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
+
+/* Definitions for TasksTimeSinceBootUp */
+osThreadId_t TasksTimeSinceBootUpHandle;
+uint32_t TasksTimeSinceBootUpBuffer[128];
+osStaticThreadDef_t TasksTimeSinceBootUpControlBlock;
+
+const osThreadAttr_t TasksTimeSinceBootUp_attributes = {
+  .name = "TasksTimeSinceBootUp",
+  .cb_mem = &TasksTimeSinceBootUpControlBlock,
+  .cb_size = sizeof(TasksTimeSinceBootUpControlBlock),
+  .stack_mem = &TasksTimeSinceBootUpBuffer[0],
+  .stack_size = sizeof(TasksTimeSinceBootUpBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
 
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
@@ -103,6 +160,19 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+
+  /* Initialization for TasksHexDisplay */
+  TasksHexDisplayHandle = osThreadNew(StartHexDisplayTask, NULL, &TasksHexDisplay_attributes);
+
+  /* Initialization for TasksSteeringOutputs */
+  TasksSteeringOutputsHandle = osThreadNew(StartSteeringOutputsTask, NULL, &TasksSteeringOutputs_attributes);
+  
+/* Initialization for TasksDiagnostic */
+  TasksDiagnosticHandle = osThreadNew(TasksDiagnostic, NULL, &TasksDiagnostic_attributes);
+
+  /* Initialization for TasksTimeSinceBootUp */
+  TasksTimeSinceBootUpHandle = osThreadNew(TimeSinceBootUp, NULL, &TasksTimeSinceBootUp_attributes);
+
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */

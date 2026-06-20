@@ -15,6 +15,8 @@
 #include "iwdg_app.h"
 #include "diagnostic_app.h"
 #include "main.h"
+#include "stm32f1xx_hal.h"
+#include <stdint.h>
 
 /* DEFINES */
 #define STEERING_TASK_DELAY 100
@@ -37,7 +39,9 @@ void StartHexDisplayTask(void *argument)
 
     for(;;)
     {
-        HexDisplayWriteDecimal((uint8_t)ReadCurrentVelocity());
+        
+        HexDisplayWriteDecimal(0);
+        HAL_Delay(600);
         osDelay(HEX_TASK_DELAY);
     }
 }

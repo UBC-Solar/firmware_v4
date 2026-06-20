@@ -29,7 +29,7 @@
 /* USER CODE BEGIN Includes */
 #include "can_app.h"
 #include "tasks.h"
-
+#include "iwdg_app.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -100,7 +100,7 @@ int main(void)
   MX_UART5_Init();
   MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
-
+  IwdgAppResetHandle();
   /* USER CODE END 2 */
 
   /* Init scheduler */

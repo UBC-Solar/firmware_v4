@@ -36,7 +36,7 @@ void StartSteeringOutputsTask(void *argument)
 void StartHexDisplayTask(void *argument)
 {
     HexDisplayInit();
-
+    HexDisplayWriteDecimal(0);
     for(;;)
     {
         

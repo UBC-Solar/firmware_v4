@@ -66,9 +66,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
         case MASTERBOARD_FAULT_Pin:
             level = HAL_GPIO_ReadPin(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin);
             if (level == GPIO_PIN_SET) {
-                MasterboardFaultCallback(true);// MASTERBOARD_FAULT is high
+                MasterboardFaultCallback(mst_irq_armed);// MASTERBOARD_FAULT is high
             } else {
-                MasterboardFaultCallback(false);// MASTERBOARD_FAULT is low
+                // MASTERBOARD_FAULT is low
             }
             break;
 

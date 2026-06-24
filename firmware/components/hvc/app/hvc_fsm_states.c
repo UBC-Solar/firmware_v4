@@ -77,7 +77,6 @@ void MvpLvPowerup(void) {
 void MST_Ready(void)
 {
     GPIO_PinState mst_fault = GPIO_Read(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin);
-
     #if (INT_TEST_JUNE_11TH == RUN) 
     mst_fault = GPIO_PIN_SET;
 #endif
@@ -104,11 +103,13 @@ void MST_Ready(void)
  */
 void MST_Check(void)
 {
-
-    if (mst_status_healthy) {
-        ticks.generic = HAL_GetTick();
-        hvc_state = FANS_POWERUP;
-        return;
+    if (GPIO_Read(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin) == GPIO_PIN_RESET) {
+        mst_irq_armed = true;
+        if (mst_status_healthy) {
+            ticks.generic = HAL_GetTick();
+            hvc_state = FANS_POWERUP;
+            return;
+        }
     }
 
     if (timer_elapsed(MST_READY_TIMEOUT_MS, &ticks.generic)) {

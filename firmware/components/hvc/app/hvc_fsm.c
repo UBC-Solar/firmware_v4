@@ -23,6 +23,8 @@ bool tel_heartbeat_received = false;
 bool mst_status_healthy = false;
 int32_t mst_pack_voltage_mv = 0;
 bool lv_powerup_received = false;
+bool mst_irq_armed = false;
+
 uint32_t last_tel_heartbeat_ms = 0;
 uint32_t last_mst_heartbeat_ms = 0;
 uint32_t last_dist_heartbeat_ms = 0;
@@ -141,10 +143,12 @@ void IMDFaultCallback(void)
     hvc_state = FAULT;
 }
 
-void MasterboardFaultCallback(bool if_fault)
+void MasterboardFaultCallback(bool is_mst_irq_armed)
 {
-    fault_flags.masterboard_fault = if_fault;
-    DEBUG_IO_PRINT("Masterboard Fault\r\n");
+    if (mst_irq_armed) {
+        fault_flags.masterboard_fault = true;
+        DEBUG_IO_PRINT("Masterboard Fault\r\n");
+    }
 }
 
 void HVCurrentAlertCallback(void)

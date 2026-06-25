@@ -48,8 +48,6 @@ void HVC_FSM_Init(void)
 
     #if (INT_TEST_JUNE_11TH == RUN)
     mst_pack_voltage_mv = 115 * 1000;
-    mst_status_healthy = true;
-    tel_heartbeat_received = true;
     #endif // (INT_TEST_CAN == RUN)
 
 }
@@ -117,12 +115,11 @@ void HVC_FSM_Run(void)
             Fault();
             break;
     }
-    //NEED TO SEND OUT HEARBEAT
-    //static uint32_t last_heartbeat_tick = 0U;
-    //if (timer_elapsed(HVC_HEARTBEAT_INTERVAL_MS, &last_heartbeat_tick))
-    //{
-    //     CAN_SendHeartbeat();
-    //}
+    static uint32_t last_heartbeat_tick = 0U;
+    if (timer_elapsed(HVC_HEARTBEAT_INTERVAL_MS, &last_heartbeat_tick))
+    {
+        CAN_SendHeartbeat();
+    }
 }
 
 /*============================================================================*/
@@ -143,7 +140,7 @@ void IMDFaultCallback(void)
     hvc_state = FAULT;
 }
 
-void MasterboardFaultCallback(bool is_mst_irq_armed)
+void MasterboardFaultCallback(bool mst_irq_armed)
 {
     if (mst_irq_armed) {
         fault_flags.masterboard_fault = true;

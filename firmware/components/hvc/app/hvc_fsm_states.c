@@ -87,7 +87,7 @@ void MST_Ready(void)
         return;
     }
 
-    if (timer_elapsed(MST_READY_TIMEOUT_MS, &ticks.generic)) {
+    if (timer_elapsed(MST_CHECK_TIMEOUT_MS, &ticks.generic)) {
         DEBUG_IO_print("HVC: MST_READY timeout\r\n");
         hvc_state = FAULT;
         return;
@@ -102,8 +102,12 @@ void MST_Ready(void)
  * Exit State: FANS_POWERUP
  */
 void MST_Check(void)
-{
-    if (GPIO_Read(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin) == GPIO_PIN_RESET) {
+{   
+    GPIO_PinState mst_fault = GPIO_Read(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin);
+    #if (INT_TEST_JUNE_11TH == RUN) 
+    mst_fault = GPIO_PIN_RESET;
+#endif
+    if (mst_fault == GPIO_PIN_RESET) {
         mst_irq_armed = true;
         if (mst_status_healthy) {
             ticks.generic = HAL_GetTick();
@@ -111,6 +115,7 @@ void MST_Check(void)
             return;
         }
     }
+    
 
     if (timer_elapsed(MST_READY_TIMEOUT_MS, &ticks.generic)) {
         DEBUG_IO_print("HVC: MST_CHECK timeout\r\n");

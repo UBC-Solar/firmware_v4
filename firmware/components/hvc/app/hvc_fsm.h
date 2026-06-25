@@ -46,6 +46,7 @@ typedef enum
 #define FAULT_LED_BLINK_MS          200U
 #define MVP_LV_POWERUP_TIMEOUT_MS   5000U
 #define MST_READY_TIMEOUT_MS        7000U
+#define MST_CHECK_TIMEOUT_MS        7000U
 #define LV_POWERUP_MAX_RETRY        5U
 #define LV_POWERUP_INTERVAL_MS      500U
 #define Thermistor_MAX_THRESHOLD_MV 5000U
@@ -116,6 +117,7 @@ extern HVC_FaultFlags_t fault_flags;
 extern uint32_t last_tel_heartbeat_ms;
 extern uint32_t last_mst_heartbeat_ms;
 extern uint32_t last_dist_heartbeat_ms;
+extern bool mst_irq_armed;
 
 /*============================================================================*/
 /* INTERNAL HELPERS — implemented in hvc_fsm.c */

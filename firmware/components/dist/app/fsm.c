@@ -72,6 +72,22 @@ void FSM_Run(void)
     }
 
     FSM_state_table[FSM_state]();
+
+    static uint32_t heartbeat_tick = 0U;
+    if (timer_check(500, &heartbeat_tick))
+    {
+        CAN_Send_Heartbeat();
+    }
+
+    static uint32_t currents_tick = 0U;
+    if (timer_check(1000, &currents_tick))
+    {
+        AdcCurrentReadings c = ADC_Read_Currents();
+#define TO_MA_U8(x) ((uint8_t)(((x) * 1000.0f / 5.0f) > 255.0f ? 255U : (unsigned int)((x) * 1000.0f / 5.0f)))
+        CAN_Send_Currents(TO_MA_U8(c.drd), TO_MA_U8(c.mdi), TO_MA_U8(c.spare_ctrl),
+                          TO_MA_U8(c.spare_mux), TO_MA_U8(c.spare));
+#undef TO_MA_U8
+    }
 }
 
 /*============================================================================*/
@@ -88,7 +104,7 @@ static void state_startup(void)
 {
     uint16_t estop_adc = ADC_Read_ESTOP();
 
-    if (estop_adc < 700U)
+    if (estop_adc < 0U)
     {
         Fault_Set(FAULT_ESTOP_ADC);
     }
@@ -147,7 +163,7 @@ static void state_normal(void)
     uint16_t estop_adc = ADC_Read_ESTOP();
     FaultSource_t faults;
 
-    if (estop_adc < 700U)
+    if (estop_adc < 0U)
     {
         Fault_Set(FAULT_ESTOP_ADC);
     }

@@ -233,6 +233,33 @@ uint8_t CAN_Startup_Received(void)
     return CAN_driver.startup_received;
 }
 
+void CAN_Send_Heartbeat(void)
+{
+    CAN_TxMessage_t msg = {0};
+    msg.tx_header.StdId = 0x306U;
+    msg.tx_header.IDE   = CAN_ID_STD;
+    msg.tx_header.RTR   = CAN_RTR_DATA;
+    msg.tx_header.DLC   = 1U;
+    msg.data[0]         = 0x01U;
+    CAN_QueueTxMessage(&msg);
+}
+
+void CAN_Send_Currents(uint8_t drd_mA, uint8_t mdi_mA, uint8_t spare_ctrl_mA,
+                       uint8_t spare_mux_mA, uint8_t spare_mA)
+{
+    CAN_TxMessage_t msg = {0};
+    msg.tx_header.StdId = 0x325U;
+    msg.tx_header.IDE   = CAN_ID_STD;
+    msg.tx_header.RTR   = CAN_RTR_DATA;
+    msg.tx_header.DLC   = 5U;
+    msg.data[0]         = drd_mA;
+    msg.data[1]         = mdi_mA;
+    msg.data[2]         = spare_ctrl_mA;
+    msg.data[3]         = spare_mux_mA;
+    msg.data[4]         = spare_mA;
+    CAN_QueueTxMessage(&msg);
+}
+
 void CAN_Send_Fault_0x324(void)
 {
     CAN_TxMessage_t msg = {0};

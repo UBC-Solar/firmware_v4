@@ -30,6 +30,7 @@
  * CAN messages
  */
 #define CAN_STATUS_ID               0x601
+#define CAN_STATUS_PERIOD_MS        1000
 #define CAN_MODULE_VOLT_SUMMARY_ID  0x602
 #define CAN_MODULE_TEMP_SUMMARY_ID  0x603
 #define CAN_MODULE_VOLT_DATA_ID     0x604
@@ -42,12 +43,20 @@
  */
 // The number of modules used by the pack depends on
 // whether scrutineering is enabled.
-#define NUM_MODULES 32U
+#define NUM_MODULES 16U
 #define NUM_CELLS_PER_MODULE 13U
 
 // Slave(board)s
-#define SLAVE_NUM_DEVICES 2U // Number of ADBMS1818 ICs daisy chained
+#define SLAVE_NUM_DEVICES 1U // Number of ADBMS1818 ICs daisy chained
 #define SLAVEBOARD_REV 1
+
+// Enable / disable MST algorithms
+#define RUN_MAIN_LOOP true
+#define ISOSPI_CONNECTED true
+#define CAN_CONNECTED false
+#define TEMP_STRATEGY_ALL_AT_ONCE false
+#define CAN_STRATEGY_ALL_AT_ONCE false
+
 
 /**
  * Slaveboards configuration and ADBMS1818 options
@@ -126,5 +135,3 @@
 #define INT_TEST_SLAVE_BAL_SCRUT SKIP
 #define INT_TEST_SLAVE_MUX SKIP
 #define INT_TEST_JUNE_16th RUN
-
-#define MAIN_LOOP RUN

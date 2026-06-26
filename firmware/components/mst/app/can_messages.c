@@ -4,6 +4,13 @@
 #include "mst_main.h"
 #include "stm32f1xx_hal.h"
 
+uint32_t last_heartbeat_time_ms = 0;
+
+#if !CAN_STRATEGY_ALL_AT_ONCE
+uint8_t current_volt_group_idx = 0;
+uint8_t current_temp_group_idx = 0;
+#endif // !CAN_STRATEGY_ALL_AT_ONCE
+
 void CAN_SendHeartbeatMessage(void) {
     CAN_TxMessage_t msg = {0};
     msg.tx_header.StdId = CAN_STATUS_ID;
@@ -12,7 +19,12 @@ void CAN_SendHeartbeatMessage(void) {
     msg.tx_header.DLC = 4;
 
     uint32_t status = 0;
-    
+
+    if (HAL_GetTick() - last_heartbeat_time_ms < CAN_STATUS_PERIOD_MS) {
+        return;
+    }
+    last_heartbeat_time_ms = HAL_GetTick();
+
     // Bits 0-4 Faults
     status |= (pack_state.error_comm_fail                   ? 1 : 0) << 0;
     status |= (pack_state.error_self_test                   ? 1 : 0) << 1;
@@ -110,18 +122,17 @@ void CAN_SendTempSummaryMessage(void) {
     CAN_QueueTxMessage(&msg);
 }
 
-void CAN_SendModuleVoltMessage(void) {
-    // We have 8 multiplex groups, sending 4 module readouts per group
-    for (int mux_group = 0; mux_group < 8; mux_group++) {
+void SendModuleVoltMessage_(uint8_t group_idx) {
+
         CAN_TxMessage_t msg = {0};
         msg.tx_header.StdId = CAN_MODULE_VOLT_DATA_ID;
         msg.tx_header.IDE = CAN_ID_STD;
         msg.tx_header.RTR = CAN_RTR_DATA;
         msg.tx_header.DLC = 5;
 
-        msg.data[0] = mux_group & 0x0F;
+        msg.data[0] = group_idx & 0x0F;
         
-        int start_idx = mux_group * 4;
+        int start_idx = group_idx * 4;
         for (int i = 0; i < 4; i++) {
             int module_idx = start_idx + i;
             if (module_idx >= NUM_MODULES) {
@@ -133,20 +144,30 @@ void CAN_SendModuleVoltMessage(void) {
             msg.data[1 + i] = (pack_modules[module_idx].voltage_mv >> 8) & 0xFF;
         }
         CAN_QueueTxMessage(&msg);
-    }
 }
 
-void CAN_SendModuleTempMessage(void) {
-    for (int mux_group = 0; mux_group < 8; mux_group++) {
+void CAN_SendModuleVoltMessage(void) {
+    // We have 8 multiplex groups, sending 4 module readouts per group
+    #if CAN_STRATEGY_ALL_AT_ONCE
+    for (int group_idx = 0; group_idx < 8; group_idx++) {
+        SendModuleVoltMessage_(group_idx);
+    }
+    #else// CAN_STRATEGY_ALL_AT_ONCE is false
+    SendModuleVoltMessage_(current_volt_group_idx);
+    current_volt_group_idx++;
+    #endif // CAN_STRATEGY_ALL_AT_ONCE
+}
+
+void SendModuleTempMessage_(uint8_t group_idx) {
         CAN_TxMessage_t msg = {0};
         msg.tx_header.StdId = CAN_MODULE_TEMP_DATA_ID;
         msg.tx_header.IDE = CAN_ID_STD;
         msg.tx_header.RTR = CAN_RTR_DATA;
         msg.tx_header.DLC = 5;
 
-        msg.data[0] = mux_group & 0x07;
+        msg.data[0] = group_idx & 0x07;
         
-        int start_idx = mux_group * 4;
+        int start_idx = group_idx * 4;
         for (int i = 0; i < 4; i++) {
             int module_idx = start_idx + i;
             if (module_idx < NUM_MODULES) {
@@ -163,20 +184,32 @@ void CAN_SendModuleTempMessage(void) {
             }
         }
         CAN_QueueTxMessage(&msg);
+}
+
+void CAN_SendModuleTempMessage(void) {
+    // We have 8 multiplex groups, sending 4 module readouts per group
+
+    #if CAN_STRATEGY_ALL_AT_ONCE
+    for (int group_idx = 0; group_idx < 8; group_idx++) {
+        SendModuleTempMessage_(group_idx);
     }
+    #else// CAN_STRATEGY_ALL_AT_ONCE is false
+    SendModuleTempMessage_(current_temp_group_idx);
+    current_temp_group_idx++;
+    #endif // CAN_STRATEGY_ALL_AT_ONCE
 }
 
 void CAN_SendModuleStatusMessage(void) {
-    for (int mux_group = 0; mux_group < 8; mux_group++) {
+    for (int group_idx = 0; group_idx < 8; group_idx++) {
         CAN_TxMessage_t msg = {0};
         msg.tx_header.StdId = CAN_MODULE_STATUS_ID;
         msg.tx_header.IDE = CAN_ID_STD;
         msg.tx_header.RTR = CAN_RTR_DATA;
         msg.tx_header.DLC = 5;
 
-        msg.data[0] = mux_group & 0x07;
+        msg.data[0] = group_idx & 0x07;
         
-        int start_idx = mux_group * 4;
+        int start_idx = group_idx * 4;
         for (int i = 0; i < 4; i++) {
             int module_idx = start_idx + i;
             if (module_idx < NUM_MODULES) {

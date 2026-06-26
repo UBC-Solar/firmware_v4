@@ -37,7 +37,7 @@ void ComputePackStatistics(module_t pack_modules[NUM_MODULES], pack_state_t *pac
             pack_modules[i].temperature_mC < (pack_state->avg_temp_mC - 1000) ||
             pack_modules[i].temperature_mC > (pack_state->avg_temp_mC + 1000);
 
-        LOG_INFO("Module %d - Voltage: %d.%02dV, Temp: %d.%02dC %s", 
+        LOG_INFO("Module %d - Voltage: %d.%03dV, Temp: %d.%03dC %s", 
             i, 
             pack_modules[i].voltage_mv / 1000, pack_modules[i].voltage_mv % 1000, 
             pack_modules[i].temperature_mC / 1000, pack_modules[i].temperature_mC % 1000,
@@ -65,10 +65,10 @@ void CheckForEmergency(module_t *pack_modules, faults_t *pack_faults, warnings_t
         #if (INT_TEST_JUNE_16th == RUN)
         // Then ignore temperature-related faults for slaveboard index 1. 
         // Temperature circuitry on slaveboard 1 is not working at the moment...
-        if (i >= 24) {
+        // if (i >= 24) {
             module->faults.bits.fault_over_temperature = false;
             module->faults.bits.fault_under_temperature = false;
-        }
+        // }
         #endif // (INT_TEST_JUNE_16th == RUN)
 
         // Sum up all faults and warnings across each module

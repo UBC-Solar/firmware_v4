@@ -22,7 +22,6 @@
 #include "crc.h"
 #include "dma.h"
 #include "spi.h"
-#include "stm32f1xx_hal.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -110,13 +109,13 @@ int main(void)
     /**
      * Mainloop
      */
-    #if (MAIN_LOOP == RUN)
+    #if RUN_MAIN_LOOP
     CollectBoardData();
     CollectModuleData();
     AnalyzeModuleData();
     DriveOutputs();
     SendCanMessages();
-    #endif // (MAIN_LOOP == RUN)
+    #endif // RUN_MAIN_LOOP
 
     /**
      * Tests
@@ -214,9 +213,9 @@ void Error_Handler(void)
   __disable_irq();
   HAL_GPIO_WritePin(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin, GPIO_PIN_SET);
   
-  GPIO_Write(HLIM_EN_OUT_GPIO_Port, HLIM_EN_OUT_Pin, GPIO_PIN_SET);
-  GPIO_Write(LLIM_EN_OUT_GPIO_Port, LLIM_EN_OUT_Pin, GPIO_PIN_SET);
-  GPIO_Write(CONTACTOR_EN_OUT_GPIO_Port, CONTACTOR_EN_OUT_Pin, GPIO_PIN_SET);
+  GPIO_Write(HLIM_DIS_OUT_GPIO_Port, HLIM_DIS_OUT_Pin, GPIO_PIN_SET);
+  GPIO_Write(LLIM_DIS_OUT_GPIO_Port, LLIM_DIS_OUT_Pin, GPIO_PIN_SET);
+  GPIO_Write(CONTACTOR_DIS_OUT_GPIO_Port, CONTACTOR_DIS_OUT_Pin, GPIO_PIN_SET);
 
   while (1)
   {

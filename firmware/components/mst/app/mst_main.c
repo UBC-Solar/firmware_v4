@@ -39,15 +39,16 @@ void IncrementCommError() {
     uint32_t current_time = HAL_GetTick();
     LOG_ERROR("SPI communication error!");
     if (current_time - pack_state.last_comm_fail_time >= CONSECUTIVE_TIMEFRAME_MS) {
-        pack_state.num_consecutive_comm_fails = 1;
+        pack_state.num_consecutive_comm_fails = 0;
         pack_state.error_comm_fail = true;
         pack_state.last_comm_fail_time = HAL_GetTick();
-        // Fault_();
-        return;
     }
 
     pack_state.num_consecutive_comm_fails++;
     if (pack_state.num_consecutive_comm_fails >= NUM_CONSECUTIVE_COMM_ERR) {
+        #if !ISOSPI_CONNECTED
+        return;
+        #endif
         ERROR_HANDLER_LOGGED();
     }
 }
@@ -55,7 +56,12 @@ void IncrementCommError() {
 
 void Initialize() {
     // HVC expects MST to pull Fault pin HIGH during initialization
-    // GPIO_Write(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin, GPIO_PIN_SET);
+    GPIO_Write(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin, GPIO_PIN_SET);
+
+    // Contactors will conditionally be enabled again as mainloop executes
+    GPIO_Write(HLIM_DIS_OUT_GPIO_Port, HLIM_DIS_OUT_Pin, GPIO_PIN_SET);
+    GPIO_Write(LLIM_DIS_OUT_GPIO_Port, LLIM_DIS_OUT_Pin, GPIO_PIN_SET);
+    GPIO_Write(CONTACTOR_DIS_OUT_GPIO_Port, CONTACTOR_DIS_OUT_Pin, GPIO_PIN_SET);
 
     UART_Init(&huart1);
     CAN_Init(&hcan);
@@ -67,8 +73,8 @@ void Initialize() {
     SetScrutineeringMode(slaves, false);
 #endif // (SLAVEBOARD_REV == 1)
 
-    // HAL_Delay(5000);
-    // GPIO_Write(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin, GPIO_PIN_RESET);
+    HAL_Delay(2000);
+    GPIO_Write(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin, GPIO_PIN_RESET);
     LOG_INFO("MST initialization complete.");
 }
 
@@ -104,18 +110,23 @@ void CollectModuleData() {
 
     uint32_t temp_start_ms = HAL_GetTick();
     
+    #if TEMP_STRATEGY_ALL_AT_ONCE
     for (int mux_idx = 0; mux_idx < SLAVE_NUM_MODULES_PER_TEMP_VAL; mux_idx++) {
         SetTempMuxState(slaves, mux_idx);
-        // for (int i = 0; i < 10; i++) {
-        //     HAL_Delay(100); // Give the physical multiplexer chips time to settle
-        //     GPIO_Toggle(LED_OUT_GPIO_Port, LED_OUT_Pin);
-        // }
-        HAL_Delay(50);
+
+        HAL_Delay(5);
         RequestTemperatureMeasurement();
         if (RetrieveTemperatureMeasurement(slaves, pack_modules) != Slave_OK) {
             IncrementCommError();
         }
     }
+    #else // TEMP_STRATEGY_ALL_AT_ONCE is false
+    RequestTemperatureMeasurement();
+    if (RetrieveTemperatureMeasurement(slaves, pack_modules) != Slave_OK) {
+        IncrementCommError();
+    }
+    SetTempMuxState(slaves, (slaves[0].temp_mux_state+1) % SLAVE_NUM_MODULES_PER_TEMP_VAL);
+    #endif // TEMP_STRATEGY_ALL_AT_ONCE
     
     uint32_t temp_end_ms = HAL_GetTick();
     
@@ -148,9 +159,11 @@ void DriveOutputs() {
     pack_state.hlim_enable = !pack_warnings.bits.warn_high_voltage;
     pack_state.llim_enable = !pack_warnings.bits.warn_low_voltage;
     pack_state.contactor_enable = !pack_faults.raw;
-    GPIO_Write(HLIM_EN_OUT_GPIO_Port, HLIM_EN_OUT_Pin, !pack_state.hlim_enable);
-    GPIO_Write(LLIM_EN_OUT_GPIO_Port, LLIM_EN_OUT_Pin, !pack_state.llim_enable);
-    GPIO_Write(CONTACTOR_EN_OUT_GPIO_Port, CONTACTOR_EN_OUT_Pin, !pack_state.contactor_enable);
+    GPIO_Write(HLIM_DIS_OUT_GPIO_Port, HLIM_DIS_OUT_Pin, !pack_state.hlim_enable);
+    GPIO_Write(LLIM_DIS_OUT_GPIO_Port, LLIM_DIS_OUT_Pin, !pack_state.llim_enable);
+    GPIO_Write(CONTACTOR_DIS_OUT_GPIO_Port, CONTACTOR_DIS_OUT_Pin, !pack_state.contactor_enable);
+    bool debug_led_on = !pack_state.hlim_enable || !pack_state.llim_enable || !pack_state.contactor_enable;
+    GPIO_Write(LED_OUT_GPIO_Port, LED_OUT_Pin, debug_led_on);
     
     LOG_INFO("Outputs driven - HLIM: %d, LLIM: %d", pack_state.hlim_enable, pack_state.llim_enable);
 
@@ -158,7 +171,7 @@ void DriveOutputs() {
     DoBalancing(&pack_state, pack_modules, slaves);
     uint32_t balancing_end_ms = HAL_GetTick();
 
-    SetScrutineeringMode(slaves, pack_state.scrutineering_enable); // scrutineering mode is active-low
+    SetScrutineeringMode(slaves, pack_state.scrutineering_enable);
 
     uint32_t balancing_duration = balancing_end_ms - balancing_start_ms;
     LOG_DEBUG("Balancing commands: %lu ms", balancing_duration);
@@ -166,6 +179,7 @@ void DriveOutputs() {
 
 
 void SendCanMessages() {
+    #if CAN_CONNECTED
     CAN_SendHeartbeatMessage();
     CAN_SendVoltageSummaryMessage();
     CAN_SendTempSummaryMessage();
@@ -174,6 +188,7 @@ void SendCanMessages() {
     CAN_SendModuleStatusMessage();
     CAN_SendBalanceStatusMessage();
     LOG_DEBUG("All CAN messages queued for transmission.");
+    #endif
 }
 
 
@@ -203,21 +218,21 @@ void Debug_DigitalIoTestCycle(void) {
 
     DEBUG_IO_PRINT("HLIM_EN signal HIGH. Other signals should be LOW.\r\n");
     UART_Transmit("HLIM_EN signal HIGH. Other signals should be LOW.\r\n");
-    GPIO_Write(HLIM_EN_OUT_GPIO_Port, HLIM_EN_OUT_Pin, GPIO_PIN_SET);
+    GPIO_Write(HLIM_DIS_OUT_GPIO_Port, HLIM_DIS_OUT_Pin, GPIO_PIN_SET);
     HAL_Delay(1000);
-    GPIO_Write(HLIM_EN_OUT_GPIO_Port, HLIM_EN_OUT_Pin, GPIO_PIN_RESET);
+    GPIO_Write(HLIM_DIS_OUT_GPIO_Port, HLIM_DIS_OUT_Pin, GPIO_PIN_RESET);
 
     DEBUG_IO_PRINT("LLIM_EN signal HIGH. Other signals should be LOW.\r\n");
     UART_Transmit("LLIM_EN signal HIGH. Other signals should be LOW.\r\n");
-    GPIO_Write(LLIM_EN_OUT_GPIO_Port, LLIM_EN_OUT_Pin, GPIO_PIN_SET);
+    GPIO_Write(LLIM_DIS_OUT_GPIO_Port, LLIM_DIS_OUT_Pin, GPIO_PIN_SET);
     HAL_Delay(1000);
-    GPIO_Write(LLIM_EN_OUT_GPIO_Port, LLIM_EN_OUT_Pin, GPIO_PIN_RESET);
+    GPIO_Write(LLIM_DIS_OUT_GPIO_Port, LLIM_DIS_OUT_Pin, GPIO_PIN_RESET);
 
     DEBUG_IO_PRINT("CONTACTOR_EN signal HIGH. Other signals should be LOW.\r\n");
     UART_Transmit("CONTACTOR_EN signal HIGH. Other signals should be LOW.\r\n");
-    GPIO_Write(CONTACTOR_EN_OUT_GPIO_Port, CONTACTOR_EN_OUT_Pin, GPIO_PIN_SET);
+    GPIO_Write(CONTACTOR_DIS_OUT_GPIO_Port, CONTACTOR_DIS_OUT_Pin, GPIO_PIN_SET);
     HAL_Delay(1000);
-    GPIO_Write(CONTACTOR_EN_OUT_GPIO_Port, CONTACTOR_EN_OUT_Pin, GPIO_PIN_RESET);
+    GPIO_Write(CONTACTOR_DIS_OUT_GPIO_Port, CONTACTOR_DIS_OUT_Pin, GPIO_PIN_RESET);
 
     GPIO_Write(LED_OUT_GPIO_Port, LED_OUT_Pin, GPIO_PIN_SET);
 

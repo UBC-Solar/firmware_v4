@@ -17,14 +17,14 @@ volatile StrGpioCtx gpio_pin_state = {0};
 /* GPIO POLLING */
 void LightState(void)
 {
-    if (!HAL_GPIO_ReadPin(RTS_IN_GPIO_Port, RTS_IN_Pin))
+    if (!HAL_GPIO_ReadPin(LTS_IN_GPIO_Port, LTS_IN_Pin))
     {
         gpio_pin_state.lights_state.rts_en = true;
     } else {
         gpio_pin_state.lights_state.rts_en = false;
     }
 
-    if (!HAL_GPIO_ReadPin(LTS_IN_GPIO_Port, LTS_IN_Pin))
+    if (!HAL_GPIO_ReadPin(RTS_IN_GPIO_Port, RTS_IN_Pin))
     {
         gpio_pin_state.lights_state.lts_en = true;
     } else {

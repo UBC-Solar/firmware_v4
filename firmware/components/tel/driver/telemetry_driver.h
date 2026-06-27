@@ -5,7 +5,8 @@
 #include "stdlib.h"
 #include "cmsis_os2.h"
 
-#define CELLULAR 0
+// ONLY CHANGE CELLULAR TO 0 IF FLASHING WITH ST-LINK
+#define CELLULAR 1
 
 #define TEL_DATA_LENGTH                           8U
 #define TEL_MSG_TYPEDEF_SIZE                      sizeof(RADIO_Msg_TypeDef)

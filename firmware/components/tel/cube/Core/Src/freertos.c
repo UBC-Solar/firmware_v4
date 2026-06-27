@@ -26,6 +26,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "tasks.h"
+#include "telemetry_driver.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -36,7 +37,7 @@ typedef StaticEventGroup_t osStaticEventGroupDef_t;
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define NUM_USART1_TX_SEMAPHORES        1
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -46,6 +47,8 @@ typedef StaticEventGroup_t osStaticEventGroupDef_t;
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
+
+osSemaphoreId_t usart1_tx_semaphore;
 
 /* Definitions for TasksIMU */
 osThreadId_t TasksIMUHandle;
@@ -58,9 +61,36 @@ const osThreadAttr_t TasksIMU_attributes = {
   .cb_size = sizeof(TasksIMUControlBlock),
   .stack_mem = &TasksIMUBuffer[0],
   .stack_size = sizeof(TasksIMUBuffer),
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityLow,
 };
 
+/* Definitions for TasksDiagnostics */
+osThreadId_t TasksDiagnosticsHandle;
+uint32_t TasksDiagnosticsBuffer[128];
+osStaticThreadDef_t TasksDiagnosticsControlBlock;
+
+const osThreadAttr_t TasksDiagnostics_attributes = {
+  .name = "TasksDiagnostics",
+  .cb_mem = &TasksDiagnosticsControlBlock,
+  .cb_size = sizeof(TasksDiagnosticsControlBlock),
+  .stack_mem = &TasksDiagnosticsBuffer[0],
+  .stack_size = sizeof(TasksDiagnosticsBuffer),
+  .priority = (osPriority_t) osPriorityHigh,
+};
+
+/* Definitions for TasksTimeSinceStartup */
+osThreadId_t TasksTimeSinceStartupHandle;
+uint32_t TasksTimeSinceStartupBuffer[128];
+osStaticThreadDef_t TasksTimeSinceStartupControlBlock;
+
+const osThreadAttr_t TasksTimeSinceStartup_attributes = {
+  .name = "TasksTimeSinceStartup",
+  .cb_mem = &TasksTimeSinceStartupControlBlock,
+  .cb_size = sizeof(TasksTimeSinceStartupControlBlock),
+  .stack_mem = &TasksTimeSinceStartupBuffer[0],
+  .stack_size = sizeof(TasksTimeSinceStartupBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
 
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
@@ -96,6 +126,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
+  usart1_tx_semaphore = osSemaphoreNew(NUM_USART1_TX_SEMAPHORES, NUM_USART1_TX_SEMAPHORES, NULL);
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -115,6 +146,11 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of TasksIMU */
   TasksIMUHandle = osThreadNew(TasksIMU, NULL, &TasksIMU_attributes);
+  /* creation of TasksDiagnostics */
+  TasksDiagnosticsHandle = osThreadNew(TasksDiagnostics, NULL, &TasksDiagnostics_attributes);
+  /* creation of TasksTimeSinceStartup*/
+  TasksTimeSinceStartupHandle = osThreadNew(TimeSinceStartup, NULL, &TasksTimeSinceStartup_attributes);
+
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */

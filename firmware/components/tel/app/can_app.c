@@ -1,12 +1,15 @@
 #include "can_driver.h"
 #include "can_app.h"
 #include "CAN_comms.h"
+#include "rtc_app.h"
+#include "telemetry_app.h"
 
 /**
  * @brief Can Comms Callback Function for processing received CAN messages.
  * @param CAN_comms_Rx_msg Pointer to the received CAN message structure.
  */
 static void CanAppRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg);
+
 
 void CanAppInit(){
     // Initialize CAN Comms RX Callback function 
@@ -32,5 +35,8 @@ static void CanAppRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg){
 	{
 		CAN_ID = CAN_comms_Rx_msg->header.StdId; // Get standard CAN ID
 	}
-    // RX Functions go here (RTC)
+    // RX Functions go here
+	RtcAppRxHandler(CAN_ID, CAN_comms_Rx_msg->data);
+	TelAppTransmitMsg(CAN_comms_Rx_msg);
 }
+

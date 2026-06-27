@@ -1,0 +1,21 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "J-Link Release Flash",
+            "type": "shell",
+            "command": "sh",
+            "args": [
+                "-c",
+                "printf \"erase 0x08000000 0x0803FFFF\\nloadfile ${command:cmake.launchTargetPath}\\nr\\ng\\nq\\n\" | JLinkExe -device STM32F103RC -if SWD -speed 4000"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false
+            }
+        }
+    ]
+}

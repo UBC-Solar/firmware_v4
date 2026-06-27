@@ -59,3 +59,4 @@ build/
 
 # Test environments
 firmware/components/drd/test/test_scripts/environment/
+firmware/components/tel/tests/environment/

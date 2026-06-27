@@ -43,17 +43,17 @@
  */
 // The number of modules used by the pack depends on
 // whether scrutineering is enabled.
-#define NUM_MODULES 16U
+#define NUM_MODULES 32U
 #define NUM_CELLS_PER_MODULE 13U
 
 // Slave(board)s
-#define SLAVE_NUM_DEVICES 1U // Number of ADBMS1818 ICs daisy chained
+#define SLAVE_NUM_DEVICES 2U // Number of ADBMS1818 ICs daisy chained
 #define SLAVEBOARD_REV 1
 
 // Enable / disable MST algorithms
 #define RUN_MAIN_LOOP true
 #define ISOSPI_CONNECTED true
-#define CAN_CONNECTED false
+#define CAN_CONNECTED true
 #define TEMP_STRATEGY_ALL_AT_ONCE false
 #define CAN_STRATEGY_ALL_AT_ONCE false
 

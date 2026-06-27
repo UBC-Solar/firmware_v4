@@ -230,7 +230,7 @@ void Error_Handler(void)
       );
     }
 
-    GPIO_Toggle(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin);
+    GPIO_Toggle(LED_OUT_GPIO_Port, LED_OUT_Pin);
   }
   /* USER CODE END Error_Handler_Debug */
 }

@@ -6,6 +6,7 @@
 #include <math.h>
 #include <float.h>
 #include <string.h>
+#include <ina228_runtime.h>
 
 #include "stm32f1xx_hal.h"
 #include "can.h"
@@ -76,3 +77,5 @@ void CAN_RecievedMessageCallback(uint32_t fifo_num);
 
 void CAN_TxCompleteCallback();
 void CAN_ErrorCallback();
+
+void INA228_Get_Shunt_Current_mA();

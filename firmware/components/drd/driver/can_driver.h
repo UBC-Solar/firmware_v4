@@ -16,9 +16,9 @@
 #define MOTOR_DRIVE_CONTROL_ADDRESS 0x401
 #define DRIVE_COMMAND_SIZE 5
 
-#define DRD_DIAGNOSTIC_MESSAGE				0x403
+#define DRD_DIAGNOSTIC_MESSAGE				0x582
 #define DRD_DIAGNOSTIC_SIZE					8
-#define TIME_SINCE_BOOTUP_CAN_ID			0x404
+#define TIME_SINCE_BOOTUP_CAN_ID			0x581
 #define TIME_SINCE_BOOTUP_CAN_DATA_LENGTH	4
 
 #define CAN_ID_ECU		    		        0x450
@@ -42,7 +42,7 @@
 
 
 /* CAN HEADERS */
-extern const CAN_TxHeaderTypeDef drive_control_header;
+extern const CAN_TxHeaderTypeDef steering_header;
 extern const CAN_TxHeaderTypeDef mdu_request_header;
 extern const CAN_TxHeaderTypeDef drd_diagnostic_header;
 extern const CAN_TxHeaderTypeDef time_since_bootup_can_header;

@@ -91,7 +91,7 @@ typedef struct
     uint32_t neg_contactor;
     uint32_t pos_contactor;
     uint32_t lv_msg;
-    unit32_t startup;
+    uint32_t startup;
 } HVC_Ticks_t;
 
 typedef struct {

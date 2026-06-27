@@ -39,9 +39,7 @@ void StartHexDisplayTask(void *argument)
     HexDisplayWriteDecimal(0);
     for(;;)
     {
-        
-        HexDisplayWriteDecimal(0);
-        HAL_Delay(600);
+        HexDisplayWriteDecimal((uint8_t)ReadCurrentVelocity());
         osDelay(HEX_TASK_DELAY);
     }
 }

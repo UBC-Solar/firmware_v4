@@ -77,5 +77,3 @@ void CAN_RecievedMessageCallback(uint32_t fifo_num);
 
 void CAN_TxCompleteCallback();
 void CAN_ErrorCallback();
-
-void INA228_Get_Shunt_Current_mA();

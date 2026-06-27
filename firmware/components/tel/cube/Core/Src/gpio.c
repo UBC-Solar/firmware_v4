@@ -91,17 +91,17 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(I_INTN_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : R_RTS_Pin R_RSSI_Pin */
-  GPIO_InitStruct.Pin = R_RTS_Pin|R_RSSI_Pin;
+  /*Configure GPIO pin : R_RTS_Pin */
+  GPIO_InitStruct.Pin = R_RTS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  HAL_GPIO_Init(R_RTS_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : R_RESET_Pin */
   GPIO_InitStruct.Pin = R_RESET_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(R_RESET_GPIO_Port, &GPIO_InitStruct);
 

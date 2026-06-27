@@ -1,13 +1,12 @@
 #include "gpio_driver.h"
-#include "stm32f1xx_hal_gpio.h"
 #include "uart_driver.h"
 #include "main.h"
 #include "hvc_fsm.h"  
 
 /**
  * @brief Read the current logic state of a GPIO pin.
- * @param port GPIO port instance (for example, DIST_CTRL_GPIO_Port).
- * @param pin GPIO pin mask (for example, DIST_CTRL_Pin).
+ * @param port GPIO port instance (for example, GPIOA, GPIOB).
+ * @param pin GPIO pin mask (for example, GPIO_PIN_5).
  * @return GPIO pin state as GPIO_PIN_SET or GPIO_PIN_RESET.
  */
 GPIO_PinState GPIO_Read(GPIO_TypeDef *port, uint16_t pin) {
@@ -16,8 +15,8 @@ GPIO_PinState GPIO_Read(GPIO_TypeDef *port, uint16_t pin) {
 
 /**
  * @brief Write a logic state to a GPIO pin.
- * @param port GPIO port instance (for example, DIST_CTRL_GPIO_Port).
- * @param pin GPIO pin mask (for example, DIST_CTRL_Pin).
+ * @param port GPIO port instance (for example, GPIOA, GPIOB).
+ * @param pin GPIO pin mask (for example, GPIO_PIN_5).
  * @param state Output state to write: GPIO_PIN_SET or GPIO_PIN_RESET.
  */
 void GPIO_Write(GPIO_TypeDef *port, uint16_t pin, GPIO_PinState state) {
@@ -25,17 +24,6 @@ void GPIO_Write(GPIO_TypeDef *port, uint16_t pin, GPIO_PinState state) {
 }
 
 /**
-<<<<<<< HEAD
- * @brief Toggle the logic state of a GPIO pin.
- * @param port GPIO port instance (for example, DIST_CTRL_GPIO_Port).
- * @param pin GPIO pin mask (for example, DIST_CTRL_Pin).
- */
-void GPIO_TogglePin(GPIO_TypeDef *port, uint16_t pin) {
-    HAL_GPIO_TogglePin(port, pin);
-}
-
-
-=======
  * @brief Toggle the output state of a GPIO pin.
  * @param port GPIO port instance (for example, GPIOA, GPIOB).
  * @param pin GPIO pin mask (for example, GPIO_PIN_5).
@@ -44,10 +32,9 @@ void GPIO_Toggle(GPIO_TypeDef *port, uint16_t pin) {
     HAL_GPIO_TogglePin(port, pin);
 }
 
->>>>>>> Cdella778-hvc-fsm
 /**
  * @brief HAL callback invoked on external interrupt line events.
- * @param GPIO_Pin The pin number that triggered the interrupt (for example, DIST_CTRL_Pin).
+ * @param GPIO_Pin The pin number that triggered the interrupt (for example, GPIO_PIN_5).
  */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
     GPIO_PinState level;
@@ -59,9 +46,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
             level = HAL_GPIO_ReadPin(ESTOP_GPIO_Port, ESTOP_Pin);
             if (level == GPIO_PIN_SET) {
                 // ESTOP is high (rising edge or already high when sampled)
-                ESTOPCallback();
             } else {
-                // ESTOP is low (falling edge or already low when sampled)
+                ESTOPCallback();// ESTOP is low (falling edge or already low when sampled)
             }
             break;
 
@@ -79,7 +65,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
         case MASTERBOARD_FAULT_Pin:
             level = HAL_GPIO_ReadPin(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin);
             if (level == GPIO_PIN_SET) {
-                MasterboardFaultCallback(mst_irq_armed);// MASTERBOARD_FAULT is high
+                MasterboardFaultCallback();// MASTERBOARD_FAULT is high
             } else {
                 // MASTERBOARD_FAULT is low
             }
@@ -90,18 +76,18 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
             if (level == GPIO_PIN_SET) {
                 // DCDC_ACTIVE is high
             } else {
-                DCDCFaultCallback(); // DCDC_ACTIVE is low
+                // DCDC_ACTIVE is low
             }
             break;
 
-        //case SUPP_ACTIVE_Pin:
-            //level = HAL_GPIO_ReadPin(SUPP_ACTIVE_GPIO_Port, SUPP_ACTIVE_Pin);
-            //if (level == GPIO_PIN_SET) {
+        case SUPP_ACTIVE_Pin:
+            level = HAL_GPIO_ReadPin(SUPP_ACTIVE_GPIO_Port, SUPP_ACTIVE_Pin);
+            if (level == GPIO_PIN_SET) {
                 // SUPP_ACTIVE is high
-            //} else {
+            } else {
                 // SUPP_ACTIVE is low
-            //}
-            //break;
+            }
+            break;
 
         case HV_CURRENT_ALERT_Pin:
             level = HAL_GPIO_ReadPin(HV_CURRENT_ALERT_GPIO_Port, HV_CURRENT_ALERT_Pin);

@@ -38,7 +38,7 @@ static const CAN_TxHeaderTypeDef mdi_motor_temp_header = {
  * @brief Sets or clears the motor over-temperature diagnostic bit.
  * @param is_motor_over_temp true to set the flag, false to clear it.
  */
-static void DiagnisticSetMotorOverTemp(bool is_motor_over_temp);
+static void DiagnosticSetMotorOverTemp(bool is_motor_over_temp);
 
 void DiagnosticInit(void)
 {
@@ -55,7 +55,7 @@ void DiagnosticSetVoltageOverThreshold(bool is_over_threshold)
 	s_diagnostic_flags.bits.mdi_voltage_over_threshold = is_over_threshold;
 }
 
-static void DiagnisticSetMotorOverTemp(bool is_motor_over_temp)
+static void DiagnosticSetMotorOverTemp(bool is_motor_over_temp)
 {
 	s_diagnostic_flags.bits.mdi_motor_over_temp = is_motor_over_temp;
 }
@@ -76,18 +76,18 @@ void DiagnosticSendTimeSinceBootup(void)
 
 void DiagnosticSendRtdTemp(void)
 {
-	uint32_t rtd_temp_c = 0;
+	int32_t rtd_temp_c = 0;
 	RtdStatus rtd_status = RtdDriverGetTemp(&rtd_temp_c);
 	bool rtd_read_success = (rtd_status == RtdStatusOk);
 	if (rtd_read_success)
 	{
 		if (!s_diagnostic_flags.bits.mdi_motor_over_temp && rtd_temp_c >= MOTOR_OVER_TEMP_SET_C)
 		{
-			DiagnisticSetMotorOverTemp(true);
+			DiagnosticSetMotorOverTemp(true);
 		}
 		else if (s_diagnostic_flags.bits.mdi_motor_over_temp && rtd_temp_c <= (MOTOR_OVER_TEMP_SET_C - 5)) // cancels out noise
 		{
-			DiagnisticSetMotorOverTemp(false);
+			DiagnosticSetMotorOverTemp(false);
 		}
 	}
 

@@ -17,7 +17,7 @@
 void IwdgAppRefresh(IWDG_HandleTypeDef* hiwdg2)
 {
 	#ifndef DEBUG
-		IwdgDriverRefresh(hiwdg2);
+		IwdgDriverRefresh(hiwdg2); 	
 	#endif // DEBUG
 }
 

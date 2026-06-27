@@ -63,6 +63,7 @@ void CAN_QueueTxMessage(CAN_TxMessage_t *message);
 void CAN_SendMessageXXX();
 void CAN_LV_PowerupMessage();
 void CAN_SendHeartbeat();
+void CAN_SendMessage_ShuntCurrent();
 void CAN_SendStatusMsg();
 
 

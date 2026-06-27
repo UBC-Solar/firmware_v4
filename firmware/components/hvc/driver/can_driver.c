@@ -220,6 +220,24 @@ void CAN_SendHeartbeat(void)
     
 }
 
+    void CAN_SendMessage_ShuntCurrent(void)
+{
+    CAN_TxMessage_t txMessage = {0};
+    
+    int32_t current_mA = INA228_Get_Shunt_Current_mA();
+
+    txMessage.tx_header.StdId = SHUNT_CURRENT_ID;  
+    txMessage.tx_header.DLC = 4;
+
+    txMessage.data[0] = (current_mA >> 24) & 0xFF;
+    txMessage.data[1] = (current_mA >> 16) & 0xFF;
+    txMessage.data[2] = (current_mA >> 8)  & 0xFF;
+    txMessage.data[3] = (current_mA)       & 0xFF;
+
+    CAN_QueueTxMessage(&txMessage);
+}
+
+
 #if (INT_TEST_CAN == RUN)
 /**
  * @brief Send DEBUG CAN message intended for hardware unit tests

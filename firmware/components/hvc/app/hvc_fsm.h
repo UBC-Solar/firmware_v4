@@ -64,6 +64,7 @@ typedef enum
 #define HVC_MOTOR_PC_SCALE          56
 #define HEARTBEAT_TIMEOUT_MS        1000U
 #define MOTOR_DISCHARGE_DELAY_MS    100U
+#define MOTOR_DISCHARGE_TIMEOUT_MS  5000U
 
 /* CONTACTOR ACTIVE LEVELS — TODO: verify polarity from schematic */
 #define HVC_CONTACTOR_CLOSE         GPIO_PIN_SET
@@ -78,6 +79,7 @@ typedef enum
 #define HVC_STATUS_ID               0x305
 #define MAX_STATE_NAME_LEN          20U
 #define DIST_HEARTBEAT_ID           0x306  
+#define SHUNT_CURRENT_ID            0x333
 
 /*============================================================================*/
 /* INTERNAL TYPE DEFS */

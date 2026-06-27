@@ -102,7 +102,6 @@ void TelAppTransmitMsg(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
     {
         return;
     }
-
     osSemaphoreAcquire(usart1_tx_semaphore, osWaitForever);   // Dont Tx until previous Tx is done
     TelAppSetMsg(&(CAN_comms_Rx_msg->header), CAN_comms_Rx_msg->data, &tel_msg);
     UART_telemetry_transmit(&tel_msg);
@@ -121,7 +120,6 @@ void TelAppTransmitInternalMsg(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
     {
         return;
     }
-
     osSemaphoreAcquire(usart1_tx_semaphore, osWaitForever);   // Dont Tx until previous Tx is done
     TelAppSetMsg_tx(&(CAN_comms_Tx_msg->header), CAN_comms_Tx_msg->data, &tel_msg);
     UART_telemetry_transmit(&tel_msg);

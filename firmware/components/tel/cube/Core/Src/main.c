@@ -30,6 +30,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "can_app.h"
 #include "telemetry_app.h"
 #include "telemetry_driver.h"
 #include <string.h>
@@ -82,7 +83,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-   HAL_Init();
+  HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -109,7 +110,7 @@ int main(void)
   MX_TIM2_Init();
   MX_UART5_Init();
   /* USER CODE BEGIN 2 */
-
+  CanAppInit();
   /* USER CODE END 2 */
 
   /* Init scheduler */

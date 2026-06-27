@@ -1,5 +1,5 @@
 /*
- * rtd.h
+ * rtd_driver.h
  *
  *  Created on: Nov 1, 2025
  *      Author: Luke Santosham & Martin Wu
@@ -11,31 +11,36 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+/**
+ * @brief Return status for RTD temperature reads.
+ */
 typedef enum
 {
-    RtdStatusOk,
-    RtdStatusFault,
-    RtdStatusHalError,
+    RtdStatusOk,    
+    RtdStatusFault,   
+    RtdStatusHalError, 
 } RtdStatus;
 
-// PUBLIC FUNCTIONS
-
-/*
- * @brief:		Gets the temperature and status of the RTD
- * @param[out]:	temperature; a uint32_t of the temperature read from the RTD
- * 				converted from the resistance ratio.
- * @returns		status of the RTD as an enumerator (RtdStatusOk, RtdStatusFault, or
- * RtdStatusHalError).
+/**
+ * @brief Reads motor temperature from the MAX31865 RTD interface.
+ *
+ * Converts the 15-bit RTD ADC code to degrees Celsius using the PT1000
+ * resistance curve. 
+ *
+ * @param[out] temperature Signed temperature in degrees Celsius (integer).
+ * @return RtdStatusOk on success, RtdStatusFault on sensor fault,
+ *         or RtdStatusHalError on SPI failure.
  */
 RtdStatus RtdDriverGetTemp(int32_t* temperature);
 
-/*
- * @brief:      Initializes the MAX31865 RTD interface.
- * @details:    Writes the desired configuration settings (bias, conversion mode,
- *              wiring type, and filter selection) to the configuration register.
- * @param:      None.
- * @returns:    None.
+/**
+ * @brief Initializes breakout board for temperature measurement.
+ *
+ * Configures 3-wire PT1000, auto-conversion, VBIAS enabled, and 60 Hz filter.
+ * Clears any fault latched during power-up or VBIAS settling.
+ *
+ * Call once after SPI1 is initialized.
  */
-void RtdDriverInit();
+void RtdDriverInit(void);
 
 #endif /* INC_RTD_H_ */

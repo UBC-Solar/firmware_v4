@@ -12,6 +12,7 @@
 #define REFERENCE_RESISTANCE 3987
 #define TIMEOUT_DELAY 100
 #define RTD_FAULT_BIT 0x01
+#define RTD_ADC_FULL_SCALE 32768.0f
 
 /* Number of consecutive faulted reads tolerated before reporting a hard fault.
  * The over/under-voltage fault (status 0x04) is frequently a transient on noisy
@@ -205,7 +206,7 @@ static void RtdResistanceToTemp(uint16_t buffer, int32_t* temp)
      */
     uint16_t raw15 = (uint16_t)(buffer >> 1);
 
-    resistance = ((float)raw15) / 32768.0f * (float)REFERENCE_RESISTANCE;
+    resistance = ((float)raw15) / RTD_ADC_FULL_SCALE * (float)REFERENCE_RESISTANCE;
 
     temperature = (resistance - RESISTANCE_AT_0C) / (COEFF_OF_RESISTANCE_PLAT * RESISTANCE_AT_0C);
     *temp = (int32_t)temperature;

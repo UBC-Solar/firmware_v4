@@ -38,7 +38,7 @@ static const CAN_TxHeaderTypeDef mdi_motor_temp_header = {
  * @brief Sets or clears the motor over-temperature diagnostic bit.
  * @param is_motor_over_temp true to set the flag, false to clear it.
  */
-static void DiagnisticSetMotorOverTemp(bool is_motor_over_temp);
+static void DiagnosticSetMotorOverTemp(bool is_motor_over_temp);
 
 void DiagnosticInit(void)
 {
@@ -55,7 +55,7 @@ void DiagnosticSetVoltageOverThreshold(bool is_over_threshold)
 	s_diagnostic_flags.bits.mdi_voltage_over_threshold = is_over_threshold;
 }
 
-static void DiagnisticSetMotorOverTemp(bool is_motor_over_temp)
+static void DiagnosticSetMotorOverTemp(bool is_motor_over_temp)
 {
 	s_diagnostic_flags.bits.mdi_motor_over_temp = is_motor_over_temp;
 }
@@ -83,21 +83,20 @@ void DiagnosticSendRtdTemp(void)
 	{
 		if (!s_diagnostic_flags.bits.mdi_motor_over_temp && rtd_temp_c >= MOTOR_OVER_TEMP_SET_C)
 		{
-			DiagnisticSetMotorOverTemp(true);
+			DiagnosticSetMotorOverTemp(true);
 		}
 		else if (s_diagnostic_flags.bits.mdi_motor_over_temp && rtd_temp_c <= (MOTOR_OVER_TEMP_SET_C - 5)) // cancels out noise
 		{
-			DiagnisticSetMotorOverTemp(false);
+			DiagnosticSetMotorOverTemp(false);
 		}
 	}
 
-	uint32_t rtd_temp_raw = (uint32_t)rtd_temp_c;
 	uint8_t data[5];
 	data[0] = (uint8_t)(rtd_read_success);
-	data[1] = (uint8_t)(rtd_temp_raw & 0xFFU);
-	data[2] = (uint8_t)((rtd_temp_raw >> 8) & 0xFFU);
-	data[3] = (uint8_t)((rtd_temp_raw >> 16) & 0xFFU);
-	data[4] = (uint8_t)((rtd_temp_raw >> 24) & 0xFFU);
+	data[1] = (uint8_t)(rtd_temp_c & 0xFFU);
+	data[2] = (uint8_t)((rtd_temp_c >> 8) & 0xFFU);
+	data[3] = (uint8_t)((rtd_temp_c >> 16) & 0xFFU);
+	data[4] = (uint8_t)((rtd_temp_c >> 24) & 0xFFU);
 
 	CanDriverSend(&mdi_motor_temp_header, data);
 }

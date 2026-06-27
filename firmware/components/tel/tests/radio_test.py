@@ -1,5 +1,4 @@
-from datetime import datetime
-
+from datetime import datetime, timezone
 import can
 import time
 import threading
@@ -22,7 +21,7 @@ def send_message(can_id, data, isextended_id=False):
         print(f"Message NOT sent {e}")
         
 def send_rtc_message(bus):
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
 
     # Simulate struct tm fields
     tm_sec   = now.second

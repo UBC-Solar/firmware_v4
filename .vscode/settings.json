@@ -4,7 +4,11 @@
     "${workspaceFolder}/firmware/components/mdi",
     "${workspaceFolder}/firmware/components/drd",
     "${workspaceFolder}/firmware/components/hvc",
+<<<<<<< HEAD
     "${workspaceFolder}/firmware/components/mst",
+=======
+    "${workspaceFolder}/firmware/components/dist"
+>>>>>>> user/Cdella778/dist-mvp
   ],
   "cmake.buildDirectory": "${sourceDirectory}/build",
   "cmake.cmakePath": "cube-cmake",

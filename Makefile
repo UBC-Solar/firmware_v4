@@ -90,5 +90,5 @@ clean:
 	rm -rf firmware/components/hvc/$(BUILD_DIR)
 	rm -rf firmware/components/mst/$(BUILD_DIR)
 	rm -rf firmware/components/str/$(BUILD_DIR)
-	cd firmware/components/mdi/ && ./ceedling clean
+# 	cd firmware/components/mdi/ && ./ceedling clean
 	@echo "Clean complete."

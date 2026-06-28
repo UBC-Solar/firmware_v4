@@ -25,17 +25,6 @@ void GPIO_Write(GPIO_TypeDef *port, uint16_t pin, GPIO_PinState state) {
 }
 
 /**
-<<<<<<< HEAD
- * @brief Toggle the logic state of a GPIO pin.
- * @param port GPIO port instance (for example, DIST_CTRL_GPIO_Port).
- * @param pin GPIO pin mask (for example, DIST_CTRL_Pin).
- */
-void GPIO_TogglePin(GPIO_TypeDef *port, uint16_t pin) {
-    HAL_GPIO_TogglePin(port, pin);
-}
-
-
-=======
  * @brief Toggle the output state of a GPIO pin.
  * @param port GPIO port instance (for example, GPIOA, GPIOB).
  * @param pin GPIO pin mask (for example, GPIO_PIN_5).
@@ -44,7 +33,6 @@ void GPIO_Toggle(GPIO_TypeDef *port, uint16_t pin) {
     HAL_GPIO_TogglePin(port, pin);
 }
 
->>>>>>> Cdella778-hvc-fsm
 /**
  * @brief HAL callback invoked on external interrupt line events.
  * @param GPIO_Pin The pin number that triggered the interrupt (for example, DIST_CTRL_Pin).

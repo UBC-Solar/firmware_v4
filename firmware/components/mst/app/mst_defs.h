@@ -34,9 +34,10 @@
 #define CAN_MODULE_VOLT_SUMMARY_ID  0x602
 #define CAN_MODULE_TEMP_SUMMARY_ID  0x603
 #define CAN_MODULE_VOLT_DATA_ID     0x604
-#define CAN_MODULE_TEMP_DATA_ID     0x604
-#define CAN_MODULE_STATUS_ID        0x604
-#define CAN_BALANCE_DATA_ID         0x605
+#define CAN_MODULE_TEMP_DATA_ID     0x605
+#define CAN_MODULE_STATUS_ID        0x606
+#define CAN_BALANCE_DATA_ID         0x607
+
 
 /**
  * Battery Pack Layout Specifications

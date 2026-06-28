@@ -58,7 +58,7 @@ typedef enum
 #define FAN_POWERUP_TIMEOUT_MS      5000U
 #define HVC_HEARTBEAT_INTERVAL_MS   200U
 #define HV_CONNECT_TIMEOUT_MS       10000U
-#define DISCHARGE_COMPLETE_THRESHOLD_MV 0U
+#define DISCHARGE_COMPLETE_THRESHOLD_MV 1U
 #define HVC_SUPP_LOW_THRESHOLD_MV   10500
 #define HVC_PC_COMPLETE_RATIO       90   // % of HV bus voltage for precharge complete
 #define HVC_MOTOR_PC_SCALE          56
@@ -71,7 +71,7 @@ typedef enum
 #define HVC_CONTACTOR_OPEN          GPIO_PIN_RESET
 
 /* CAN Message ID's — TODO: Set to specific message decided by user*/
-#define TEL_HEARTBEAT_ID            0x300          
+#define TEL_HEARTBEAT_ID            0x301          
 #define HVC_HEARTBEAT_ID            0x302
 #define LV_POWERUP_ID               0x303
 #define MST_HEARTBEAT_ID            0x601

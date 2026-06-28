@@ -4,7 +4,7 @@
 
 /**
  * Bitmask of all fault sources. Multiple faults can be active simultaneously.
- * ISRs write to this register; the FSM reads and acts on it.
+ * ISRs (interrupts) write to this register; the FSM reads and acts on it.
  */
 typedef enum {
     FAULT_NONE             = 0,

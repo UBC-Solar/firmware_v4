@@ -25,7 +25,7 @@
 #include "can.h"
 #include "can_driver.h"
 #include "i2c.h"
-#include "fault_handler.h"
+#include "faulting_runtime.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

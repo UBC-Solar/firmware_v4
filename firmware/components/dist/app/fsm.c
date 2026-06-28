@@ -1,7 +1,7 @@
 #include "fsm.h"
-#include "fault_handler.h"
+#include "faulting_runtime.h"
 #include "gpio_driver.h"
-#include "i2c_driver.h"
+#include "led_runtime.h"
 #include "adc_driver.h"
 #include "can_driver.h"
 #include "stm32f1xx_hal.h"
@@ -26,7 +26,9 @@ static uint8_t led_driver_ready;
 /*============================================================================*/
 /* PRIVATE FUNCTION PROTOTYPES */
 
-static bool timer_check(uint32_t interval, uint32_t *last_tick);
+static bool     timer_check(uint32_t interval, uint32_t *last_tick);
+static uint16_t check_estop(void);
+static void     print_currents(void);
 
 static void state_startup(void);
 static void state_activate_ctrl(void);
@@ -102,24 +104,12 @@ void FSM_Run(void)
  */
 static void state_startup(void)
 {
-    uint16_t estop_adc = ADC_Read_ESTOP();
-
-    if (estop_adc < 0U)
-    {
-        Fault_Set(FAULT_ESTOP_ADC);
-    }
+    uint16_t estop_adc = check_estop();
 
     if (timer_check(100, &ticks.blink_tick))
     {
-        AdcCurrentReadings currents = ADC_Read_Currents();
         DEBUG_LED_Toggle();
         DEBUG_IO_PRINT("MUX_STATUS: %d  ESTOP_ADC: %u\r\n", MUX_STATUS_Read(), estop_adc);
-        DEBUG_IO_PRINT("CURRENTS: DRD=%umA MDI=%umA SPARE_CTRL=%umA SPARE_MUX=%umA SPARE=%umA\r\n",
-                       (unsigned int)(currents.drd        * 1000.0f),
-                       (unsigned int)(currents.mdi        * 1000.0f),
-                       (unsigned int)(currents.spare_ctrl * 1000.0f),
-                       (unsigned int)(currents.spare_mux  * 1000.0f),
-                       (unsigned int)(currents.spare      * 1000.0f));
     }
 
     if (Fault_Get() & FAULT_ESTOP_ADC)
@@ -144,6 +134,7 @@ static void state_activate_ctrl(void)
 {
     CTRL_Enable_All();
     DEBUG_LED_Set(1);
+    DEBUG_IO_PRINT("CTRL signals enabled, exiting ACTIVATE_CTRL\r\n");
     FSM_state = FSM_STATE_NORMAL;
 }
 
@@ -160,15 +151,9 @@ static void state_activate_ctrl(void)
  */
 static void state_normal(void)
 {
-    uint16_t estop_adc = ADC_Read_ESTOP();
-    FaultSource_t faults;
-
-    if (estop_adc < 0U)
-    {
-        Fault_Set(FAULT_ESTOP_ADC);
-    }
-
-    faults = Fault_Get();
+    CAN_Send_LV_ON_0x303();
+    uint16_t estop_adc = check_estop();
+    FaultSource_t faults = Fault_Get();
 
     if (faults & FAULT_ESTOP_ADC)
     {
@@ -185,14 +170,8 @@ static void state_normal(void)
 
     if (timer_check(500, &ticks.blink_tick))
     {
-        AdcCurrentReadings currents = ADC_Read_Currents();
         DEBUG_IO_PRINT("MUX_STATUS: %d  ESTOP_ADC: %u\r\n", MUX_STATUS_Read(), estop_adc);
-        DEBUG_IO_PRINT("CURRENTS: DRD=%umA MDI=%umA SPARE_CTRL=%umA SPARE_MUX=%umA SPARE=%umA\r\n",
-                       (unsigned int)(currents.drd        * 1000.0f),
-                       (unsigned int)(currents.mdi        * 1000.0f),
-                       (unsigned int)(currents.spare_ctrl * 1000.0f),
-                       (unsigned int)(currents.spare_mux  * 1000.0f),
-                       (unsigned int)(currents.spare      * 1000.0f));
+        print_currents();
     }
 
     if (faults & (FAULT_DRD_FUSE | FAULT_MDI_FUSE | FAULT_SPARE_FUSE | FAULT_SPARE_CTRL_FUSE))
@@ -217,16 +196,9 @@ static void state_fault(void)
 
     if (timer_check(200, &ticks.blink_tick))
     {
-        AdcCurrentReadings currents = ADC_Read_Currents();
         DEBUG_LED_Toggle();
         CAN_Send_Fault_0x324();
         DEBUG_IO_PRINT("MUX_STATUS: %d  ESTOP_ADC: %u\r\n", MUX_STATUS_Read(), ADC_Read_ESTOP());
-        DEBUG_IO_PRINT("CURRENTS: DRD=%umA MDI=%umA SPARE_CTRL=%umA SPARE_MUX=%umA SPARE=%umA\r\n",
-                       (unsigned int)(currents.drd        * 1000.0f),
-                       (unsigned int)(currents.mdi        * 1000.0f),
-                       (unsigned int)(currents.spare_ctrl * 1000.0f),
-                       (unsigned int)(currents.spare_mux  * 1000.0f),
-                       (unsigned int)(currents.spare      * 1000.0f));
 
         if (led_driver_ready)
         {
@@ -237,6 +209,27 @@ static void state_fault(void)
 
 /*============================================================================*/
 /* HELPER FUNCTIONS */
+
+static uint16_t check_estop(void)
+{
+    uint16_t estop_adc = ADC_Read_ESTOP();
+    if (estop_adc < 700U)
+    {
+        Fault_Set(FAULT_ESTOP_ADC);
+    }
+    return estop_adc;
+}
+
+static void print_currents(void)
+{
+    AdcCurrentReadings currents = ADC_Read_Currents();
+    DEBUG_IO_PRINT("CURRENTS: DRD=%umA MDI=%umA SPARE_CTRL=%umA SPARE_MUX=%umA SPARE=%umA\r\n",
+                   (unsigned int)(currents.drd        * 1000.0f),
+                   (unsigned int)(currents.mdi        * 1000.0f),
+                   (unsigned int)(currents.spare_ctrl * 1000.0f),
+                   (unsigned int)(currents.spare_mux  * 1000.0f),
+                   (unsigned int)(currents.spare      * 1000.0f));
+}
 
 static bool timer_check(uint32_t interval, uint32_t *last_tick)
 {

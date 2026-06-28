@@ -50,9 +50,9 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/debug_io/debug_io.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/adc_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/can_driver.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/driver/fault_handler.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/gpio_driver.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/driver/i2c_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/faulting_runtime.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/led_runtime.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/is31fl3236_driver.c
 )
 
@@ -62,7 +62,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/app
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/debug_io
     ${CMAKE_CURRENT_SOURCE_DIR}/driver
-    
+    ${CMAKE_CURRENT_SOURCE_DIR}/runtime
 )
 
 # Add project symbols (macros)

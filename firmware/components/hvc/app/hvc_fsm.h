@@ -58,19 +58,20 @@ typedef enum
 #define FAN_POWERUP_TIMEOUT_MS      5000U
 #define HVC_HEARTBEAT_INTERVAL_MS   200U
 #define HV_CONNECT_TIMEOUT_MS       10000U
-#define DISCHARGE_COMPLETE_THRESHOLD_MV 0U
+#define DISCHARGE_COMPLETE_THRESHOLD_MV 1U
 #define HVC_SUPP_LOW_THRESHOLD_MV   10500
 #define HVC_PC_COMPLETE_RATIO       90   // % of HV bus voltage for precharge complete
 #define HVC_MOTOR_PC_SCALE          56
 #define HEARTBEAT_TIMEOUT_MS        1000U
 #define MOTOR_DISCHARGE_DELAY_MS    100U
+#define MOTOR_DISCHARGE_TIMEOUT_MS  5000U
 
 /* CONTACTOR ACTIVE LEVELS — TODO: verify polarity from schematic */
 #define HVC_CONTACTOR_CLOSE         GPIO_PIN_SET
 #define HVC_CONTACTOR_OPEN          GPIO_PIN_RESET
 
 /* CAN Message ID's — TODO: Set to specific message decided by user*/
-#define TEL_HEARTBEAT_ID            0x300          
+#define TEL_HEARTBEAT_ID            0x301          
 #define HVC_HEARTBEAT_ID            0x302
 #define LV_POWERUP_ID               0x303
 #define MST_HEARTBEAT_ID            0x601
@@ -78,6 +79,7 @@ typedef enum
 #define HVC_STATUS_ID               0x305
 #define MAX_STATE_NAME_LEN          20U
 #define DIST_HEARTBEAT_ID           0x306  
+#define SHUNT_CURRENT_ID            0x333
 
 /*============================================================================*/
 /* INTERNAL TYPE DEFS */
@@ -89,6 +91,7 @@ typedef struct
     uint32_t neg_contactor;
     uint32_t pos_contactor;
     uint32_t lv_msg;
+    uint32_t startup;
 } HVC_Ticks_t;
 
 typedef struct {

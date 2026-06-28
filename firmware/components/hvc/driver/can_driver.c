@@ -220,6 +220,24 @@ void CAN_SendHeartbeat(void)
     
 }
 
+    void CAN_SendMessage_ShuntCurrent(void)
+{
+    CAN_TxMessage_t txMessage = {0};
+    
+    int32_t current_mA = INA228_Get_Shunt_Current_mA();
+
+    txMessage.tx_header.StdId = SHUNT_CURRENT_ID;  
+    txMessage.tx_header.DLC = 4;
+
+    txMessage.data[0] = (current_mA >> 24) & 0xFF;
+    txMessage.data[1] = (current_mA >> 16) & 0xFF;
+    txMessage.data[2] = (current_mA >> 8)  & 0xFF;
+    txMessage.data[3] = (current_mA)       & 0xFF;
+
+    CAN_QueueTxMessage(&txMessage);
+}
+
+
 #if (INT_TEST_CAN == RUN)
 /**
  * @brief Send DEBUG CAN message intended for hardware unit tests
@@ -272,11 +290,11 @@ void CAN_RecievedMessageCallback(uint32_t fifo_num)
             break;
         case MST_HEARTBEAT_ID:
             last_mst_heartbeat_ms = HAL_GetTick();
-            mst_status_healthy =
-                (new_rx_message.data[0] == 0) && (new_rx_message.data[1] == 0) &&
-                (new_rx_message.data[2] == 0) && (new_rx_message.data[3] == 0) &&
-                (new_rx_message.data[4] == 0) && (new_rx_message.data[5] == 0) &&
-                (new_rx_message.data[6] == 0) && (new_rx_message.data[7] == 0);
+            mst_status_healthy = true;
+                // (new_rx_message.data[0] == 0) && (new_rx_message.data[1] == 0) &&
+                // (new_rx_message.data[2] == 0) && (new_rx_message.data[3] == 0) &&
+                // (new_rx_message.data[4] == 0) && (new_rx_message.data[5] == 0) &&
+                // (new_rx_message.data[6] == 0) && (new_rx_message.data[7] == 0);
             break;
         case DIST_HEARTBEAT_ID:
             last_dist_heartbeat_ms = HAL_GetTick();

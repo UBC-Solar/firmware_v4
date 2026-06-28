@@ -115,11 +115,12 @@ void HVC_FSM_Run(void)
             Fault();
             break;
     }
-    static uint32_t last_heartbeat_tick = 0U;
-    if (timer_elapsed(HVC_HEARTBEAT_INTERVAL_MS, &last_heartbeat_tick))
-    {
-        CAN_SendHeartbeat();
-    }
+    // static uint32_t last_heartbeat_tick = 0U;
+    // if (timer_elapsed(HVC_HEARTBEAT_INTERVAL_MS, &last_heartbeat_tick))
+    // {
+    //     CAN_SendHeartbeat();
+    //     //DEBUG_IO_PRINT("%lu ms since startup\r\n", ticks.startup); 
+    // }
 }
 
 /*============================================================================*/

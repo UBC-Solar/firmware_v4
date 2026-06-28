@@ -6,6 +6,7 @@
 #include <math.h>
 #include <float.h>
 #include <string.h>
+#include <ina228_runtime.h>
 
 #include "stm32f1xx_hal.h"
 #include "can.h"
@@ -63,6 +64,7 @@ void CAN_QueueTxMessage(CAN_TxMessage_t *message);
 void CAN_SendMessageXXX();
 void CAN_LV_PowerupMessage();
 void CAN_SendHeartbeat();
+void CAN_SendMessage_ShuntCurrent();
 void CAN_SendStatusMsg();
 
 

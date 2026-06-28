@@ -76,9 +76,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
         case DCDC_ACTIVE_Pin:
             level = HAL_GPIO_ReadPin(DCDC_ACTIVE_GPIO_Port, DCDC_ACTIVE_Pin);
             if (level == GPIO_PIN_SET) {
-                // DCDC_ACTIVE is high
+                DCDCFaultCallback(); // DCDC_ACTIVE is high
             } else {
-                DCDCFaultCallback(); // DCDC_ACTIVE is low
+                // DCDC_ACTIVE is low
             }
             break;
 

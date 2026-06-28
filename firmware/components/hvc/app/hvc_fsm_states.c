@@ -87,7 +87,7 @@ void MST_Ready(void)
         return;
     }
 
-    if (timer_elapsed(MST_CHECK_TIMEOUT_MS, &ticks.generic)) {
+    if (timer_elapsed(MST_READY_TIMEOUT_MS, &ticks.generic)) {
         DEBUG_IO_print("HVC: MST_READY timeout\r\n");
         hvc_state = FAULT;
         return;
@@ -117,7 +117,7 @@ void MST_Check(void)
     }
     
 
-    if (timer_elapsed(MST_READY_TIMEOUT_MS, &ticks.generic)) {
+    if (timer_elapsed(MST_CHECK_TIMEOUT_MS, &ticks.generic)) {
         DEBUG_IO_print("HVC: MST_CHECK timeout\r\n");
         hvc_state = FAULT;
         return;
@@ -190,17 +190,25 @@ void HV_Connect(void)
 
 void MotorDischarge() 
 {
+    static bool discharge_started = false;
     ADC_Voltages adc = ADC_GetVoltages();
 
     if ((int64_t) adc.motor_precharge < DISCHARGE_COMPLETE_THRESHOLD_MV) {
-        GPIO_Write(DISCHARGE_TOGGLE_OFF_GPIO_Port, DISCHARGE_TOGGLE_OFF_Pin, GPIO_PIN_SET);
-        ticks.generic = HAL_GetTick();
+        if (!discharge_started) {
+            GPIO_Write(DISCHARGE_TOGGLE_OFF_GPIO_Port, DISCHARGE_TOGGLE_OFF_Pin, GPIO_PIN_SET);
+            ticks.generic = HAL_GetTick();
+            discharge_started = true;
+        }
+        if (timer_elapsed(MOTOR_DISCHARGE_DELAY_MS, &ticks.generic)) {
+            GPIO_Write(DISCHARGE_TOGGLE_OFF_GPIO_Port, DISCHARGE_TOGGLE_OFF_Pin, GPIO_PIN_RESET);
+            ticks.generic = HAL_GetTick();
+            hvc_state = MOTOR_PRECHARGE;
+        }
     }
-    if (timer_elapsed(MOTOR_DISCHARGE_DELAY_MS, &ticks.generic)) {
-        GPIO_Write(DISCHARGE_TOGGLE_OFF_GPIO_Port, DISCHARGE_TOGGLE_OFF_Pin, GPIO_PIN_RESET);
-        DEBUG_IO_print("HVC: Motor-Discharge timeout\r\n");
-        ticks.generic = HAL_GetTick();
-        hvc_state = MOTOR_PRECHARGE;
+    if (timer_elapsed(MOTOR_DISCHARGE_TIMEOUT_MS, &ticks.generic)) {
+        DEBUG_IO_print("HVC: MotorDischarge timeout\r\n");
+        hvc_state = FAULT;
+        return;
     }
 }
 
@@ -398,8 +406,6 @@ void Monitoring(void)
         return;
     }
 
-    //NEED TO RECIEVE HEARTBEAT
-
     if (HAL_GetTick() - last_tel_heartbeat_ms > HEARTBEAT_TIMEOUT_MS) {
         DEBUG_IO_print("TEL heartbeat timeout\r\n");
         fault_flags.tel_heartbeat_timeout = true;
@@ -417,7 +423,8 @@ void Monitoring(void)
     }
 
     if (timer_elapsed(CAN_TX_INTERVAL_MS, &ticks.generic)) { CAN_SendStatusMsg(); }
-
+    
+    CAN_SendMessage_ShuntCurrent();
     check_supp_voltage();
 }
 

@@ -65,8 +65,19 @@ void CAN_Init(CAN_HandleTypeDef *handle);
  */
 void CAN_QueueTxMessage(CAN_TxMessage_t *message);
 
+/** @brief Send the dist board heartbeat (ID 0x306, data[0] = 0x01). */
+void CAN_Send_Heartbeat(void);
+
+/** @brief Send all five eFuse current readings over CAN (ID 0x325).
+ *         Each LSB = 5 mA, max 1275 mA (255 counts). */
+void CAN_Send_Currents(uint8_t drd_mA, uint8_t mdi_mA, uint8_t spare_ctrl_mA,
+                       uint8_t spare_mux_mA, uint8_t spare_mA);
+
 /** @brief Send the dist board fault message (ID 0x324, data[0] bit 0 set). */
 void CAN_Send_Fault_0x324(void);
+
+/** @brief Send the LV power-on notification (ID 0x303, data[0] = 0x01). */
+void CAN_Send_LV_ON_0x303(void);
 
 /*============================================================================*/
 /* RX / STATUS */

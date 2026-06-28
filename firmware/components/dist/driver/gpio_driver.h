@@ -12,6 +12,7 @@ void GPIO_TogglePin(GPIO_TypeDef *port, uint16_t pin);
 /*============================================================================*/
 /* EFUSE CONTROL — drive high to enable, low to disable */
 
+void SPARE_MUX_CTRL_Toggle(void);
 void SPARE_CTRL_Toggle(void);
 void MDI_CTRL_Toggle(void);
 void DRD_Toggle(void);
@@ -37,8 +38,8 @@ GPIO_PinState SPARE_FUSE_Read(void);
 /** @return GPIO_PIN_RESET if the SPARE_CTRL eFuse has tripped, GPIO_PIN_SET otherwise. */
 GPIO_PinState SPARE_CTRL_FUSE_Read(void);
 
-/** @return 1 if any monitored eFuse FAULT line is asserted, 0 if all are healthy. */
-uint8_t Any_Fuse_Fault(void);
+/** @return Current logic state of the MUX_STATUS input pin. */
+GPIO_PinState MUX_STATUS_Read(void);
 
 /*============================================================================*/
 /* DEBUG */

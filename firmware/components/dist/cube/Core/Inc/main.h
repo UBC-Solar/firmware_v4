@@ -87,6 +87,8 @@ void Error_Handler(void);
 #define SPARE_MUX_FUSE_GPIO_Port GPIOC
 #define DEBUG_Pin GPIO_PIN_9
 #define DEBUG_GPIO_Port GPIOC
+#define SPARE_MUX_CTRL_Pin GPIO_PIN_8
+#define SPARE_MUX_CTRL_GPIO_Port GPIOA
 #define SPARE_CTRL_Pin GPIO_PIN_10
 #define SPARE_CTRL_GPIO_Port GPIOA
 #define MDI_CTRL_Pin GPIO_PIN_11

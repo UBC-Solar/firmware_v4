@@ -25,6 +25,7 @@
 #include "can.h"
 #include "can_driver.h"
 #include "i2c.h"
+#include "faulting_runtime.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -257,5 +258,16 @@ void I2C1_EV_IRQHandler(void)
 void I2C1_ER_IRQHandler(void)
 {
     HAL_I2C_ER_IRQHandler(&hi2c1);
+}
+
+// eFuse FAULT pins PB12-PB15 all share EXTI15_10.
+// HAL_GPIO_EXTI_IRQHandler checks the pending flag before dispatching the callback,
+// so calling all four here is safe — only the one(s) that fired will trigger.
+void EXTI15_10_IRQHandler(void)
+{
+    HAL_GPIO_EXTI_IRQHandler(DRD_FUSE_Pin);
+    HAL_GPIO_EXTI_IRQHandler(MDI_FUSE_Pin);
+    HAL_GPIO_EXTI_IRQHandler(SPARE_CTRL_FUSE_Pin);
+    HAL_GPIO_EXTI_IRQHandler(SPARE_FUSE_Pin);
 }
 /* USER CODE END 1 */

@@ -5,6 +5,7 @@
 
 CAN_Driver_t CAN_driver;
 
+
 static void tryTransmitFromQueue()
 {
     uint32_t mailbox;
@@ -210,7 +211,7 @@ static void process_rx(uint32_t fifo)
     DEBUG_IO_PRINT("CAN RX: ID=0x%03lX data[0]=0x%02X\r\n",
                    msg.rx_header.StdId, msg.data[0]);
 
-    // Startup authorisation: BMS sends 0x323 with bit 0 set to release the board
+    // Startup authorisation: HVC sends 0x323 with bit 0 set to release the board
     // from the STARTUP state once the bus is live and the pack is ready.
     if (msg.rx_header.StdId == 0x323U && (msg.data[0] & 0x01U))
     {
@@ -233,10 +234,53 @@ uint8_t CAN_Startup_Received(void)
     return CAN_driver.startup_received;
 }
 
+void CAN_Send_Heartbeat(void)
+{
+
+    static uint16_t HeartBeatCounter = 0U;
+    CAN_TxMessage_t msg = {0};
+    msg.tx_header.StdId = 0x306U;
+    msg.tx_header.IDE   = CAN_ID_STD;
+    msg.tx_header.RTR   = CAN_RTR_DATA;
+    msg.tx_header.DLC   = 3U;
+    msg.data[0]         = 0x01U;
+    msg.data[1]         = (uint8_t)(HeartBeatCounter>>8); // Bit shift to get the most significant byte of the 16-bit counter
+    msg.data[2]         = (uint8_t)(HeartBeatCounter & 0xFFU);
+    CAN_QueueTxMessage(&msg);
+    HeartBeatCounter++;
+}
+
+void CAN_Send_Currents(uint8_t drd_mA, uint8_t mdi_mA, uint8_t spare_ctrl_mA,
+                       uint8_t spare_mux_mA, uint8_t spare_mA)
+{
+    CAN_TxMessage_t msg = {0};
+    msg.tx_header.StdId = 0x325U;
+    msg.tx_header.IDE   = CAN_ID_STD;
+    msg.tx_header.RTR   = CAN_RTR_DATA;
+    msg.tx_header.DLC   = 5U;
+    msg.data[0]         = drd_mA;
+    msg.data[1]         = mdi_mA;
+    msg.data[2]         = spare_ctrl_mA;
+    msg.data[3]         = spare_mux_mA;
+    msg.data[4]         = spare_mA;
+    CAN_QueueTxMessage(&msg);
+}
+
 void CAN_Send_Fault_0x324(void)
 {
     CAN_TxMessage_t msg = {0};
     msg.tx_header.StdId = 0x324U;
+    msg.tx_header.IDE   = CAN_ID_STD;
+    msg.tx_header.RTR   = CAN_RTR_DATA;
+    msg.tx_header.DLC   = 1U;
+    msg.data[0]         = 0x01U;
+    CAN_QueueTxMessage(&msg);
+}
+
+void CAN_Send_LV_ON_0x303(void)
+{
+    CAN_TxMessage_t msg = {0};
+    msg.tx_header.StdId = 0x303U;
     msg.tx_header.IDE   = CAN_ID_STD;
     msg.tx_header.RTR   = CAN_RTR_DATA;
     msg.tx_header.DLC   = 1U;

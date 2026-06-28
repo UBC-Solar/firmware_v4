@@ -1,5 +1,13 @@
+/**
+ * @file    can_driver.c
+ * @brief   MDI CAN hardware driver implementation.
+ */
 #include "can_driver.h"
 
+/**
+ * @brief Configures CAN filter settings for accepted incoming IDs.
+ * @param filter Pointer to filter configuration structure to populate.
+ */
 static void CanFilterInit(CAN_FilterTypeDef *filter);
 
 static CanDriverRxCallback s_rx_callback = NULL;

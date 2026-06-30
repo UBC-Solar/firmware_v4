@@ -6,9 +6,11 @@
 
 uint32_t last_heartbeat_time_ms = 0;
 
+
 #if !CAN_STRATEGY_ALL_AT_ONCE
 uint8_t current_volt_group_idx = 0;
 uint8_t current_temp_group_idx = 0;
+uint8_t current_status_group_idx = 0;
 #endif // !CAN_STRATEGY_ALL_AT_ONCE
 
 void CAN_SendHeartbeatMessage(void) {
@@ -132,8 +134,8 @@ void SendModuleVoltMessage_(uint8_t group_idx) {
 
         msg.data[0] = group_idx & 0x0F;
         
-        int start_idx = group_idx * 4;
-        for (int i = 0; i < 4; i++) {
+        int start_idx = group_idx * CAN_NUM_MODULES_PER_GROUP;
+        for (int i = 0; i < CAN_NUM_MODULES_PER_GROUP; i++) {
             int module_idx = start_idx + i;
             if (module_idx >= NUM_MODULES) {
                 continue;
@@ -149,12 +151,12 @@ void SendModuleVoltMessage_(uint8_t group_idx) {
 void CAN_SendModuleVoltMessage(void) {
     // We have 8 multiplex groups, sending 4 module readouts per group
     #if CAN_STRATEGY_ALL_AT_ONCE
-    for (int group_idx = 0; group_idx < 8; group_idx++) {
+    for (int group_idx = 0; group_idx < CAN_NUM_MODULE_GROUPS; group_idx++) {
         SendModuleVoltMessage_(group_idx);
     }
     #else// CAN_STRATEGY_ALL_AT_ONCE is false
     SendModuleVoltMessage_(current_volt_group_idx);
-    current_volt_group_idx++;
+    current_volt_group_idx = (current_volt_group_idx + 1U) % CAN_NUM_MODULE_GROUPS;
     #endif // CAN_STRATEGY_ALL_AT_ONCE
 }
 
@@ -167,8 +169,8 @@ void SendModuleTempMessage_(uint8_t group_idx) {
 
         msg.data[0] = group_idx & 0x07;
         
-        int start_idx = group_idx * 4;
-        for (int i = 0; i < 4; i++) {
+        int start_idx = group_idx * CAN_NUM_MODULES_PER_GROUP;
+        for (int i = 0; i < CAN_NUM_MODULES_PER_GROUP; i++) {
             int module_idx = start_idx + i;
             if (module_idx < NUM_MODULES) {
                 int32_t temp_C = pack_modules[module_idx].temperature_mC / 1000;
@@ -190,39 +192,48 @@ void CAN_SendModuleTempMessage(void) {
     // We have 8 multiplex groups, sending 4 module readouts per group
 
     #if CAN_STRATEGY_ALL_AT_ONCE
-    for (int group_idx = 0; group_idx < 8; group_idx++) {
+    for (int group_idx = 0; group_idx < CAN_NUM_MODULE_GROUPS; group_idx++) {
         SendModuleTempMessage_(group_idx);
     }
     #else// CAN_STRATEGY_ALL_AT_ONCE is false
     SendModuleTempMessage_(current_temp_group_idx);
-    current_temp_group_idx++;
+    current_temp_group_idx = (current_temp_group_idx + 1U) % CAN_NUM_MODULE_GROUPS;
     #endif // CAN_STRATEGY_ALL_AT_ONCE
 }
 
-void CAN_SendModuleStatusMessage(void) {
-    for (int group_idx = 0; group_idx < 8; group_idx++) {
-        CAN_TxMessage_t msg = {0};
-        msg.tx_header.StdId = CAN_MODULE_STATUS_ID;
-        msg.tx_header.IDE = CAN_ID_STD;
-        msg.tx_header.RTR = CAN_RTR_DATA;
-        msg.tx_header.DLC = 5;
+void SendModuleStatusMessage_(uint8_t group_idx) {
+    CAN_TxMessage_t msg = {0};
+    msg.tx_header.StdId = CAN_MODULE_STATUS_ID;
+    msg.tx_header.IDE = CAN_ID_STD;
+    msg.tx_header.RTR = CAN_RTR_DATA;
+    msg.tx_header.DLC = 5;
 
-        msg.data[0] = group_idx & 0x07;
-        
-        int start_idx = group_idx * 4;
-        for (int i = 0; i < 4; i++) {
-            int module_idx = start_idx + i;
-            if (module_idx < NUM_MODULES) {
-                // Determine module status. There is no specific bit definition for "Module Status" 
-                // in the file so filling with zeros/generic placeholders.
-                uint8_t module_status = 0;
-                msg.data[1 + i] = module_status;
-            } else {
-                msg.data[1 + i] = 0;
-            }
+    msg.data[0] = group_idx & 0x07;
+    
+    int start_idx = group_idx * CAN_NUM_MODULES_PER_GROUP;
+    for (int i = 0; i < CAN_NUM_MODULES_PER_GROUP; i++) {
+        int module_idx = start_idx + i;
+        if (module_idx < NUM_MODULES) {
+            // Determine module status. There is no specific bit definition for "Module Status" 
+            // in the file so filling with zeros/generic placeholders.
+            uint8_t module_status = 0;
+            msg.data[1 + i] = module_status;
+        } else {
+            msg.data[1 + i] = 0;
         }
-        CAN_QueueTxMessage(&msg);
     }
+    CAN_QueueTxMessage(&msg);
+}
+
+void CAN_SendModuleStatusMessage(void) {
+    #if CAN_STRATEGY_ALL_AT_ONCE
+    for (int group_idx = 0; group_idx < CAN_NUM_MODULE_GROUPS; group_idx++) {
+        SendModuleStatusMessage_(group_idx);
+    }
+    #else // CAN_STRATEGY_ALL_AT_ONCE is false
+    SendModuleStatusMessage_(current_status_group_idx);
+    current_status_group_idx = (current_status_group_idx + 1U) % CAN_NUM_MODULE_GROUPS;
+    #endif // CAN_STRATEGY_ALL_AT_ONCE
 }
 
 void CAN_SendBalanceStatusMessage(void) {

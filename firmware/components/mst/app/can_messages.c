@@ -5,6 +5,7 @@
 #include "stm32f1xx_hal.h"
 
 uint32_t last_heartbeat_time_ms = 0;
+uint32_t current_heartbeat = 0;
 
 
 #if !CAN_STRATEGY_ALL_AT_ONCE
@@ -27,7 +28,6 @@ void CAN_SendHeartbeatMessage(void) {
     }
     last_heartbeat_time_ms = HAL_GetTick();
 
-    // Bits 0-4 Faults
     status |= (pack_state.error_comm_fail                   ? 1 : 0) << 0;
     status |= (pack_state.error_self_test                   ? 1 : 0) << 1;
     status |= (pack_faults.bits.fault_over_temperature      ? 1 : 0) << 2;
@@ -43,19 +43,17 @@ void CAN_SendHeartbeatMessage(void) {
     status |= (pack_state.balancing_enable                  ? 1 : 0) << 12;
     status |= (pack_state.scrutineering_enable              ? 1 : 0) << 13;
 
-    msg.data[0] = status & 0xFF;
-    msg.data[1] = (status >> 8) & 0xFF;
-    msg.data[2] = (status >> 16) & 0xFF;
-    msg.data[3] = (status >> 24) & 0xFF;
-
-    uint32_t current_time = HAL_GetTick();
-    msg.data[4] = current_time & 0xFF;
-    msg.data[5] = (current_time >> 8) & 0xFF;
-    msg.data[6] = (current_time >> 16) & 0xFF;
-    msg.data[7] = (current_time >> 24) & 0xFF;
+    msg.data[0] = current_heartbeat & 0xFF;
+    msg.data[1] = (current_heartbeat >> 8) & 0xFF;
+    msg.data[2] = (current_heartbeat >> 16) & 0xFF;
+    msg.data[3] = (current_heartbeat >> 24) & 0xFF;
+    msg.data[4] = status & 0xFF;
+    msg.data[5] = (status >> 8) & 0xFF;
+    msg.data[6] = (status >> 16) & 0xFF;
+    msg.data[7] = (status >> 24) & 0xFF;
     
-
     CAN_QueueTxMessage(&msg);
+    current_heartbeat++;
 }
 
 void CAN_SendVoltageSummaryMessage(void) {

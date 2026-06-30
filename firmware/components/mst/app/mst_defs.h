@@ -27,6 +27,14 @@
 #define CONSECUTIVE_TIMEFRAME_MS 2000
 
 /**
+ * Battery Pack Layout Specifications
+ */
+// The number of modules used by the pack depends on
+// whether scrutineering is enabled.
+#define NUM_MODULES 32U
+#define NUM_CELLS_PER_MODULE 13U
+
+/**
  * CAN messages
  */
 #define CAN_STATUS_ID               0x310
@@ -37,15 +45,9 @@
 #define CAN_MODULE_TEMP_DATA_ID     0x314
 #define CAN_MODULE_STATUS_ID        0x315
 #define CAN_BALANCE_DATA_ID         0x316
+#define CAN_NUM_MODULE_GROUPS       8U
+#define CAN_NUM_MODULES_PER_GROUP   NUM_MODULES / CAN_NUM_MODULE_GROUPS
 
-
-/**
- * Battery Pack Layout Specifications
- */
-// The number of modules used by the pack depends on
-// whether scrutineering is enabled.
-#define NUM_MODULES 32U
-#define NUM_CELLS_PER_MODULE 13U
 
 // Slave(board)s
 #define SLAVE_NUM_DEVICES 2U // Number of ADBMS1818 ICs daisy chained

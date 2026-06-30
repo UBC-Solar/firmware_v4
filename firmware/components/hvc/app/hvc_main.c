@@ -32,7 +32,8 @@ void HVC_Init(
     
     uint16_t filter_ids[] = {
         TEL_HEARTBEAT_ID,
-        LV_POWERUP_ID,
+        LV_POWERUP_SENT_ID
+        LV_POWERUP_RECIEVED_ID,
         MST_HEARTBEAT_ID,
         DIST_FAULT_ID,
         DIST_HEARTBEAT_ID

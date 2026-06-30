@@ -9,6 +9,14 @@
 #include "can.h"
 
 /*============================================================================*/
+/* CAN ID's*/
+#define DIST_HEARTBEAT_ID       0x306
+#define DIST_FAULT_ID	        0x307
+#define LV_POWERUP_RECIEVED_ID	0x308
+#define LV_CURRENTS_ID      	0x309
+
+
+/*============================================================================*/
 /* CONSTANTS */
 
 #define CAN_MAX_DATAFRAME_BYTES  8U

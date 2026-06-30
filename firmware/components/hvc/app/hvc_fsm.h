@@ -37,49 +37,60 @@ typedef enum
 } HVC_State_t;
 
 /*============================================================================*/
-/* CONSTANTS — TODO: Verify all constants*/
+/* CAN ID's*/
+#define TEL_HEARTBEAT_ID            0x301U          
+#define HVC_HEARTBEAT_ID            0x302U
+#define LV_POWERUP_SENT_ID          0x303U
+#define HVC_STATUS_ID               0x304U
+#define SHUNT_CURRENT_ID            0x305U
+#define DIST_FAULT_ID               0x306U
+#define DIST_HEARTBEAT_ID           0x307U 
+#define LV_POWERUP_RECIEVED_ID      0x308U
+#define MST_HEARTBEAT_ID            0x309U
+/*============================================================================*/
+/* TIMEOUT CONSTANTS */
 
-#define CONTACTOR_DELAY_MS          200U
 #define MOTOR_PC_TIMEOUT_MS         20000U
 #define MPPT_PC_TIMEOUT_MS          2000U
-#define CAN_TX_INTERVAL_MS          200U
-#define FAULT_LED_BLINK_MS          200U
 #define MVP_LV_POWERUP_TIMEOUT_MS   5000U
 #define MST_READY_TIMEOUT_MS        7000U
 #define MST_CHECK_TIMEOUT_MS        7000U
-#define LV_POWERUP_MAX_RETRY        5U
-#define LV_POWERUP_INTERVAL_MS      500U
-#define Thermistor_MAX_THRESHOLD_MV 5000U
+#define FAN_POWERUP_TIMEOUT_MS      5000U
+#define HV_CONNECT_TIMEOUT_MS       10000U
+#define MOTOR_DISCHARGE_TIMEOUT_MS  5000U
 #define LV_POWERUP_TIMEOUT_MS       5000U
-#define MC_DC_WAIT_TIME_MS          100U
+#define HEARTBEAT_TIMEOUT_MS        1000U
+
+/*============================================================================*/
+/* Delay/Interval CONSTANTS */
+
+#define CONTACTOR_DELAY_MS          200U
+#define CAN_TX_INTERVAL_MS          200U
+#define HVC_HEARTBEAT_INTERVAL_MS   200U
+#define FAULT_LED_BLINK_MS          200U
+#define MOTOR_DISCHARGE_DELAY_MS    100U
+
+/*============================================================================*/
+/* FAN CRTL CONSTANTS */
 #define FANS_FULL_SPEED             65535U
 #define FANS_HALF_SPEED             32767U
 #define FANS_FULL_SPEED_DURATION_MS 2000U
-#define FAN_POWERUP_TIMEOUT_MS      5000U
-#define HVC_HEARTBEAT_INTERVAL_MS   200U
-#define HV_CONNECT_TIMEOUT_MS       10000U
-#define DISCHARGE_COMPLETE_THRESHOLD_MV 1U
-#define HVC_SUPP_LOW_THRESHOLD_MV   10500
-#define HVC_PC_COMPLETE_RATIO       90   // % of HV bus voltage for precharge complete
-#define HVC_MOTOR_PC_SCALE          56
-#define HEARTBEAT_TIMEOUT_MS        1000U
-#define MOTOR_DISCHARGE_DELAY_MS    100U
-#define MOTOR_DISCHARGE_TIMEOUT_MS  5000U
 
-/* CONTACTOR ACTIVE LEVELS — TODO: verify polarity from schematic */
+/*============================================================================*/
+/* THRESHOLD CONSTANTS */
+#define HVC_SUPP_LOW_THRESHOLD_MV   10500
+#define Thermistor_MAX_THRESHOLD_MV 5000U
+
+/*============================================================================*/
+/* RATIOS & SCALES */
+
+#define HVC_PC_COMPLETE_RATIO       90 // % of HV bus voltage for precharge complete
+#define HVC_MOTOR_PC_SCALE          56
+
+/*============================================================================*/
+/* CONTACTOR ACTIVE LEVELS*/
 #define HVC_CONTACTOR_CLOSE         GPIO_PIN_SET
 #define HVC_CONTACTOR_OPEN          GPIO_PIN_RESET
-
-/* CAN Message ID's — TODO: Set to specific message decided by user*/
-#define TEL_HEARTBEAT_ID            0x301          
-#define HVC_HEARTBEAT_ID            0x302
-#define LV_POWERUP_ID               0x303
-#define MST_HEARTBEAT_ID            0x601
-#define DIST_FAULT_ID               0x324
-#define HVC_STATUS_ID               0x305
-#define MAX_STATE_NAME_LEN          20U
-#define DIST_HEARTBEAT_ID           0x306  
-#define SHUNT_CURRENT_ID            0x333
 
 /*============================================================================*/
 /* INTERNAL TYPE DEFS */
@@ -154,7 +165,6 @@ void Fault(void);
 
 void HVC_FSM_Init(void);
 void HVC_FSM_Run(void);
-
 void ESTOPCallback(void);
 void IMDFaultCallback(void);
 void MasterboardFaultCallback(bool if_fault);

@@ -239,7 +239,7 @@ void CAN_Send_Heartbeat(void)
 
     static uint16_t HeartBeatCounter = 0U;
     CAN_TxMessage_t msg = {0};
-    msg.tx_header.StdId = 0x306U;
+    msg.tx_header.StdId = DIST_HEARTBEAT_ID;
     msg.tx_header.IDE   = CAN_ID_STD;
     msg.tx_header.RTR   = CAN_RTR_DATA;
     msg.tx_header.DLC   = 3U;
@@ -254,7 +254,7 @@ void CAN_Send_Currents(uint8_t drd_mA, uint8_t mdi_mA, uint8_t spare_ctrl_mA,
                        uint8_t spare_mux_mA, uint8_t spare_mA)
 {
     CAN_TxMessage_t msg = {0};
-    msg.tx_header.StdId = 0x325U;
+    msg.tx_header.StdId = LV_CURRENTS_ID;
     msg.tx_header.IDE   = CAN_ID_STD;
     msg.tx_header.RTR   = CAN_RTR_DATA;
     msg.tx_header.DLC   = 5U;
@@ -269,7 +269,7 @@ void CAN_Send_Currents(uint8_t drd_mA, uint8_t mdi_mA, uint8_t spare_ctrl_mA,
 void CAN_Send_Fault_0x324(void)
 {
     CAN_TxMessage_t msg = {0};
-    msg.tx_header.StdId = 0x324U;
+    msg.tx_header.StdId = DIST_FAULT_ID;
     msg.tx_header.IDE   = CAN_ID_STD;
     msg.tx_header.RTR   = CAN_RTR_DATA;
     msg.tx_header.DLC   = 1U;
@@ -280,7 +280,7 @@ void CAN_Send_Fault_0x324(void)
 void CAN_Send_LV_ON_0x303(void)
 {
     CAN_TxMessage_t msg = {0};
-    msg.tx_header.StdId = 0x303U;
+    msg.tx_header.StdId = LV_POWERUP_RECIEVED_ID;
     msg.tx_header.IDE   = CAN_ID_STD;
     msg.tx_header.RTR   = CAN_RTR_DATA;
     msg.tx_header.DLC   = 1U;

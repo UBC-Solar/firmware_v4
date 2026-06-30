@@ -168,6 +168,9 @@ void DCDCFaultCallback(void)
     DEBUG_IO_PRINT("DCDC_Active Fault\r\n");
     hvc_state = FAULT;
 }
+
+
+
 /*============================================================================*/
 /* HELPERS */
 

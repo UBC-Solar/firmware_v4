@@ -29,14 +29,14 @@
 /**
  * CAN messages
  */
-#define CAN_STATUS_ID               0x601
+#define CAN_STATUS_ID               0x310
 #define CAN_STATUS_PERIOD_MS        1000
-#define CAN_MODULE_VOLT_SUMMARY_ID  0x602
-#define CAN_MODULE_TEMP_SUMMARY_ID  0x603
-#define CAN_MODULE_VOLT_DATA_ID     0x604
-#define CAN_MODULE_TEMP_DATA_ID     0x605
-#define CAN_MODULE_STATUS_ID        0x606
-#define CAN_BALANCE_DATA_ID         0x607
+#define CAN_MODULE_VOLT_SUMMARY_ID  0x311
+#define CAN_MODULE_TEMP_SUMMARY_ID  0x312
+#define CAN_MODULE_VOLT_DATA_ID     0x313
+#define CAN_MODULE_TEMP_DATA_ID     0x314
+#define CAN_MODULE_STATUS_ID        0x315
+#define CAN_BALANCE_DATA_ID         0x316
 
 
 /**

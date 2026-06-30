@@ -349,7 +349,6 @@ void LvPowerup(void)
     }
 
     if (timer_elapsed(LV_POWERUP_TIMEOUT_MS, &ticks.generic)) {
-        msg_sent = false;
         DEBUG_IO_print("LV_POWERUP timeout\r\n");
         hvc_state = FAULT;
         return;

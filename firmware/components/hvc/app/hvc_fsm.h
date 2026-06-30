@@ -82,6 +82,7 @@ typedef enum
 /* THRESHOLD CONSTANTS */
 #define HVC_SUPP_LOW_THRESHOLD_MV   10500
 #define Thermistor_MAX_THRESHOLD_MV 5000U
+#define DISCHARGE_COMPLETE_THRESHOLD_MV 1U
 
 /*============================================================================*/
 /* RATIOS & SCALES */

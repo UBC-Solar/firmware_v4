@@ -1,3 +1,13 @@
+/**
+ * @file    rtc_app.c
+ * @brief   RTC application implementation for UBC Solar TEL board
+ *
+ * This file contains the implementation of the RTC functions for the TEL board.
+ *
+ * @author  Gregory Bian
+ * @date    Jun 30 2026
+ */
+
 #include "rtc_app.h"
 #include "can_app.h"
 #include "rtc_driver.h"

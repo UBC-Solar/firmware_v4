@@ -50,31 +50,33 @@ typedef enum
 /*============================================================================*/
 /* TIMEOUT CONSTANTS */
 
-#define MOTOR_PC_TIMEOUT_MS         20000U
-#define MPPT_PC_TIMEOUT_MS          2000U
-#define MVP_LV_POWERUP_TIMEOUT_MS   5000U
-#define MST_READY_TIMEOUT_MS        7000U
-#define MST_CHECK_TIMEOUT_MS        7000U
-#define FAN_POWERUP_TIMEOUT_MS      5000U
-#define HV_CONNECT_TIMEOUT_MS       10000U
-#define MOTOR_DISCHARGE_TIMEOUT_MS  5000U
-#define LV_POWERUP_TIMEOUT_MS       5000U
-#define HEARTBEAT_TIMEOUT_MS        1000U
+#define MOTOR_PC_TIMEOUT_MS         3000U
+#define MPPT_PC_TIMEOUT_MS          3000U
+#define MVP_LV_POWERUP_TIMEOUT_MS   3000U
+#define MST_READY_TIMEOUT_MS        3000U
+#define MST_CHECK_TIMEOUT_MS        3000U
+#define FAN_POWERUP_TIMEOUT_MS      3000U
+#define HV_CONNECT_TIMEOUT_MS       3000U
+#define MOTOR_DISCHARGE_TIMEOUT_MS  3000U
+#define LV_POWERUP_TIMEOUT_MS       3000U
+#define HEARTBEAT_TIMEOUT_MS        3000U
 
 /*============================================================================*/
 /* Delay/Interval CONSTANTS */
 
 #define CONTACTOR_DELAY_MS          200U
 #define CAN_TX_INTERVAL_MS          200U
-#define HVC_HEARTBEAT_INTERVAL_MS   200U
+#define MOTOR_DISCHARGE_DELAY_MS    250U
 #define FAULT_LED_BLINK_MS          200U
-#define MOTOR_DISCHARGE_DELAY_MS    100U
+#define LV_POWERUP_RETRY_MS         500U
+#define HVC_HEARTBEAT_INTERVAL_MS   1000U
+
 
 /*============================================================================*/
 /* FAN CRTL CONSTANTS */
 #define FANS_FULL_SPEED             65535U
 #define FANS_HALF_SPEED             32767U
-#define FANS_FULL_SPEED_DURATION_MS 2000U
+#define FANS_FULL_SPEED_DURATION_MS 1000U
 
 /*============================================================================*/
 /* THRESHOLD CONSTANTS */
@@ -103,6 +105,7 @@ typedef struct
     uint32_t pos_contactor;
     uint32_t lv_msg;
     uint32_t startup;
+    uint32_t retry;
 } HVC_Ticks_t;
 
 typedef struct {

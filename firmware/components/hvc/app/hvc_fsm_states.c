@@ -337,17 +337,12 @@ void CloseHLIM(void)
 void LvPowerup(void)
 {
 
-    static bool msg_sent = false;
-
-    if (!msg_sent) {
+    if (timer_elapsed(LV_POWERUP_RETRY_MS, &ticks.retry)) {
         CAN_LV_PowerupMessage();
-        msg_sent = true;
-        ticks.generic = HAL_GetTick();
     }
 
     if (lv_powerup_received) {
         lv_powerup_received = false;
-        msg_sent = false;
         ticks.generic = HAL_GetTick();
         hvc_state = MONITORING;
         return;
@@ -422,9 +417,10 @@ void Monitoring(void)
         hvc_state = FAULT;
     }
 
-    if (timer_elapsed(CAN_TX_INTERVAL_MS, &ticks.generic)) { CAN_SendStatusMsg(); }
-    
-    CAN_SendMessage_ShuntCurrent();
+    if (timer_elapsed(CAN_TX_INTERVAL_MS, &ticks.generic)) { 
+        CAN_SendStatusMsg();
+        CAN_SendMessage_ShuntCurrent(); 
+    }
     check_supp_voltage();
 }
 

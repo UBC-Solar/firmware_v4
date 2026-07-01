@@ -16,9 +16,10 @@ typedef enum {
 } FaultSource_t;
 
 /**
- * @brief Configure EXTI falling-edge interrupts on all eFuse FAULT pins and
- *        check their initial state to catch faults that asserted before init.
- *        Must be called after MX_GPIO_Init().
+ * @brief Configure EXTI falling-edge interrupts on all eFuse FAULT pins.
+ *        Must be called after MX_GPIO_Init(). Called before the eFuses are
+ *        enabled, so no initial-state check is done here — see Fault_Clear()
+ *        call in state_activate_ctrl() for discarding pre-power-up noise.
  */
 void Fault_Init(void);
 

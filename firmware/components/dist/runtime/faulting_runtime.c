@@ -26,12 +26,12 @@ void Fault_Init(void)
     HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
-    // Catch faults that were already asserted before EXTI was enabled.
-    // A falling edge on a pin that is already low will not re-trigger EXTI.
-    if (DRD_FUSE_Read()        == GPIO_PIN_RESET) Fault_Set(FAULT_DRD_FUSE);
-    if (MDI_FUSE_Read()        == GPIO_PIN_RESET) Fault_Set(FAULT_MDI_FUSE);
-    if (SPARE_FUSE_Read()      == GPIO_PIN_RESET) Fault_Set(FAULT_SPARE_FUSE);
-    if (SPARE_CTRL_FUSE_Read() == GPIO_PIN_RESET) Fault_Set(FAULT_SPARE_CTRL_FUSE);
+    // NOTE: the eFuses are not yet enabled at this point (CTRL_Enable_All()
+    // runs later, once ACTIVATE_CTRL is entered), so their FAULT sense lines
+    // have no meaningful level here — an initial-state check would just latch
+    // whatever the disabled/unpowered line happens to read. EXTI is already
+    // armed above and will catch the real falling edge whenever an eFuse
+    // actually trips, including right at power-up.
 }
 
 void Fault_Set(FaultSource_t source)
@@ -51,7 +51,13 @@ uint8_t Fault_Any(void)
 
 FaultSource_t Fault_Get(void)
 {
-    // ESTOP is level-sensitive: poll every call so a release is also reflected
+    // ESTOP is level-sensitive: poll every call so a release is also reflected.
+    //
+    // Critical section: this read-modify-write on fault_register is not atomic,
+    // and the eFuse EXTI ISR (Fault_Set) writes the same shared register. Without
+    // this guard, an EXTI firing between this function's load and store gets
+    // silently overwritten by the stale value this function then stores back.
+    HAL_NVIC_DisableIRQ(EXTI15_10_IRQn);
     if (ESTOP_Read() == GPIO_PIN_RESET)
     {
         fault_register |= FAULT_ESTOP;
@@ -60,6 +66,7 @@ FaultSource_t Fault_Get(void)
     {
         fault_register &= ~(FaultSource_t)FAULT_ESTOP;
     }
+    HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
     return fault_register;
 }
 

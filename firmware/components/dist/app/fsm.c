@@ -119,6 +119,14 @@ static void state_startup(void)
 static void state_activate_ctrl(void)
 {
     CTRL_Enable_All();
+
+    // Discard any eFuse FAULT bits latched while the fuses were still
+    // disabled (their sense lines have no defined level until powered).
+    // Real faults from this point on, including power-up transients, are
+    // still caught by the EXTI handler and checked after NORMAL's
+    // stabilisation window.
+    Fault_Clear();
+
     DEBUG_LED_Set(1);
     DEBUG_IO_PRINT("CTRL signals enabled, exiting ACTIVATE_CTRL\r\n");
     FSM_state = FSM_STATE_NORMAL;

@@ -124,7 +124,7 @@ void HVC_FSM_Run(void)
         CAN_SendHeartbeat();
         DEBUG_IO_PRINT("%lu ms since startup\r\n", ticks.startup); 
     }
-}
+}   
 
 /*============================================================================*/
 /* INTERRUPT CALLBACKS */

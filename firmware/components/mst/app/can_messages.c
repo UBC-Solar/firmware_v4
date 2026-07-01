@@ -34,12 +34,12 @@ void CAN_SendHeartbeatMessage(void) {
     status |= (pack_faults.bits.fault_under_voltage         ? 1 : 0) << 3;
     status |= (pack_faults.bits.fault_over_voltage          ? 1 : 0) << 4;
     status |= (pack_faults.bits.fault_under_temperature     ? 1 : 0) << 5;
-    status |= (pack_state.balancing_active                  ? 1 : 0) << 6;
-    status |= (pack_state.llim_enable                       ? 1 : 0) << 7;
-    status |= (pack_state.hlim_enable                       ? 1 : 0) << 8;
-    status |= (pack_warnings.bits.warn_low_voltage          ? 1 : 0) << 9;
-    status |= (pack_warnings.bits.warn_high_voltage         ? 1 : 0) << 10;
-    status |= (pack_warnings.bits.warn_high_temperature     ? 1 : 0) << 11;
+    status |= (pack_warnings.bits.warn_low_voltage          ? 1 : 0) << 6;
+    status |= (pack_warnings.bits.warn_high_voltage         ? 1 : 0) << 7;
+    status |= (pack_warnings.bits.warn_high_temperature     ? 1 : 0) << 8;
+    status |= (pack_state.balancing_active                  ? 1 : 0) << 9;
+    status |= (pack_state.llim_enable                       ? 1 : 0) << 10;
+    status |= (pack_state.hlim_enable                       ? 1 : 0) << 11;
     status |= (pack_state.balancing_enable                  ? 1 : 0) << 12;
     status |= (pack_state.scrutineering_enable              ? 1 : 0) << 13;
 

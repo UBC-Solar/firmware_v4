@@ -68,6 +68,7 @@ void CheckForEmergency(module_t *pack_modules, faults_t *pack_faults, warnings_t
         // if (i >= 24) {
             module->faults.bits.fault_over_temperature = false;
             module->faults.bits.fault_under_temperature = false;
+            module->warnings.bits.warn_high_temperature = false;
         // }
         #endif // (INT_TEST_JUNE_16th == RUN)
 

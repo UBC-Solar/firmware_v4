@@ -68,6 +68,7 @@ void HVC_FSM_Run(void)
         fault_flags.overcurrent || fault_flags.undercurrent)
     {
         hvc_state = FAULT; // override with fault.
+        //TODO: Add print for cause of the fault
     }
 
     switch (hvc_state) {

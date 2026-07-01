@@ -43,10 +43,10 @@ typedef enum
 #define LV_POWERUP_SENT_ID          0x303U
 #define HVC_STATUS_ID               0x304U
 #define SHUNT_CURRENT_ID            0x305U
-#define DIST_FAULT_ID               0x306U
-#define DIST_HEARTBEAT_ID           0x307U 
+#define DIST_HEARTBEAT_ID           0x306U 
+#define DIST_FAULT_ID               0x307U
 #define LV_POWERUP_RECIEVED_ID      0x308U
-#define MST_HEARTBEAT_ID            0x309U
+#define MST_HEARTBEAT_ID            0x310U
 #define MST_VOLT_SUMMARY_ID         0x311U
 /*============================================================================*/
 /* TIMEOUT CONSTANTS */
@@ -54,8 +54,8 @@ typedef enum
 #define MOTOR_PC_TIMEOUT_MS         3000U
 #define MPPT_PC_TIMEOUT_MS          3000U
 #define MVP_LV_POWERUP_TIMEOUT_MS   3000U
-#define MST_READY_TIMEOUT_MS        3000U
-#define MST_CHECK_TIMEOUT_MS        3000U
+#define MST_READY_TIMEOUT_MS        5000U
+#define MST_CHECK_TIMEOUT_MS        5000U
 #define FAN_POWERUP_TIMEOUT_MS      3000U
 #define HV_CONNECT_TIMEOUT_MS       3000U
 #define MOTOR_DISCHARGE_TIMEOUT_MS  3000U
@@ -83,7 +83,7 @@ typedef enum
 /* THRESHOLD CONSTANTS */
 #define HVC_SUPP_LOW_THRESHOLD_MV   10500
 #define Thermistor_MAX_THRESHOLD_MV 5000U
-#define DISCHARGE_COMPLETE_THRESHOLD_MV 1U
+#define DISCHARGE_COMPLETE_THRESHOLD_MV 100000U
 
 /*============================================================================*/
 /* RATIOS & SCALES */

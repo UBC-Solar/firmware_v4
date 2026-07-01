@@ -309,12 +309,14 @@ void CAN_RecievedMessageCallback(uint32_t fifo_num)
             break;
         case MST_HEARTBEAT_ID:
             last_mst_heartbeat_ms = HAL_GetTick();
-            mst_status_healthy = true;
-                // (new_rx_message.data[0] == 0) && (new_rx_message.data[1] == 0) &&
-                // (new_rx_message.data[2] == 0) && (new_rx_message.data[3] == 0) &&
-                // (new_rx_message.data[4] == 0) && (new_rx_message.data[5] == 0) &&
-                // (new_rx_message.data[6] == 0) && (new_rx_message.data[7] == 0);
+            mst_status_healthy = 
+                (new_rx_message.data[4] == 0) && 
+                ((new_rx_message.data[5] & 1) == 0);
             break;
+        case MST_VOLT_SUMMARY_ID:
+            mst_pack_voltage_mv = 
+                (uint32_t) new_rx_message.data[0] |
+                (uint32_t) new_rx_message.data[1] << 8;
         case DIST_HEARTBEAT_ID:
             last_dist_heartbeat_ms = HAL_GetTick();
             break;

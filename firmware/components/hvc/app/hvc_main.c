@@ -35,10 +35,11 @@ void HVC_Init(
         LV_POWERUP_SENT_ID,
         LV_POWERUP_RECIEVED_ID,
         MST_HEARTBEAT_ID,
+        MST_VOLT_SUMMARY_ID,
         DIST_FAULT_ID,
         DIST_HEARTBEAT_ID
     };
-    CAN_InitFilterList(_hcan, filter_ids, 5);
+    CAN_InitFilterList(_hcan, filter_ids, 7);
     CAN_Init(_hcan);
 
     DEBUG_IO_print("UART and ADC and I2C initialized.\n");

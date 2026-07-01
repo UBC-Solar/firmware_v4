@@ -47,6 +47,7 @@ typedef enum
 #define DIST_HEARTBEAT_ID           0x307U 
 #define LV_POWERUP_RECIEVED_ID      0x308U
 #define MST_HEARTBEAT_ID            0x309U
+#define MST_VOLT_SUMMARY_ID         0x311U
 /*============================================================================*/
 /* TIMEOUT CONSTANTS */
 

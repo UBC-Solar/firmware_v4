@@ -211,11 +211,24 @@ static void process_rx(uint32_t fifo)
     DEBUG_IO_PRINT("CAN RX: ID=0x%03lX data[0]=0x%02X\r\n",
                    msg.rx_header.StdId, msg.data[0]);
 
-    // Startup authorisation: HVC sends 0x323 with bit 0 set to release the board
+    // Startup authorisation: HVC sends 0x303 with bit 0 set to release the board
     // from the STARTUP state once the bus is live and the pack is ready.
-    if (msg.rx_header.StdId == 0x323U && (msg.data[0] & 0x01U))
+    if (msg.rx_header.StdId == 0x303U && (msg.data[0] & 0x01U))
     {
         CAN_driver.startup_received = 1U;
+    }
+
+    // External fault: any non-zero byte in 0x304 signals a fault condition.
+    if (msg.rx_header.StdId == 0x304U)
+    {
+        for (uint8_t i = 0; i < msg.rx_header.DLC; i++)
+        {
+            if (msg.data[i] != 0U)
+            {
+                CAN_driver.ext_fault_received = 1U;
+                break;
+            }
+        }
     }
 }
 
@@ -232,6 +245,11 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 uint8_t CAN_Startup_Received(void)
 {
     return CAN_driver.startup_received;
+}
+
+uint8_t CAN_ExtFault_Received(void)
+{
+    return CAN_driver.ext_fault_received;
 }
 
 void CAN_Send_Heartbeat(void)
@@ -266,7 +284,7 @@ void CAN_Send_Currents(uint8_t drd_mA, uint8_t mdi_mA, uint8_t spare_ctrl_mA,
     CAN_QueueTxMessage(&msg);
 }
 
-void CAN_Send_Fault_0x324(void)
+void CAN_Send_Fault(void)
 {
     CAN_TxMessage_t msg = {0};
     msg.tx_header.StdId = DIST_FAULT_ID;

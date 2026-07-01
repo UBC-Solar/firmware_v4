@@ -12,7 +12,7 @@ typedef enum {
     FAULT_MDI_FUSE         = (1U << 1),
     FAULT_SPARE_FUSE       = (1U << 2),
     FAULT_SPARE_CTRL_FUSE  = (1U << 3),
-    FAULT_ESTOP_ADC        = (1U << 4),
+    FAULT_ESTOP            = (1U << 4),
 } FaultSource_t;
 
 /**

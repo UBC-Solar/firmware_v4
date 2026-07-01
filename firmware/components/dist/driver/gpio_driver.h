@@ -41,6 +41,9 @@ GPIO_PinState SPARE_CTRL_FUSE_Read(void);
 /** @return Current logic state of the MUX_STATUS input pin. */
 GPIO_PinState MUX_STATUS_Read(void);
 
+/** @return GPIO_PIN_RESET if ESTOP is asserted (active-low), GPIO_PIN_SET otherwise. */
+GPIO_PinState ESTOP_Read(void);
+
 /*============================================================================*/
 /* DEBUG */
 

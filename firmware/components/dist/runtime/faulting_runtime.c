@@ -51,6 +51,15 @@ uint8_t Fault_Any(void)
 
 FaultSource_t Fault_Get(void)
 {
+    // ESTOP is level-sensitive: poll every call so a release is also reflected
+    if (ESTOP_Read() == GPIO_PIN_RESET)
+    {
+        fault_register |= FAULT_ESTOP;
+    }
+    else
+    {
+        fault_register &= ~(FaultSource_t)FAULT_ESTOP;
+    }
     return fault_register;
 }
 

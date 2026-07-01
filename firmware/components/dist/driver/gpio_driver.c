@@ -80,6 +80,10 @@ GPIO_PinState MUX_STATUS_Read(void) {
     return GPIO_Read(MUX_STATUS_GPIO_Port, MUX_STATUS_Pin);
 }
 
+GPIO_PinState ESTOP_Read(void) {
+    return GPIO_Read(ESTOP_GPIO_GPIO_Port, ESTOP_GPIO_Pin);
+}
+
 /*============================================================================*/
 /* DEBUG */
 

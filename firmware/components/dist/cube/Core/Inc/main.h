@@ -57,8 +57,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define ESTOP_ADC_Pin GPIO_PIN_0
-#define ESTOP_ADC_GPIO_Port GPIOC
+#define ESTOP_GPIO_Pin GPIO_PIN_0
+#define ESTOP_GPIO_GPIO_Port GPIOC
 #define SPARE_CTRL_CURRENT_Pin GPIO_PIN_4
 #define SPARE_CTRL_CURRENT_GPIO_Port GPIOA
 #define SPARE_MUX_CURRENT_Pin GPIO_PIN_5

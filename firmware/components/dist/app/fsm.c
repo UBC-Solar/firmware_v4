@@ -26,9 +26,12 @@ static uint8_t led_driver_ready;
 /*============================================================================*/
 /* PRIVATE FUNCTION PROTOTYPES */
 
-static bool     timer_check(uint32_t interval, uint32_t *last_tick);
-static uint16_t check_estop(void);
-static void     print_currents(void);
+static bool timer_check(uint32_t interval, uint32_t *last_tick);
+static void send_heartbeat_if_due(void);
+static void send_currents_if_due(void);
+static bool check_critical_faults(FaultSource_t faults);
+static bool check_efuse_faults(FaultSource_t faults);
+static void print_currents(void);
 
 static void state_startup(void);
 static void state_activate_ctrl(void);
@@ -50,10 +53,10 @@ static void (*FSM_state_table[])(void) = {
 
 void FSM_Init(uint8_t led_driver_available)
 {
-    led_driver_ready       = led_driver_available;
-    ticks.blink_tick       = HAL_GetTick();
-    ticks.state_tick       = HAL_GetTick();
-    FSM_state              = FSM_STATE_STARTUP;
+    led_driver_ready = led_driver_available;
+    ticks.blink_tick = HAL_GetTick();
+    ticks.state_tick = HAL_GetTick();
+    FSM_state        = FSM_STATE_STARTUP;
 }
 
 void FSM_Run(void)
@@ -75,51 +78,34 @@ void FSM_Run(void)
 
     FSM_state_table[FSM_state]();
 
-    static uint32_t heartbeat_tick = 0U;
-    if (timer_check(500, &heartbeat_tick))
-    {
-        CAN_Send_Heartbeat();
-    }
-
-    static uint32_t currents_tick = 0U;
-    if (timer_check(1000, &currents_tick))
-    {
-        AdcCurrentReadings c = ADC_Read_Currents();
-#define TO_MA_U8(x) ((uint8_t)(((x) * 1000.0f / 5.0f) > 255.0f ? 255U : (unsigned int)((x) * 1000.0f / 5.0f)))
-        CAN_Send_Currents(TO_MA_U8(c.drd), TO_MA_U8(c.mdi), TO_MA_U8(c.spare_ctrl),
-                          TO_MA_U8(c.spare_mux), TO_MA_U8(c.spare));
-#undef TO_MA_U8
-    }
+    send_heartbeat_if_due();
+    send_currents_if_due();
 }
 
 /*============================================================================*/
 /* STATE FUNCTION IMPLEMENTATIONS */
 
 /**
- * @brief Startup state. Waits for CAN authorisation from BMS before enabling
- *        any outputs. ESTOP is monitored throughout; a low reading faults immediately.
- *        eFuse fault pins are not checked here — eFuses are not yet enabled.
+ * @brief Startup state. Waits for CAN authorisation before enabling outputs.
+ *        ESTOP is monitored throughout; eFuse FAULT pins are not yet active.
  *
- * Exit: CAN 0x323 bit 0 → ACTIVATE_CTRL. ESTOP ADC < 700 → FAULT.
+ * Exit: CAN 0x303 bit 0 → ACTIVATE_CTRL. ESTOP asserted → FAULT.
  */
 static void state_startup(void)
 {
-    uint16_t estop_adc = check_estop();
-
     if (timer_check(100, &ticks.blink_tick))
     {
         DEBUG_LED_Toggle();
-        DEBUG_IO_PRINT("MUX_STATUS: %d  ESTOP_ADC: %u\r\n", MUX_STATUS_Read(), estop_adc);
     }
 
-    if (Fault_Get() & FAULT_ESTOP_ADC)
+    if (Fault_Get() & FAULT_ESTOP)
     {
-        DEBUG_IO_PRINT("FAULT: ESTOP_ADC below threshold (%u) during STARTUP\r\n", estop_adc);
+        DEBUG_IO_PRINT("FAULT: ESTOP asserted during STARTUP\r\n");
         FSM_state = FSM_STATE_FAULT;
     }
     else if (CAN_Startup_Received())
     {
-        DEBUG_IO_PRINT("CAN 0x323 received, exiting STARTUP\r\n");
+        DEBUG_IO_PRINT("CAN 0x303 received, exiting STARTUP\r\n");
         FSM_state = FSM_STATE_ACTIVATE_CTRL;
     }
 }
@@ -139,25 +125,19 @@ static void state_activate_ctrl(void)
 }
 
 /**
- * @brief Normal monitoring state. All eFuses are enabled. Continuously monitors
- *        ESTOP (polled each cycle) and eFuse FAULT lines (EXTI-driven via fault
- *        register) for fault conditions.
+ * @brief Normal monitoring state. All eFuses are enabled. ESTOP and CAN ext
+ *        faults are checked every cycle; eFuse FAULT lines are not acted on
+ *        until 200 ms after entry to allow outputs to stabilise.
  *
- * ESTOP is checked before the eFuse grace period so it is never masked.
- * eFuse faults are not acted on until 200 ms after entering this state to allow
- * outputs to stabilise after CTRL_Enable_All().
- *
- * Exit: ESTOP ADC < 700 or any eFuse FAULT asserted → FAULT.
+ * Exit: ESTOP, 0x304 non-zero, or any eFuse FAULT asserted → FAULT.
  */
 static void state_normal(void)
 {
     CAN_Send_LV_ON_0x303();
-    uint16_t estop_adc = check_estop();
     FaultSource_t faults = Fault_Get();
 
-    if (faults & FAULT_ESTOP_ADC)
+    if (check_critical_faults(faults))
     {
-        DEBUG_IO_PRINT("FAULT: ESTOP_ADC below threshold (%u)\r\n", estop_adc);
         FSM_state = FSM_STATE_FAULT;
         return;
     }
@@ -170,16 +150,12 @@ static void state_normal(void)
 
     if (timer_check(500, &ticks.blink_tick))
     {
-        DEBUG_IO_PRINT("MUX_STATUS: %d  ESTOP_ADC: %u\r\n", MUX_STATUS_Read(), estop_adc);
+        DEBUG_IO_PRINT("MUX_STATUS: %d\r\n", MUX_STATUS_Read());
         print_currents();
     }
 
-    if (faults & (FAULT_DRD_FUSE | FAULT_MDI_FUSE | FAULT_SPARE_FUSE | FAULT_SPARE_CTRL_FUSE))
+    if (check_efuse_faults(faults))
     {
-        if (faults & FAULT_DRD_FUSE)        DEBUG_IO_PRINT("FAULT: DRD_FUSE tripped\r\n");
-        if (faults & FAULT_MDI_FUSE)        DEBUG_IO_PRINT("FAULT: MDI_FUSE tripped\r\n");
-        if (faults & FAULT_SPARE_FUSE)      DEBUG_IO_PRINT("FAULT: SPARE_FUSE tripped\r\n");
-        if (faults & FAULT_SPARE_CTRL_FUSE) DEBUG_IO_PRINT("FAULT: SPARE_CTRL_FUSE tripped\r\n");
         FSM_state = FSM_STATE_FAULT;
     }
 }
@@ -197,8 +173,8 @@ static void state_fault(void)
     if (timer_check(200, &ticks.blink_tick))
     {
         DEBUG_LED_Toggle();
-        CAN_Send_Fault_0x324();
-        DEBUG_IO_PRINT("MUX_STATUS: %d  ESTOP_ADC: %u\r\n", MUX_STATUS_Read(), ADC_Read_ESTOP());
+        CAN_Send_Fault();
+        DEBUG_IO_PRINT("MUX_STATUS: %d\r\n", MUX_STATUS_Read());
 
         if (led_driver_ready)
         {
@@ -210,14 +186,56 @@ static void state_fault(void)
 /*============================================================================*/
 /* HELPER FUNCTIONS */
 
-static uint16_t check_estop(void)
+static void send_heartbeat_if_due(void)
 {
-    uint16_t estop_adc = ADC_Read_ESTOP();
-    if (estop_adc < 700U)
+    static uint32_t heartbeat_tick = 0U;
+    if (timer_check(500, &heartbeat_tick))
     {
-        Fault_Set(FAULT_ESTOP_ADC);
+        CAN_Send_Heartbeat();
     }
-    return estop_adc;
+}
+
+static void send_currents_if_due(void)
+{
+    static uint32_t currents_tick = 0U;
+    if (timer_check(1000, &currents_tick))
+    {
+        AdcCurrentReadings c = ADC_Read_Currents();
+#define TO_MA_U8(x) ((uint8_t)(((x) * 1000.0f / 5.0f) > 255.0f ? 255U : (unsigned int)((x) * 1000.0f / 5.0f)))
+        CAN_Send_Currents(TO_MA_U8(c.drd), TO_MA_U8(c.mdi), TO_MA_U8(c.spare_ctrl),
+                          TO_MA_U8(c.spare_mux), TO_MA_U8(c.spare));
+#undef TO_MA_U8
+    }
+}
+
+// Returns true and prints the fault if ESTOP is asserted or 0x304 is non-zero.
+static bool check_critical_faults(FaultSource_t faults)
+{
+    if (faults & FAULT_ESTOP)
+    {
+        DEBUG_IO_PRINT("FAULT: ESTOP asserted\r\n");
+        return true;
+    }
+    if (CAN_ExtFault_Received())
+    {
+        DEBUG_IO_PRINT("FAULT: non-zero 0x304 received\r\n");
+        return true;
+    }
+    return false;
+}
+
+// Returns true and prints each tripped eFuse FAULT line.
+static bool check_efuse_faults(FaultSource_t faults)
+{
+    if (!(faults & (FAULT_DRD_FUSE | FAULT_MDI_FUSE | FAULT_SPARE_FUSE | FAULT_SPARE_CTRL_FUSE)))
+    {
+        return false;
+    }
+    if (faults & FAULT_DRD_FUSE)        DEBUG_IO_PRINT("FAULT: DRD_FUSE tripped\r\n");
+    if (faults & FAULT_MDI_FUSE)        DEBUG_IO_PRINT("FAULT: MDI_FUSE tripped\r\n");
+    if (faults & FAULT_SPARE_FUSE)      DEBUG_IO_PRINT("FAULT: SPARE_FUSE tripped\r\n");
+    if (faults & FAULT_SPARE_CTRL_FUSE) DEBUG_IO_PRINT("FAULT: SPARE_CTRL_FUSE tripped\r\n");
+    return true;
 }
 
 static void print_currents(void)

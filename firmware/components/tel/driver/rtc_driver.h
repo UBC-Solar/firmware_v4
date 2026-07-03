@@ -1,3 +1,12 @@
+/**
+ * @file    rtc_driver.h
+ * @brief   RTC driver header file for UBC Solar TEL board
+ *
+ * This file contains the prototypes and variables for the RTC driver functions for the TEL board.
+ *
+ * @author  Gregory Bian
+ * @date    Jun 30 2026
+ */
 #ifndef __RTC__DRIVER__H__
 #define __RTC__DRIVER__H__
 

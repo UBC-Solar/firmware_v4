@@ -1,3 +1,12 @@
+/**
+ * @file    tasks.c
+ * @brief   FreeRTOS task implementations for TEL board application logic
+ *
+ * This file contains the implementation of all FreeRTOS tasks for this board component of UBC Solar
+ * firmware. Each task represents a concurrent execution thread that runs indefinitely within the
+ * real-time operating system.
+ */
+
 #include "tasks.h"
 #include "CAN_comms.h"
 #include "cmsis_os2.h"

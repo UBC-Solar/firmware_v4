@@ -49,6 +49,8 @@ void FaultHandlerCanRxHandler(uint32_t msg_id, uint8_t* data);
  */
 void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr);
 
+void ImuDataCanRxHandler(uint32_t msg_id, uint8_t* data);
+
 /**
  * @brief Queries and processes data related to motor control.
  */

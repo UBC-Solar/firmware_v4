@@ -55,6 +55,7 @@ file(GLOB_RECURSE COMMON_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../../common/*/*.c
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     ${CMAKE_CURRENT_SOURCE_DIR}/app/drive_state.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/cruise_control.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/soc.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/can_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/cyclic_data_handler.c

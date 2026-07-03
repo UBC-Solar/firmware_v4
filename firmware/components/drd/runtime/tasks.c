@@ -18,6 +18,7 @@
 #include "spi.h"
 #include "external_lights.h"
 #include "diagnostic.h"
+#include "cruise_control.h"
 
 /* DRIVE STATE TASK */
 void TasksDriveState(void* argument)
@@ -25,11 +26,13 @@ void TasksDriveState(void* argument)
     (void)argument; // Unused parameter
 
     uint32_t motor_controller_count = 0;
+    float dt_s = 1.0f / CONTROL_FREQUENCY_HZ; // 100ms
 
     for (;;)
     {
         if ((motor_controller_count % 4) == 0) {
             MotorControlQueryData(); // Motor controller transmit
+            VelocitySetMs(dt_s);
         }
 
         osDelay(DRIVE_STATE_FSM_DELAY);

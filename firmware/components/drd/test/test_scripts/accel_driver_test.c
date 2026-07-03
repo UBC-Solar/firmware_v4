@@ -1,16 +1,11 @@
 /**
  * @file    accel_driver.c
- * @brief   Accelerator ADC driver implementation for UBC Solar DRD board.
- *
- * Reads accelerator ADC channels, validates pedal sensor data, and converts
- * valid input into a throttle DAC command.
+ * @brief   Accelerator test file
  */
 
 /* INCLUDES */
-#include "cruise_control.h"
-#include "accel_driver.h"
-#include "diagnostic.h"
-#include "adc.h"
+#include "cruise_control_test.h"
+#include "accel_driver_test.h"
 #include <stdbool.h>
 
 /* DEFINES */
@@ -65,7 +60,7 @@ uint16_t AccelDriverReadThrottle(void)
 
     if (!ValidateAdcReadings(adc1, adc2))
     {
-        return MC_DAC_MIN;
+        return MC_DAC_MIN; // Invalid sensors = no throttle
     }
 
     return AccelNormalizeToDac((float)adc1, (float)ADC_LOWEST_VALID, (float)ADC_HIGHEST_VALID);
@@ -117,7 +112,7 @@ static uint16_t ConvertToDac(uint16_t adc)
               ADC_FULL_THROTTLE_MIN); // Keep adc val within throttle range
     return ((adc - ADC_NO_THROTTLE_MAX) * MC_DAC_MAX) /
            (ADC_FULL_THROTTLE_MIN -
-            ADC_NO_THROTTLE_MAX);
+            ADC_NO_THROTTLE_MAX); // Find ratio between 0 to 1 and then * 1023
 }
 
 uint16_t AccelNormalizeToDac(float value, float min, float max) {

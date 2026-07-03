@@ -16,6 +16,7 @@
 /* INCLUDES */
 #include <stdbool.h>
 #include <stdint.h>
+#include <math.h>
 
 /* DRIVE STATE DEFINES */
 #define MC_DAC_MAX 1023 // Note: This gets capped by MDI to 920 anyways for safety
@@ -25,7 +26,6 @@
 #define ACCEL_DAC_OFF 0
 
 #define WHEEL_RADIUS 0.283
-#define M_PI 3.14159
 #define VELOCITY_THRESHOLD 0.5
 
 /* DRIVE STATE DATA TYPES */
@@ -58,7 +58,7 @@ typedef enum {
 typedef struct {
     DriveStateStates state;
     DriveStateFlags flags;
-    uint32_t velocity_kmh;
+    float velocity_kmh;
     uint16_t throttle_dac;
 } DriveStateCtx;
 
@@ -96,6 +96,10 @@ void DriveStateSteeringCanMsgHandler(uint8_t* data);
  * @brief Returns the current drive state.
  */
 DriveStateStates DriveStateGetDriveState(void);
+
+float GetVelocityMs(void);
+
+bool CruiseControlEnabled(void);
 
 #ifdef DEBUG
 /**

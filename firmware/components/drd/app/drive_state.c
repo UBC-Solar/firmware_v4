@@ -22,6 +22,7 @@
 #include "cyclic_data_handler.h"
 #include "diagnostic.h"
 #include "gpio_driver.h"
+#include "cruise_control.h"
 
 /* GLOBAL VARIABLES */
 volatile DriveStateCtx g_drive_state_ctx = {
@@ -95,7 +96,6 @@ void DriveStateFsmHandler()
     UpdatePedalFlags(ctx);
     DriveStateMotorControl motor_command = ComputeNextCommand(ctx);
     ComputeNextState(ctx);
-
     CyclicDataSetDriveState(g_drive_state_ctx.state);
 
     MotorCommandPackAndSend(&motor_command, false);
@@ -118,16 +118,31 @@ static void ComputeNextState(DriveStateCtx *ctx)
     bool valid_state_change =
         !(ctx->flags.next_state_request && ctx->flags.prev_state_request);
 
-    bool valid_drive_state = ctx->flags.velocity_under_threshold && ctx->flags.brake_on && valid_state_change;
+    bool valid_cruise_state = ((ctx->velocity_kmh / KMH_TO_MS_CONVERSION) > CRUISE_SPEED_MIN_MS) ? 1 : 0;
 
-    if (!valid_drive_state)
-    {
-        return;
-    }
+    bool valid_drive_state = ctx->flags.velocity_under_threshold && ctx->flags.brake_on && valid_state_change;
 
     switch (ctx->state)
     {
+    case FORWARD:
+
+        if (ctx->flags.cruise_on && valid_cruise_state)
+        {
+            ctx->state = CRUISE;
+            break;
+        }
+
+        if (!valid_drive_state) return;
+        
+        if (ctx->flags.prev_state_request)
+        {
+            ctx->state = PARK;
+        }
+        break;
+
     case PARK:
+        if (!valid_drive_state) return;
+
         if (ctx->flags.next_state_request)
         {
             ctx->state = FORWARD;
@@ -138,16 +153,23 @@ static void ComputeNextState(DriveStateCtx *ctx)
             ctx->state = REVERSE;
         }
         break;
-    case FORWARD:
-        if (ctx->flags.prev_state_request)
+    case REVERSE:
+        if (!valid_drive_state) return;
+
+        if (ctx->flags.next_state_request)
         {
             ctx->state = PARK;
         }
         break;
-    case REVERSE:
-        if (ctx->flags.next_state_request)
+    case CRUISE:
+        if (!ctx->flags.cruise_on)
         {
-            ctx->state = PARK;
+            ctx->state = FORWARD;
+        }
+
+        if (ctx->flags.brake_on)
+        {
+            ctx->state = FORWARD;
         }
         break;
     default:
@@ -168,6 +190,21 @@ static DriveStateMotorControl ComputeNextCommand(DriveStateCtx *ctx)
         return GetMotorCommand(ctx, ctx->throttle_dac, REGEN_DAC_OFF);
     }
 
+    if (ctx->state == CRUISE)
+    {
+        float cruise_accel = GetCruiseAcceleration();
+        if (cruise_accel >= ACCEL_CRUISE_DEADZONE) {
+            return GetMotorCommand(ctx, ctx->throttle_dac, ctx->flags.regen_on ? ctx->throttle_dac : REGEN_DAC_OFF);
+        }
+        
+        else if (cruise_accel <= -ACCEL_CRUISE_DEADZONE) {
+            uint16_t regen_DAC = ctx->throttle_dac;
+            return GetMotorCommand(ctx, ACCEL_DAC_OFF, regen_DAC);
+        } else {
+            return GetMotorCommand(ctx, ctx->throttle_dac, ctx->flags.regen_on ? REGEN_DAC_ON : REGEN_DAC_OFF);
+        }
+    }
+
     return GetMotorCommand(ctx, ctx->throttle_dac, ctx->flags.regen_on ? REGEN_DAC_ON : REGEN_DAC_OFF);
 }
 
@@ -181,6 +218,14 @@ static DriveStateMotorControl GetMotorCommand(DriveStateCtx *ctx, uint16_t accel
     return motor_command;
 }
 
+float GetVelocityMs(void) {
+    return g_drive_state_ctx.velocity_kmh / KMH_TO_MS_CONVERSION;
+}
+
+bool CruiseControlEnabled(void) {
+    return g_drive_state_ctx.flags.cruise_on;
+}
+
 /* SETS DRIVE STATE FLAGS */
 static void UpdatePedalFlags(DriveStateCtx *ctx)
 {
@@ -188,7 +233,12 @@ static void UpdatePedalFlags(DriveStateCtx *ctx)
     SetBrakeLedPin(BRAKE_LED_PORT, BRAKE_LED_PIN, ctx->flags.brake_on);
     DiagnosticSetMechBrakePressed(ctx->flags.brake_on);
 
-    ctx->throttle_dac = AccelDriverReadThrottle();
+    if (ctx->state == CRUISE) {
+        float cruise_accel = GetCruiseAcceleration();
+        ctx->throttle_dac = AccelCruiseNormalizeToDac(cruise_accel);
+    } else {
+        ctx->throttle_dac = AccelDriverReadThrottle();
+    }
 
     EcoPowerHandler(ctx);
 }
@@ -273,8 +323,8 @@ void DriveStateSteeringCanMsgHandler(uint8_t* data)
 
     g_drive_state_ctx.flags.regen_on = ((data[0] >> 0) & 0x01);
     g_drive_state_ctx.flags.cruise_on = ((data[0] >> 1) & 0x01);
+    // TODO: cruise set speed will be configured here
     DiagnosticSetRegenEnabled(g_drive_state_ctx.flags.regen_on);
-
 }
 
 #ifdef DEBUG

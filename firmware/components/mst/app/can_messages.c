@@ -19,7 +19,7 @@ void CAN_SendHeartbeatMessage(void) {
     msg.tx_header.StdId = CAN_STATUS_ID;
     msg.tx_header.IDE = CAN_ID_STD;
     msg.tx_header.RTR = CAN_RTR_DATA;
-    msg.tx_header.DLC = 4;
+    msg.tx_header.DLC = 8;
 
     uint32_t status = 0;
 

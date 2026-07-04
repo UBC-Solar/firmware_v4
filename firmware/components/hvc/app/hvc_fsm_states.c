@@ -416,9 +416,9 @@ void Monitoring(void)
         hvc_state = FAULT;
     }
 
-    if (timer_elapsed(CAN_TX_INTERVAL_MS, &ticks.generic)) { 
+    if (timer_elapsed(CAN_TX_INTERVAL_MS, &ticks.generic)) {
         CAN_SendStatusMsg();
-        CAN_SendMessage_ShuntCurrent(); 
+        CAN_SendMessage_ShuntCurrent();
     }
     check_supp_voltage();
 }

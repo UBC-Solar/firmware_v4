@@ -6,7 +6,8 @@
 /*============================================================================*/
 /* PRIVATE VARIABLES */
 
-static volatile FaultSource_t fault_register = FAULT_NONE;
+static volatile FaultSource_t fault_register  = FAULT_NONE;
+static volatile uint32_t      exti_fire_count = 0U;
 
 /*============================================================================*/
 /* PUBLIC FUNCTIONS */
@@ -33,7 +34,7 @@ void Fault_Init(void)
     // armed above and will catch the real falling edge whenever an eFuse
     // actually trips, including right at power-up.
 }
-
+//
 void Fault_Set(FaultSource_t source)
 {
     fault_register |= source;
@@ -51,22 +52,16 @@ uint8_t Fault_Any(void)
 
 FaultSource_t Fault_Get(void)
 {
-    // ESTOP is level-sensitive: poll every call so a release is also reflected.
-    //
-    // Critical section: this read-modify-write on fault_register is not atomic,
-    // and the eFuse EXTI ISR (Fault_Set) writes the same shared register. Without
-    // this guard, an EXTI firing between this function's load and store gets
-    // silently overwritten by the stale value this function then stores back.
-    HAL_NVIC_DisableIRQ(EXTI15_10_IRQn);
+    // ESTOP is latching: once asserted it stays in the register until Fault_Clear().
+    // Only set, never clear, so a brief transient or bounce doesn't disappear before
+    // the FSM can act on it.
     if (ESTOP_Read() == GPIO_PIN_RESET)
     {
+        // Critical section: read-modify-write is not atomic vs. eFuse EXTI ISR.
+        HAL_NVIC_DisableIRQ(EXTI15_10_IRQn);
         fault_register |= FAULT_ESTOP;
+        HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
     }
-    else
-    {
-        fault_register &= ~(FaultSource_t)FAULT_ESTOP;
-    }
-    HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
     return fault_register;
 }
 
@@ -76,6 +71,7 @@ FaultSource_t Fault_Get(void)
 // HAL weak override. Called by HAL_GPIO_EXTI_IRQHandler for the triggering pin.
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
+    exti_fire_count++;
     switch (GPIO_Pin)
     {
         case DRD_FUSE_Pin:        Fault_Set(FAULT_DRD_FUSE);        break;
@@ -84,4 +80,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         case SPARE_CTRL_FUSE_Pin: Fault_Set(FAULT_SPARE_CTRL_FUSE); break;
         default:                                                     break;
     }
+}
+
+uint32_t Fault_EXTI_Count(void)
+{
+    return exti_fire_count;
 }

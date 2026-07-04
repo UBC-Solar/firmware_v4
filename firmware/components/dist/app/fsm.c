@@ -28,9 +28,11 @@ static uint8_t led_driver_ready;
 
 static bool timer_check(uint32_t interval, uint32_t *last_tick);
 static void send_heartbeat_if_due(void);
+static void send_lv_on_if_due(void);
 static void send_currents_if_due(void);
 static bool check_critical_faults(FaultSource_t faults);
 static bool check_efuse_faults(FaultSource_t faults);
+static void print_fault_reasons(FaultSource_t faults);
 static void print_currents(void);
 
 static void state_startup(void);
@@ -73,12 +75,17 @@ void FSM_Run(void)
         };
         ticks.state_tick = HAL_GetTick();
         DEBUG_IO_PRINT("FSM -> %s\r\n", state_names[FSM_state]);
+        if (FSM_state == FSM_STATE_FAULT)
+        {
+            print_fault_reasons(Fault_Get());
+        }
         prev_state = FSM_state;
     }
 
     FSM_state_table[FSM_state]();
 
     send_heartbeat_if_due();
+    send_lv_on_if_due();
     send_currents_if_due();
 }
 
@@ -141,7 +148,6 @@ static void state_activate_ctrl(void)
  */
 static void state_normal(void)
 {
-    CAN_Send_LV_ON_0x303();
     FaultSource_t faults = Fault_Get();
 
     if (check_critical_faults(faults))
@@ -177,13 +183,11 @@ static void state_normal(void)
 static void state_fault(void)
 {
     CTRL_Disable_All();
+    DEBUG_LED_Set(1);
 
     if (timer_check(200, &ticks.blink_tick))
     {
-        DEBUG_LED_Toggle();
         CAN_Send_Fault();
-        DEBUG_IO_PRINT("MUX_STATUS: %d\r\n", MUX_STATUS_Read());
-
         if (led_driver_ready)
         {
             IS31FL3236A_DIST_FAULT_Toggle();
@@ -203,6 +207,15 @@ static void send_heartbeat_if_due(void)
     }
 }
 
+static void send_lv_on_if_due(void)
+{
+    static uint32_t lv_on_tick = 0U;
+    if (timer_check(500, &lv_on_tick))
+    {
+        CAN_Send_LV_ON_0x303();
+    }
+}
+
 static void send_currents_if_due(void)
 {
     static uint32_t currents_tick = 0U;
@@ -216,12 +229,33 @@ static void send_currents_if_due(void)
     }
 }
 
-// Returns true and prints the fault if ESTOP is asserted or 0x304 is non-zero.
+static void print_fault_reasons(FaultSource_t faults)
+{
+    DEBUG_IO_PRINT("  EXTI fired %lu times total\r\n", Fault_EXTI_Count());
+    if (faults == FAULT_NONE && !CAN_ExtFault_Received())
+    {
+        DEBUG_IO_PRINT("  cause: unknown (no fault bits latched)\r\n");
+        return;
+    }
+    if (faults & FAULT_ESTOP)            DEBUG_IO_PRINT("  cause: ESTOP asserted\r\n");
+    if (faults & FAULT_DRD_FUSE)         DEBUG_IO_PRINT("  cause: DRD eFuse tripped\r\n");
+    if (faults & FAULT_MDI_FUSE)         DEBUG_IO_PRINT("  cause: MDI eFuse tripped\r\n");
+    if (faults & FAULT_SPARE_FUSE)       DEBUG_IO_PRINT("  cause: SPARE eFuse tripped\r\n");
+    if (faults & FAULT_SPARE_CTRL_FUSE)  DEBUG_IO_PRINT("  cause: SPARE_CTRL eFuse tripped\r\n");
+    if (CAN_ExtFault_Received())         DEBUG_IO_PRINT("  cause: non-zero CAN 0x304 received\r\n");
+}
+
+// Returns true immediately (no grace period) if ESTOP, DRD eFuse, or 0x304 fault.
 static bool check_critical_faults(FaultSource_t faults)
 {
     if (faults & FAULT_ESTOP)
     {
         DEBUG_IO_PRINT("FAULT: ESTOP asserted\r\n");
+        return true;
+    }
+    if (faults & FAULT_DRD_FUSE)
+    {
+        DEBUG_IO_PRINT("FAULT: DRD eFuse tripped\r\n");
         return true;
     }
     if (CAN_ExtFault_Received())
@@ -232,14 +266,13 @@ static bool check_critical_faults(FaultSource_t faults)
     return false;
 }
 
-// Returns true and prints each tripped eFuse FAULT line.
+// Returns true and prints each tripped eFuse FAULT line (checked after grace period).
 static bool check_efuse_faults(FaultSource_t faults)
 {
-    if (!(faults & (FAULT_DRD_FUSE | FAULT_MDI_FUSE | FAULT_SPARE_FUSE | FAULT_SPARE_CTRL_FUSE)))
+    if (!(faults & (FAULT_MDI_FUSE | FAULT_SPARE_FUSE | FAULT_SPARE_CTRL_FUSE)))
     {
         return false;
     }
-    if (faults & FAULT_DRD_FUSE)        DEBUG_IO_PRINT("FAULT: DRD_FUSE tripped\r\n");
     if (faults & FAULT_MDI_FUSE)        DEBUG_IO_PRINT("FAULT: MDI_FUSE tripped\r\n");
     if (faults & FAULT_SPARE_FUSE)      DEBUG_IO_PRINT("FAULT: SPARE_FUSE tripped\r\n");
     if (faults & FAULT_SPARE_CTRL_FUSE) DEBUG_IO_PRINT("FAULT: SPARE_CTRL_FUSE tripped\r\n");

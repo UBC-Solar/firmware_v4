@@ -1,13 +1,15 @@
-#include "superloop.h"
+#include "tasks.h"
 
 #include "can_app.h"
 #include "diagnostic.h"
 #include "mdi_driver.h"
+#include "rtd_driver.h"
 #include "main.h"
 
 void AppMain(void)
 {
     CanAppInit();
+    RtdDriverInit();
     DiagnosticInit();
     DiagnosticSendFlags();
 
@@ -22,6 +24,7 @@ void AppMain(void)
         if ((uint32_t)(now - last_diagnostic_tick) >= MDI_DIAGNOSTICS_DELAY)
         {
             DiagnosticSendTimeSinceBootup();
+            DiagnosticSendRtdTemp();
             DiagnosticSendFlags();
             last_diagnostic_tick = now;
         }

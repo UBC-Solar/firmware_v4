@@ -1,3 +1,14 @@
+/**
+ * @file    can_app.h
+ * @brief   CAN application header file for UBC Solar TEL board
+ *
+ * This file contains the prototypes and variables for the CAN application, 
+ * which handles the reception and processing of CAN messages.
+ *
+ * @author  Gregory Bian
+ * @date    Jun 30 2026
+ */
+
 #ifndef __CAN_APP__H__
 #define __CAN_APP__H__
 

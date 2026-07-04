@@ -61,7 +61,7 @@ void MotorControlQueryData(void)
 void MotorCommandPackAndSend(DriveStateMotorControl *motor_command, bool isr)
 {
     CAN_comms_Tx_msg_t msg;
-    msg.header = drive_control_header;
+    msg.header = steering_header;
 
     uint8_t data[8] = {0};
 

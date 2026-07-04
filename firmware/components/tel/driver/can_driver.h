@@ -1,3 +1,13 @@
+/**
+ * @file    can_driver.h
+ * @brief   CAN driver header file for UBC Solar TEL board
+ *
+ * This file contains the prototypes and variables for the CAN driver functions for the TEL board.
+ *
+ * @author  Gregory Bian
+ * @date    Jun 30 2026
+ */
+
 #ifndef __CAN_DRIVER__H__
 #define __CAN_DRIVER__H__
 

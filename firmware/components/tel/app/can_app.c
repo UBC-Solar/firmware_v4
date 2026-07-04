@@ -1,3 +1,14 @@
+/**
+ * @file    can_app.c
+ * @brief   CAN application implementation for UBC Solar TEL board
+ *
+ * This file contains the initialization and callback functions for the CAN application, 
+ * which handles the reception and processing of CAN messages.
+ *
+ * @author  Gregory Bian
+ * @date    Jun 30 2026
+ */
+
 #include "can_driver.h"
 #include "can_app.h"
 #include "CAN_comms.h"

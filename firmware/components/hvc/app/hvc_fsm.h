@@ -38,7 +38,7 @@ typedef enum
 
 /*============================================================================*/
 /* CAN ID's*/
-#define TEL_HEARTBEAT_ID            0x301U          
+#define TEL_HEARTBEAT_ID            0x750U          
 #define HVC_HEARTBEAT_ID            0x302U
 #define LV_POWERUP_SENT_ID          0x303U
 #define HVC_STATUS_ID               0x304U

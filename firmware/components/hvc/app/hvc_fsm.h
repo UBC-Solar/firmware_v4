@@ -108,6 +108,7 @@ typedef struct
     uint32_t lv_msg;
     uint32_t startup;
     uint32_t retry;
+    uint32_t supp_voltage;
 } HVC_Ticks_t;
 
 typedef struct {

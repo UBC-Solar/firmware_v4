@@ -240,10 +240,13 @@ void CAN_LV_PowerupMessage()
 }
 
     void CAN_SendMessage_ShuntCurrent(void)
-{
-    CAN_TxMessage_t txMessage = {0};
+{    
+    INA228_Read_Shunt_Voltage();
     
     int32_t current_mA = INA228_Get_Shunt_Current_mA();
+    DEBUG_IO_print("Shunt Current:%u mA \r\n", current_mA);
+    
+    CAN_TxMessage_t txMessage = {0};
 
     txMessage.tx_header.StdId = SHUNT_CURRENT_ID;  
     txMessage.tx_header.DLC = 4;

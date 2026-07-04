@@ -415,7 +415,6 @@ void Monitoring(void)
         fault_flags.dist_heartbeat_timeout = true;
         hvc_state = FAULT;
     }
-
     if (timer_elapsed(CAN_TX_INTERVAL_MS, &ticks.generic)) { 
         CAN_SendStatusMsg();
         CAN_SendMessage_ShuntCurrent(); 

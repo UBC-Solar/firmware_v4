@@ -47,9 +47,10 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     ${CMAKE_CURRENT_SOURCE_DIR}/app/can_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/diagnostic.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/rtd_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/can_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/mdi_driver.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/superloop.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/tasks.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/debug_io/debug_io.c
 )
 

@@ -1,3 +1,12 @@
+/**
+ * @file    can_driver.c
+ * @brief   CAN driver implementation for UBC Solar TEL board
+ *
+ * This file contains the implementation of the CAN driver functions for the TEL board.
+ *
+ * @author  Gregory Bian
+ * @date    Jun 30 2026
+ */
 #include "can_driver.h"
 #include "can.h"
 #include "CAN_comms.h"

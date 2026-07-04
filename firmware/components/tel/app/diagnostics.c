@@ -1,3 +1,13 @@
+/**
+ * @file    diagnostics.c
+ * @brief   Diagnostic application implementation for UBC Solar TEL board
+ *
+ * This file contains the implementation of the diagnostic functions for the TEL board.
+ *
+ * @author  Gregory Bian
+ * @date    Jun 30 2026
+ */
+
 #include "diagnostics.h"
 #include "stdint.h"
 #include "CAN_comms.h"

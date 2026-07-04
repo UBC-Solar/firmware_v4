@@ -1,3 +1,12 @@
+/**
+ * @file    telemetry_driver.h
+ * @brief   Telemetry driver header file for UBC Solar TEL board
+ *
+ * This file contains the prototypes and variables for the Telemetry driver functions for the TEL board.
+ *
+ * @author  Gregory Bian
+ * @date    Jun 30 2026
+ */
 #ifndef __TELEMETRY_DRIVER__H__
 #define __TELEMETRY_DRIVER__H__
 

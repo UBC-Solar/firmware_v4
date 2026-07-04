@@ -1,3 +1,12 @@
+/**<
+ * @file    telemetry_driver.c
+ * @brief   Telemetry driver implementation for UBC Solar TEL board
+ *
+ * This file contains the implementation of the telemetry driver functions for the TEL board.
+ *
+ * @author  Gregory Bian
+ * @date    Jun 30 2026
+ */
 #include "telemetry_driver.h"
 
 telemetry_diagnostics_t telemetry_diagnostic;

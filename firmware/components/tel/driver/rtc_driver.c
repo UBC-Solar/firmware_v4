@@ -1,3 +1,12 @@
+/**<
+ * @file    rtc_driver.c
+ * @brief   RTC driver implementation for UBC Solar TEL board
+ *
+ * This file contains the implementation of the RTC driver functions for the TEL board.
+ *
+ * @author  Gregory Bian
+ * @date    Jun 30 2026
+ */
 #include <sys/types.h>
 #include "rtc_driver.h"
 #include "rtc.h"

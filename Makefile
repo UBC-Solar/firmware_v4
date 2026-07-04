@@ -1,6 +1,6 @@
 # Top level makefile used to make building from the command line simple.
 
-.PHONY: all mdi tel drd hvc mst clean help debug release utest
+.PHONY: all mdi tel drd hvc mst str clean help debug release utest
 
 debug release Debug Release:
 	@:
@@ -33,7 +33,7 @@ endif
 
 FILTERED_GOALS := $(filter-out debug release,$(MAKECMDGOALS))
 
-all: mdi tel drd hvc mst
+all: mdi tel drd hvc mst str
 
 mdi:
 	@echo "=== Building MDI ($(MODE)) ==="
@@ -70,6 +70,13 @@ mst:
 		-B firmware/components/mst/$(BUILD_DIR)
 	cmake --build firmware/components/mst/$(BUILD_DIR)
 
+str:
+	@echo "=== Building Masterboard ($(MODE)) ==="
+	cmake --preset $(MODE) \
+		-S firmware/components/str \
+		-B firmware/components/str/$(BUILD_DIR)
+	cmake --build firmware/components/str/$(BUILD_DIR)
+
 utest:
 	@echo "=== Running all unit tests ==="
 # 	cd firmware/components/mdi/ && ./ceedling test:all
@@ -82,5 +89,6 @@ clean:
 	rm -rf firmware/components/drd/$(BUILD_DIR)
 	rm -rf firmware/components/hvc/$(BUILD_DIR)
 	rm -rf firmware/components/mst/$(BUILD_DIR)
+	rm -rf firmware/components/str/$(BUILD_DIR)
 # 	cd firmware/components/mdi/ && ./ceedling clean
 	@echo "Clean complete."

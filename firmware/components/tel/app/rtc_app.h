@@ -1,3 +1,14 @@
+/**
+ * @file    rtc_app.h
+ * @brief   RTC application header file for UBC Solar TEL board
+ *
+ * This file contains the prototypes and variables for the RTC application, 
+ * which handles synchronization and message processing for the RTC module.
+ *
+ * @author  Gregory Bian
+ * @date    Jun 30 2026
+ */
+
 #ifndef __RTC__APP__H__
 #define __RTC__APP__H__
 

@@ -6,7 +6,7 @@
  * Bitmask of all fault sources. Multiple faults can be active simultaneously.
  * ISRs (interrupts) write to this register; the FSM reads and acts on it.
  */
-ypedef enum {
+typedef enum {
     FAULT_NONE             = 0,        // 0b00000
     FAULT_DRD_FUSE         = (1U << 0), // 0b00001
     FAULT_MDI_FUSE         = (1U << 1), // 0b00010

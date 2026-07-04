@@ -245,7 +245,7 @@ static void print_fault_reasons(FaultSource_t faults)
     if (CAN_ExtFault_Received())         DEBUG_IO_PRINT("  cause: non-zero CAN 0x304 received\r\n");
 }
 
-// Returns true immediately (no grace period) if ESTOP, DRD eFuse, or 0x304 fault.
+// Returns true immediately (no grace period) if ESTOP, DRD eFuse, MDI eFuse, or 0x304 fault.
 static bool check_critical_faults(FaultSource_t faults)
 {
     if (faults & FAULT_ESTOP)
@@ -256,6 +256,11 @@ static bool check_critical_faults(FaultSource_t faults)
     if (faults & FAULT_DRD_FUSE)
     {
         DEBUG_IO_PRINT("FAULT: DRD eFuse tripped\r\n");
+        return true;
+    }
+    if (faults & FAULT_MDI_FUSE)
+    {
+        DEBUG_IO_PRINT("FAULT: MDI eFuse tripped\r\n");
         return true;
     }
     if (CAN_ExtFault_Received())
@@ -269,11 +274,10 @@ static bool check_critical_faults(FaultSource_t faults)
 // Returns true and prints each tripped eFuse FAULT line (checked after grace period).
 static bool check_efuse_faults(FaultSource_t faults)
 {
-    if (!(faults & (FAULT_MDI_FUSE | FAULT_SPARE_FUSE | FAULT_SPARE_CTRL_FUSE)))
+    if (!(faults & (FAULT_SPARE_FUSE | FAULT_SPARE_CTRL_FUSE)))
     {
         return false;
     }
-    if (faults & FAULT_MDI_FUSE)        DEBUG_IO_PRINT("FAULT: MDI_FUSE tripped\r\n");
     if (faults & FAULT_SPARE_FUSE)      DEBUG_IO_PRINT("FAULT: SPARE_FUSE tripped\r\n");
     if (faults & FAULT_SPARE_CTRL_FUSE) DEBUG_IO_PRINT("FAULT: SPARE_CTRL_FUSE tripped\r\n");
     return true;

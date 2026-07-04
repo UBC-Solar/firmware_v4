@@ -187,20 +187,31 @@ void CAN_SendMessageXXX()
     CAN_QueueTxMessage(&txMessage);
 }
 
- void CAN_SendStatusMsg() 
+void CAN_SendStatusMsg(void)
 {
     CAN_TxMessage_t txMessage = {0};
 
     txMessage.tx_header.StdId = HVC_STATUS_ID;
-    txMessage.tx_header.DLC = 8;
+    txMessage.tx_header.DLC = 1;
+
     txMessage.data[0] = (uint8_t)hvc_state;
+
+    CAN_QueueTxMessage(message: &txMessage);
+}
+ void CAN_SendFaultMsg() 
+{
+    CAN_TxMessage_t txMessage = {0};
+
+    txMessage.tx_header.StdId = HVC_FAULT_ID;
+    txMessage.tx_header.DLC = 8;
     txMessage.data[1] = (uint8_t)fault_flags.estop;
     txMessage.data[2] = (uint8_t)fault_flags.imd_fault;
     txMessage.data[3] = (uint8_t)fault_flags.masterboard_fault;
     txMessage.data[4] = (uint8_t)fault_flags.overcurrent;
     txMessage.data[5] = (uint8_t)fault_flags.undercurrent;
     txMessage.data[6] = (uint8_t)fault_flags.dist_fault;
-    txMessage.data[7] = (uint8_t)(fault_flags.tel_heartbeat_timeout | 
+    txMessage.data[7] = (uint8_t)fault_flags.dcdc_fault;
+    txMessage.data[8] = (uint8_t)(fault_flags.tel_heartbeat_timeout | 
                                fault_flags.mst_heartbeat_timeout | 
                                fault_flags.dist_heartbeat_timeout);
     CAN_QueueTxMessage(&txMessage);
@@ -239,11 +250,14 @@ void CAN_LV_PowerupMessage()
 
 }
 
-    void CAN_SendMessage_ShuntCurrent(void)
-{
-    CAN_TxMessage_t txMessage = {0};
+void CAN_Send_ShuntCurrent(void)
+{    
+    INA228_Read_Shunt_Voltage();
     
     int32_t current_mA = INA228_Get_Shunt_Current_mA();
+    DEBUG_IO_print("Shunt Current:%u mA \r\n", current_mA);
+    
+    CAN_TxMessage_t txMessage = {0};
 
     txMessage.tx_header.StdId = SHUNT_CURRENT_ID;  
     txMessage.tx_header.DLC = 4;
@@ -256,6 +270,22 @@ void CAN_LV_PowerupMessage()
     CAN_QueueTxMessage(&txMessage);
 }
 
+void CAN_Send_SuppVoltage(void)
+{
+    ADC_Voltages adc = ADC_GetVoltages();
+    uint32_t actual_mV = (uint32_t)adc.supp_sense * SUPP_SENSE_DIVIDER_NUM / SUPP_SENSE_DIVIDER_DEN;
+
+    DEBUG_IO_print("SUPP Voltage: %lu mV\r\n", actual_mV);
+
+    CAN_TxMessage_t txMessage = {0};
+    txMessage.tx_header.StdId = SUPP_VOLTAGE_ID;
+    txMessage.tx_header.DLC = 4;
+    txMessage.data[0] = (actual_mV >> 24) & 0xFF;
+    txMessage.data[1] = (actual_mV >> 16) & 0xFF;
+    txMessage.data[2] = (actual_mV >> 8)  & 0xFF;
+    txMessage.data[3] = (actual_mV)       & 0xFF;
+    CAN_QueueTxMessage(&txMessage);
+}
 
 #if (INT_TEST_CAN == RUN)
 /**

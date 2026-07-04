@@ -21,9 +21,12 @@ HVC_FaultFlags_t fault_flags;
 bool startup_complete = false;
 bool tel_heartbeat_received = false;
 bool mst_status_healthy = false;
-int32_t mst_pack_voltage_mv = 0;
 bool lv_powerup_received = false;
 bool mst_irq_armed = false;
+bool tel_dist_heartbeat_check_enabled = false;  // TEL + DIST heartbeat checks, enabled after MVP_LV_POWERUP
+bool mst_heartbeat_check_enabled = false;       // MST hearbeat check, enabled after MST_CHECK
+int32_t mst_pack_voltage_mv = 0;
+
 
 uint32_t last_tel_heartbeat_ms = 0;
 uint32_t last_mst_heartbeat_ms = 0;
@@ -62,13 +65,30 @@ void HVC_FSM_Run(void)
     log_state_change(hvc_state, prev_hvc_state);
     prev_hvc_state = hvc_state;
 #endif // DEBUG
+    if (tel_dist_heartbeat_check_enabled) {
+        if (HAL_GetTick() - last_tel_heartbeat_ms > HEARTBEAT_TIMEOUT_MS) {
+            DEBUG_IO_print("TEL heartbeat timeout\r\n");
+            fault_flags.tel_heartbeat_timeout = true;
+        }
+        if (HAL_GetTick() - last_dist_heartbeat_ms > HEARTBEAT_TIMEOUT_MS) {
+            DEBUG_IO_print("DIST heartbeat timeout\r\n");
+            fault_flags.dist_heartbeat_timeout = true;
+        }
+    }
 
-    if (fault_flags.dist_fault || fault_flags.imd_fault || 
-        fault_flags.estop || 
+    if (mst_heartbeat_check_enabled &&
+        (HAL_GetTick() - last_mst_heartbeat_ms > HEARTBEAT_TIMEOUT_MS))
+    {
+        DEBUG_IO_print("MST heartbeat timeout\r\n");
+        fault_flags.mst_heartbeat_timeout = true;
+    }
+
+    if (fault_flags.dist_fault || fault_flags.imd_fault || fault_flags.tel_heartbeat_timeout ||
+        fault_flags.estop || fault_flags.dcdc_fault || fault_flags.masterboard_fault ||
         fault_flags.overcurrent || fault_flags.undercurrent)
     {
-        hvc_state = FAULT; // override with fault.
-        //TODO: Add print for cause of the fault
+        hvc_state = FAULT;
+        log_fault_cause();
     }
 
     switch (hvc_state) {
@@ -199,10 +219,17 @@ void open_all_contactors(void)
 void check_supp_voltage(void)
 {
     ADC_Voltages adc = ADC_GetVoltages();
-    GPIO_PinState state = (adc.supp_sense < HVC_SUPP_LOW_THRESHOLD_MV)
+    uint32_t actual_mV = (uint32_t)adc.supp_sense * SUPP_SENSE_DIVIDER_NUM / SUPP_SENSE_DIVIDER_DEN;
+
+    GPIO_PinState state = (actual_mV < HVC_SUPP_LOW_THRESHOLD_MV)
                            ? GPIO_PIN_SET : GPIO_PIN_RESET;
     GPIO_Write(SUPP_LOW_LED_GPIO_Port, SUPP_LOW_LED_Pin, state);
+
+    if (timer_elapsed(HVC_HEARTBEAT_INTERVAL_MS, ticks.supp_voltage)) {
+        DEBUG_IO_PRINT("SUPP Voltage: %lu mV\r\n", actual_mV);
+    }
 }
+
 
 // Note that char pointers returned from this function will always point to string literals
 // stored inside flash memory (where the program itself is stored). We're not using heap space here.
@@ -233,4 +260,48 @@ void log_state_change(HVC_State_t new_state, HVC_State_t old_state) {
     const char *old_state_str = state_to_string(old_state);
 
     DEBUG_IO_PRINT("HVC State change: %s --> %s\r\n", old_state_str, new_state_str);
+}
+
+void log_fault_cause(void)
+{
+    if (fault_flags.estop)
+    {
+        DEBUG_PRINT("FAULT: estop\r\n");
+    }
+    if (fault_flags.imd_fault)
+    {
+        DEBUG_PRINT("FAULT: imd_fault\r\n");
+    }
+    if (fault_flags.masterboard_fault)
+    {
+        DEBUG_PRINT("FAULT: masterboard_fault\r\n");
+    }
+    if (fault_flags.dist_fault)
+    {
+        DEBUG_PRINT("FAULT: dist_fault\r\n");
+    }
+    if (fault_flags.dcdc_fault)
+    {
+        DEBUG_PRINT("FAULT: dcdc_fault\r\n");
+    }
+    if (fault_flags.overcurrent)
+    {
+        DEBUG_PRINT("FAULT: overcurrent\r\n");
+    }
+    if (fault_flags.undercurrent)
+    {
+        DEBUG_PRINT("FAULT: undercurrent\r\n");
+    }
+    if (fault_flags.tel_heartbeat_timeout)
+    {
+        DEBUG_PRINT("FAULT: tel_heartbeat_timeout\r\n");
+    }
+    if (fault_flags.mst_heartbeat_timeout)
+    {
+        DEBUG_PRINT("FAULT: mst_heartbeat_timeout\r\n");
+    }
+    if (fault_flags.dist_heartbeat_timeout)
+    {
+        DEBUG_PRINT("FAULT: dist_heartbeat_timeout\r\n");
+    }
 }

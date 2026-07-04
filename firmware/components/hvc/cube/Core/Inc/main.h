@@ -49,8 +49,6 @@ extern "C" {
 
 /* USER CODE END EM */
 
-void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
-
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -65,6 +63,7 @@ void Error_Handler(void);
 #define GPIO2_GPIO_Port GPIOC
 #define IMD_GPIO_IN_Pin GPIO_PIN_2
 #define IMD_GPIO_IN_GPIO_Port GPIOC
+#define IMD_GPIO_IN_EXTI_IRQn EXTI2_IRQn
 #define THERMISTOR_Pin GPIO_PIN_1
 #define THERMISTOR_GPIO_Port GPIOA
 #define MOTOR_PRECHARGE_Pin GPIO_PIN_4
@@ -73,14 +72,18 @@ void Error_Handler(void);
 #define MPPT_PRECHARGE_GPIO_Port GPIOA
 #define MASTERBOARD_FAULT_Pin GPIO_PIN_6
 #define MASTERBOARD_FAULT_GPIO_Port GPIOA
+#define MASTERBOARD_FAULT_EXTI_IRQn EXTI9_5_IRQn
 #define SUPP_SENSE_Pin GPIO_PIN_7
 #define SUPP_SENSE_GPIO_Port GPIOA
 #define ESTOP_Pin GPIO_PIN_4
 #define ESTOP_GPIO_Port GPIOC
+#define ESTOP_EXTI_IRQn EXTI4_IRQn
 #define DCDC_ACTIVE_Pin GPIO_PIN_5
 #define DCDC_ACTIVE_GPIO_Port GPIOC
+#define DCDC_ACTIVE_EXTI_IRQn EXTI9_5_IRQn
 #define SUPP_ACTIVE_Pin GPIO_PIN_0
 #define SUPP_ACTIVE_GPIO_Port GPIOB
+#define SUPP_ACTIVE_EXTI_IRQn EXTI0_IRQn
 #define LV_CURR_SENSE_Pin GPIO_PIN_1
 #define LV_CURR_SENSE_GPIO_Port GPIOB
 #define BOOT1_Pin GPIO_PIN_2
@@ -113,6 +116,7 @@ void Error_Handler(void);
 #define DIST_CTRL_GPIO_Port GPIOA
 #define HV_CURRENT_ALERT_Pin GPIO_PIN_10
 #define HV_CURRENT_ALERT_GPIO_Port GPIOC
+#define HV_CURRENT_ALERT_EXTI_IRQn EXTI15_10_IRQn
 #define IMD_CTRL_Pin GPIO_PIN_11
 #define IMD_CTRL_GPIO_Port GPIOC
 #define FAN_PWM_Pin GPIO_PIN_8

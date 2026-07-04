@@ -65,14 +65,16 @@ void Error_Handler(void);
 #define LED_OUT_GPIO_Port GPIOB
 #define BOOT1_Pin GPIO_PIN_2
 #define BOOT1_GPIO_Port GPIOB
+#define SPI_ADBMS_NSS_Pin GPIO_PIN_12
+#define SPI_ADBMS_NSS_GPIO_Port GPIOB
 #define FAULT_OUT_Pin GPIO_PIN_9
 #define FAULT_OUT_GPIO_Port GPIOC
-#define LLIM_EN_OUT_Pin GPIO_PIN_10
-#define LLIM_EN_OUT_GPIO_Port GPIOC
-#define HLIM_EN_OUT_Pin GPIO_PIN_11
-#define HLIM_EN_OUT_GPIO_Port GPIOC
-#define CONTACTOR_EN_OUT_Pin GPIO_PIN_12
-#define CONTACTOR_EN_OUT_GPIO_Port GPIOC
+#define LLIM_DIS_OUT_Pin GPIO_PIN_10
+#define LLIM_DIS_OUT_GPIO_Port GPIOC
+#define HLIM_DIS_OUT_Pin GPIO_PIN_11
+#define HLIM_DIS_OUT_GPIO_Port GPIOC
+#define CONTACTOR_DIS_OUT_Pin GPIO_PIN_12
+#define CONTACTOR_DIS_OUT_GPIO_Port GPIOC
 
 /* USER CODE BEGIN Private defines */
 

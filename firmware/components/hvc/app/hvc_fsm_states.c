@@ -402,11 +402,33 @@ void Monitoring(void)
         return;
     }
 
+<<<<<<< HEAD
+    if (HAL_GetTick() - last_tel_heartbeat_ms > HEARTBEAT_TIMEOUT_MS) {
+        DEBUG_IO_print("TEL heartbeat timeout\r\n");
+        fault_flags.tel_heartbeat_timeout = true;
+        hvc_state = FAULT;
+    }
+    if (HAL_GetTick() - last_mst_heartbeat_ms > HEARTBEAT_TIMEOUT_MS) {
+        DEBUG_IO_print("MST heartbeat timeout\r\n");
+        fault_flags.mst_heartbeat_timeout = true;
+        hvc_state = FAULT;
+    }
+    if (HAL_GetTick() - last_dist_heartbeat_ms > HEARTBEAT_TIMEOUT_MS) {
+        DEBUG_IO_print("DIST heartbeat timeout\r\n");
+        fault_flags.dist_heartbeat_timeout = true;
+        hvc_state = FAULT;
+    }
+
+    if (timer_elapsed(CAN_TX_INTERVAL_MS, &ticks.generic)) {
+        CAN_SendStatusMsg();
+        CAN_SendMessage_ShuntCurrent();
+=======
     if (timer_elapsed(CAN_TX_INTERVAL_MS, &ticks.generic)) { 
         CAN_SendStatusMsg();
         CAN_SendFaultMsg();
         CAN_Send_ShuntCurrent();
         CAN_Send_SuppVoltage();
+>>>>>>> 214291119f15f55ae6ad14e2e89c6882a3866953
     }
 }
 

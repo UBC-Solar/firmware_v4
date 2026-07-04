@@ -1,6 +1,7 @@
 #include "can_driver.h"
 
 #include "gpio_driver.h"
+#include "adc_driver.h"
 #include "main.h"
 #include "stm32f1xx_hal_def.h"
 #include "debug_io.h"
@@ -266,6 +267,24 @@ void CAN_Send_ShuntCurrent(void)
     txMessage.data[1] = (current_mA >> 16) & 0xFF;
     txMessage.data[2] = (current_mA >> 8)  & 0xFF;
     txMessage.data[3] = (current_mA)       & 0xFF;
+
+    CAN_QueueTxMessage(&txMessage);
+}
+
+void CAN_Send_LVCurrent(void)
+{    
+    ADC_Voltages adc = ADC_GetVoltages();
+    int32_t calc_mA = ((int32_t)adc.lv_curr_sense - LV_CURRENT_SENSOR_VOFFSET_MV)
+                       * 1000 / LV_CURRENT_SENSOR_MV_PER_A;
+
+    int16_t lv_current_mA = (int16_t)calc_mA;  // safe: range is well within int16_t    
+    CAN_TxMessage_t txMessage = {0};
+
+    txMessage.tx_header.StdId = HVC_LV_CURRENT_ID;  
+    txMessage.tx_header.DLC = 2;
+
+    txMessage.data[0] = (lv_current_mA >> 8) & 0xFF;
+    txMessage.data[1] = (lv_current_mA)      & 0xFF;
 
     CAN_QueueTxMessage(&txMessage);
 }

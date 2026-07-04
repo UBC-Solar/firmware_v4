@@ -47,6 +47,7 @@ typedef enum
 #define DIST_HEARTBEAT_ID           0x306U 
 #define DIST_FAULT_ID               0x307U
 #define LV_POWERUP_RECIEVED_ID      0x308U
+#define HVC_LV_CURRENT_ID              0x309U
 #define MST_HEARTBEAT_ID            0x310U
 #define MST_VOLT_SUMMARY_ID         0x311U
 #define SUPP_VOLTAGE_ID             0x317U
@@ -86,14 +87,17 @@ typedef enum
 #define HVC_SUPP_LOW_THRESHOLD_MV   10500
 #define Thermistor_MAX_THRESHOLD_MV 5000U
 #define DISCHARGE_COMPLETE_THRESHOLD_MV 100000U
-#define SUPP_SENSE_DIVIDER_NUM   5700  // (R13.4 + R13.5)
-#define SUPP_SENSE_DIVIDER_DEN   1000  // R13.5
 
 /*============================================================================*/
 /* RATIOS & SCALES */
 
 #define HVC_PC_COMPLETE_RATIO       90 // % of HV bus voltage for precharge complete
 #define HVC_MOTOR_PC_SCALE          56
+#define SUPP_SENSE_DIVIDER_NUM   5700  // (R13.4 + R13.5)
+#define SUPP_SENSE_DIVIDER_DEN   1000  // R13.5
+#define LV_CURRENT_SENSOR_VOFFSET_MV   330    // VS × 0.1, VS = 3.3V, A3U variant
+#define LV_CURRENT_SENSOR_MV_PER_A     200    // A3 sensitivity (both B/U variants)
+
 
 /*============================================================================*/
 /* CONTACTOR ACTIVE LEVELS*/

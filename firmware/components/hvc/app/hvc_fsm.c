@@ -266,42 +266,42 @@ void log_fault_cause(void)
 {
     if (fault_flags.estop)
     {
-        DEBUG_PRINT("FAULT: estop\r\n");
+        DEBUG_IO_PRINT("FAULT: estop\r\n");
     }
     if (fault_flags.imd_fault)
     {
-        DEBUG_PRINT("FAULT: imd_fault\r\n");
+        DEBUG_IO_PRINT("FAULT: imd_fault\r\n");
     }
     if (fault_flags.masterboard_fault)
     {
-        DEBUG_PRINT("FAULT: masterboard_fault\r\n");
+        DEBUG_IO_PRINT("FAULT: masterboard_fault\r\n");
     }
     if (fault_flags.dist_fault)
     {
-        DEBUG_PRINT("FAULT: dist_fault\r\n");
+        DEBUG_IO_PRINT("FAULT: dist_fault\r\n");
     }
     if (fault_flags.dcdc_fault)
     {
-        DEBUG_PRINT("FAULT: dcdc_fault\r\n");
+        DEBUG_IO_PRINT("FAULT: dcdc_fault\r\n");
     }
     if (fault_flags.overcurrent)
     {
-        DEBUG_PRINT("FAULT: overcurrent\r\n");
+        DEBUG_IO_PRINT("FAULT: overcurrent\r\n");
     }
     if (fault_flags.undercurrent)
     {
-        DEBUG_PRINT("FAULT: undercurrent\r\n");
+        DEBUG_IO_PRINT("FAULT: undercurrent\r\n");
     }
     if (fault_flags.tel_heartbeat_timeout)
     {
-        DEBUG_PRINT("FAULT: tel_heartbeat_timeout\r\n");
+        DEBUG_IO_PRINT("FAULT: tel_heartbeat_timeout\r\n");
     }
     if (fault_flags.mst_heartbeat_timeout)
     {
-        DEBUG_PRINT("FAULT: mst_heartbeat_timeout\r\n");
+        DEBUG_IO_PRINT("FAULT: mst_heartbeat_timeout\r\n");
     }
     if (fault_flags.dist_heartbeat_timeout)
     {
-        DEBUG_PRINT("FAULT: dist_heartbeat_timeout\r\n");
+        DEBUG_IO_PRINT("FAULT: dist_heartbeat_timeout\r\n");
     }
 }

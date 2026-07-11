@@ -196,7 +196,7 @@ void CAN_SendStatusMsg(void)
     txMessage.tx_header.DLC = 1;
     txMessage.data[0] = (uint8_t)hvc_state;
 
-    CAN_QueueTxMessage(message: &txMessage);
+    CAN_QueueTxMessage(&txMessage);
 }
 
 void CAN_SendFaultMsg() 

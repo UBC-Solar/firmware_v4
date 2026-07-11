@@ -44,6 +44,10 @@ void Debug_IsoSpiTestCycle(void);
 void Debug_SlaveTestCommsCycle(void);
 #endif // (INT_TEST_SLAVE == RUN)
 
+#if (INT_TEST_SLAVE_BAL_VOLT == RUN)
+void Debug_SlaveTestBalancingVoltageDrop(void);
+#endif // (INT_TEST_SLAVE_BAL_VOLT == RUN)
+
 #if (INT_TEST_SLAVE_BAL_SCRUT == RUN)
 void Debug_SlaveTestBalanceScrutCycle(void);
 #endif // (INT_TEST_SLAVE_BAL_SCRUT == RUN)

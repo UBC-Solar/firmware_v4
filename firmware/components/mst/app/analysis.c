@@ -7,17 +7,50 @@
 
 
 void ComputePackStatistics(module_t pack_modules[NUM_MODULES], pack_state_t *pack_state) {
-    uint32_t total_voltage_mV = 0;
-    int32_t total_temp_mC = 0;
-    for (int i = 0; i < NUM_MODULES; i++) {
-        total_voltage_mV += pack_modules[i].voltage_mv;
-        total_temp_mC += pack_modules[i].temperature_mC;
-    }
-    pack_state->total_voltage_mV = (uint32_t) total_voltage_mV;
-    pack_state->avg_voltage_mV = (uint32_t) total_voltage_mV / NUM_MODULES;
-    pack_state->avg_temp_mC = (int32_t ) total_temp_mC / NUM_MODULES;
+    /* Initialize accumulators in pack_state directly and min/max */
+    pack_state->total_voltage_mV = 0U;
+    pack_state->avg_voltage_mV = 0U;
+    pack_state->avg_temp_mC = 0;
 
-    LOG_INFO("Pack stats - Total V: %lu mV, Avg V: %lu mV, Total T: %ld mC, Avg T: %ld mC", pack_state->total_voltage_mV, pack_state->avg_voltage_mV, total_temp_mC, pack_state->avg_temp_mC);
+    pack_state->min_voltage_mV = UINT32_MAX;
+    pack_state->max_voltage_mV = 0U;
+    pack_state->min_voltage_idx = 0U;
+    pack_state->max_voltage_idx = 0U;
+    pack_state->min_temp_mC = INT32_MAX;
+    pack_state->max_temp_mC = INT32_MIN;
+    pack_state->min_temp_idx = 0U;
+    pack_state->max_temp_idx = 0U;
+
+    for (int i = 0; i < NUM_MODULES; i++) {
+        uint32_t v = pack_modules[i].voltage_mv;
+        int32_t t = pack_modules[i].temperature_mC;
+
+        pack_state->total_voltage_mV += v;
+        pack_state->avg_temp_mC += t;
+
+        if (v < pack_state->min_voltage_mV) {
+            pack_state->min_voltage_mV = v;
+            pack_state->min_voltage_idx = (uint8_t)i;
+        }
+        if (v > pack_state->max_voltage_mV) {
+            pack_state->max_voltage_mV = v;
+            pack_state->max_voltage_idx = (uint8_t)i;
+        }
+        if (t < pack_state->min_temp_mC) {
+            pack_state->min_temp_mC = t;
+            pack_state->min_temp_idx = (uint8_t)i;
+        }
+        if (t > pack_state->max_temp_mC) {
+            pack_state->max_temp_mC = t;
+            pack_state->max_temp_idx = (uint8_t)i;
+        }
+    }
+
+    int32_t total_temp_mC = pack_state->avg_temp_mC;
+    pack_state->avg_voltage_mV = pack_state->total_voltage_mV / NUM_MODULES;
+    pack_state->avg_temp_mC = total_temp_mC / (int32_t)NUM_MODULES;
+
+    LOG_INFO("Pack stats - Total V: %lu mV, Avg V: %lu mV, Total T: %ld mC, Avg T: %ld mC", pack_state->total_voltage_mV, pack_state->avg_voltage_mV, total_temp_mC, pack_state->avg_temp_mC);
     LOG_INFO("Pack statuses - Balancing Active: %d, Balancing Enable: %d, Scrutineering: %d", 
               pack_state->balancing_active, pack_state->balancing_enable, pack_state->scrutineering_enable);
     LOG_INFO("Pack statuses - LLIM: %d, HLIM: %d, Contactor: %d", 

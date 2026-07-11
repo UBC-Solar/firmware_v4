@@ -99,6 +99,7 @@ void CollectModuleData() {
         PauseAllBalancing();
     }
     RequestVoltageMeasurement();
+    uint32_t voltage_measure_end_ms = HAL_GetTick();
     if (RetrieveVoltageMeasurement(slaves, pack_modules) != Slave_OK) {
         IncrementCommError();
     }
@@ -106,9 +107,8 @@ void CollectModuleData() {
         ResumeAllBalancing();
     }
     
-    uint32_t voltage_end_ms = HAL_GetTick();
 
-    uint32_t temp_start_ms = HAL_GetTick();
+    uint32_t voltage_calc_end_ms = HAL_GetTick();
     
     #if TEMP_STRATEGY_ALL_AT_ONCE
     for (int mux_idx = 0; mux_idx < SLAVE_NUM_MODULES_PER_TEMP_VAL; mux_idx++) {
@@ -130,12 +130,14 @@ void CollectModuleData() {
     
     uint32_t temp_end_ms = HAL_GetTick();
     
-    uint32_t voltage_duration = voltage_end_ms - voltage_start_ms;
-    uint32_t temp_duration = temp_end_ms - temp_start_ms;
+    uint32_t voltage_measure_duration = voltage_measure_end_ms - voltage_start_ms;
+    uint32_t voltage_calc_duration = voltage_calc_end_ms - voltage_measure_end_ms;
+
+    uint32_t temp_duration = temp_end_ms - voltage_calc_end_ms;
     uint32_t total_duration = temp_end_ms - voltage_start_ms;
     
-    LOG_DEBUG("Voltage measurement: %lu ms, Temperature measurement: %lu ms, Total: %lu ms", 
-              voltage_duration, temp_duration, total_duration);
+    LOG_DEBUG("Voltage measurement: %lu ms, Voltage calculation: %lu ms, Temperature measurement: %lu ms, Total: %lu ms", 
+              voltage_measure_duration, voltage_calc_duration, temp_duration, total_duration);
 }
 
 
@@ -307,7 +309,60 @@ void Debug_SlaveTestCommsCycle(void) {
     LOG_INFO("Reg group match: %d. Comm error: %d. Config B first byte: %02X", reg_group_match, comm_status.error, slaves[0].config_regs[0][0]);
     HAL_Delay(500);
 }
+
 #endif // (INT_TEST_SLAVE == RUN)
+#if (INT_TEST_SLAVE_BAL_VOLT == RUN)
+void Debug_SlaveTestBalancingVoltageDrop(void) {
+    uint32_t previous_voltages[NUM_MODULES] = {0};
+    uint32_t current_voltages[NUM_MODULES] = {0};
+    pack_state.balancing_enable = true;
+
+    Slave_WakeUp();
+
+    RequestVoltageMeasurement();
+    if (RetrieveVoltageMeasurement(slaves, pack_modules) != Slave_OK) {
+        IncrementCommError();
+    }
+
+    for (int module_idx = 0; module_idx < NUM_MODULES; module_idx++) {
+        previous_voltages[module_idx] = pack_modules[module_idx].voltage_mv;
+    }
+
+    ComputePackStatistics(pack_modules, &pack_state);
+
+    /** Either: only enable one module's balancing */
+    // pack_modules[12].voltage_mv = pack_state.min_voltage_mV + 300;
+    // DoBalancing(&pack_state, pack_modules, slaves);
+
+    /** Or: enable balancing for every module */
+    Debug_DoBalancing(slaves, true);
+
+    HAL_Delay(500);
+    RequestVoltageMeasurement();
+    if (RetrieveVoltageMeasurement(slaves, pack_modules) != Slave_OK) {
+        IncrementCommError();
+    }
+
+    // 3 newlines to separate test data for each round of tests
+    LOG_INFO("");
+    LOG_INFO("");
+    LOG_INFO("");
+
+    for (int module_idx = 0; module_idx < NUM_MODULES; module_idx++) {
+        current_voltages[module_idx] = pack_modules[module_idx].voltage_mv;
+        int32_t voltage_delta_mv = (int32_t)current_voltages[module_idx] - (int32_t)previous_voltages[module_idx];
+        LOG_INFO("Module %d voltage: %lu mV (bal off) -> %lu mV (bal on). Note: %ld mV diff",
+                 module_idx,
+                 previous_voltages[module_idx],
+                 current_voltages[module_idx],
+                 voltage_delta_mv);
+    }
+
+    Debug_DoBalancing(slaves, false);
+    HAL_Delay(2000);
+}
+#endif // (INT_TEST_SLAVE_BAL_VOLT == RUN)
+
 
 #if (INT_TEST_SLAVE_BAL_SCRUT == RUN)
 void Debug_SlaveTestBalanceScrutCycle(void) {

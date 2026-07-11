@@ -35,22 +35,34 @@ typedef union {
 
 
 typedef struct {
-    bool balancing_active : 1;
-    bool balancing_enable : 1;
-    bool scrutineering_enable : 1;
+    bool balancing_active;
+    bool balancing_enable;
+    bool scrutineering_enable;
 
-    bool llim_enable : 1;
-    bool hlim_enable : 1;
-    bool contactor_enable : 1;
+    bool llim_enable;
+    bool hlim_enable;
+    bool contactor_enable;
 
-    bool error_comm_fail : 1;
-    bool error_self_test : 1;
-    uint32_t last_comm_fail_time : 32;
-    uint8_t num_consecutive_comm_fails : 8;
+    bool error_comm_fail;
+    bool error_self_test;
+    uint32_t last_comm_fail_time;
+    uint8_t num_consecutive_comm_fails;
     
-    uint32_t total_voltage_mV : 16;
-    uint16_t avg_voltage_mV : 16;
-    int32_t avg_temp_mC : 32;
+    uint32_t total_voltage_mV;
+    uint32_t avg_voltage_mV;
+    int32_t avg_temp_mC;
+
+    uint32_t min_voltage_mV;
+    uint8_t min_voltage_idx;
+
+    uint32_t max_voltage_mV;
+    uint8_t max_voltage_idx;
+
+    int32_t min_temp_mC;
+    uint8_t min_temp_idx;
+
+    int32_t max_temp_mC;
+    uint8_t max_temp_idx;
 } pack_state_t;
 
 

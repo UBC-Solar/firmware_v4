@@ -140,6 +140,10 @@ int main(void)
     Debug_SlaveTestCommsCycle();
     #endif // (INT_TEST_SLAVE == RUN)
 
+    #if (INT_TEST_SLAVE_BAL_VOLT == RUN)
+    Debug_SlaveTestBalancingVoltageDrop();
+    #endif // (INT_TEST_SLAVE_BAL_VOLT == RUN)
+
     #if (INT_TEST_SLAVE_BAL_SCRUT == RUN)
     Debug_SlaveTestBalanceScrutCycle();
     #endif // (INT_TEST_SLAVE_BAL_SCRUT == RUN)

@@ -38,7 +38,8 @@ typedef enum
 
 /*============================================================================*/
 /* CAN ID's*/
-#define TEL_HEARTBEAT_ID            0x750U          
+#define HVC_FAULT_ID                0x301U
+#define TEL_HEARTBEAT_ID            0x750U                   
 #define HVC_HEARTBEAT_ID            0x302U
 #define LV_POWERUP_SENT_ID          0x303U
 #define HVC_STATUS_ID               0x304U
@@ -46,8 +47,10 @@ typedef enum
 #define DIST_HEARTBEAT_ID           0x306U 
 #define DIST_FAULT_ID               0x307U
 #define LV_POWERUP_RECIEVED_ID      0x308U
+#define HVC_LV_CURRENT_ID           0x309U
 #define MST_HEARTBEAT_ID            0x310U
 #define MST_VOLT_SUMMARY_ID         0x311U
+#define SUPP_VOLTAGE_ID             0x317U
 /*============================================================================*/
 /* TIMEOUT CONSTANTS */
 
@@ -90,6 +93,10 @@ typedef enum
 
 #define HVC_PC_COMPLETE_RATIO       90 // % of HV bus voltage for precharge complete
 #define HVC_MOTOR_PC_SCALE          56
+#define SUPP_SENSE_DIVIDER_NUM      5700  // (R13.4 + R13.5)
+#define SUPP_SENSE_DIVIDER_DEN      1000  // R13.5
+#define LV_CURRENT_SENSOR_VOFFSET_MV   330    // VS × 0.1, VS = 3.3V, A3U variant
+#define LV_CURRENT_SENSOR_MV_PER_A     200    // A3 sensitivity (both B/U variants)
 
 /*============================================================================*/
 /* CONTACTOR ACTIVE LEVELS*/
@@ -127,16 +134,18 @@ typedef struct {
 
 extern volatile HVC_State_t hvc_state;
 extern HVC_Ticks_t ticks;
+extern HVC_FaultFlags_t fault_flags;
 extern bool startup_complete;
 extern bool tel_heartbeat_received;
 extern bool mst_status_healthy;
-extern int32_t mst_pack_voltage_mv;
+extern bool tel_dist_heartbeat_check_enabled;
+extern bool mst_heartbeat_check_enabled;
 extern bool lv_powerup_received;
-extern HVC_FaultFlags_t fault_flags;
+extern bool mst_irq_armed;
+extern int32_t mst_pack_voltage_mv;
 extern uint32_t last_tel_heartbeat_ms;
 extern uint32_t last_mst_heartbeat_ms;
 extern uint32_t last_dist_heartbeat_ms;
-extern bool mst_irq_armed;
 
 /*============================================================================*/
 /* INTERNAL HELPERS — implemented in hvc_fsm.c */
@@ -145,8 +154,8 @@ bool   timer_elapsed(uint32_t interval, uint32_t *last_tick);
 void   open_all_contactors(void);
 void   check_supp_voltage(void);
 const char* state_to_string(HVC_State_t state_in);
-void    log_state_change(HVC_State_t new_state, HVC_State_t old_state);
-
+void   log_state_change(HVC_State_t new_state, HVC_State_t old_state);
+void   log_fault_cause();
 /*============================================================================*/
 /* STATE FUNCTION PROTOTYPES — implemented in hvc_fsm_states.c */
 

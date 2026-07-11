@@ -55,6 +55,7 @@ void MvpLvPowerup(void) {
     if (tel_heartbeat_received) {
         tel_heartbeat_received = false;
         dist_powered = false;
+        tel_dist_heartbeat_check_enabled = true;   
         ticks.generic = HAL_GetTick();
         hvc_state = MST_READY;
         return;
@@ -110,6 +111,7 @@ void MST_Check(void)
     if (mst_fault == GPIO_PIN_RESET) {
         mst_irq_armed = true;
         if (mst_status_healthy) {
+            mst_heartbeat_check_enabled = true;
             ticks.generic = HAL_GetTick();
             hvc_state = FANS_POWERUP;
             return;
@@ -400,25 +402,11 @@ void Monitoring(void)
         return;
     }
 
-    if (HAL_GetTick() - last_tel_heartbeat_ms > HEARTBEAT_TIMEOUT_MS) {
-        DEBUG_IO_print("TEL heartbeat timeout\r\n");
-        fault_flags.tel_heartbeat_timeout = true;
-        hvc_state = FAULT;
-    }
-    if (HAL_GetTick() - last_mst_heartbeat_ms > HEARTBEAT_TIMEOUT_MS) {
-        DEBUG_IO_print("MST heartbeat timeout\r\n");
-        fault_flags.mst_heartbeat_timeout = true;
-        hvc_state = FAULT;
-    }
-    if (HAL_GetTick() - last_dist_heartbeat_ms > HEARTBEAT_TIMEOUT_MS) {
-        DEBUG_IO_print("DIST heartbeat timeout\r\n");
-        fault_flags.dist_heartbeat_timeout = true;
-        hvc_state = FAULT;
-    }
-
     if (timer_elapsed(CAN_TX_INTERVAL_MS, &ticks.generic)) { 
-        CAN_SendStatusMsg();
-        CAN_SendMessage_ShuntCurrent(); 
+        CAN_SendStatusMsg(); 
+        CAN_SendFaultMsg();
+        CAN_Send_ShuntCurrent();
+        CAN_Send_SuppVoltage();
     }
     check_supp_voltage();
 }
@@ -439,5 +427,11 @@ void Fault(void)
 
     if (timer_elapsed(CAN_TX_INTERVAL_MS, &ticks.generic)) { CAN_SendStatusMsg(); }
 
+    if (timer_elapsed(CAN_TX_INTERVAL_MS, &ticks.generic)) {
+        CAN_SendStatusMsg();
+        CAN_SendFaultMsg();
+        CAN_Send_ShuntCurrent();
+        CAN_Send_SuppVoltage();
+    }
     check_supp_voltage();
 }

@@ -132,16 +132,17 @@ void Module_Init(
             // Cell Voltage Register Group F,
             {31, -1, -1}
         },
-        // 2 bytes per value, each value can hold data for one of 4 modules at any point.
-        // So each register group holds data for 12 modules.
+        // 2 bytes per GPIO reading, so there are 3 readings per register.
+        // Each reading can hold data for one of 4 modules at any point (because of the multiplexer on slaveboard). 
+        // So each register group holds data for 3 * 4 = 12 modules.
         // Multiplexer documentation: https://www.ti.com/lit/ds/symlink/sn74lv4052a.pdf
         .temp_mappings = {
             // Auxiliary Register Group A
             { {-1, -1, -1, -1}, {-1, -1, -1, -1}, {16, 17, 18, 19} },
             // Auxiliary Register Group B
-            { {20, 21, 22, 23}, {24, 25, 26, 27}, {28, 29, 30, 31} },
+            { {20, 21, 22, 23}, {24, 25, 26, 27}, {-1, -1, -1, -1} },
             // Auxiliary Register Group C
-            { {-1, -1, -1, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1} }
+            { {28, 29, 30, 31}, {-1, -1, -1, -1}, {-1, -1, -1, -1} }
         },
         // 4 bits per value, each value holds data for 4 continuous modules at once (e.g. value == 0 --> data for modules 0 to 3)
         // so each register group holds data for 12 modules

@@ -54,6 +54,7 @@
 #define SLAVEBOARD_REV 1
 
 // Enable / disable MST algorithms
+#define INIT_FAULT_HOLD_DURATION_MS 2000 // MST pulls FAULT HIGH at startup to notify HVC
 #define RUN_MAIN_LOOP true
 #define ISOSPI_CONNECTED true
 #define CAN_CONNECTED true

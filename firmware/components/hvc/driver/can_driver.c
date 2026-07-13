@@ -205,16 +205,17 @@ void CAN_SendFaultMsg()
 
     txMessage.tx_header.StdId = HVC_FAULT_ID;
     txMessage.tx_header.DLC = 8;
-    txMessage.data[1] = (uint8_t)fault_flags.estop;
-    txMessage.data[2] = (uint8_t)fault_flags.imd_fault;
-    txMessage.data[3] = (uint8_t)fault_flags.masterboard_fault;
-    txMessage.data[4] = (uint8_t)fault_flags.overcurrent;
-    txMessage.data[5] = (uint8_t)fault_flags.undercurrent;
-    txMessage.data[6] = (uint8_t)fault_flags.dist_fault;
-    txMessage.data[7] = (uint8_t)fault_flags.dcdc_fault;
-    txMessage.data[8] = (uint8_t)(fault_flags.tel_heartbeat_timeout | 
-                               fault_flags.mst_heartbeat_timeout | 
-                               fault_flags.dist_heartbeat_timeout);  
+    txMessage.data[0] = (fault_flags.estop << 7) |
+                        (fault_flags.imd_fault << 6) | 
+                        (fault_flags.masterboard_fault << 5) |
+                        (fault_flags.overcurrent << 4) | 
+                        (fault_flags.undercurrent << 3) | 
+                        (fault_flags.dist_fault << 2) |
+                        (fault_flags.dcdc_fault << 1) | 
+                        (fault_flags.tel_heartbeat_timeout << 0);
+
+    txMessage.data[1] = (fault_flags.mst_heartbeat_timeout << 7) |
+                        (fault_flags.dist_heartbeat_timeout << 6);  
 
     CAN_QueueTxMessage(&txMessage);
 }

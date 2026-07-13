@@ -82,12 +82,13 @@ void HVC_FSM_Run(void)
         fault_flags.mst_heartbeat_timeout = true;
     }
 
-    if (fault_flags.dist_fault || fault_flags.imd_fault || fault_flags.tel_heartbeat_timeout ||
-        fault_flags.estop || fault_flags.dcdc_fault || fault_flags.masterboard_fault ||
-        fault_flags.overcurrent || fault_flags.undercurrent)
+    if (fault_flags.dist_fault || fault_flags.imd_fault || fault_flags.estop ||
+        fault_flags.dcdc_fault || fault_flags.masterboard_fault ||
+        fault_flags.overcurrent || fault_flags.undercurrent || fault_flags.tel_heartbeat_timeout ||
+        fault_flags.mst_heartbeat_timeout || fault_flags.dist_heartbeat_timeout
+        )
     {
         hvc_state = FAULT; // override with fault.
-        //TODO: Add print for cause of the fault
         hvc_state = FAULT;
         log_fault_cause();
     }
@@ -226,7 +227,7 @@ void check_supp_voltage(void)
                            ? GPIO_PIN_SET : GPIO_PIN_RESET;
     GPIO_Write(SUPP_LOW_LED_GPIO_Port, SUPP_LOW_LED_Pin, state);
     
-    if (timer_elapsed(HVC_HEARTBEAT_INTERVAL_MS, ticks.supp_voltage)) {
+    if (timer_elapsed(HVC_HEARTBEAT_INTERVAL_MS, &ticks.supp_voltage)) {
         DEBUG_IO_PRINT("SUPP Voltage: %lu mV\r\n", actual_mV);
     }
 }

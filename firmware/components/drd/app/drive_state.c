@@ -22,6 +22,8 @@
 #include "cyclic_data_handler.h"
 #include "diagnostic.h"
 #include "gpio_driver.h"
+#include "lcd_app.h"
+#include "lcd_handler.h"
 
 /* GLOBAL VARIABLES */
 volatile DriveStateCtx g_drive_state_ctx = {
@@ -36,6 +38,7 @@ volatile DriveStateCtx g_drive_state_ctx = {
         .eco_mode_on = false,
     },
     .velocity_kmh = 0,
+    .velocity_mph = 0,
     .throttle_dac = 0,
 };
 
@@ -254,11 +257,20 @@ static void EcoPowerHandler(DriveStateCtx *ctx)
 void DriveStateVelocityCanMsgHandler(uint8_t* data)
 {
     uint32_t rpm = (data[4] >> 3) | ((data[5] & 0x7f) << 5);
-    float velocity = (WHEEL_RADIUS * 2.0f * M_PI * rpm) / 60.0f;
-    g_drive_state_ctx.velocity_kmh = (uint32_t)(velocity * 3.6f);
-    CyclicDataSetSpeed(g_drive_state_ctx.velocity_kmh);
+    float velocity_ms = (WHEEL_RADIUS * 2.0f * M_PI * rpm) / 60.0f; // convert to m/s
 
-    if (velocity < VELOCITY_THRESHOLD)
+    uint8_t speed_units = LcdHandlerGetSpeedUnits();
+
+    if (LCD_APP_KPH == speed_units){
+        g_drive_state_ctx.velocity_kmh = (uint32_t)(velocity_ms * KPH_MULTIPLIER);
+        CyclicDataSetSpeed(g_drive_state_ctx.velocity_kmh);
+    }
+    else if (LCD_APP_MPH == speed_units){
+        g_drive_state_ctx.velocity_mph = (uint32_t)(velocity_ms * MPH_MULTIPLIER);
+        CyclicDataSetSpeed(g_drive_state_ctx.velocity_mph);
+    }
+
+    if (velocity_ms < VELOCITY_THRESHOLD)
     {
         g_drive_state_ctx.flags.velocity_under_threshold = true;
     }

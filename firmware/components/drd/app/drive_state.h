@@ -28,6 +28,9 @@
 #define M_PI 3.14159
 #define VELOCITY_THRESHOLD 0.5
 
+#define MPH_MULTIPLIER 2.23694f
+#define KPH_MULTIPLIER 3.6f
+
 /* DRIVE STATE DATA TYPES */
 typedef struct
 {
@@ -59,6 +62,7 @@ typedef struct {
     DriveStateStates state;
     DriveStateFlags flags;
     uint32_t velocity_kmh;
+    uint32_t velocity_mph;
     uint16_t throttle_dac;
 } DriveStateCtx;
 

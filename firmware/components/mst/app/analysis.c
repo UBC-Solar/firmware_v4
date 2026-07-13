@@ -29,20 +29,23 @@ void ComputePackStatistics(module_t pack_modules[NUM_MODULES], pack_state_t *pac
               pack_faults.bits.fault_over_temperature, pack_faults.bits.fault_under_temperature);
 
     
+    #if (CURRENT_LOG_LEVEL <= LOG_LEVEL_INFO)
     for (int i = 0; i < NUM_MODULES; i++) {
 
         bool is_module_outlier = 
             pack_modules[i].voltage_mv < (pack_state->avg_voltage_mV * 0.7) || 
             pack_modules[i].voltage_mv > (pack_state->avg_voltage_mV * 1.3) ||
-            pack_modules[i].temperature_mC < (pack_state->avg_temp_mC - 1000) ||
-            pack_modules[i].temperature_mC > (pack_state->avg_temp_mC + 1000);
+            pack_modules[i].temperature_mC < (pack_state->avg_temp_mC - 2000) ||
+            pack_modules[i].temperature_mC > (pack_state->avg_temp_mC + 2000);
 
-        LOG_INFO("Module %d - Voltage: %d.%03dV, Temp: %d.%03dC %s", 
+        LOG_INFO("Module %d - Balancing? %s, Voltage: %d.%03dV, Temp: %d.%03dC %s", 
             i, 
+            pack_modules[i].is_balancing ? "Y" : "N",
             pack_modules[i].voltage_mv / 1000, pack_modules[i].voltage_mv % 1000, 
             pack_modules[i].temperature_mC / 1000, pack_modules[i].temperature_mC % 1000,
             is_module_outlier ? " <-- OUTLIER" : "");
     }
+    #endif // (CURRENT_LOG_LEVEL <= LOG_LEVEL_INFO)
 }
 
 

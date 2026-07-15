@@ -1,6 +1,6 @@
 # Top level makefile used to make building from the command line simple.
 
-.PHONY: all mdi tel drd hvc mst str clean help debug release utest
+.PHONY: all mdi tel drd hvc mst str nucleo clean help debug release utest
 
 debug release Debug Release:
 	@:
@@ -15,6 +15,7 @@ help:
 	@echo "  make all release    - Build all modules (Release)"
 	@echo "  make mdi debug      - Build MDI in Debug"
 	@echo "  make mdi release    - Build MDI in Release"
+	@echo "  make nucleo debug   - Build Nucleo-F103RB bootloader/app test"
 	@echo "  make utest          - Run all unit tests"
 	@echo "  make utest mdi      - Run unit tests for MDI only"
 	@echo "  make clean          - Remove all build directories"
@@ -77,6 +78,13 @@ str:
 		-B firmware/components/str/$(BUILD_DIR)
 	cmake --build firmware/components/str/$(BUILD_DIR)
 
+nucleo:
+	@echo "=== Building Nucleo-F103RB ($(MODE)) ==="
+	cmake --preset $(MODE) \
+		-S firmware/components/nucleo_f103rb \
+		-B firmware/components/nucleo_f103rb/$(BUILD_DIR)
+	cmake --build firmware/components/nucleo_f103rb/$(BUILD_DIR)
+
 utest:
 	@echo "=== Running all unit tests ==="
 # 	cd firmware/components/mdi/ && ./ceedling test:all
@@ -90,5 +98,6 @@ clean:
 	rm -rf firmware/components/hvc/$(BUILD_DIR)
 	rm -rf firmware/components/mst/$(BUILD_DIR)
 	rm -rf firmware/components/str/$(BUILD_DIR)
+	rm -rf firmware/components/nucleo_f103rb/$(BUILD_DIR)
 # 	cd firmware/components/mdi/ && ./ceedling clean
 	@echo "Clean complete."

@@ -123,8 +123,8 @@ void TransmitDriveControlState(void)
     data[2] = (uint8_t)((cruise_set_velocity_kmh >> 8) & 0xFFU);
 
     data[3] =
-    ((uint8_t)gpio_pin_state.cruise_state.cruise_inc & 0xFU << 0) |
-    ((uint8_t)gpio_pin_state.cruise_state.cruise_dec & 0xFU << 1);
+    (((uint8_t)gpio_pin_state.cruise_state.cruise_inc & 0x1U) << 0) |
+    (((uint8_t)gpio_pin_state.cruise_state.cruise_dec & 0x1U) << 1);
 
     memcpy(msg.data, data, CAN_DATA_SIZE);
 

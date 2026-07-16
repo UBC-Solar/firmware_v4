@@ -16,6 +16,7 @@
 
 /* DEFINES */
 #define STR_DISPLAY_MAX 99
+#define AS1115_CODE_B_DASH 0x0A // Code-B decode glyph for '-'
 
 /* DISPLAY OUTPUT */
 void HexDisplayWriteDecimal(uint8_t num)
@@ -30,4 +31,10 @@ void HexDisplayWriteDecimal(uint8_t num)
 
     HexDisplayWriteReg(AS1115_REG_DIGIT0, tens_digit);
     HexDisplayWriteReg(AS1115_REG_DIGIT1, ones_digit);
+}
+
+void HexDisplayWriteDashes(void)
+{
+    HexDisplayWriteReg(AS1115_REG_DIGIT0, AS1115_CODE_B_DASH);
+    HexDisplayWriteReg(AS1115_REG_DIGIT1, AS1115_CODE_B_DASH);
 }

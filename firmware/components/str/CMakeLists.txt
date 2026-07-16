@@ -46,6 +46,7 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     ${CMAKE_CURRENT_SOURCE_DIR}/app/can_app.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/cyclic_data_handler.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/diagnostic_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/gpio_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/hex_app.c
@@ -72,6 +73,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/driver
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/CAN_comms
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/cyclic_data
 )
 
 # Add project symbols (macros)

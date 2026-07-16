@@ -30,4 +30,12 @@ void SteeringVelocityCanMsgHandler(uint8_t* data);
  */
 void HexDisplayWriteDecimal(uint8_t num);
 
+/**
+ * @brief Writes "--" to the two-digit steering wheel display.
+ *
+ * Used when cyclic speed data is missing or stale so a real 0 km/h reading
+ * is not confused with no data.
+ */
+void HexDisplayWriteDashes(void);
+
 #endif /* __HEX__APP__H__ */

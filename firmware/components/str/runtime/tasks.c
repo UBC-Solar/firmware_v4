@@ -8,6 +8,7 @@
 #include "iwdg_app.h"
 #include "cmsis_os.h"
 #include "can_app.h"
+#include "cyclic_data_handler.h"
 #include "gpio_app.h"
 #include "gpio_driver.h"
 #include "hex_driver.h"
@@ -36,10 +37,21 @@ void StartSteeringOutputsTask(void *argument)
 void StartHexDisplayTask(void *argument)
 {
     HexDisplayInit();
-    HexDisplayWriteDecimal(0);
+    HexDisplayWriteDashes();
     for(;;)
     {
-        HexDisplayWriteDecimal((uint8_t)ReadCurrentVelocity());
+        uint32_t* speed = CyclicDataGetSpeed();
+
+        if (speed != NULL)
+        {
+            HexDisplayWriteDecimal((uint8_t)(*speed));
+        }
+        else
+        {
+            // No/stale RPM-derived speed — show "--", not 0
+            HexDisplayWriteDashes();
+        }
+
         osDelay(HEX_TASK_DELAY);
     }
 }

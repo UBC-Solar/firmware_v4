@@ -37,9 +37,21 @@ void StartSteeringOutputsTask(void *argument)
 void StartHexDisplayTask(void *argument)
 {
     HexDisplayInit();
+    HexDisplayWriteDashes();
     for(;;)
     {
-        HexAppUpdate();
+        uint32_t* speed = CyclicDataGetSpeed();
+
+        if (speed != NULL)
+        {
+            HexDisplayWriteDecimal((uint8_t)(*speed));
+        }
+        else
+        {
+            // No/stale RPM-derived speed — show "--", not 0
+            HexDisplayWriteDashes();
+        }
+
         osDelay(HEX_TASK_DELAY);
     }
 }

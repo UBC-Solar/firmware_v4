@@ -38,12 +38,4 @@ void HexDisplayWriteDecimal(uint8_t num);
  */
 void HexDisplayWriteDashes(void);
 
-/**
- * @brief Updates the hex display with current speed or dashes if unavailable.
- *
- * Retrieves cyclic speed data and writes it to the display. If speed data is
- * unavailable or stale, displays dashes instead.
- */
-void HexAppUpdate(void);
-
 #endif /* __HEX__APP__H__ */

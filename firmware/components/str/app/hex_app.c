@@ -39,18 +39,3 @@ void HexDisplayWriteDashes(void)
     HexDisplayWriteReg(AS1115_REG_DIGIT0, AS1115_CODE_B_DASH);
     HexDisplayWriteReg(AS1115_REG_DIGIT1, AS1115_CODE_B_DASH);
 }
-
-void HexAppUpdate(void)
-{
-    uint32_t* speed = CyclicDataGetSpeed();
-
-    if (speed != NULL)
-    {
-        HexDisplayWriteDecimal((uint8_t)(*speed));
-    }
-    else
-    {
-        //if no speed is available, display dashes
-        HexDisplayWriteDashes();
-    }
-}

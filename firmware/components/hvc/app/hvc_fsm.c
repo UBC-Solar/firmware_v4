@@ -166,9 +166,9 @@ void IMDFaultCallback(void)
     hvc_state = FAULT;
 }
 
-void MasterboardFaultCallback(bool mst_irq_armed)
+void MasterboardFaultCallback(bool if_fault)
 {
-    if (mst_irq_armed) {
+    if (if_fault) {
         fault_flags.masterboard_fault = true;
         DEBUG_IO_PRINT("Masterboard Fault\r\n");
     }
@@ -226,10 +226,6 @@ void check_supp_voltage(void)
     GPIO_PinState state = (actual_mV < HVC_SUPP_LOW_THRESHOLD_MV)
                            ? GPIO_PIN_SET : GPIO_PIN_RESET;
     GPIO_Write(SUPP_LOW_LED_GPIO_Port, SUPP_LOW_LED_Pin, state);
-    
-    if (timer_elapsed(HVC_HEARTBEAT_INTERVAL_MS, &ticks.supp_voltage)) {
-        DEBUG_IO_PRINT("SUPP Voltage: %lu mV\r\n", actual_mV);
-    }
 }
 
 // Note that char pointers returned from this function will always point to string literals

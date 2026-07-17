@@ -188,6 +188,20 @@ void CAN_SendMessageXXX()
     CAN_QueueTxMessage(&txMessage);
 }
 
+/**
+ * @brief Send all periodic CAN messages, if the TX interval has elapsed.
+ */
+void CAN_SendAllMessages(void) 
+{
+    if (timer_elapsed(CAN_TX_INTERVAL_MS, &ticks.generic)) {
+        CAN_SendStatusMsg();
+        CAN_SendFaultMsg();
+        CAN_Send_ShuntCurrent();
+        CAN_Send_LVCurrent();
+        CAN_Send_SuppVoltage();
+    }
+}
+
 void CAN_SendStatusMsg(void) 
 {
     CAN_TxMessage_t txMessage = {0};
@@ -204,7 +218,7 @@ void CAN_SendFaultMsg()
     CAN_TxMessage_t txMessage = {0};
 
     txMessage.tx_header.StdId = HVC_FAULT_ID;
-    txMessage.tx_header.DLC = 8;
+    txMessage.tx_header.DLC = 2;
     txMessage.data[0] = (fault_flags.estop << 7) |
                         (fault_flags.imd_fault << 6) | 
                         (fault_flags.masterboard_fault << 5) |
@@ -229,7 +243,7 @@ void CAN_SendHeartbeat(void)
     txMessage.tx_header.StdId = HVC_HEARTBEAT_ID;
     txMessage.tx_header.IDE   = CAN_ID_STD;
     txMessage.tx_header.RTR   = CAN_RTR_DATA;
-    txMessage.tx_header.DLC   = 2U;
+    txMessage.tx_header.DLC   = 2;
 
     txMessage.data[0] = (uint8_t)(HeartBeatCounter >> 8);  
     txMessage.data[1] = (uint8_t)(HeartBeatCounter & 0xFFU);
@@ -245,7 +259,7 @@ void CAN_LV_PowerupMessage()
 
     // Note: replace with actual values
     txMessage.tx_header.StdId = LV_POWERUP_SENT_ID;
-    txMessage.tx_header.DLC = 2;
+    txMessage.tx_header.DLC = 1;
     txMessage.data[0] = 1U;
 
     CAN_QueueTxMessage(&txMessage);
@@ -258,7 +272,7 @@ void CAN_LV_PowerupMessage()
     INA228_Read_Shunt_Voltage();
 
     int32_t current_mA = INA228_Get_Shunt_Current_mA();
-    DEBUG_IO_print("Shunt Current:%u mA \r\n", current_mA);
+    DEBUG_IO_print("Shunt Current:%d mA \r\n", current_mA);
 
     CAN_TxMessage_t txMessage = {0};
 
@@ -282,6 +296,8 @@ void CAN_Send_LVCurrent(void)
     int16_t lv_current_mA = (int16_t)calc_mA;  // safe: range is well within int16_t    
     CAN_TxMessage_t txMessage = {0};
 
+    DEBUG_IO_print("LV_Current: %d mA\r\n", lv_current_mA);
+
     txMessage.tx_header.StdId = HVC_LV_CURRENT_ID;  
     txMessage.tx_header.DLC = 2;
 
@@ -296,7 +312,7 @@ void CAN_Send_SuppVoltage(void)
     ADC_Voltages adc = ADC_GetVoltages();
     uint32_t actual_mV = (uint32_t)adc.supp_sense * SUPP_SENSE_DIVIDER_NUM / SUPP_SENSE_DIVIDER_DEN;
 
-    DEBUG_IO_print("SUPP Voltage: %lu mV\r\n", actual_mV);
+    DEBUG_IO_print("SUPP Voltage: %d mV\r\n", actual_mV);
 
     CAN_TxMessage_t txMessage = {0};
     txMessage.tx_header.StdId = SUPP_VOLTAGE_ID;
@@ -367,9 +383,12 @@ void CAN_RecievedMessageCallback(uint32_t fifo_num)
                 ((new_rx_message.data[5] & 1) == 0);
             break;
         case MST_VOLT_SUMMARY_ID:
-            mst_pack_voltage_mv = 
+            mst_pack_voltage_mv =
                 (uint32_t) new_rx_message.data[0] |
-                (uint32_t) new_rx_message.data[1] << 8;
+                (uint32_t) new_rx_message.data[1] << 8 |
+                (uint32_t) new_rx_message.data[2] << 16 |
+                (uint32_t) new_rx_message.data[3] << 24;
+                break;
         case DIST_HEARTBEAT_ID:
             last_dist_heartbeat_ms = HAL_GetTick();
             break;

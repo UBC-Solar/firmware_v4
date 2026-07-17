@@ -401,13 +401,7 @@ void Monitoring(void)
         hvc_state = FAULT;
         return;
     }
-
-    if (timer_elapsed(CAN_TX_INTERVAL_MS, &ticks.generic)) { 
-        CAN_SendStatusMsg(); 
-        CAN_SendFaultMsg();
-        CAN_Send_ShuntCurrent();
-        CAN_Send_SuppVoltage();
-    }
+    CAN_SendAllMessages();
     check_supp_voltage();
 }
 
@@ -424,14 +418,6 @@ void Fault(void)
     if (timer_elapsed(FAULT_LED_BLINK_MS, &ticks.fault_led)) {
         GPIO_Toggle(FAULT_LED_GPIO_Port, FAULT_LED_Pin);
     }
-
-    if (timer_elapsed(CAN_TX_INTERVAL_MS, &ticks.generic)) { CAN_SendStatusMsg(); }
-
-    if (timer_elapsed(CAN_TX_INTERVAL_MS, &ticks.generic)) {
-        CAN_SendStatusMsg();
-        CAN_SendFaultMsg();
-        CAN_Send_ShuntCurrent();
-        CAN_Send_SuppVoltage();
-    }
+    CAN_SendAllMessages();
     check_supp_voltage();
 }

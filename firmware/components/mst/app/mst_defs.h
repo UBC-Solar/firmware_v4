@@ -37,16 +37,18 @@
 /**
  * CAN messages
  */
-#define CAN_STATUS_ID               0x310
-#define CAN_STATUS_PERIOD_MS        1000
-#define CAN_MODULE_VOLT_SUMMARY_ID  0x311
-#define CAN_MODULE_TEMP_SUMMARY_ID  0x312
-#define CAN_MODULE_VOLT_DATA_ID     0x313
-#define CAN_MODULE_TEMP_DATA_ID     0x314
-#define CAN_MODULE_STATUS_ID        0x315
-#define CAN_BALANCE_DATA_ID         0x316
-#define CAN_NUM_MODULE_GROUPS       8U
-#define CAN_NUM_MODULES_PER_GROUP   NUM_MODULES / CAN_NUM_MODULE_GROUPS
+#define CAN_STATUS_ID                       0x310
+#define CAN_STATUS_PERIOD_MS                1000
+#define CAN_MODULE_VOLT_SUMMARY_ID          0x311
+#define CAN_MODULE_TEMP_SUMMARY_ID          0x312
+#define CAN_MODULE_VOLT_DATA_ID_START       0x320
+#define CAN_MODULE_TEMP_DATA_ID_START       0x340
+#define CAN_MODULE_STATUS_ID_START          0x360
+#define CAN_BALANCE_DATA_ID                 0x380
+#define CAN_NUM_DATA_GROUPS                 8U
+#define CAN_NUM_MODULES_PER_DATA_GROUP      NUM_MODULES / CAN_NUM_DATA_GROUPS
+#define CAN_NUM_STATS_GROUPS                4U
+#define CAN_NUM_MODULES_PER_STATS_GROUP     NUM_MODULES / CAN_NUM_STATS_GROUPS
 
 
 // Slave(board)s

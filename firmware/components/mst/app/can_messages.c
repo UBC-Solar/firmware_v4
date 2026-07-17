@@ -4,17 +4,11 @@
 #include "mst_main.h"
 #include "stm32f1xx_hal.h"
 
-uint32_t last_heartbeat_time_ms = 0;
-uint32_t current_heartbeat = 0;
-
-
-#if !CAN_STRATEGY_ALL_AT_ONCE
-uint8_t current_volt_group_idx = 0;
-uint8_t current_temp_group_idx = 0;
-uint8_t current_status_group_idx = 0;
-#endif // !CAN_STRATEGY_ALL_AT_ONCE
 
 void CAN_SendHeartbeatMessage(void) {
+    static uint32_t last_heartbeat_time_ms = 0;
+    static uint32_t current_heartbeat = 0;
+
     CAN_TxMessage_t msg = {0};
     msg.tx_header.StdId = CAN_STATUS_ID;
     msg.tx_header.IDE = CAN_ID_STD;
@@ -55,33 +49,23 @@ void CAN_SendHeartbeatMessage(void) {
     CAN_QueueTxMessage(&msg);
     current_heartbeat++;
 }
-
 void CAN_SendVoltageSummaryMessage(void) {
     CAN_TxMessage_t msg = {0};
     msg.tx_header.StdId = CAN_MODULE_VOLT_SUMMARY_ID;
     msg.tx_header.IDE = CAN_ID_STD;
     msg.tx_header.RTR = CAN_RTR_DATA;
-    msg.tx_header.DLC = 6;
+    msg.tx_header.DLC = 8;
 
-    uint32_t total_voltage = 0;
-    uint32_t min_voltage = 0xFFFFFFFF;
-    uint32_t max_voltage = 0;
-    uint8_t min_idx = 0;
-    uint8_t max_idx = 0;
+    uint32_t total_voltage = pack_state.total_voltage_mV;
 
-    for (int i = 0; i < NUM_MODULES; i++) {
-        uint32_t v = pack_modules[i].voltage_mv;
-        total_voltage += v;
-        if (v < min_voltage) { min_voltage = v; min_idx = i; }
-        if (v > max_voltage) { max_voltage = v; max_idx = i; }
-    }
-
-    msg.data[0] = total_voltage & 0xFF;
-    msg.data[1] = (total_voltage >> 8) & 0xFF;
-    msg.data[2] = min_idx;
-    msg.data[3] = max_idx;
-    msg.data[4] = 0;
-    msg.data[5] = 0;
+    msg.data[0] = (total_voltage)       & 0xFF;
+    msg.data[1] = (total_voltage >> 8)  & 0xFF;
+    msg.data[2] = (total_voltage >> 16) & 0xFF;
+    msg.data[3] = (total_voltage >> 24) & 0xFF;
+    msg.data[4] = pack_state.min_voltage_idx+1;
+    msg.data[5] = pack_state.max_voltage_idx+1;
+    msg.data[6] = 0;
+    msg.data[7] = 0;
 
     CAN_QueueTxMessage(&msg);
 }
@@ -91,57 +75,46 @@ void CAN_SendTempSummaryMessage(void) {
     msg.tx_header.StdId = CAN_MODULE_TEMP_SUMMARY_ID;
     msg.tx_header.IDE = CAN_ID_STD;
     msg.tx_header.RTR = CAN_RTR_DATA;
-    msg.tx_header.DLC = 5;
+    msg.tx_header.DLC = 4;
 
-    int32_t total_temp = 0;
-    int32_t min_temp = 999000;
-    int32_t max_temp = -999000;
-    uint8_t min_idx = 0;
-    uint8_t max_idx = 0;
+    int16_t avg_temp_c = (int16_t) (pack_state.avg_temp_mC / 1000);
 
-    for (int i = 0; i < NUM_MODULES; i++) {
-        int32_t t = pack_modules[i].temperature_mC;
-        total_temp += t;
-        if (t < min_temp) { min_temp = t; min_idx = i; }
-        if (t > max_temp) { max_temp = t; max_idx = i; }
-    }
-
-    int32_t avg_temp_mC = total_temp / NUM_MODULES;
-    int32_t avg_temp_C = avg_temp_mC / 1000;
-    
-    // Clamp to 8-bit signed integer range
-    if (avg_temp_C > 127) avg_temp_C = 127;
-    if (avg_temp_C < -127) avg_temp_C = -127;
-
-    msg.data[0] = (uint8_t)(int8_t)avg_temp_C;
-    msg.data[1] = min_idx;
-    msg.data[2] = max_idx;
-    msg.data[3] = 0;
-    msg.data[4] = 0;
+    msg.data[0] = (uint8_t)avg_temp_c & 0xFF;
+    msg.data[1] = (uint8_t)avg_temp_c >> 8;
+    msg.data[2] = pack_state.min_temp_idx+1;
+    msg.data[3] = pack_state.max_temp_idx+1;
 
     CAN_QueueTxMessage(&msg);
 }
 
 void SendModuleVoltMessage_(uint8_t group_idx) {
-
         CAN_TxMessage_t msg = {0};
-        msg.tx_header.StdId = CAN_MODULE_VOLT_DATA_ID;
+        msg.tx_header.StdId = CAN_MODULE_VOLT_DATA_ID_START + group_idx;
         msg.tx_header.IDE = CAN_ID_STD;
         msg.tx_header.RTR = CAN_RTR_DATA;
-        msg.tx_header.DLC = 5;
-
-        msg.data[0] = group_idx & 0x0F;
+        msg.tx_header.DLC = 8;
         
-        int start_idx = group_idx * CAN_NUM_MODULES_PER_GROUP;
-        for (int i = 0; i < CAN_NUM_MODULES_PER_GROUP; i++) {
+        int start_idx = group_idx * CAN_NUM_MODULES_PER_DATA_GROUP;
+        for (int i = 0; i < CAN_NUM_MODULES_PER_DATA_GROUP; i++) {
             int module_idx = start_idx + i;
             if (module_idx >= NUM_MODULES) {
                 continue;
             }
 
-            // Taking 8 MSB as specified by docs. voltage_mv is mV, 
-            // wait, "take the 8 MSB of voltage values". E.g., (voltage_mv >> 8).
-            msg.data[1 + i] = (pack_modules[module_idx].voltage_mv >> 8) & 0xFF;
+            // Note: max value representable with 16 bits is 65536.
+            // If the unit of this value is mV, then we can report a max of 65V.
+            // This should be sufficient for cell voltages.
+            uint16_t volt_mv_16;
+            if (pack_modules[module_idx].voltage_mv >= 0xFFFF) {
+                // Clamp value just in case
+                volt_mv_16 = 0xFFFF;
+            }
+            else {
+                volt_mv_16 = (uint16_t) pack_modules[module_idx].voltage_mv;
+            }
+
+            msg.data[i*2]   = volt_mv_16 & 0xFF;
+            msg.data[i*2+1] = volt_mv_16 >> 8;
         }
         CAN_QueueTxMessage(&msg);
 }
@@ -149,39 +122,34 @@ void SendModuleVoltMessage_(uint8_t group_idx) {
 void CAN_SendModuleVoltMessage(void) {
     // We have 8 multiplex groups, sending 4 module readouts per group
     #if CAN_STRATEGY_ALL_AT_ONCE
-    for (int group_idx = 0; group_idx < CAN_NUM_MODULE_GROUPS; group_idx++) {
+    for (int group_idx = 0; group_idx < CAN_NUM_DATA_GROUPS; group_idx++) {
         SendModuleVoltMessage_(group_idx);
     }
     #else// CAN_STRATEGY_ALL_AT_ONCE is false
+    static uint8_t current_volt_group_idx = 0;
     SendModuleVoltMessage_(current_volt_group_idx);
-    current_volt_group_idx = (current_volt_group_idx + 1U) % CAN_NUM_MODULE_GROUPS;
+    current_volt_group_idx = (current_volt_group_idx + 1U) % CAN_NUM_DATA_GROUPS;
     #endif // CAN_STRATEGY_ALL_AT_ONCE
 }
 
 void SendModuleTempMessage_(uint8_t group_idx) {
         CAN_TxMessage_t msg = {0};
-        msg.tx_header.StdId = CAN_MODULE_TEMP_DATA_ID;
+        msg.tx_header.StdId = CAN_MODULE_TEMP_DATA_ID_START + group_idx;
         msg.tx_header.IDE = CAN_ID_STD;
         msg.tx_header.RTR = CAN_RTR_DATA;
-        msg.tx_header.DLC = 5;
-
-        msg.data[0] = group_idx & 0x07;
+        msg.tx_header.DLC = 8;
         
-        int start_idx = group_idx * CAN_NUM_MODULES_PER_GROUP;
-        for (int i = 0; i < CAN_NUM_MODULES_PER_GROUP; i++) {
+        int start_idx = group_idx * CAN_NUM_MODULES_PER_DATA_GROUP;
+        for (int i = 0; i < CAN_NUM_MODULES_PER_DATA_GROUP; i++) {
             int module_idx = start_idx + i;
-            if (module_idx < NUM_MODULES) {
-                int32_t temp_C = pack_modules[module_idx].temperature_mC / 1000;
-                
-                // Clamp to 8-bit signed integer range
-                if (temp_C > 127) temp_C = 127;
-                if (temp_C < -127) temp_C = -127;
-                
-                int8_t temp_c_8 = (int8_t)temp_C;
-                msg.data[1 + i] = (uint8_t)temp_c_8;
-            } else {
-                msg.data[1 + i] = 0;
+            if (module_idx >= NUM_MODULES) {
+                continue;
             }
+
+            int16_t temp_c_16 = (int16_t) (pack_modules[module_idx].temperature_mC / 1000);
+            
+            msg.data[i*2]   = (uint8_t)temp_c_16 & 0xFF;
+            msg.data[i*2+1] = (uint8_t)temp_c_16 >> 8;
         }
         CAN_QueueTxMessage(&msg);
 }
@@ -190,47 +158,45 @@ void CAN_SendModuleTempMessage(void) {
     // We have 8 multiplex groups, sending 4 module readouts per group
 
     #if CAN_STRATEGY_ALL_AT_ONCE
-    for (int group_idx = 0; group_idx < CAN_NUM_MODULE_GROUPS; group_idx++) {
+    for (int group_idx = 0; group_idx < CAN_NUM_DATA_GROUPS; group_idx++) {
         SendModuleTempMessage_(group_idx);
     }
     #else// CAN_STRATEGY_ALL_AT_ONCE is false
+    static uint8_t current_temp_group_idx = 0;
     SendModuleTempMessage_(current_temp_group_idx);
-    current_temp_group_idx = (current_temp_group_idx + 1U) % CAN_NUM_MODULE_GROUPS;
+    current_temp_group_idx = (current_temp_group_idx + 1U) % CAN_NUM_DATA_GROUPS;
     #endif // CAN_STRATEGY_ALL_AT_ONCE
 }
 
 void SendModuleStatusMessage_(uint8_t group_idx) {
     CAN_TxMessage_t msg = {0};
-    msg.tx_header.StdId = CAN_MODULE_STATUS_ID;
+    msg.tx_header.StdId = CAN_MODULE_STATUS_ID_START + group_idx;
     msg.tx_header.IDE = CAN_ID_STD;
     msg.tx_header.RTR = CAN_RTR_DATA;
-    msg.tx_header.DLC = 5;
-
-    msg.data[0] = group_idx & 0x07;
+    msg.tx_header.DLC = 8;
     
-    int start_idx = group_idx * CAN_NUM_MODULES_PER_GROUP;
-    for (int i = 0; i < CAN_NUM_MODULES_PER_GROUP; i++) {
+    int start_idx = group_idx * CAN_NUM_MODULES_PER_STATS_GROUP;
+    for (int i = 0; i < CAN_NUM_MODULES_PER_STATS_GROUP; i++) {
         int module_idx = start_idx + i;
-        if (module_idx < NUM_MODULES) {
-            // Determine module status. There is no specific bit definition for "Module Status" 
-            // in the file so filling with zeros/generic placeholders.
-            uint8_t module_status = 0;
-            msg.data[1 + i] = module_status;
-        } else {
-            msg.data[1 + i] = 0;
+        if (module_idx >= NUM_MODULES) {
+            continue;
         }
+        msg.data[i] = 
+            ((pack_modules[module_idx].faults.raw & 0x0F) << 4) |
+            (pack_modules[module_idx].warnings.raw & 0x07);
     }
     CAN_QueueTxMessage(&msg);
 }
 
 void CAN_SendModuleStatusMessage(void) {
     #if CAN_STRATEGY_ALL_AT_ONCE
-    for (int group_idx = 0; group_idx < CAN_NUM_MODULE_GROUPS; group_idx++) {
+    for (int group_idx = 0; group_idx < CAN_NUM_STATS_GROUPS; group_idx++) {
         SendModuleStatusMessage_(group_idx);
     }
     #else // CAN_STRATEGY_ALL_AT_ONCE is false
+    static uint8_t current_status_group_idx = 0;
     SendModuleStatusMessage_(current_status_group_idx);
-    current_status_group_idx = (current_status_group_idx + 1U) % CAN_NUM_MODULE_GROUPS;
+    current_status_group_idx = (current_status_group_idx + 1U) % CAN_NUM_STATS_GROUPS;
     #endif // CAN_STRATEGY_ALL_AT_ONCE
 }
 

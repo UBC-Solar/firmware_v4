@@ -46,11 +46,14 @@ void ComputePackStatistics(module_t pack_modules[NUM_MODULES], pack_state_t *pac
         }
     }
 
-    int32_t total_temp_mC = pack_state->avg_temp_mC;
-    pack_state->avg_voltage_mV = pack_state->total_voltage_mV / NUM_MODULES;
-    pack_state->avg_temp_mC = total_temp_mC / (int32_t)NUM_MODULES;
+    int32_t total_temp_mC = pack_state->avg_temp_mC;
 
-    LOG_INFO("Pack stats - Total V: %lu mV, Avg V: %lu mV, Total T: %ld mC, Avg T: %ld mC", pack_state->total_voltage_mV, pack_state->avg_voltage_mV, total_temp_mC, pack_state->avg_temp_mC);
+    pack_state->avg_voltage_mV = pack_state->total_voltage_mV / NUM_MODULES;
+    pack_state->avg_temp_mC = total_temp_mC / (int32_t)NUM_MODULES;
+
+
+    LOG_INFO("Pack stats - Total V: %lu mV, Avg V: %lu mV, Total T: %ld mC, Avg T: %ld mC", pack_state->total_voltage_mV, pack_state->avg_voltage_mV, total_temp_mC, pack_state->avg_temp_mC);
+
     LOG_INFO("Pack statuses - Balancing Active: %d, Balancing Enable: %d, Scrutineering: %d", 
               pack_state->balancing_active, pack_state->balancing_enable, pack_state->scrutineering_enable);
     LOG_INFO("Pack statuses - LLIM: %d, HLIM: %d, Contactor: %d", 
@@ -98,7 +101,7 @@ void CheckForEmergency(module_t *pack_modules, faults_t *pack_faults, warnings_t
         module->warnings.bits.warn_high_voltage = module->voltage_mv >= WARN_HIGH_VOLTAGE_mV;
         module->warnings.bits.warn_high_temperature = module->temperature_mC >= (WARN_HIGH_TEMP_degC*1000);
 
-        #if (INT_TEST_JUNE_16th == RUN)
+        #if IGNORE_TEMPEREATURE_VALUES
         // Then ignore temperature-related faults for slaveboard index 1. 
         // Temperature circuitry on slaveboard 1 is not working at the moment...
         // if (i >= 24) {
@@ -106,7 +109,7 @@ void CheckForEmergency(module_t *pack_modules, faults_t *pack_faults, warnings_t
             module->faults.bits.fault_under_temperature = false;
             module->warnings.bits.warn_high_temperature = false;
         // }
-        #endif // (INT_TEST_JUNE_16th == RUN)
+        #endif // IGNORE_TEMPEREATURE_VALUES
 
         // Sum up all faults and warnings across each module
         pack_faults->raw |= module->faults.raw;

@@ -93,7 +93,7 @@ void SteeringVelocityCanMsgHandler(uint8_t* data)
     uint32_t velocity_kmh = (uint32_t)(velocity_mps * 3.6f);
 
     CyclicDataSetSpeed(velocity_kmh);
-    GetVelocity(velocity_kmh); // Cruise control still uses gpio_app velocity state
+    GpioAppSetVelocity(velocity_kmh); // Cruise control still uses gpio_app velocity state
 }
 
 /* CAN TX */

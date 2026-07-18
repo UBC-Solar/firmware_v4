@@ -36,6 +36,10 @@ void Fault_() {
 
 
 void IncrementCommError() {
+    #if !ISOSPI_CONNECTED
+    return;
+    #endif
+
     uint32_t current_time = HAL_GetTick();
     LOG_ERROR("SPI communication error!");
     if (current_time - pack_state.last_comm_fail_time >= CONSECUTIVE_TIMEFRAME_MS) {
@@ -46,9 +50,6 @@ void IncrementCommError() {
 
     pack_state.num_consecutive_comm_fails++;
     if (pack_state.num_consecutive_comm_fails >= NUM_CONSECUTIVE_COMM_ERR) {
-        #if !ISOSPI_CONNECTED
-        return;
-        #endif
         ERROR_HANDLER_LOGGED();
     }
 }
@@ -143,6 +144,13 @@ void CollectModuleData() {
     
     LOG_DEBUG("Voltage measurement: %lu ms, Voltage calculation: %lu ms, Temperature measurement: %lu ms, Total: %lu ms", 
               voltage_measure_duration, voltage_calc_duration, temp_duration, total_duration);
+
+#if GENERATE_FAKE_BATTERY_DATA
+    for (int module_idx = 0; module_idx < NUM_MODULES; module_idx++) {
+        pack_modules[module_idx].voltage_mv = 3600;
+        pack_modules[module_idx].temperature_mC = 21000;
+    }
+#endif // GENERATE_FAKE_BATTERY_DATA
 }
 
 

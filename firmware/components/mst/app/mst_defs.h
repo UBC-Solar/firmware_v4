@@ -82,6 +82,10 @@
 // If false, send one group of modules' data CAN messages each mainloop
 #define CAN_STRATEGY_ALL_AT_ONCE false
 
+// If true, override all real battery measurements with fake, constant values (3.6V, 21 degrees C for every module)
+// If false, battery data measurement and analysis runs as normal
+#define GENERATE_FAKE_BATTERY_DATA false
+
 // During testing, slaveboard / SBT temperature circuitry were damaged
 // and report incorrect temperatures. If true, ignore all temperature warnings / faults
 #define IGNORE_TEMPEREATURE_VALUES false

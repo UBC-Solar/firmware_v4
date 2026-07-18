@@ -75,6 +75,10 @@ typedef enum
 #define LV_POWERUP_RETRY_MS         500U
 #define HVC_HEARTBEAT_INTERVAL_MS   1000U
 
+#define MPPT_PC_DELAY_MS            5000U
+#define MOTOR_PC_DELAY_MS           5000U
+
+
 
 /*============================================================================*/
 /* FAN CRTL CONSTANTS */

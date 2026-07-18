@@ -235,8 +235,8 @@ void MotorPrecharge(void)
         ticks.generic = HAL_GetTick();
     }
 
-    ADC_Voltages adc = ADC_GetVoltages();
     #if(INT_TEST_PRECHARGE == SKIP)
+        ADC_Voltages adc = ADC_GetVoltages();
         if ((int64_t) adc.motor_precharge >= 
             (int64_t) mst_pack_voltage_mv / HVC_MOTOR_PC_SCALE * HVC_PC_COMPLETE_RATIO / 100)
         {
@@ -245,23 +245,22 @@ void MotorPrecharge(void)
             hvc_state = MPPT_PRECHARGE;
             return;
         }
+        
+        if (timer_elapsed(MOTOR_PC_TIMEOUT_MS, &ticks.generic)) {
+            pc_started = false;
+            DEBUG_IO_print("Motor-Precharge timeout\r\n");
+            hvc_state = FAULT;
+            return;
+        }
     #endif
 
     #if(INT_TEST_PRECHARGE == RUN)
-        if(timer_elapsed(MOTOR_PC_TIMEOUT_MS, &ticks.generic)) {
+        if(timer_elapsed(MOTOR_PC_DELAY_MS, &ticks.generic)) {
             ticks.generic = HAL_GetTick();
             hvc_state = MPPT_PRECHARGE;
             return;
         }
     #endif
-
-
-    if (timer_elapsed(MOTOR_PC_TIMEOUT_MS, &ticks.generic)) {
-        pc_started = false;
-        DEBUG_IO_print("Motor-Precharge timeout\r\n");
-        hvc_state = FAULT;
-        return;
-    }
 }
 
 /**
@@ -294,22 +293,21 @@ void MpptPrecharge(void)
         hvc_state = CLOSE_LLIM;
         return;
     }
-    #endif
-
-    #if (INT_TEST_PRECHARGE == RUN)
-    if(timer_elapsed(MPPT_PC_TIMEOUT_MS, &ticks.generic)) {   
-        ticks.generic = HAL_GetTick();
-        hvc_state = CLOSE_LLIM;
-        return;
-    }
-    #endif
-
     if (timer_elapsed(MPPT_PC_TIMEOUT_MS, &ticks.generic)) {
         pc_started = false;
         DEBUG_IO_print("MPPT-Precharge timeout\r\n");
         hvc_state = FAULT;
         return;
     }
+    #endif
+
+    #if (INT_TEST_PRECHARGE == RUN)
+    if(timer_elapsed(MPPT_PC_DELAY_MS, &ticks.generic)) {   
+        ticks.generic = HAL_GetTick();
+        hvc_state = CLOSE_LLIM;
+        return;
+    }
+    #endif
 }
 
 /**
@@ -391,8 +389,13 @@ void Monitoring(void)
         hvc_state = FAULT;
         return;
     }
+    
+    GPIO_PinState mst_fault = GPIO_Read(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin);
+    #if (INT_TEST_JUNE_11TH == RUN) 
+    mst_fault = GPIO_PIN_RESET;
+    #endif
 
-    if (GPIO_Read(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin) == GPIO_PIN_SET) {
+    if (mst_fault == GPIO_PIN_SET) {
         DEBUG_IO_print("Monitoring: Masterboard Fault\r\n");
         hvc_state = FAULT;
         return;

@@ -226,7 +226,7 @@ void MotorDischarge()
  */
 void MotorPrecharge(void)
 {
-
+    
     static bool pc_started = false;
 
     if (!pc_started) {
@@ -236,14 +236,25 @@ void MotorPrecharge(void)
     }
 
     ADC_Voltages adc = ADC_GetVoltages();
-    if ((int64_t) adc.motor_precharge >= 
-        (int64_t) mst_pack_voltage_mv / HVC_MOTOR_PC_SCALE * HVC_PC_COMPLETE_RATIO / 100)
-    {
-        pc_started = false;
-        ticks.generic = HAL_GetTick();
-        hvc_state = MPPT_PRECHARGE;
-        return;
-    }
+    #if(INT_TEST_PRECHARGE == SKIP)
+        if ((int64_t) adc.motor_precharge >= 
+            (int64_t) mst_pack_voltage_mv / HVC_MOTOR_PC_SCALE * HVC_PC_COMPLETE_RATIO / 100)
+        {
+            pc_started = false;
+            ticks.generic = HAL_GetTick();
+            hvc_state = MPPT_PRECHARGE;
+            return;
+        }
+    #endif
+
+    #if(INT_TEST_PRECHARGE == RUN)
+        if(timer_elapsed(MOTOR_PC_TIMEOUT_MS, &ticks.generic)) {
+            ticks.generic = HAL_GetTick();
+            hvc_state = MPPT_PRECHARGE;
+            return;
+        }
+    #endif
+
 
     if (timer_elapsed(MOTOR_PC_TIMEOUT_MS, &ticks.generic)) {
         pc_started = false;
@@ -264,7 +275,7 @@ void MotorPrecharge(void)
  */
 void MpptPrecharge(void)
 {
-
+    
     static bool pc_started = false;
 
     if (!pc_started) {
@@ -273,6 +284,7 @@ void MpptPrecharge(void)
         ticks.generic = HAL_GetTick();
     }
 
+    #if (INT_TEST_PRECHARGE == SKIP)
     ADC_Voltages adc = ADC_GetVoltages();
     if ((int64_t) adc.mppt_precharge >= 
         (int64_t) mst_pack_voltage_mv / HVC_MOTOR_PC_SCALE * HVC_PC_COMPLETE_RATIO / 100)
@@ -282,6 +294,15 @@ void MpptPrecharge(void)
         hvc_state = CLOSE_LLIM;
         return;
     }
+    #endif
+
+    #if (INT_TEST_PRECHARGE == RUN)
+    if(timer_elapsed(MPPT_PC_TIMEOUT_MS, &ticks.generic)) {   
+        ticks.generic = HAL_GetTick();
+        hvc_state = CLOSE_LLIM;
+        return;
+    }
+    #endif
 
     if (timer_elapsed(MPPT_PC_TIMEOUT_MS, &ticks.generic)) {
         pc_started = false;

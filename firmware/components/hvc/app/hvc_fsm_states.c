@@ -55,6 +55,7 @@ void MvpLvPowerup(void) {
     if (tel_heartbeat_received) {
         tel_heartbeat_received = false;
         dist_powered = false;
+        tel_dist_heartbeat_check_enabled = true;   
         ticks.generic = HAL_GetTick();
         hvc_state = MST_READY;
         return;
@@ -110,6 +111,7 @@ void MST_Check(void)
     if (mst_fault == GPIO_PIN_RESET) {
         mst_irq_armed = true;
         if (mst_status_healthy) {
+            mst_heartbeat_check_enabled = true;
             ticks.generic = HAL_GetTick();
             hvc_state = FANS_POWERUP;
             return;
@@ -224,7 +226,7 @@ void MotorDischarge()
  */
 void MotorPrecharge(void)
 {
-
+    
     static bool pc_started = false;
 
     if (!pc_started) {
@@ -233,22 +235,32 @@ void MotorPrecharge(void)
         ticks.generic = HAL_GetTick();
     }
 
-    ADC_Voltages adc = ADC_GetVoltages();
-    if ((int64_t) adc.motor_precharge >= 
-        (int64_t) mst_pack_voltage_mv / HVC_MOTOR_PC_SCALE * HVC_PC_COMPLETE_RATIO / 100)
-    {
-        pc_started = false;
-        ticks.generic = HAL_GetTick();
-        hvc_state = MPPT_PRECHARGE;
-        return;
-    }
+    #if(INT_TEST_PRECHARGE == SKIP)
+        ADC_Voltages adc = ADC_GetVoltages();
+        if ((int64_t) adc.motor_precharge >= 
+            (int64_t) mst_pack_voltage_mv / HVC_MOTOR_PC_SCALE * HVC_PC_COMPLETE_RATIO / 100)
+        {
+            pc_started = false;
+            ticks.generic = HAL_GetTick();
+            hvc_state = MPPT_PRECHARGE;
+            return;
+        }
+        
+        if (timer_elapsed(MOTOR_PC_TIMEOUT_MS, &ticks.generic)) {
+            pc_started = false;
+            DEBUG_IO_print("Motor-Precharge timeout\r\n");
+            hvc_state = FAULT;
+            return;
+        }
+    #endif
 
-    if (timer_elapsed(MOTOR_PC_TIMEOUT_MS, &ticks.generic)) {
-        pc_started = false;
-        DEBUG_IO_print("Motor-Precharge timeout\r\n");
-        hvc_state = FAULT;
-        return;
-    }
+    #if(INT_TEST_PRECHARGE == RUN)
+        if(timer_elapsed(MOTOR_PC_DELAY_MS, &ticks.generic)) {
+            ticks.generic = HAL_GetTick();
+            hvc_state = MPPT_PRECHARGE;
+            return;
+        }
+    #endif
 }
 
 /**
@@ -262,7 +274,7 @@ void MotorPrecharge(void)
  */
 void MpptPrecharge(void)
 {
-
+    
     static bool pc_started = false;
 
     if (!pc_started) {
@@ -271,6 +283,7 @@ void MpptPrecharge(void)
         ticks.generic = HAL_GetTick();
     }
 
+    #if (INT_TEST_PRECHARGE == SKIP)
     ADC_Voltages adc = ADC_GetVoltages();
     if ((int64_t) adc.mppt_precharge >= 
         (int64_t) mst_pack_voltage_mv / HVC_MOTOR_PC_SCALE * HVC_PC_COMPLETE_RATIO / 100)
@@ -280,13 +293,21 @@ void MpptPrecharge(void)
         hvc_state = CLOSE_LLIM;
         return;
     }
-
     if (timer_elapsed(MPPT_PC_TIMEOUT_MS, &ticks.generic)) {
         pc_started = false;
         DEBUG_IO_print("MPPT-Precharge timeout\r\n");
         hvc_state = FAULT;
         return;
     }
+    #endif
+
+    #if (INT_TEST_PRECHARGE == RUN)
+    if(timer_elapsed(MPPT_PC_DELAY_MS, &ticks.generic)) {   
+        ticks.generic = HAL_GetTick();
+        hvc_state = CLOSE_LLIM;
+        return;
+    }
+    #endif
 }
 
 /**
@@ -368,8 +389,13 @@ void Monitoring(void)
         hvc_state = FAULT;
         return;
     }
+    
+    GPIO_PinState mst_fault = GPIO_Read(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin);
+    #if (INT_TEST_JUNE_11TH == RUN) 
+    mst_fault = GPIO_PIN_RESET;
+    #endif
 
-    if (GPIO_Read(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin) == GPIO_PIN_SET) {
+    if (mst_fault == GPIO_PIN_SET) {
         DEBUG_IO_print("Monitoring: Masterboard Fault\r\n");
         hvc_state = FAULT;
         return;
@@ -399,27 +425,7 @@ void Monitoring(void)
         hvc_state = FAULT;
         return;
     }
-
-    if (HAL_GetTick() - last_tel_heartbeat_ms > HEARTBEAT_TIMEOUT_MS) {
-        DEBUG_IO_print("TEL heartbeat timeout\r\n");
-        fault_flags.tel_heartbeat_timeout = true;
-        hvc_state = FAULT;
-    }
-    if (HAL_GetTick() - last_mst_heartbeat_ms > HEARTBEAT_TIMEOUT_MS) {
-        DEBUG_IO_print("MST heartbeat timeout\r\n");
-        fault_flags.mst_heartbeat_timeout = true;
-        hvc_state = FAULT;
-    }
-    if (HAL_GetTick() - last_dist_heartbeat_ms > HEARTBEAT_TIMEOUT_MS) {
-        DEBUG_IO_print("DIST heartbeat timeout\r\n");
-        fault_flags.dist_heartbeat_timeout = true;
-        hvc_state = FAULT;
-    }
-
-    if (timer_elapsed(CAN_TX_INTERVAL_MS, &ticks.generic)) { 
-        CAN_SendStatusMsg();
-        CAN_SendMessage_ShuntCurrent(); 
-    }
+    CAN_SendAllMessages();
     check_supp_voltage();
 }
 
@@ -436,8 +442,6 @@ void Fault(void)
     if (timer_elapsed(FAULT_LED_BLINK_MS, &ticks.fault_led)) {
         GPIO_Toggle(FAULT_LED_GPIO_Port, FAULT_LED_Pin);
     }
-
-    if (timer_elapsed(CAN_TX_INTERVAL_MS, &ticks.generic)) { CAN_SendStatusMsg(); }
-
+    CAN_SendAllMessages();
     check_supp_voltage();
 }

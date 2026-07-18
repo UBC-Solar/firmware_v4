@@ -32,7 +32,7 @@ static volatile bool g_prev_fault = false;
  */
 static void LcdHandlerGetData(void);
 
-void LcdHandlerInit(SPI_HandleTypeDef* hspi)
+void LcdHandlerInit(SPI_HandleTypeDef* hspi, volatile uint8_t speed_units)
 {
     // Initialize the temperature labels for each temperature struct in the array
     g_lcd_temperatures[0].temp_label = MPPTA;
@@ -44,7 +44,7 @@ void LcdHandlerInit(SPI_HandleTypeDef* hspi)
     g_lcd_temperatures[6].temp_label = MOTOR_CONT;
     g_lcd_temperatures[7].temp_label = MOTOR_THERM;
 
-    g_lcd_data.speed_units = LCD_APP_MPH;
+    g_lcd_data.speed_units = speed_units;
 
     LcdDriverInit(hspi); // Initialize the LCD driver
 }
@@ -144,6 +144,11 @@ static void LcdHandlerGetData(void) {
     g_lcd_data.soc = CyclicDataGetSoc();
     g_lcd_data.pack_current = CyclicDataGetPackCurrent();
     g_lcd_data.pack_voltage = CyclicDataGetPackVoltage();
+}
+
+uint8_t LcdHandlerGetSpeedUnits(void)
+{
+    return g_lcd_data.speed_units;
 }
 
 /* LCD HANDLER BATTERY FAULT DATA SETTERS */

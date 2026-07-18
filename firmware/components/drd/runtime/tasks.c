@@ -93,7 +93,7 @@ void TasksExternalLights(void* argument)
 /* LCD UPDATE TASK */
 void TasksLcdUpdate(void *argument)
 {
-    LcdHandlerInit(&hspi1);
+    LcdHandlerInit(&hspi1, (volatile uint8_t) LCD_APP_KPH);
 
     for (;;)
     {

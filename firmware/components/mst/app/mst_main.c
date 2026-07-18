@@ -73,7 +73,7 @@ void Initialize() {
     SetScrutineeringMode(slaves, false);
 #endif // (SLAVEBOARD_REV == 1)
 
-    HAL_Delay(2000);
+    HAL_Delay(INIT_FAULT_HOLD_DURATION_MS);
     GPIO_Write(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin, GPIO_PIN_RESET);
     LOG_INFO("MST initialization complete.");
 }
@@ -406,3 +406,4 @@ void Debug_SlaveTestMuxCycle(void) {
     current_mux_state = (current_mux_state + 1) % 4;
 }
 #endif // (INT_TEST_SLAVE_MUX == RUN)
+

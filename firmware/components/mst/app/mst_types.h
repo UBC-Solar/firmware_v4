@@ -16,7 +16,7 @@ typedef union {
         bool fault_over_temperature : 1;
         bool fault_under_temperature : 1; // most likely a measurement failure
 
-        uint8_t _reserved : 3;
+        uint8_t _reserved : 4;
     } bits;
     uint8_t raw;
 } faults_t;
@@ -28,7 +28,7 @@ typedef union {
         bool warn_high_voltage : 1;
         bool warn_high_temperature : 1;
 
-        uint8_t _reserved : 3;
+        uint8_t _reserved : 5;
     } bits;
     uint8_t raw;
 } warnings_t;

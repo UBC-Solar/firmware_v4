@@ -104,8 +104,14 @@ typedef enum
  * @brief Initializes the LCD App and SPI interface.
  *
  * @param hspi Pointer to the SPI handle.
+ * @param speed_units Initial speed-unit selection for the LCD display.
  */
-void LcdHandlerInit(SPI_HandleTypeDef* hspi);
+void LcdHandlerInit(SPI_HandleTypeDef* hspi, volatile uint8_t speed_units);
+
+/**
+ * @brief Returns the currently selected speed-unit mode for the LCD display.
+ */
+uint8_t LcdHandlerGetSpeedUnits(void);
 
 /**
  * @brief Handles the screen logic for the LCD App, including page changes and updating displayed data.

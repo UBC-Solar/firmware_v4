@@ -351,6 +351,11 @@ Slave_Status_t Slave_ReadRegisterGroup(Slave_Command_t command, uint8_t rx_data[
 	{
 		// 6 data bytes + 2 PEC bytes = 8 bytes
 		status_HAL = HAL_SPI_Receive(slave_spi_handle, rx_message, 8, SLAVE_TIMEOUT_MS);
+
+		LOG_DEBUG("rx_message[%d]: %02X %02X %02X %02X %02X %02X %02X %02X", ic_num, 
+		         rx_message[0], rx_message[1], rx_message[2], rx_message[3], 
+		         rx_message[4], rx_message[5], rx_message[6], rx_message[7]);
+		
 		status_slave = ProcessHalStatus_(status_HAL, ic_num);
 		if (status_slave.error != Slave_OK) return status_slave;
 

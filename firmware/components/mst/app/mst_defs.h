@@ -7,14 +7,14 @@
  */
 // Absolute limits. MST will fault if exceeded
 #define MAX_VOLTAGE_mV 4200U
-#define MIN_VOLTAGE_mV 2500U
+#define MIN_VOLTAGE_mV 2750U
 
 #define MAX_TEMP_degC 60U
 #define MIN_TEMP_degC 0U
 
 // Warning values
 #define WARN_HIGH_VOLTAGE_mV 4100U
-#define WARN_LOW_VOLTAGE_mV 2600U
+#define WARN_LOW_VOLTAGE_mV 2850U
 
 #define WARN_HIGH_TEMP_degC 55U
 
@@ -56,7 +56,10 @@
 /**
  * Enable / disable MST algorithms
  */
- // Runs the mainloop. Should be enabled unless running a test
+// MST pulls FAULT HIGH at startup to notify HVC
+#define INIT_FAULT_HOLD_DURATION_MS 2000 
+
+// Runs the mainloop. Should be enabled unless running a test
 #define RUN_MAIN_LOOP true
 
 // If false, will not halt even if IsoSPI comms fail

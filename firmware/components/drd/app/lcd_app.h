@@ -37,8 +37,8 @@
 #define LCD_APP_SPEED_UNIT_KPH_X 76
 #define LCD_APP_SPEED_UNIT_MPH_X 72
 #define LCD_APP_SPEED_UNIT_Y 1
-#define LCD_APP_MPH 1
-#define LCD_APP_KPH 0
+#define LCD_APP_MPH 0
+#define LCD_APP_KPH 1
 #define LCD_APP_SPEED_UNITS_FONT (Verdana8)
 #define LCD_APP_SPEED_UNITS_SPACING 1
 

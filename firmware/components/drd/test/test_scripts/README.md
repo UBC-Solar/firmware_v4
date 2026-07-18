@@ -29,5 +29,6 @@ source environment/bin/activate
 
 # run the script
 python3 lcd_test.py
+python3 simulate_mc.py
 ```
 

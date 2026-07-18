@@ -51,6 +51,7 @@ typedef enum
 #define MST_HEARTBEAT_ID            0x310U
 #define MST_VOLT_SUMMARY_ID         0x311U
 #define SUPP_VOLTAGE_ID             0x317U
+#define DCDC_TEMP_VOLTAGE_ID        0x319U
 /*============================================================================*/
 /* TIMEOUT CONSTANTS */
 

@@ -48,6 +48,8 @@ void HVC_Init(
 
     HVC_FSM_Init(); // sets hvc_state
 
+    InitTemperatureReading();
+
     if (
         (HAL_GPIO_ReadPin(ESTOP_GPIO_Port, ESTOP_Pin) == GPIO_PIN_SET) ||
         (HAL_GPIO_ReadPin(IMD_GPIO_IN_GPIO_Port, IMD_GPIO_IN_Pin) == GPIO_PIN_SET) ||

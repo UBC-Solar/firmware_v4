@@ -111,35 +111,36 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
  * second value is resistance (computed at initialization time),
  * third value is thermistor resistance.
  */
+ // inverted table from MST code
 thermistor_mapping_t thermistor_temp_lut[THERMISTOR_LUT_TABLE_SIZE] = {
-    { -30000, 0, 175200 },
-    {      0, 0, 32554  },
-    {  10000, 0, 19872  },
-    {  20000, 0, 12488  },
-    // values above are out of expected range, and thus more sparse
-    {  25000, 0, 10000  },
-    {  30000, 0, 8059   },
-    {  35000, 0, 6535   },
-    {  40000, 0, 5330   },
-    {  45000, 0, 4372   },
-    {  50000, 0, 3605   },
-    {  55000, 0, 2989   },
-    {  60000, 0, 2490   },
-    {  65000, 0, 2084   },
-    // values below are out of expected range, and thus more sparse
-    {  80000, 0, 1256   },
-    { 100000, 0, 677.3  },
+    { 200000, 0, 63.67  },
     { 150000, 0, 182.6  },
-    { 200000, 0, 63.67  }
+    { 100000, 0, 677.3  },
+    {  80000, 0, 1256   },
+    // values below are out of expected range, and thus more sparse
+    {  65000, 0, 2084   },
+    {  60000, 0, 2490   },
+    {  55000, 0, 2989   },
+    {  50000, 0, 3605   },
+    {  45000, 0, 4372   },
+    {  40000, 0, 5330   },
+    {  35000, 0, 6535   },
+    {  30000, 0, 8059   },
+    {  25000, 0, 10000  },
+    // values above are out of expected range, and thus more sparse
+    {  20000, 0, 12488  },
+    {  10000, 0, 19872  },
+    {      0, 0, 32554  },
+    { -30000, 0, 175200 }
 };
 
 //COPIED FROM MST
 void InitTemperatureReading() {
     for (int i = 0; i < THERMISTOR_LUT_TABLE_SIZE; i++) {
         //V_T: thermistor voltage. R_T: thermistor resistance.
-        // V_T = V_ref2 * (R_T)/(10,000 + R_T)
+        // V_T = V_ref2 * (10,000)/(10,000 + R_T)  // (thermistor is in different place)
         //Vref2 = 3300000 uV
-        uint64_t resistance_Ohm = (uint64_t) 3300000 * thermistor_temp_lut[i].resistance_Ohm / (10000 + thermistor_temp_lut[i].resistance_Ohm);
+        uint64_t resistance_Ohm = (uint64_t) 3300000 * (10000) / (10000 + thermistor_temp_lut[i].resistance_Ohm);
         thermistor_temp_lut[i].voltage_uV = resistance_Ohm;
     }
 }

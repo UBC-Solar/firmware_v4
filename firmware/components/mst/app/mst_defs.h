@@ -65,7 +65,7 @@
 #define RUN_MAIN_LOOP true
 
 // If false, will not halt even if IsoSPI comms fail
-#define ISOSPI_CONNECTED true
+#define ISOSPI_CONNECTED false
 
 // Will not attempt to send CAN messages if false
 #define CAN_CONNECTED true
@@ -77,6 +77,8 @@
 // If true, send all module data CAN messages every mainloop
 // If false, send one group of modules' data CAN messages each mainloop
 #define CAN_STRATEGY_ALL_AT_ONCE false
+
+#define GENERATE_FAKE_BATTERY_DATA true
 
 // During testing, slaveboard / SBT temperature circuitry were damaged
 // and report incorrect temperatures. If true, ignore all temperature warnings / faults

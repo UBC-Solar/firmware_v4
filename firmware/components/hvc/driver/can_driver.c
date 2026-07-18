@@ -243,10 +243,12 @@ void CAN_SendHeartbeat(void)
     txMessage.tx_header.StdId = HVC_HEARTBEAT_ID;
     txMessage.tx_header.IDE   = CAN_ID_STD;
     txMessage.tx_header.RTR   = CAN_RTR_DATA;
-    txMessage.tx_header.DLC   = 2;
+    txMessage.tx_header.DLC   = 4;
 
-    txMessage.data[0] = (uint8_t)(HeartBeatCounter >> 8);  
-    txMessage.data[1] = (uint8_t)(HeartBeatCounter & 0xFFU);
+    txMessage.data[0] = (uint8_t)(HeartBeatCounter >> 24); 
+    txMessage.data[1] = (uint8_t)(HeartBeatCounter >> 16); 
+    txMessage.data[2] = (uint8_t)(HeartBeatCounter >> 8); 
+    txMessage.data[3] = (uint8_t)(HeartBeatCounter & 0xFFU);
 
     CAN_QueueTxMessage(&txMessage);
     HeartBeatCounter++;

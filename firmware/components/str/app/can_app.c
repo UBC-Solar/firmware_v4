@@ -8,6 +8,7 @@
 
 #include "CAN_comms.h"
 #include "can_driver.h"
+#include "cyclic_data_handler.h"
 #include "gpio_driver.h"
 #include "hex_app.h"
 #include "main.h"
@@ -91,7 +92,8 @@ void SteeringVelocityCanMsgHandler(uint8_t* data)
     float velocity_mps = (STR_WHEEL_RADIUS_M * 2.0f * (float)M_PI * (float)rpm) / 60.0f;
     uint32_t velocity_kmh = (uint32_t)(velocity_mps * 3.6f);
 
-    GetVelocity(velocity_kmh);
+    CyclicDataSetSpeed(velocity_kmh);
+    GpioAppSetVelocity(velocity_kmh); // Cruise control still uses gpio_app velocity state
 }
 
 /* CAN TX */

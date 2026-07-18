@@ -52,7 +52,6 @@ void HVC_FSM_Init(void)
     #if (INT_TEST_JUNE_11TH == RUN)
     mst_pack_voltage_mv = 115 * 1000;
     #endif // (INT_TEST_CAN == RUN)
-
 }
 
 /**

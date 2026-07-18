@@ -199,6 +199,7 @@ void CAN_SendAllMessages(void)
         CAN_Send_ShuntCurrent();
         CAN_Send_LVCurrent();
         CAN_Send_SuppVoltage();
+        CAN_Send_DCDCThermistorTemp();
     }
 }
 
@@ -321,6 +322,24 @@ void CAN_Send_SuppVoltage(void)
     txMessage.data[1] = (actual_mV >> 16) & 0xFF;
     txMessage.data[2] = (actual_mV >> 8)  & 0xFF;
     txMessage.data[3] = (actual_mV)       & 0xFF;
+    CAN_QueueTxMessage(&txMessage);
+}
+
+
+void CAN_Send_DCDCThermistorTemp(void) {
+    ADC_Voltages adc = ADC_GetVoltages();
+    int32_t dcdc_temp = ThermistorVoltToTemp_(adc.dcdc_thermistor * 1000); //mV to uV
+    //converted to mC
+
+    DEBUG_IO_print("DCDC Temp: %d mV\r\n", dcdc_temp);
+
+    CAN_TxMessage_t txMessage = {0};
+    txMessage.tx_header.StdId = DCDC_TEMP_VOLTAGE_ID;
+    txMessage.tx_header.DLC = 4;
+    txMessage.data[0] = (dcdc_temp >> 24) & 0xFF;
+    txMessage.data[1] = (dcdc_temp >> 16) & 0xFF;
+    txMessage.data[2] = (dcdc_temp >> 8)  & 0xFF;
+    txMessage.data[3] = (dcdc_temp)       & 0xFF;
     CAN_QueueTxMessage(&txMessage);
 }
 

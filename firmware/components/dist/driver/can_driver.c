@@ -255,15 +255,16 @@ uint8_t CAN_ExtFault_Received(void)
 void CAN_Send_Heartbeat(void)
 {
 
-    static uint16_t HeartBeatCounter = 0U;
+    static uint32_t HeartBeatCounter = 0U;
     CAN_TxMessage_t msg = {0};
     msg.tx_header.StdId = DIST_HEARTBEAT_ID;
     msg.tx_header.IDE   = CAN_ID_STD;
     msg.tx_header.RTR   = CAN_RTR_DATA;
-    msg.tx_header.DLC   = 3U;
-    msg.data[0]         = 0x01U;
-    msg.data[1]         = (uint8_t)(HeartBeatCounter>>8); // Bit shift to get the most significant byte of the 16-bit counter
-    msg.data[2]         = (uint8_t)(HeartBeatCounter & 0xFFU);
+    msg.tx_header.DLC   = 4U;
+    msg.data[0]         = (uint8_t)(HeartBeatCounter >> 24);
+    msg.data[1]         = (uint8_t)(HeartBeatCounter >> 16);
+    msg.data[2]         = (uint8_t)(HeartBeatCounter >> 8);
+    msg.data[3]         = (uint8_t)(HeartBeatCounter & 0xFFU);
     CAN_QueueTxMessage(&msg);
     HeartBeatCounter++;
 }

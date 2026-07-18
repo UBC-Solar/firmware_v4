@@ -53,13 +53,32 @@
 #define SLAVE_NUM_DEVICES 2U // Number of ADBMS1818 ICs daisy chained
 #define SLAVEBOARD_REV 1
 
-// Enable / disable MST algorithms
-#define INIT_FAULT_HOLD_DURATION_MS 2000 // MST pulls FAULT HIGH at startup to notify HVC
+/**
+ * Enable / disable MST algorithms
+ */
+// MST pulls FAULT HIGH at startup to notify HVC
+#define INIT_FAULT_HOLD_DURATION_MS 2000 
+
+// Runs the mainloop. Should be enabled unless running a test
 #define RUN_MAIN_LOOP true
+
+// If false, will not halt even if IsoSPI comms fail
 #define ISOSPI_CONNECTED true
+
+// Will not attempt to send CAN messages if false
 #define CAN_CONNECTED true
+
+// If true, measure temp of all modules on every mainloop
+// If false, measure one multiplexer setting each mainloop
 #define TEMP_STRATEGY_ALL_AT_ONCE false
+
+// If true, send all module data CAN messages every mainloop
+// If false, send one group of modules' data CAN messages each mainloop
 #define CAN_STRATEGY_ALL_AT_ONCE false
+
+// During testing, slaveboard / SBT temperature circuitry were damaged
+// and report incorrect temperatures. If true, ignore all temperature warnings / faults
+#define IGNORE_TEMPEREATURE_VALUES true
 
 
 /**
@@ -131,11 +150,11 @@
 // Hardware unit tests (UNIT_...) to verify that the hardware works properly.
 // Integration tests (INT_...) to verify functionality with rest of BMS.
 // A test is either set to RUN or SKIP.
-#define UNIT_TEST_MCU SKIP
-#define UNIT_TEST_IO SKIP
-#define UNIT_TEST_CAN SKIP
-#define UNIT_TEST_ISOSPI SKIP
-#define INT_TEST_SLAVE SKIP
-#define INT_TEST_SLAVE_BAL_SCRUT SKIP
-#define INT_TEST_SLAVE_MUX SKIP
-#define INT_TEST_JUNE_16th RUN
+#define UNIT_TEST_MCU SKIP // Check if MCU can run code
+#define UNIT_TEST_IO SKIP // Check if GPIOs work 
+#define UNIT_TEST_CAN SKIP // Test if CAN peripheral can send pulses
+#define UNIT_TEST_ISOSPI SKIP // Test if IsoSPI peripheral can send pulses
+#define INT_TEST_SLAVE SKIP // Test basic communication with slaveboards
+#define INT_TEST_SLAVE_BAL_VOLT SKIP // Characterize measured voltage drop when balancing is enabled
+#define INT_TEST_SLAVE_BAL_SCRUT SKIP // Test if scrutineering and balancing modes can be enabled/disabled
+#define INT_TEST_SLAVE_MUX SKIP // Characterize slaveboard multiplexer behaviour

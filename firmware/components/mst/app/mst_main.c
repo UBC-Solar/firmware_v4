@@ -73,7 +73,12 @@ void Initialize() {
     SetScrutineeringMode(slaves, false);
 #endif // (SLAVEBOARD_REV == 1)
 
-    HAL_Delay(INIT_FAULT_HOLD_DURATION_MS);
+    uint32_t init_fault_hold_start_ms = HAL_GetTick();
+    while (HAL_GetTick() - init_fault_hold_start_ms <= INIT_FAULT_HOLD_DURATION_MS) {
+        // We need to send valid commands to the ADBMSs or else they'll go to sleep after some time
+        WriteConfigRegisters(slaves);
+        HAL_Delay(100);
+    }
     GPIO_Write(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin, GPIO_PIN_RESET);
     LOG_INFO("MST initialization complete.");
 }

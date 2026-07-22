@@ -142,6 +142,10 @@ void CollectModuleData() {
 
 
 void AnalyzeModuleData() {
+    if (pack_state.mainloop_count <= NUM_INIT_MAINLOOPS) {
+        return;
+    }
+
     CheckForEmergency(pack_modules, &pack_faults, &pack_warnings);
 
     if (pack_faults.raw != 0) {
@@ -183,6 +187,9 @@ void DriveOutputs() {
 void SendCanMessages() {
     #if CAN_CONNECTED
     CAN_SendHeartbeatMessage();
+    if (pack_state.mainloop_count <= NUM_INIT_MAINLOOPS) {
+        return;
+    }
     CAN_SendVoltageSummaryMessage();
     CAN_SendTempSummaryMessage();
     CAN_SendModuleVoltMessage();
@@ -351,7 +358,8 @@ void Debug_SlaveTestBalancingVoltageDrop(void) {
     for (int module_idx = 0; module_idx < NUM_MODULES; module_idx++) {
         current_voltages[module_idx] = pack_modules[module_idx].voltage_mv;
         int32_t voltage_delta_mv = (int32_t)current_voltages[module_idx] - (int32_t)previous_voltages[module_idx];
-        LOG_INFO("Module %d voltage: %lu mV (bal off) -> %lu mV (bal on). Note: %ld mV diff",
+        LOG_INFO("Module %d voltage: %lu mV (bal off) -> %lu mV (bal on). Note: %ld mV diff",
+
                  module_idx,
                  previous_voltages[module_idx],
                  current_voltages[module_idx],

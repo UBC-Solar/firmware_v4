@@ -64,6 +64,10 @@
 // Runs the mainloop. Should be enabled unless running a test
 #define RUN_MAIN_LOOP true
 
+// Number of times mainloop has to run before we have all data.
+// This is useful if we don't plan on measuring all cell data on every loop iteration
+#define NUM_INIT_MAINLOOPS 4
+
 // If false, will not halt even if IsoSPI comms fail
 #define ISOSPI_CONNECTED true
 

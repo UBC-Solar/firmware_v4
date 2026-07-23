@@ -14,13 +14,6 @@
 #define RTD_FAULT_BIT 0x01
 #define RTD_ADC_FULL_SCALE 32768.0f
 
-/* Number of consecutive faulted reads tolerated before reporting a hard fault.
- * The over/under-voltage fault (status 0x04) is frequently a transient on noisy
- * 3-wire harnesses; we hold the last good temperature across short bursts and
- * only escalate to RtdStatusFault if the fault persists. With the 1s diagnostic
- * cadence this is ~RTD_FAULT_DEBOUNCE_COUNT seconds of continuous fault. */
-#define RTD_FAULT_DEBOUNCE_COUNT 5
-
 // Register Addresses
 #define CONFIG_REG_R 0x00
 #define RTD_MSB_REG_R 0x01
@@ -36,6 +29,7 @@
 #define CONFIG_FAULTCLR 0x02 // Fault status auto-clear (D3:D2 must be 0)
 #define CONFIG_FAULTCYC 0x00 // No fault cycle
 #define CONFIG_FILT50HZ 0x00 // 60Hz filter
+#define RTD_FAULT_MASK 0xFCU // only D7 through D2 are fault bits
 
 // PRIVATE FUNCTION PROTOTYPES
 static bool RtdWriteRegister(uint8_t address_with_write_bit, uint8_t data);
@@ -53,7 +47,6 @@ static uint8_t s_rtd_config = CONFIG_VBIAS | CONFIG_AUTO | CONFIG_3WIRE | CONFIG
 /* Transient-fault debounce state. */
 static int32_t s_last_good_temp = 0;
 static bool s_has_last_good = false;
-static uint32_t s_consecutive_faults = 0;
 
 // PUBLIC FUNCTIONS
 RtdStatus RtdDriverGetTemp(int32_t* temperature)
@@ -69,20 +62,17 @@ RtdStatus RtdDriverGetTemp(int32_t* temperature)
 
     if (buffer & RTD_FAULT_BIT)
     {
+        RtdFaultFlags faults = 0U;
+
+        if (RtdDriverReadFaults(&faults) != RtdStatusOk)
+        {
+            return RtdStatusHalError;
+        }
+
         /* The MAX31865 fault bit (D0) is the OR of the fault status register
          * and is LATCHED. Clear the latched fault so a transient does not
          * stick forever. */
         RtdClearFault();
-
-        s_consecutive_faults++;
-
-        /* Ride through short fault bursts (commonly transient over/under-voltage,
-         * status 0x04) by reporting the last good temperature. */
-        if (s_has_last_good && s_consecutive_faults < RTD_FAULT_DEBOUNCE_COUNT)
-        {
-            *temperature = s_last_good_temp;
-            return RtdStatusOk;
-        }
 
         return RtdStatusFault;
     }
@@ -91,7 +81,6 @@ RtdStatus RtdDriverGetTemp(int32_t* temperature)
 
     s_last_good_temp = *temperature;
     s_has_last_good = true;
-    s_consecutive_faults = 0;
 
     return RtdStatusOk;
 }
@@ -162,6 +151,22 @@ static bool RtdReadRegister(uint8_t address_read, uint8_t* data)
     HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
 
     return hal_err;
+}
+
+RtdStatus RtdDriverReadFaults(RtdFaultFlags* faults)
+{
+    if (!faults)
+    {
+        return RtdStatusHalError;
+    }
+
+    if (RtdReadRegister(FAULT_STATUS_REG_R, faults))
+    {
+        return RtdStatusHalError;
+    }
+
+    *faults &= RTD_FAULT_MASK;
+    return RtdStatusOk;
 }
 
 static RtdStatus RtdReadResistance(uint16_t* buffer)

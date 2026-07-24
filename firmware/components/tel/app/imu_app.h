@@ -51,8 +51,8 @@
     float mag_x, mag_y, Mag_z;
  } imu_data_t;
 
- void imu_init(void); //TODO: function to set the set feature cmd for all sensors
- void imu_task(void); //TODO: function to send IMU data over CAN
+ void imu_app_init(void); //TODO: function to set the set feature cmd for all sensors
+ void imu_app_task(void); //TODO: function to send IMU data over CAN
  #ifdef __cplusplus
  }
  #endif

@@ -18,12 +18,14 @@
 /* IMU TASK */
 void TasksIMU(void* argument)
 {
-    (void)argument; // Unused parameter
+    (void)argument;
+
+    imu_app_init();
 
     for (;;)
     {
-        // TODO: Implement IMU data acquisition and processing
-        osDelay(osWaitForever);
+        imu_app_task();
+        osDelay(IMU_TASK_DELAY);
     }
 }
 

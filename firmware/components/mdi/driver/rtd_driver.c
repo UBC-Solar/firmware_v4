@@ -44,9 +44,6 @@ extern SPI_HandleTypeDef hspi1;
  * be cleared without disturbing the running conversion settings. */
 static uint8_t s_rtd_config = CONFIG_VBIAS | CONFIG_AUTO | CONFIG_3WIRE | CONFIG_FILT50HZ;
 
-/* Transient-fault debounce state. */
-static int32_t s_last_good_temp = 0;
-static bool s_has_last_good = false;
 
 // PUBLIC FUNCTIONS
 RtdStatus RtdDriverGetTemp(int32_t* temperature)
@@ -63,10 +60,11 @@ RtdStatus RtdDriverGetTemp(int32_t* temperature)
     if (buffer & RTD_FAULT_BIT)
     {
         RtdFaultFlags faults = 0U;
+        RtdStatus fault_status = RtdDriverReadFaults(&faults);
 
-        if (RtdDriverReadFaults(&faults) != RtdStatusOk)
+        if (fault_status != RtdStatusOk)
         {
-            return RtdStatusHalError;
+            return fault_status;
         }
 
         /* The MAX31865 fault bit (D0) is the OR of the fault status register
@@ -78,9 +76,6 @@ RtdStatus RtdDriverGetTemp(int32_t* temperature)
     }
 
     RtdResistanceToTemp(buffer, temperature);
-
-    s_last_good_temp = *temperature;
-    s_has_last_good = true;
 
     return RtdStatusOk;
 }
@@ -157,7 +152,7 @@ RtdStatus RtdDriverReadFaults(RtdFaultFlags* faults)
 {
     if (!faults)
     {
-        return RtdStatusHalError;
+        return RtdStatusFault;
     }
 
     if (RtdReadRegister(FAULT_STATUS_REG_R, faults))

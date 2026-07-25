@@ -13,6 +13,7 @@
 #include "usart.h"
 #include "rtc.h"
 #include "telemetry_app.h"
+#include "gps_app.h"
 #include "diagnostics.h"
 
 /* IMU TASK */
@@ -24,6 +25,17 @@ void TasksIMU(void* argument)
     {
         // TODO: Implement IMU data acquisition and processing
         osDelay(osWaitForever);
+    }
+}
+
+void TasksGPS(void *argument)
+{
+    (void)argument; // Unused parameter
+
+    for (;;)
+    {
+        (void)GpsAppReadRawData();
+        osDelay(GPS_DELAY);
     }
 }
 

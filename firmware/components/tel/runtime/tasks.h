@@ -31,6 +31,13 @@ void TasksCanload(void *argument);
 void TasksIMU(void* argument);
 
 /**
+ * @brief   GPS raw I2C read task function
+ * @param   argument: Not used
+ * @retval  None
+ */
+void TasksGPS(void* argument);
+
+/**
  * @brief   Diagnostics task function
  * @param   argument: Not used
  * @retval  None

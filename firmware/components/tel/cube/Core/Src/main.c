@@ -31,6 +31,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "can_app.h"
+#include "gps_app.h"
 #include "telemetry_app.h"
 #include "telemetry_driver.h"
 #include <string.h>
@@ -110,6 +111,7 @@ int main(void)
   MX_TIM2_Init();
   MX_UART5_Init();
   /* USER CODE BEGIN 2 */
+  (void)GpsAppInit();
   CanAppInit();
   /* USER CODE END 2 */
 

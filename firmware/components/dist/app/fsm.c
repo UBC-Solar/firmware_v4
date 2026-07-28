@@ -1,4 +1,5 @@
 #include "fsm.h"
+#include "dist_main.h"
 #include "faulting_runtime.h"
 #include "gpio_driver.h"
 #include "led_runtime.h"
@@ -28,6 +29,7 @@ static uint8_t led_driver_ready;
 
 static bool timer_check(uint32_t interval, uint32_t *last_tick);
 static void send_heartbeat_if_due(void);
+static void send_lv_on_if_due(void);
 static void send_currents_if_due(void);
 static bool check_critical_faults(FaultSource_t faults);
 static bool check_efuse_faults(FaultSource_t faults);
@@ -73,12 +75,17 @@ void FSM_Run(void)
         };
         ticks.state_tick = HAL_GetTick();
         DEBUG_IO_PRINT("FSM -> %s\r\n", state_names[FSM_state]);
+        if (FSM_state == FSM_STATE_NORMAL)
+        {
+            CAN_Send_LV_ON_0x303();
+        }
         prev_state = FSM_state;
     }
 
     FSM_state_table[FSM_state]();
 
     send_heartbeat_if_due();
+    send_lv_on_if_due();
     send_currents_if_due();
 }
 
@@ -98,12 +105,16 @@ static void state_startup(void)
         DEBUG_LED_Toggle();
     }
 
+#ifndef BENCHTOP_TESTING
     if (Fault_Get() & FAULT_ESTOP)
     {
         DEBUG_IO_PRINT("FAULT: ESTOP asserted during STARTUP\r\n");
         FSM_state = FSM_STATE_FAULT;
     }
     else if (CAN_Startup_Received())
+#else
+    if (CAN_Startup_Received())
+#endif // BENCHTOP_TESTING
     {
         DEBUG_IO_PRINT("CAN 0x303 received, exiting STARTUP\r\n");
         FSM_state = FSM_STATE_ACTIVATE_CTRL;
@@ -141,7 +152,6 @@ static void state_activate_ctrl(void)
  */
 static void state_normal(void)
 {
-    CAN_Send_LV_ON_0x303();
     FaultSource_t faults = Fault_Get();
 
     if (check_critical_faults(faults))
@@ -194,6 +204,15 @@ static void state_fault(void)
 /*============================================================================*/
 /* HELPER FUNCTIONS */
 
+static void send_lv_on_if_due(void)
+{
+    static uint32_t lv_on_tick = 0U;
+    if (timer_check(500, &lv_on_tick))
+    {
+        CAN_Send_LV_ON_0x303();
+    }
+}
+
 static void send_heartbeat_if_due(void)
 {
     static uint32_t heartbeat_tick = 0U;
@@ -213,17 +232,20 @@ static void send_currents_if_due(void)
         CAN_Send_Currents(TO_MA_U8(c.drd), TO_MA_U8(c.mdi), TO_MA_U8(c.spare_ctrl),
                           TO_MA_U8(c.spare_mux), TO_MA_U8(c.spare));
 #undef TO_MA_U8
+        print_currents();
     }
 }
 
 // Returns true and prints the fault if ESTOP is asserted or 0x304 is non-zero.
 static bool check_critical_faults(FaultSource_t faults)
 {
+#ifndef BENCHTOP_TESTING
     if (faults & FAULT_ESTOP)
     {
         DEBUG_IO_PRINT("FAULT: ESTOP asserted\r\n");
         return true;
     }
+#endif // BENCHTOP_TESTING
     if (CAN_ExtFault_Received())
     {
         DEBUG_IO_PRINT("FAULT: non-zero 0x304 received\r\n");

@@ -181,7 +181,7 @@ static void state_fault(void)
     if (timer_check(200, &ticks.blink_tick))
     {
         DEBUG_LED_Toggle();
-        CAN_Send_Fault();
+        CAN_Send_Fault_0x307();
         DEBUG_IO_PRINT("MUX_STATUS: %d\r\n", MUX_STATUS_Read());
 
         if (led_driver_ready)

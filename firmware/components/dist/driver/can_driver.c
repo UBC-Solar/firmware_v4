@@ -285,7 +285,7 @@ void CAN_Send_Currents(uint8_t drd_mA, uint8_t mdi_mA, uint8_t spare_ctrl_mA,
     CAN_QueueTxMessage(&msg);
 }
 
-void CAN_Send_Fault(void)
+void CAN_Send_Fault_0x307(void)
 {
     CAN_TxMessage_t msg = {0};
     msg.tx_header.StdId = DIST_FAULT_ID;

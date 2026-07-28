@@ -82,8 +82,8 @@ void CAN_Send_Heartbeat(void);
 void CAN_Send_Currents(uint8_t drd_mA, uint8_t mdi_mA, uint8_t spare_ctrl_mA,
                        uint8_t spare_mux_mA, uint8_t spare_mA);
 
-/** @brief Send the dist board fault message (ID 0x324, data[0] bit 0 set). */
-void CAN_Send_Fault_0x324(void);
+/** @brief Send the dist board fault message (ID 0x307, data[0] bit 0 set). */
+void CAN_Send_Fault_0x307(void);
 
 /** @brief Send the LV power-on notification (ID 0x303, data[0] = 0x01). */
 void CAN_Send_LV_ON_0x303(void);

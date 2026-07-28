@@ -1,4 +1,5 @@
 #include "fsm.h"
+#include "dist_main.h"
 #include "faulting_runtime.h"
 #include "gpio_driver.h"
 #include "led_runtime.h"
@@ -98,11 +99,18 @@ static void state_startup(void)
         DEBUG_LED_Toggle();
     }
 
-    if (Fault_Get() & FAULT_ESTOP)
+    if (CAN_ExtFault_Received())
+    {
+        DEBUG_IO_PRINT("FAULT: HVC fault received during STARTUP\r\n");
+        FSM_state = FSM_STATE_FAULT;
+    }
+#ifndef BENCHTOP_TESTING
+    else if (Fault_Get() & FAULT_ESTOP)
     {
         DEBUG_IO_PRINT("FAULT: ESTOP asserted during STARTUP\r\n");
         FSM_state = FSM_STATE_FAULT;
     }
+#endif // BENCHTOP_TESTING
     else if (CAN_Startup_Received())
     {
         DEBUG_IO_PRINT("CAN 0x303 received, exiting STARTUP\r\n");
@@ -219,11 +227,13 @@ static void send_currents_if_due(void)
 // Returns true and prints the fault if ESTOP is asserted or 0x304 is non-zero.
 static bool check_critical_faults(FaultSource_t faults)
 {
+#ifndef BENCHTOP_TESTING
     if (faults & FAULT_ESTOP)
     {
         DEBUG_IO_PRINT("FAULT: ESTOP asserted\r\n");
         return true;
     }
+#endif // BENCHTOP_TESTING
     if (CAN_ExtFault_Received())
     {
         DEBUG_IO_PRINT("FAULT: non-zero 0x304 received\r\n");

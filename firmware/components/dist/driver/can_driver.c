@@ -218,6 +218,12 @@ static void process_rx(uint32_t fifo)
         CAN_driver.startup_received = 1U;
     }
 
+    // HVC fault message: any reception of 0x301 means HVC has entered a fault state.
+    if (msg.rx_header.StdId == 0x301U)
+    {
+        CAN_driver.ext_fault_received = 1U;
+    }
+
     // External fault: any non-zero byte in 0x304 signals a fault condition.
     if (msg.rx_header.StdId == 0x304U)
     {

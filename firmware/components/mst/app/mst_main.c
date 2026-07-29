@@ -104,11 +104,16 @@ void CollectModuleData() {
     if (pack_state.balancing_active) {
         PauseAllBalancing();
     }
+
     RequestVoltageMeasurement();
     uint32_t voltage_measure_end_ms = HAL_GetTick();
     if (RetrieveVoltageMeasurement(slaves, pack_modules) != Slave_OK) {
         IncrementCommError();
     }
+    else {
+        pack_state.error_comm_fail = false;
+    }
+
     if (pack_state.balancing_active) {
         ResumeAllBalancing();
     }
@@ -125,11 +130,17 @@ void CollectModuleData() {
         if (RetrieveTemperatureMeasurement(slaves, pack_modules) != Slave_OK) {
             IncrementCommError();
         }
+        else {
+            pack_state.error_comm_fail = false;
+        }
     }
     #else // TEMP_STRATEGY_ALL_AT_ONCE is false
     RequestTemperatureMeasurement();
     if (RetrieveTemperatureMeasurement(slaves, pack_modules) != Slave_OK) {
         IncrementCommError();
+    }
+    else {
+        pack_state.error_comm_fail = false;
     }
     SetTempMuxState(slaves, (slaves[0].temp_mux_state+1) % SLAVE_NUM_MODULES_PER_TEMP_VAL);
     #endif // TEMP_STRATEGY_ALL_AT_ONCE

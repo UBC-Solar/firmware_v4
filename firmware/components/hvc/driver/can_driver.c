@@ -200,6 +200,7 @@ void CAN_SendAllMessages(void)
         CAN_Send_LVCurrent();
         CAN_Send_SuppVoltage();
         CAN_Send_DCDCThermistorTemp();
+        CAN_Send_PC_Monitoring();
     }
 }
 
@@ -342,6 +343,23 @@ void CAN_Send_DCDCThermistorTemp(void) {
     txMessage.data[1] = (dcdc_temp >> 16) & 0xFF;
     txMessage.data[2] = (dcdc_temp >> 8)  & 0xFF;
     txMessage.data[3] = (dcdc_temp)       & 0xFF;
+    CAN_QueueTxMessage(&txMessage);
+}
+
+void CAN_Send_PC_Monitoring (void) {
+    ADC_Voltages adc = ADC_GetVoltages();
+    int32_t mppt_precharge_mV = (int32_t)adc.mppt_precharge;
+    int32_t motor_precharge_mV = (int32_t)adc.motor_precharge;
+
+    DEBUG_IO_print("MPPT Precharge: %d mV, Motor Precharge: %d mV\r\n", mppt_precharge_mV, motor_precharge_mV);
+
+    CAN_TxMessage_t txMessage = {0};
+    txMessage.tx_header.StdId = HVC_PC_MONITORING_ID;
+    txMessage.tx_header.DLC = 4;
+    txMessage.data[0] = (mppt_precharge_mV >> 8) & 0xFF;
+    txMessage.data[1] = (mppt_precharge_mV)      & 0xFF;
+    txMessage.data[2] = (motor_precharge_mV >> 8) & 0xFF;
+    txMessage.data[3] = (motor_precharge_mV)      & 0xFF;
     CAN_QueueTxMessage(&txMessage);
 }
 

@@ -70,6 +70,10 @@ void CAN_Send_LVCurrent();
 void CAN_Send_SuppVoltage();
 void CAN_SendStatusMsg();
 void CAN_SendFaultMsg();
+void CAN_Send_DCDCThermistorTemp();
+void CAN_Send_PC_Monitoring();
+
+
 
 
 #if (INT_TEST_CAN == RUN)

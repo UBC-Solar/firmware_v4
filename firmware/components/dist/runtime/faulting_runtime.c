@@ -23,8 +23,16 @@ void Fault_Init(void)
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(DRD_FUSE_GPIO_Port, &GPIO_InitStruct);
 
+    GPIO_InitStruct.Pin  = SPARE_MUX_FUSE_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(SPARE_MUX_FUSE_GPIO_Port, &GPIO_InitStruct);
+
     HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+
+    HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
     // NOTE: the eFuses are not yet enabled at this point (CTRL_Enable_All()
     // runs later, once ACTIVATE_CTRL is entered), so their FAULT sense lines
@@ -58,6 +66,7 @@ FaultSource_t Fault_Get(void)
     // this guard, an EXTI firing between this function's load and store gets
     // silently overwritten by the stale value this function then stores back.
     HAL_NVIC_DisableIRQ(EXTI15_10_IRQn);
+    HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
     if (ESTOP_Read() == GPIO_PIN_RESET)
     {
         fault_register |= FAULT_ESTOP;
@@ -66,6 +75,7 @@ FaultSource_t Fault_Get(void)
     {
         fault_register &= ~(FaultSource_t)FAULT_ESTOP;
     }
+    HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
     HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
     return fault_register;
 }
@@ -82,6 +92,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         case MDI_FUSE_Pin:        Fault_Set(FAULT_MDI_FUSE);        break;
         case SPARE_FUSE_Pin:      Fault_Set(FAULT_SPARE_FUSE);      break;
         case SPARE_CTRL_FUSE_Pin: Fault_Set(FAULT_SPARE_CTRL_FUSE); break;
+        case SPARE_MUX_FUSE_Pin:  Fault_Set(FAULT_SPARE_MUX_FUSE);  break;
         default:                                                     break;
     }
 }

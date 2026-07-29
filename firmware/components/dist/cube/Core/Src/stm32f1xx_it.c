@@ -270,4 +270,10 @@ void EXTI15_10_IRQHandler(void)
     HAL_GPIO_EXTI_IRQHandler(SPARE_CTRL_FUSE_Pin);
     HAL_GPIO_EXTI_IRQHandler(SPARE_FUSE_Pin);
 }
+
+// SPARE_MUX_FUSE (PC6) is on EXTI line 6, shared with lines 5-9.
+void EXTI9_5_IRQHandler(void)
+{
+    HAL_GPIO_EXTI_IRQHandler(SPARE_MUX_FUSE_Pin);
+}
 /* USER CODE END 1 */

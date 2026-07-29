@@ -219,7 +219,7 @@ static void process_rx(uint32_t fifo)
     }
 
     // External fault: any non-zero byte in 0x304 signals a fault condition.
-    if (msg.rx_header.StdId == 0x304U)
+    if (msg.rx_header.StdId == 0x301U)
     {
         for (uint8_t i = 0; i < msg.rx_header.DLC; i++)
         {

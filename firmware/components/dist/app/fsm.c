@@ -105,16 +105,19 @@ static void state_startup(void)
         DEBUG_LED_Toggle();
     }
 
+    if (CAN_ExtFault_Received())
+    {
+        DEBUG_IO_PRINT("FAULT: HVC fault received during STARTUP\r\n");
+        FSM_state = FSM_STATE_FAULT;
+    }
 #ifndef BENCHTOP_TESTING
-    if (Fault_Get() & FAULT_ESTOP)
+    else if (Fault_Get() & FAULT_ESTOP)
     {
         DEBUG_IO_PRINT("FAULT: ESTOP asserted during STARTUP\r\n");
         FSM_state = FSM_STATE_FAULT;
     }
-    else if (CAN_Startup_Received())
-#else
-    if (CAN_Startup_Received())
 #endif // BENCHTOP_TESTING
+    else if (CAN_Startup_Received()) // BENCHTOP_TESTING
     {
         DEBUG_IO_PRINT("CAN 0x303 received, exiting STARTUP\r\n");
         FSM_state = FSM_STATE_ACTIVATE_CTRL;

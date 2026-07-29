@@ -1,6 +1,5 @@
 #pragma once
 
-#define BENCHTOP_TESTING      // comment out to enable ESTOP fault check
-// #define SPARE_MUX_BENCHTOP    // comment out to enable SPARE_MUX eFuse
+#define BENCHTOP_TESTING  // uncomment to disable ESTOP fault check during bench testing
 
 void AppMain(void);

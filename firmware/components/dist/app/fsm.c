@@ -137,7 +137,7 @@ static void state_activate_ctrl(void)
  *        faults are checked every cycle; eFuse FAULT lines are not acted on
  *        until 200 ms after entry to allow outputs to stabilise.
  *
- * Exit: ESTOP, 0x304 non-zero, or any eFuse FAULT asserted → FAULT.
+ * Exit: ESTOP, HVC_FAULT_ID (0x301) non-zero, or any eFuse FAULT asserted → FAULT.
  */
 static void state_normal(void)
 {
@@ -216,7 +216,7 @@ static void send_currents_if_due(void)
     }
 }
 
-// Returns true and prints the fault if ESTOP is asserted or 0x304 is non-zero.
+// Returns true and prints the fault if ESTOP is asserted or HVC_FAULT_ID (0x301) is non-zero.
 static bool check_critical_faults(FaultSource_t faults)
 {
     if (faults & FAULT_ESTOP)
@@ -226,7 +226,7 @@ static bool check_critical_faults(FaultSource_t faults)
     }
     if (CAN_ExtFault_Received())
     {
-        DEBUG_IO_PRINT("FAULT: non-zero 0x304 received\r\n");
+        DEBUG_IO_PRINT("FAULT: non-zero HVC_FAULT_ID (0x301) received\r\n");
         return true;
     }
     return false;

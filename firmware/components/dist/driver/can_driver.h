@@ -10,6 +10,7 @@
 
 /*============================================================================*/
 /* CAN ID's*/
+#define HVC_FAULT_ID            0x301
 #define DIST_HEARTBEAT_ID       0x306
 #define DIST_FAULT_ID	        0x307
 #define LV_POWERUP_RECIEVED_ID	0x308
@@ -47,7 +48,7 @@ typedef struct {
     volatile uint32_t tx_queue_push_index;
     volatile uint32_t tx_queue_pop_index;
     volatile uint8_t startup_received;   // set when 0x323 with bit 0 is received
-    volatile uint8_t ext_fault_received; // set when 0x304 is received with any non-zero byte
+    volatile uint8_t ext_fault_received; // set when HVC_FAULT_ID (0x301) is received with any non-zero byte
 } CAN_Driver_t;
 
 /*============================================================================*/
@@ -94,7 +95,7 @@ void CAN_Send_LV_ON_0x303(void);
 /** @return 1 if a valid startup authorisation (0x323, bit 0) has been received. */
 uint8_t CAN_Startup_Received(void);
 
-/** @return 1 if a 0x304 message with any non-zero byte has been received. */
+/** @return 1 if an HVC_FAULT_ID (0x301) message with any non-zero byte has been received. */
 uint8_t CAN_ExtFault_Received(void);
 
 /*============================================================================*/

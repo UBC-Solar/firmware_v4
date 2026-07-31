@@ -79,16 +79,18 @@ void DiagnosticSendRtdTemp(void)
 	int32_t rtd_temp_c = 0;
 	RtdStatus rtd_status = RtdDriverGetTemp(&rtd_temp_c);
 	bool rtd_read_success = (rtd_status == RtdStatusOk);
-	if (rtd_read_success)
+	if (!rtd_read_success)
 	{
-		if (!s_diagnostic_flags.bits.mdi_motor_over_temp && rtd_temp_c >= MOTOR_OVER_TEMP_SET_C)
-		{
-			DiagnosticSetMotorOverTemp(true);
-		}
-		else if (s_diagnostic_flags.bits.mdi_motor_over_temp && rtd_temp_c <= (MOTOR_OVER_TEMP_SET_C - 5)) // cancels out noise
-		{
-			DiagnosticSetMotorOverTemp(false);
-		}
+		return;
+	}
+
+	if (!s_diagnostic_flags.bits.mdi_motor_over_temp && rtd_temp_c >= MOTOR_OVER_TEMP_SET_C)
+	{
+		DiagnosticSetMotorOverTemp(true);
+	}
+	else if (s_diagnostic_flags.bits.mdi_motor_over_temp && rtd_temp_c <= (MOTOR_OVER_TEMP_SET_C - 5)) // cancels out noise
+	{
+		DiagnosticSetMotorOverTemp(false);
 	}
 
 	uint8_t data[5];

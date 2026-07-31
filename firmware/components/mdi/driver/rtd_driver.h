@@ -31,10 +31,18 @@ typedef uint8_t RtdFaultFlags;
  *
  * @param[out] faults Raw fault bits from register 0x07. Unused bits D1 and D0
  *                    are masked off.
- * @return RtdStatusOk on success or RtdStatusHalError on invalid input or an
- *         SPI failure.
+ * @return RtdStatusOk on success, RtdStatusFault on invalid input, or
+ *         RtdStatusHalError on an SPI failure.
  */
 RtdStatus RtdDriverReadFaults(RtdFaultFlags* faults);
+
+/**
+ * @brief Gets the debounced MAX31865 fault flags.
+ *
+ * @return Fault bits after the configured number of consecutive faulted
+ *         readings, or zero when no debounced fault is active.
+ */
+RtdFaultFlags RtdDriverGetFaults(void);
 
 /**
  * @brief Reads motor temperature from the MAX31865 RTD interface.

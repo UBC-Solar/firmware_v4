@@ -105,12 +105,12 @@ void GpioPollState(void)
     //     gpio_pin_state.next_page = false;
     // }
 
-    if (HAL_GPIO_ReadPin(REGEN_GPIO_Port, REGEN_Pin))
-    {
-        gpio_pin_state.regen_en = true;
-    } else {
-        gpio_pin_state.regen_en = false;
-    }
+    // if (HAL_GPIO_ReadPin(REGEN_GPIO_Port, REGEN_Pin))
+    // {
+    //     gpio_pin_state.regen_en = true;
+    // } else {
+    //     gpio_pin_state.regen_en = false;
+    // }
 }
 
 
@@ -136,6 +136,10 @@ void StrInterruptHandler(uint16_t GPIO_Pin)
 
         case PTT_MCU_Pin:
             gpio_pin_state.ptt_en = !gpio_pin_state.ptt_en;
+            break;
+
+        case REGEN_Pin:
+            gpio_pin_state.regen_en = !gpio_pin_state.regen_en;
             break;
 
         case CRUISE_CONTROL_Pin:

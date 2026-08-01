@@ -79,6 +79,9 @@ void Error_Handler(void);
 #define CRUISE_DEC_GPIO_Port GPIOA
 #define CRUISE_INC_Pin GPIO_PIN_9
 #define CRUISE_INC_GPIO_Port GPIOA
+#define REGEN_Pin GPIO_PIN_12
+#define REGEN_GPIO_Port GPIOA
+#define REGEN_EXTI_IRQn EXTI15_10_IRQn
 
 /* USER CODE BEGIN Private defines */
 

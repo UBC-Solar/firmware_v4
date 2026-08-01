@@ -84,12 +84,12 @@ void CruiseState(uint32_t velocity)
 
 void GpioPollState(void)
 {
-    if (!HAL_GPIO_ReadPin(HORN_MCU_GPIO_Port, HORN_MCU_Pin))
-    {
-        gpio_pin_state.horn_en = true;
-    } else {
-        gpio_pin_state.horn_en = false;
-    }
+    // if (!HAL_GPIO_ReadPin(HORN_MCU_GPIO_Port, HORN_MCU_Pin))
+    // {
+    //     gpio_pin_state.horn_en = true;
+    // } else {
+    //     gpio_pin_state.horn_en = false;
+    // }
 
     if (!HAL_GPIO_ReadPin(PTT_MCU_GPIO_Port, PTT_MCU_Pin))
     {
@@ -98,12 +98,12 @@ void GpioPollState(void)
         gpio_pin_state.ptt_en = false;
     }
 
-    if (!HAL_GPIO_ReadPin(NEXT_PAGE_GPIO_Port, NEXT_PAGE_Pin))
-    {
-        gpio_pin_state.next_page = true;
-    } else {
-        gpio_pin_state.next_page = false;
-    }
+    // if (!HAL_GPIO_ReadPin(NEXT_PAGE_GPIO_Port, NEXT_PAGE_Pin))
+    // {
+    //     gpio_pin_state.next_page = true;
+    // } else {
+    //     gpio_pin_state.next_page = false;
+    // }
 
     if (HAL_GPIO_ReadPin(REGEN_GPIO_Port, REGEN_Pin))
     {
@@ -113,19 +113,50 @@ void GpioPollState(void)
     }
 }
 
+
+// static bool page = false;
 /* GPIO INTERRUPTS */
-void StrInterruptHandler(uint16_t toggle)
+/**
+ * @brief Handles STR GPIO interrupt events.
+ * @param GPIO_Pin GPIO pin that triggered the interrupt.
+ */
+void StrInterruptHandler(uint16_t GPIO_Pin)
 {
-    if (toggle != CRUISE_CONTROL_Pin)
+    switch (GPIO_Pin)
     {
-        return;
+        case HORN_MCU_Pin:
+            gpio_pin_state.horn_en = !gpio_pin_state.horn_en;
+            break;
+
+        case NEXT_PAGE_Pin:
+
+            gpio_pin_state.next_page = !gpio_pin_state.next_page;
+            // page = gpio_pin_state.next_page;
+            break; 
+
+        case CRUISE_CONTROL_Pin:
+            gpio_pin_state.cruise_state.cruise_en = !gpio_pin_state.cruise_state.cruise_en;
+
+            if (gpio_pin_state.cruise_state.cruise_en)
+            {
+                GetCruiseSetVelocity(ReadCurrentVelocity());
+            }
+            break;
+
+        default:
+            break;
     }
 
-    HAL_GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
+//     if (GPIO_PIN != CRUISE_CONTROL_Pin)
+//     {
+//         return;
+//     }
 
-    gpio_pin_state.cruise_state.cruise_en = !gpio_pin_state.cruise_state.cruise_en;
-    if (gpio_pin_state.cruise_state.cruise_en)
-    {
-        GetCruiseSetVelocity(ReadCurrentVelocity());
-    }
+//     HAL_GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
+
+//     gpio_pin_state.cruise_state.cruise_en = !gpio_pin_state.cruise_state.cruise_en;
+//     if (gpio_pin_state.cruise_state.cruise_en)
+//     {
+//         GetCruiseSetVelocity(ReadCurrentVelocity());
+//     }
 }

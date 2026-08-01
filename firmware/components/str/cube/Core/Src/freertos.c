@@ -24,7 +24,6 @@
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
-
 /* USER CODE BEGIN Includes */
 #include "tasks.h"
 /* USER CODE END Includes */

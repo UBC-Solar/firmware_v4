@@ -65,8 +65,10 @@ void Error_Handler(void);
 #define LTS_IN_GPIO_Port GPIOA
 #define NEXT_PAGE_Pin GPIO_PIN_2
 #define NEXT_PAGE_GPIO_Port GPIOA
+#define NEXT_PAGE_EXTI_IRQn EXTI2_IRQn
 #define HORN_MCU_Pin GPIO_PIN_7
 #define HORN_MCU_GPIO_Port GPIOA
+#define HORN_MCU_EXTI_IRQn EXTI9_5_IRQn
 #define PTT_MCU_Pin GPIO_PIN_10
 #define PTT_MCU_GPIO_Port GPIOB
 #define CRUISE_CONTROL_Pin GPIO_PIN_13

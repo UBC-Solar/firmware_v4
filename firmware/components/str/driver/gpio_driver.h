@@ -75,8 +75,8 @@ void GpioPollState(void);
 
 /**
  * @brief Handles STR GPIO interrupt events.
- * @param toggle GPIO pin that triggered the interrupt.
+ * @param GPIO_Pin GPIO pin that triggered the interrupt.
  */
-void StrInterruptHandler(uint16_t toggle);
+void StrInterruptHandler(uint16_t GPIO_Pin);
 
 #endif /* __GPIO_DRIVER_H__ */

@@ -71,6 +71,7 @@ void Error_Handler(void);
 #define HORN_MCU_EXTI_IRQn EXTI9_5_IRQn
 #define PTT_MCU_Pin GPIO_PIN_10
 #define PTT_MCU_GPIO_Port GPIOB
+#define PTT_MCU_EXTI_IRQn EXTI15_10_IRQn
 #define CRUISE_CONTROL_Pin GPIO_PIN_13
 #define CRUISE_CONTROL_GPIO_Port GPIOB
 #define CRUISE_CONTROL_EXTI_IRQn EXTI15_10_IRQn
@@ -78,8 +79,6 @@ void Error_Handler(void);
 #define CRUISE_DEC_GPIO_Port GPIOA
 #define CRUISE_INC_Pin GPIO_PIN_9
 #define CRUISE_INC_GPIO_Port GPIOA
-#define REGEN_Pin GPIO_PIN_12
-#define REGEN_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 

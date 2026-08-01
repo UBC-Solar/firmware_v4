@@ -91,12 +91,12 @@ void GpioPollState(void)
     //     gpio_pin_state.horn_en = false;
     // }
 
-    if (!HAL_GPIO_ReadPin(PTT_MCU_GPIO_Port, PTT_MCU_Pin))
-    {
-        gpio_pin_state.ptt_en = true;
-    } else {
-        gpio_pin_state.ptt_en = false;
-    }
+    // if (!HAL_GPIO_ReadPin(PTT_MCU_GPIO_Port, PTT_MCU_Pin))
+    // {
+    //     gpio_pin_state.ptt_en = true;
+    // } else {
+    //     gpio_pin_state.ptt_en = false;
+    // }
 
     // if (!HAL_GPIO_ReadPin(NEXT_PAGE_GPIO_Port, NEXT_PAGE_Pin))
     // {
@@ -133,6 +133,10 @@ void StrInterruptHandler(uint16_t GPIO_Pin)
             gpio_pin_state.next_page = !gpio_pin_state.next_page;
             // page = gpio_pin_state.next_page;
             break; 
+
+        case PTT_MCU_Pin:
+            gpio_pin_state.ptt_en = !gpio_pin_state.ptt_en;
+            break;
 
         case CRUISE_CONTROL_Pin:
             gpio_pin_state.cruise_state.cruise_en = !gpio_pin_state.cruise_state.cruise_en;

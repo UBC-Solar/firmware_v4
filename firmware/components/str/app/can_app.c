@@ -14,6 +14,7 @@
 #include "main.h"
 #include "gpio_app.h"
 #include "stm32f1xx_hal_gpio.h"
+#include "stm32f1xx_hal.h"
 
 #include <string.h>
 
@@ -51,6 +52,10 @@ static void CANCommsRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
 	{
 		return;
 	}
+
+	// Log timestamp of CAN RX for diagnostics (detects stale bus)
+	uint32_t current_time_ms = HAL_GetTick();
+	CyclicDataSetCanRxTimestamp(current_time_ms);
 
 	if(CAN_comms_Rx_msg->header.IDE == CAN_ID_EXT)
 	{

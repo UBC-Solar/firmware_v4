@@ -41,7 +41,7 @@ class DRDTest:
 
         # Test Temperature page
         self.switch_page()
-        print("\Temperature Page: test temperature")
+        print("\nTemperature Page: test temperature")
         self.script_send_temperature(self.bus)
 
         #Test Temperature page
@@ -275,7 +275,7 @@ class DRDTest:
         send_message(0x623, [safe_value & 0xFF,(safe_value >> 8) & 0xFF,0,0,0,0,0,0]) # clear
 
 if(__name__ == "__main__"):
-    with can.interface.Bus(channel='can0', interface='socketcan', bitrate=500000) as bus:
+    with can.interface.Bus(channel='PCAN_USBBUS1', interface='pcan', bitrate=500000) as bus:
         print("CAN bus initialized")
         drd_test = DRDTest(bus)
         drd_test.clearbus(bus)

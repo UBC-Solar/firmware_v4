@@ -344,54 +344,76 @@ void Debug_SlaveTestCommsCycle(void) {
 #endif // (INT_TEST_SLAVE == RUN)
 #if (INT_TEST_SLAVE_BAL_VOLT == RUN)
 void Debug_SlaveTestBalancingVoltageDrop(void) {
+    // 6 newlines to separate test data for each round of tests
+    LOG_INFO("");
+    LOG_INFO("");
+    LOG_INFO("");
+    LOG_INFO("");
+    LOG_INFO("");
+    LOG_INFO("");
+
+    static uint32_t bal_enable_mod_idx = 0;
+    static uint32_t last_iter_time = 0;
+    static const uint32_t time_per_module_ms = 4500;
+    if (HAL_GetTick() - last_iter_time >= time_per_module_ms) {
+        bal_enable_mod_idx++;
+        last_iter_time = HAL_GetTick();
+    }
+
+    bool module_bal_enables[NUM_MODULES] = {0};
+    module_bal_enables[bal_enable_mod_idx] = true;
+
     uint32_t previous_voltages[NUM_MODULES] = {0};
     uint32_t current_voltages[NUM_MODULES] = {0};
-    pack_state.balancing_enable = true;
 
+    LOG_INFO("Balancing OFF");
     Slave_WakeUp();
-
-    RequestVoltageMeasurement();
-    if (RetrieveVoltageMeasurement(slaves, pack_modules) != Slave_OK) {
-        IncrementCommError();
-    }
-
-    for (int module_idx = 0; module_idx < NUM_MODULES; module_idx++) {
-        previous_voltages[module_idx] = pack_modules[module_idx].voltage_mv;
-    }
-
-    ComputePackStatistics(pack_modules, &pack_state);
-
-    /** Either: only enable one module's balancing */
-    // pack_modules[12].voltage_mv = pack_state.min_voltage_mV + 300;
-    // DoBalancing(&pack_state, pack_modules, slaves);
-
-    /** Or: enable balancing for every module */
-    Debug_DoBalancing(slaves, true);
-
+    PauseAllBalancing();
     HAL_Delay(500);
     RequestVoltageMeasurement();
     if (RetrieveVoltageMeasurement(slaves, pack_modules) != Slave_OK) {
         IncrementCommError();
     }
+    ComputePackStatistics(pack_modules, &pack_state);
+    #if CAN_CONNECTED
+    // Integration test: the rest of BMS might be plugged in. Need to keep let them know we're alive
+    CAN_SendHeartbeatMessage();
+    #endif // CAN_CONNECTED
 
-    // 3 newlines to separate test data for each round of tests
-    LOG_INFO("");
-    LOG_INFO("");
-    LOG_INFO("");
+    for (int module_idx = 0; module_idx < NUM_MODULES; module_idx++) {
+        previous_voltages[module_idx] = pack_modules[module_idx].voltage_mv;
+    }
 
+    LOG_INFO("Balancing ON");
+    Slave_WakeUp();
+    Debug_SetBalancingForModules(slaves, module_bal_enables);
+    ResumeAllBalancing();
+    HAL_Delay(500);
+    RequestVoltageMeasurement();
+    if (RetrieveVoltageMeasurement(slaves, pack_modules) != Slave_OK) {
+        IncrementCommError();
+    }
+    ComputePackStatistics(pack_modules, &pack_state);
+    #if CAN_CONNECTED
+    CAN_SendHeartbeatMessage();
+    #endif // CAN_CONNECTED
+
+    LOG_INFO("At tick %u. Now comparing voltages of module index %d", HAL_GetTick(), bal_enable_mod_idx);
     for (int module_idx = 0; module_idx < NUM_MODULES; module_idx++) {
         current_voltages[module_idx] = pack_modules[module_idx].voltage_mv;
         int32_t voltage_delta_mv = (int32_t)current_voltages[module_idx] - (int32_t)previous_voltages[module_idx];
         LOG_INFO("Module %d voltage: %lu mV (bal off) -> %lu mV (bal on). Note: %ld mV diff",
-
                  module_idx,
                  previous_voltages[module_idx],
                  current_voltages[module_idx],
                  voltage_delta_mv);
     }
 
-    Debug_DoBalancing(slaves, false);
-    HAL_Delay(2000);
+    PauseAllBalancing();
+    HAL_Delay(500);
+    #if CAN_CONNECTED
+    SendCanMessages();
+    #endif // CAN_CONNECTED
 }
 #endif // (INT_TEST_SLAVE_BAL_VOLT == RUN)
 
@@ -400,12 +422,17 @@ void Debug_SlaveTestBalancingVoltageDrop(void) {
 void Debug_SlaveTestBalanceScrutCycle(void) {
     bool balance_enabled = pack_state.balancing_enable;
     bool scrutineering_enabled = pack_state.scrutineering_enable;
+    bool module_enables[32];
+    for (int i = 0; i < 32; i++) {
+        module_enables[i] = balance_enabled;
+    }
+
     Slave_WakeUp();
 
     ResumeAllBalancing();
 
     SetScrutineeringMode(slaves, scrutineering_enabled);
-    Debug_DoBalancing(slaves, balance_enabled);
+    Debug_SetBalancingForModules(slaves, module_enables);
 
     LOG_INFO("Balancing pins %s, Scrutineering mode %s", balance_enabled ? "ON" : "OFF", scrutineering_enabled ? "ON" : "OFF");
 

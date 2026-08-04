@@ -285,7 +285,7 @@ void CAN_Send_Currents(uint8_t drd_mA, uint8_t mdi_mA, uint8_t spare_ctrl_mA,
     CAN_QueueTxMessage(&msg);
 }
 
-void CAN_Send_Fault_0x307(void)
+void CAN_Send_Fault(void)
 {
     CAN_TxMessage_t msg = {0};
     msg.tx_header.StdId = DIST_FAULT_ID;
@@ -296,7 +296,7 @@ void CAN_Send_Fault_0x307(void)
     CAN_QueueTxMessage(&msg);
 }
 
-void CAN_Send_LV_ON_0x303(void)
+void CAN_Send_LV_ON(void)
 {
     CAN_TxMessage_t msg = {0};
     msg.tx_header.StdId = LV_POWERUP_RECIEVED_ID;
@@ -304,6 +304,19 @@ void CAN_Send_LV_ON_0x303(void)
     msg.tx_header.RTR   = CAN_RTR_DATA;
     msg.tx_header.DLC   = 1U;
     msg.data[0]         = 0x01U;
+    CAN_QueueTxMessage(&msg);
+}
+
+
+// Sends the ID of the current firmware branch (DIST_BRANCH_ID). 
+void CAN_Send_Branch_ID(void)
+{
+    CAN_TxMessage_t msg = {0};
+    msg.tx_header.StdId = SEND_DIST_BRANCH_ID;
+    msg.tx_header.IDE   = CAN_ID_STD;
+    msg.tx_header.RTR   = CAN_RTR_DATA;
+    msg.tx_header.DLC   = 1U;
+    msg.data[0]         = DIST_BRANCH_ID;
     CAN_QueueTxMessage(&msg);
 }
 

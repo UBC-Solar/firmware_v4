@@ -31,6 +31,7 @@ static bool timer_check(uint32_t interval, uint32_t *last_tick);
 static void send_heartbeat_if_due(void);
 static void send_lv_on_if_due(void);
 static void send_currents_if_due(void);
+static void send_branch_id_if_due(void);
 static bool check_critical_faults(FaultSource_t faults);
 static bool check_efuse_faults(FaultSource_t faults);
 static void print_currents(void);
@@ -77,7 +78,7 @@ void FSM_Run(void)
         DEBUG_IO_PRINT("FSM -> %s\r\n", state_names[FSM_state]);
         if (FSM_state == FSM_STATE_NORMAL)
         {
-            CAN_Send_LV_ON_0x303();
+            CAN_Send_LV_ON();
         }
         prev_state = FSM_state;
     }
@@ -87,6 +88,7 @@ void FSM_Run(void)
     send_heartbeat_if_due();
     send_lv_on_if_due();
     send_currents_if_due();
+    send_branch_id_if_due();
 }
 
 /*============================================================================*/
@@ -194,7 +196,7 @@ static void state_fault(void)
     if (timer_check(200, &ticks.blink_tick))
     {
         DEBUG_LED_Toggle();
-        CAN_Send_Fault_0x307();
+        CAN_Send_Fault();
         DEBUG_IO_PRINT("MUX_STATUS: %d\r\n", MUX_STATUS_Read());
 
         if (led_driver_ready)
@@ -212,7 +214,7 @@ static void send_lv_on_if_due(void)
     static uint32_t lv_on_tick = 0U;
     if (timer_check(500, &lv_on_tick))
     {
-        CAN_Send_LV_ON_0x303();
+        CAN_Send_LV_ON();
     }
 }
 
@@ -236,6 +238,15 @@ static void send_currents_if_due(void)
                           TO_MA_U8(c.spare_mux), TO_MA_U8(c.spare));
 #undef TO_MA_U8
         print_currents();
+    }
+}
+
+static void send_branch_id_if_due(void)
+{
+    static uint32_t branch_id_tick = 0U;
+    if (timer_check(1000, &branch_id_tick))
+    {
+        CAN_Send_Branch_ID();
     }
 }
 

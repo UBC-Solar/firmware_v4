@@ -14,10 +14,16 @@
 #define DIST_FAULT_ID	        0x307
 #define LV_POWERUP_RECIEVED_ID	0x308
 #define LV_CURRENTS_ID      	0x309
+#define SEND_DIST_BRANCH_ID     0x3A4 
 
+/*============================================================================*/
 /* CAN ID's Receive*/
 #define HVC_FAULT_ID            0x301
 #define LV_POWERUP_ID           0x303
+
+/*============================================================================*/
+/* Actual Branch ID */
+#define DIST_BRANCH_ID          1
 
 
 /*============================================================================*/
@@ -50,7 +56,7 @@ typedef struct {
     volatile CAN_TxMessage_t tx_queue[CAN_TX_QUEUE_CAPACITY];
     volatile uint32_t tx_queue_push_index;
     volatile uint32_t tx_queue_pop_index;
-    volatile uint8_t startup_received;   // set when 0x323 with bit 0 is received
+    volatile uint8_t startup_received;   // set when LV_POWERUP_ID (0x303) with bit 0 is received
     volatile uint8_t ext_fault_received; // set when 0x304 is received with any non-zero byte
 } CAN_Driver_t;
 
@@ -87,10 +93,13 @@ void CAN_Send_Currents(uint8_t drd_mA, uint8_t mdi_mA, uint8_t spare_ctrl_mA,
                        uint8_t spare_mux_mA, uint8_t spare_mA);
 
 /** @brief Send the dist board fault message (ID 0x307, data[0] bit 0 set). */
-void CAN_Send_Fault_0x307(void);
+void CAN_Send_Fault(void);
 
-/** @brief Send the LV power-on notification (ID 0x303, data[0] = 0x01). */
-void CAN_Send_LV_ON_0x303(void);
+/** @brief Send the dist branch ID (ID 0x3A4, data[0] = DIST_BRANCH_ID). */
+void CAN_Send_Branch_ID(void);
+
+/** @brief Send the LV power-on notification (ID 0x308, data[0] = 0x01). */
+void CAN_Send_LV_ON(void);
 
 /*============================================================================*/
 /* RX / STATUS */

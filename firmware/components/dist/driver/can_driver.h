@@ -9,11 +9,15 @@
 #include "can.h"
 
 /*============================================================================*/
-/* CAN ID's*/
+/* CAN ID's Send*/
 #define DIST_HEARTBEAT_ID       0x306
 #define DIST_FAULT_ID	        0x307
 #define LV_POWERUP_RECIEVED_ID	0x308
 #define LV_CURRENTS_ID      	0x309
+
+/* CAN ID's Receive*/
+#define HVC_FAULT_ID            0x301
+#define LV_POWERUP_ID           0x303
 
 
 /*============================================================================*/

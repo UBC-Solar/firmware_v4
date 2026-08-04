@@ -117,7 +117,7 @@ static void state_startup(void)
         FSM_state = FSM_STATE_FAULT;
     }
 #endif // BENCHTOP_TESTING
-    else if (CAN_Startup_Received()) // BENCHTOP_TESTING
+    else if (CAN_Startup_Received())
     {
         DEBUG_IO_PRINT("CAN 0x303 received, exiting STARTUP\r\n");
         FSM_state = FSM_STATE_ACTIVATE_CTRL;

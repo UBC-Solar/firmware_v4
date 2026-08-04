@@ -13,6 +13,9 @@
 #define ADC_VREF           3.3f
 #define ADC_COUNTS         4095.0f
 
+#define EFUSE_CORRECTION_SLOPE 0.961085f
+#define EFUSE_CORRECTION_OFFSET 0.00328378f
+
 void ADC_Driver_Init(void)
 {
     /* STM32F1 ADC requires a calibration run after init — skipping this causes
@@ -49,11 +52,12 @@ static float ilm_to_amps(uint16_t raw, float rilm)
     return vilm / (GIMON * rilm);
 }
 
-/* Correction for 910Ω channels: measured = 0.961085×actual - 3.28378 mA
- * Inverted: actual = (measured + 3.28378 mA) / 0.961085 */
+/* Correction for 910Ω channels from tests: measured = 0.961085×actual - 3.28378 mA
+ * Inverted: actual = (measured + 3.28378 mA) / 0.961085 
+ See BMS testing / DIST / efuse on monday*/
 static float correct_910(float amps)
 {
-    return (amps + 0.00328378f) / 0.961085f;
+    return (amps + EFUSE_CORRECTION_OFFSET) / EFUSE_CORRECTION_SLOPE;
 }
 
 uint16_t ADC_Read_ESTOP(void)

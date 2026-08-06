@@ -21,25 +21,25 @@
  * @param velocity_kmh Vehicle velocity in km/h.
  * @return Stored vehicle velocity in km/h.
  */
-uint32_t VehicleSetVelocity(uint32_t velocity_kmh);
+uint32_t GPIOAppSetVehicleVelocity(uint32_t velocity_kmh);
 
 /**
  * @brief Reads the latest stored vehicle velocity.
  * @return Current vehicle velocity in km/h.
  */
-uint32_t VehicleGetVelocity(void);
+uint32_t GPIOAppGetVehicleVelocity(void);
 
 /**
  * @brief Stores the current cruise control set velocity.
  * @param velocity_kmh Cruise set velocity in km/h.
  * @return Stored cruise set velocity in km/h.
  */
-uint32_t CruiseSetVelocity(uint32_t velocity_kmh);
+uint32_t GPIOAppSetCruiseVelocity(uint32_t velocity_kmh);
 
 /**
  * @brief Reads the current cruise control set velocity.
  * @return Cruise set velocity in km/h.
  */
-uint32_t CruiseGetVelocity(void);
+uint32_t GPIOAppGetCruiseVelocity(void);
 
 #endif // GPIO_APP_H

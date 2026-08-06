@@ -93,7 +93,7 @@ void SteeringVelocityCanMsgHandler(uint8_t* data)
     uint32_t velocity_kmh = (uint32_t)(velocity_mps * 3.6f);
 
     CyclicDataSetSpeed(velocity_kmh);
-    VehicleSetVelocity(velocity_kmh);
+    GPIOAppSetVehicleVelocity(velocity_kmh);
 }
 
 /* CAN TX */
@@ -119,7 +119,7 @@ void TransmitDriveControlState(void)
 
     if (gpio_pin_state.cruise_state.cruise_en)
     {
-        cruise_set_velocity_kmh = (uint16_t)CruiseGetVelocity();
+        cruise_set_velocity_kmh = (uint16_t)GPIOAppGetCruiseVelocity();
     }
 
     data[0] =

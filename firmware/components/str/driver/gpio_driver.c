@@ -50,15 +50,15 @@ void StrInterruptHandler(uint16_t GPIO_Pin)
         case CRUISE_INC_Pin:
         {
             if (!gpio_pin_state.cruise_state.cruise_en ||
-                (VehicleGetVelocity() == 0U))
+                (GPIOAppGetVehicleVelocity() == 0U))
             {
                 break;
             }
 
-            uint32_t cruise_set_velocity_kmh = CruiseGetVelocity();
+            uint32_t cruise_set_velocity_kmh = GPIOAppGetCruiseVelocity();
 
             cruise_set_velocity_kmh++;
-            CruiseSetVelocity(cruise_set_velocity_kmh);
+            GPIOAppSetCruiseVelocity(cruise_set_velocity_kmh);
 
             gpio_pin_state.cruise_state.cruise_inc = true;
             break;
@@ -67,17 +67,17 @@ void StrInterruptHandler(uint16_t GPIO_Pin)
         case CRUISE_DEC_Pin:
         {
             if (!gpio_pin_state.cruise_state.cruise_en ||
-                (VehicleGetVelocity() == 0U))
+                (GPIOAppGetVehicleVelocity() == 0U))
             {
                 break;
             }
 
-            uint32_t cruise_set_velocity_kmh = CruiseGetVelocity();
+            uint32_t cruise_set_velocity_kmh = GPIOAppGetCruiseVelocity();
 
             if (cruise_set_velocity_kmh > 0U)
             {
                 cruise_set_velocity_kmh--;
-                CruiseSetVelocity(cruise_set_velocity_kmh);
+                GPIOAppSetCruiseVelocity(cruise_set_velocity_kmh);
                 gpio_pin_state.cruise_state.cruise_dec = true;
             }
 
@@ -92,9 +92,9 @@ void StrInterruptHandler(uint16_t GPIO_Pin)
 
             if (gpio_pin_state.cruise_state.cruise_en)
             {
-                uint32_t current_velocity_kmh = VehicleGetVelocity();
+                uint32_t current_velocity_kmh = GPIOAppGetVehicleVelocity();
 
-                CruiseSetVelocity(current_velocity_kmh);
+                GPIOAppSetCruiseVelocity(current_velocity_kmh);
             }
             break;
 

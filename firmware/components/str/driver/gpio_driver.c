@@ -14,14 +14,6 @@
 /* GLOBAL VARIABLES */
 volatile StrGpioCtx gpio_pin_state = {0};
 
-/* TEMPORARY CRUISE DEBUG VARIABLES */
-volatile bool debug_cruise_en = false;
-volatile uint32_t debug_cruise_inc = 0U;
-volatile uint32_t debug_cruise_dec = 0U;
-volatile uint32_t debug_cruise_speed = 0U;
-volatile bool debug_rts = false;
-volatile bool debug_lts = false;
-
 /* GPIO INTERRUPTS */
 /**
  * @brief Handles STR GPIO interrupt events.
@@ -33,12 +25,10 @@ void StrInterruptHandler(uint16_t GPIO_Pin)
     {
         case RTS_IN_Pin:
             gpio_pin_state.lights_state.rts_en = !gpio_pin_state.lights_state.rts_en;
-            debug_rts = gpio_pin_state.lights_state.rts_en;
             break;
 
         case LTS_IN_Pin:
             gpio_pin_state.lights_state.lts_en = !gpio_pin_state.lights_state.lts_en;
-            debug_lts = gpio_pin_state.lights_state.lts_en;
             break;
 
         case HORN_MCU_Pin:
@@ -71,8 +61,6 @@ void StrInterruptHandler(uint16_t GPIO_Pin)
             CruiseSetVelocity(cruise_set_velocity_kmh);
 
             gpio_pin_state.cruise_state.cruise_inc = true;
-            debug_cruise_inc++;
-            debug_cruise_speed = cruise_set_velocity_kmh;
             break;
         }
 
@@ -91,8 +79,6 @@ void StrInterruptHandler(uint16_t GPIO_Pin)
                 cruise_set_velocity_kmh--;
                 CruiseSetVelocity(cruise_set_velocity_kmh);
                 gpio_pin_state.cruise_state.cruise_dec = true;
-                debug_cruise_dec++;
-                debug_cruise_speed = cruise_set_velocity_kmh;
             }
 
             break;
@@ -100,7 +86,6 @@ void StrInterruptHandler(uint16_t GPIO_Pin)
 
         case CRUISE_CONTROL_Pin:
             gpio_pin_state.cruise_state.cruise_en = !gpio_pin_state.cruise_state.cruise_en;
-            debug_cruise_en = gpio_pin_state.cruise_state.cruise_en;
 
             gpio_pin_state.cruise_state.cruise_inc = false;
             gpio_pin_state.cruise_state.cruise_dec = false;
@@ -110,7 +95,6 @@ void StrInterruptHandler(uint16_t GPIO_Pin)
                 uint32_t current_velocity_kmh = VehicleGetVelocity();
 
                 CruiseSetVelocity(current_velocity_kmh);
-                debug_cruise_speed = current_velocity_kmh;
             }
             break;
 

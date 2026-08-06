@@ -13,7 +13,7 @@
 #include "gpio_app.h"
 
 /* PRIVATE VARIABLES */
-static volatile uint32_t s_current_velocity_kmh = 40U;
+static volatile uint32_t s_current_velocity_kmh = 0U;
 static volatile uint32_t s_cruise_set_velocity_kmh = 0U;
 
 uint32_t VehicleSetVelocity(uint32_t velocity)

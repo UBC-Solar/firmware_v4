@@ -207,6 +207,7 @@ static uint8_t UpdateMotorCommandFlags(DriveStateCtx *ctx)
     uint8_t flags = 0;
     flags |= ((ctx->state == REVERSE) ? 0 : 1); // Direction Bit: 0 (REVERSE), 1 (FORWARD/PARK)
     flags |= (ctx->flags.eco_mode_on ? 1 << 1 : 0);
+    flags |= ((LCD_APP_KPH == LcdHandlerGetSpeedUnits()) ? 1 << 2 : 0); // Speed Units Bit: 0 (MPH), 1 (KPH)
     return flags;
 }
 

@@ -80,6 +80,24 @@ void SteeringCanRxHandler(uint32_t msg_id, uint8_t* data)
     {
         SteeringVelocityCanMsgHandler(data);
     }
+    else if (msg_id == DRD_MOTOR_COMMAND_CAN_ID)
+    {
+        SteeringSpeedUnitsCanMsgHandler(data);
+    }
+}
+
+/**
+ * @brief Extracts the driver-selected speed units from a DRD motor command frame.
+ * @param data Pointer to the motor command CAN payload.
+ */
+void SteeringSpeedUnitsCanMsgHandler(uint8_t* data)
+{
+    if (data == NULL)
+    {
+        return;
+    }
+
+    HexAppSetSpeedUnits((data[4] >> 2) & 0x01U); // Motor Command bit 34
 }
 
 /**

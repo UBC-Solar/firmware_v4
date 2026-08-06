@@ -63,17 +63,6 @@ extern volatile StrGpioCtx gpio_pin_state;
 void LightState(void);
 
 /**
- * @brief Updates cruise control state from GPIO inputs.
- * @param velocity Current vehicle velocity in km/h.
- */
-void CruiseState(uint32_t velocity);
-
-/**
- * @brief Polls steering wheel GPIO inputs and updates the STR GPIO context.
- */
-void GpioPollState(void);
-
-/**
  * @brief Handles STR GPIO interrupt events.
  * @param GPIO_Pin GPIO pin that triggered the interrupt.
  */

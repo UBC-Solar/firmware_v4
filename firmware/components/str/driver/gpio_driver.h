@@ -58,11 +58,6 @@ extern volatile StrGpioCtx gpio_pin_state;
 
 /* FUNCTION PROTOTYPES */
 /**
- * @brief Polls turn-signal inputs and updates the STR GPIO context.
- */
-void LightState(void);
-
-/**
  * @brief Handles STR GPIO interrupt events.
  * @param GPIO_Pin GPIO pin that triggered the interrupt.
  */

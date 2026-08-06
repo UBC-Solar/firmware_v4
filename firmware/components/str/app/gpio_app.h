@@ -17,11 +17,6 @@
 
 /* FUNCTION PROTOTYPES */
 /**
- * @brief Polls steering wheel GPIO state and updates derived STR state.
- */
-void StrState(void);
-
-/**
  * @brief Stores the latest vehicle velocity.
  * @param velocity_kmh Vehicle velocity in km/h.
  * @return Stored vehicle velocity in km/h.

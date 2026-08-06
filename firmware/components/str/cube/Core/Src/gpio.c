@@ -56,14 +56,10 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(DEBUG_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : RTS_IN_Pin LTS_IN_Pin */
-  GPIO_InitStruct.Pin = RTS_IN_Pin|LTS_IN_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : NEXT_PAGE_Pin HORN_MCU_Pin REGEN_Pin */
-  GPIO_InitStruct.Pin = NEXT_PAGE_Pin|HORN_MCU_Pin|REGEN_Pin;
+  /*Configure GPIO pins : LTS_IN_Pin RTS_IN_Pin NEXT_PAGE_Pin HORN_MCU_Pin
+                           REGEN_Pin */
+  GPIO_InitStruct.Pin = LTS_IN_Pin|RTS_IN_Pin|NEXT_PAGE_Pin|HORN_MCU_Pin
+                          |REGEN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -87,6 +83,12 @@ void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI1_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+
   HAL_NVIC_SetPriority(EXTI2_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI2_IRQn);
 

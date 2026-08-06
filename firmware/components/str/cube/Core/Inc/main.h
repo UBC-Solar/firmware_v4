@@ -59,10 +59,12 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define DEBUG_Pin GPIO_PIN_3
 #define DEBUG_GPIO_Port GPIOC
-#define RTS_IN_Pin GPIO_PIN_0
-#define RTS_IN_GPIO_Port GPIOA
-#define LTS_IN_Pin GPIO_PIN_1
+#define LTS_IN_Pin GPIO_PIN_0
 #define LTS_IN_GPIO_Port GPIOA
+#define LTS_IN_EXTI_IRQn EXTI0_IRQn
+#define RTS_IN_Pin GPIO_PIN_1
+#define RTS_IN_GPIO_Port GPIOA
+#define RTS_IN_EXTI_IRQn EXTI1_IRQn
 #define NEXT_PAGE_Pin GPIO_PIN_2
 #define NEXT_PAGE_GPIO_Port GPIOA
 #define NEXT_PAGE_EXTI_IRQn EXTI2_IRQn

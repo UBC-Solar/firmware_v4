@@ -19,24 +19,8 @@ volatile bool debug_cruise_en = false;
 volatile uint32_t debug_cruise_inc = 0U;
 volatile uint32_t debug_cruise_dec = 0U;
 volatile uint32_t debug_cruise_speed = 0U;
-
-/* GPIO POLLING */
-void LightState(void)
-{
-    if (!HAL_GPIO_ReadPin(LTS_IN_GPIO_Port, LTS_IN_Pin))
-    {
-        gpio_pin_state.lights_state.rts_en = true;
-    } else {
-        gpio_pin_state.lights_state.rts_en = false;
-    }
-
-    if (!HAL_GPIO_ReadPin(RTS_IN_GPIO_Port, RTS_IN_Pin))
-    {
-        gpio_pin_state.lights_state.lts_en = true;
-    } else {
-        gpio_pin_state.lights_state.lts_en = false;
-    }
-}
+volatile bool debug_rts = false;
+volatile bool debug_lts = false;
 
 /* GPIO INTERRUPTS */
 /**
@@ -47,6 +31,16 @@ void StrInterruptHandler(uint16_t GPIO_Pin)
 {
     switch (GPIO_Pin)
     {
+        case RTS_IN_Pin:
+            gpio_pin_state.lights_state.rts_en = !gpio_pin_state.lights_state.rts_en;
+            debug_rts = gpio_pin_state.lights_state.rts_en;
+            break;
+
+        case LTS_IN_Pin:
+            gpio_pin_state.lights_state.lts_en = !gpio_pin_state.lights_state.lts_en;
+            debug_lts = gpio_pin_state.lights_state.lts_en;
+            break;
+
         case HORN_MCU_Pin:
             gpio_pin_state.horn_en = !gpio_pin_state.horn_en;
             break;

@@ -23,7 +23,7 @@ static LcdAppWarnings g_lcd_warnings = {0};
 static LcdAppTemperature g_lcd_temperatures[8] = {0};
 static uint8_t g_lcd_page = 1;
 static bool g_str_change_page_flag = false;
-static volatile bool g_prev_change_page = true;
+static volatile bool g_prev_change_page = false;
 static volatile bool g_prev_fault = false;
 
 /* STATIC FUNCTION DECLARATION*/

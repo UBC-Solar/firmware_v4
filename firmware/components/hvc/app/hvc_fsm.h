@@ -46,6 +46,8 @@ typedef enum
 #define HVC_LV_CURRENT_ID           0x325U
 #define DCDC_TEMP_VOLTAGE_ID        0x326U
 #define SUPP_VOLTAGE_ID             0x327U
+#define CHARGER_CMD_ID              0x1806E5F4U
+#define CHARGER_STATUS_ID           0x18FF50E5U
 
 /*============================================================================*/
 /* EXTERNAL CAN ID's*/
@@ -96,6 +98,8 @@ typedef enum
 #define HVC_SUPP_LOW_THRESHOLD_MV   10500
 #define Thermistor_MAX_THRESHOLD_MV 5000U
 #define DISCHARGE_COMPLETE_THRESHOLD_MV 100000U
+#define CHARGER_MAX_VOLT_V          130U
+#define CHARGER_MAX_CURRENT_A       10U
 
 /*============================================================================*/
 /* RATIOS & SCALES */
@@ -150,6 +154,7 @@ extern bool tel_heartbeat_received;
 extern bool mst_status_healthy;
 extern bool tel_dist_heartbeat_check_enabled;
 extern bool mst_heartbeat_check_enabled;
+extern bool charger_status_received;
 extern bool lv_powerup_received;
 extern bool mst_irq_armed;
 extern int32_t mst_pack_voltage_mv;

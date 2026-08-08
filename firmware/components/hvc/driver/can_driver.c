@@ -200,6 +200,11 @@ void CAN_SendAllMessages(void)
         CAN_Send_LVCurrent();
         CAN_Send_SuppVoltage();
         CAN_Send_DCDCThermistorTemp();
+
+        // Only send charger message if it is connected
+        if (charger_status_received) {
+            CAN_SendChargerMsg();
+        }
     }
 }
 
@@ -346,6 +351,31 @@ void CAN_Send_DCDCThermistorTemp(void) {
 }
 
 
+/**
+ * @brief Sends a CAN message with ID 0x1806E5F4 containing charging parameters and control flags.
+ *        The function configures the CAN message with maximum charging current, maximum charging voltage,
+ *        charger enable/disable status, and charging mode information.
+ *
+ * @note This function toggles the charger enable status for subsequent calls, starting the charger when
+ *       the enable status is set to 0.
+ */
+void CAN_SendChargerMsg()
+{
+    CAN_TxMessage_t txMessage = {0};
+    txMessage.tx_header.IDE = CAN_ID_EXT;
+    txMessage.tx_header.ExtId = CHARGER_CMD_ID;
+    txMessage.tx_header.DLC = 6U; // technically 8 bytes but last 2 are reserved, note this when testing
+    static uint8_t charger_switch = 0; // for now charger will always be outputting
+
+    txMessage.data[0] = (uint8_t)(CHARGER_MAX_VOLT_V >> 8);
+    txMessage.data[1] = (uint8_t)CHARGER_MAX_VOLT_V;
+    txMessage.data[2] = (uint8_t)(CHARGER_MAX_CURRENT_A >> 8);
+    txMessage.data[3] = (uint8_t)(CHARGER_MAX_CURRENT_A);
+    txMessage.data[4] = charger_switch; // Charger Switch: 0 = Close output (Voltage and current will flow), 1: Open output (Voltage and current will slowly drop to 0)
+
+    CAN_QueueTxMessage(&txMessage);
+}
+
 
 #if (INT_TEST_CAN == RUN)
 /**
@@ -415,6 +445,9 @@ void CAN_RecievedMessageCallback(uint32_t fifo_num)
             break;
         case DIST_FAULT_ID:
             fault_flags.dist_fault = true;
+            break;
+        case CHARGER_STATUS_ID:
+            charger_status_received = true;
             break;
         default:
             break;

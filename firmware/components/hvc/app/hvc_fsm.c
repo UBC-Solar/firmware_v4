@@ -25,6 +25,7 @@ bool lv_powerup_received = false;
 bool mst_irq_armed = false;
 bool tel_dist_heartbeat_check_enabled = false;  // TEL + DIST heartbeat checks, enabled after MVP_LV_POWERUP
 bool mst_heartbeat_check_enabled = false;       // MST hearbeat check, enabled after MST_CHECK
+bool charger_status_received = false;
 
 int32_t mst_pack_voltage_mv = 0;
 

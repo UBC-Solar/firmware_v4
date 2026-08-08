@@ -46,6 +46,8 @@ typedef enum
 #define HVC_LV_CURRENT_ID           0x325U
 #define DCDC_TEMP_VOLTAGE_ID        0x326U
 #define SUPP_VOLTAGE_ID             0x327U
+#define HVC_MC_PC_ID                0x328U
+#define HVC_MPPT_PC_ID              0x329U
 
 /*============================================================================*/
 /* EXTERNAL CAN ID's*/
@@ -59,8 +61,8 @@ typedef enum
 /*============================================================================*/
 /* TIMEOUT CONSTANTS */
 
-#define MOTOR_PC_TIMEOUT_MS         3000U
-#define MPPT_PC_TIMEOUT_MS          3000U
+#define MOTOR_PC_TIMEOUT_MS         10000U
+#define MPPT_PC_TIMEOUT_MS          10000U
 #define MVP_LV_POWERUP_TIMEOUT_MS   3000U
 #define MST_READY_TIMEOUT_MS        3000U
 #define MST_CHECK_TIMEOUT_MS        3000U

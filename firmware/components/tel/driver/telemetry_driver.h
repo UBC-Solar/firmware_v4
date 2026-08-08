@@ -13,10 +13,7 @@
 #include "usart.h"
 #include "stdlib.h"
 #include "cmsis_os2.h"
-
-// ONLY CHANGE CELLULAR TO 0 IF FLASHING WITH ST-LINK OR POWERING WITH POWER SUPPLY
-// J-LINK DOES NOT SUPPLY ENOUGH CURRENT FOR THE RADIO MODULE. ONLY USE ST-LINK FOR THIS.
-#define CELLULAR 1
+#include "car_configs.h"
 
 #define TEL_DATA_LENGTH                           8U
 #define TEL_MSG_TYPEDEF_SIZE                      sizeof(RADIO_Msg_TypeDef)

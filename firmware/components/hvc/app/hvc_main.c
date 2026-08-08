@@ -30,17 +30,19 @@ void HVC_Init(
     I2C_Init(_hi2c1);
     HAL_TIM_PWM_Start(_htim4, TIM_CHANNEL_3);
     
-    uint16_t filter_ids[] = {
+    uint16_t std_filter_ids[] = {
         TEL_HEARTBEAT_ID,
         LV_POWERUP_SENT_ID,
         LV_POWERUP_RECIEVED_ID,
         MST_HEARTBEAT_ID,
         MST_VOLT_SUMMARY_ID,
         DIST_FAULT_ID,
-        DIST_HEARTBEAT_ID,
+        DIST_HEARTBEAT_ID
+    };
+    uint32_t ext_filter_ids[] = {
         CHARGER_STATUS_ID
     };
-    CAN_InitFilterList(_hcan, filter_ids, 8);
+    CAN_InitFilterList(_hcan, std_filter_ids, 7, ext_filter_ids, 1);
     CAN_Init(_hcan);
 
     DEBUG_IO_print("UART and ADC and I2C initialized.\n");

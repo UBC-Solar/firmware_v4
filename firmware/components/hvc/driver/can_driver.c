@@ -65,7 +65,7 @@ void CAN_QueueTxMessage(CAN_TxMessage_t *message)
 
 
 /**
- * @brief Configure bxCAN filters for a list of standard 11-bit IDs.
+ * @brief Configure bxCAN filters for a list of standard 11-bit and/or extended 29-bit IDs.
  *
  * Filter Information (see page 664 onward of stm32f103 reference manual)
  *
@@ -82,57 +82,101 @@ void CAN_QueueTxMessage(CAN_TxMessage_t *message)
  *      - incoming ID must match exactly to what is specified in the filters
  *      - note we have two 32-bit registers, "FilterMask" and "FilterId", per bank. These are
  *        instead repurposed to contain two separate, complete filter IDs to match against
- * For a 32 bit filter register, [31:21] map to STID [10:0], other bits we don't care about.
+ * For a standard-ID 32 bit filter register, [31:21] map to STID[10:0], IDE (bit 2) is 0, other bits are 0.
+ * For an extended-ID 32 bit filter register, [31:3] map to EXID[28:0], IDE (bit 2) is 1.
  *
  * Other V3 CAN driver documentation:
  *  - Filter mask mode explanation: https://www.microchip.com/forums/m456043.aspx
  *  - Guide on filter config: https://controllerstech.com/can-protocol-in-stm32/
  *
  * @param handle CAN handle for the peripheral being configured.
- * @param std_ids Array of standard 11-bit CAN IDs to accept.
- * @param count Number of IDs in std_ids.
+ * @param std_ids Array of standard 11-bit CAN IDs to accept (may be NULL if std_count is 0).
+ * @param std_count Number of IDs in std_ids.
+ * @param ext_ids Array of extended 29-bit CAN IDs to accept (may be NULL if ext_count is 0).
+ * @param ext_count Number of IDs in ext_ids.
  */
-void CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size_t count)
+void CAN_InitFilterList(CAN_HandleTypeDef *handle,
+                         const uint16_t *std_ids, size_t std_count,
+                         const uint32_t *ext_ids, size_t ext_count)
 {
     const uint32_t max_ids = CAN_FILTER_NUM_BANKS * CAN_FILTER_NUM_ID_PER_BANK;
 
-    if ((handle == NULL) || (std_ids == NULL) || (count == 0U) || (count > max_ids))
+    if ((handle == NULL) ||
+        ((std_count > 0U) && (std_ids == NULL)) ||
+        ((ext_count > 0U) && (ext_ids == NULL)) ||
+        ((std_count + ext_count) == 0U) ||
+        ((std_count + ext_count) > max_ids))
     {
         Error_Handler();
     }
 
     CAN_FilterTypeDef filter_config;
-    size_t id_index = 0U;
     uint32_t bank_index = 0U;
 
-    while ((id_index < count) && (bank_index < CAN_FILTER_NUM_BANKS))
+    filter_config.FilterActivation = CAN_FILTER_ENABLE;
+    filter_config.SlaveStartFilterBank = CAN_FILTER_NUM_BANKS;
+    filter_config.FilterMode = CAN_FILTERMODE_IDLIST;
+    filter_config.FilterScale = CAN_FILTERSCALE_32BIT;
+
+    // Standard 11-bit IDs, two per filter bank.
+    size_t id_index = 0U;
+    while ((id_index < std_count) && (bank_index < CAN_FILTER_NUM_BANKS))
     {
         // If even number of IDs, put each ID in a separate register
         // If odd number of IDs, the last bank will contain two duplicate IDs
         uint16_t id_first = std_ids[id_index];
         uint16_t id_second = id_first;
-        if ((id_index + 1U) < count)
+        if ((id_index + 1U) < std_count)
         {
             id_second = std_ids[id_index + 1U];
         }
-
-        filter_config.FilterActivation = CAN_FILTER_ENABLE;
-        filter_config.SlaveStartFilterBank = CAN_FILTER_NUM_BANKS;
 
         // FIFO assignment: determines which FIFO (0 or 1) to store received messages.
         // Here we'll "try to" evenly distribute the received messages.
         filter_config.FilterBank = bank_index;
         filter_config.FilterFIFOAssignment = (bank_index % 2) ? CAN_FILTER_FIFO0 : CAN_FILTER_FIFO1;
-        filter_config.FilterMode = CAN_FILTERMODE_IDLIST;
-        filter_config.FilterScale = CAN_FILTERSCALE_32BIT;
 
         // Bitshift 5: the 11 most-significant-bits of the 16 bit integer are used as the ID to filter
+        // IDE bit (bit 2, low half-word) is left 0, i.e. standard ID only.
         filter_config.FilterIdHigh = (uint16_t)((id_first & 0x7FFU) << 5);
         filter_config.FilterIdLow = 0U;
 
         // Bitshift 5, same as above
         filter_config.FilterMaskIdHigh = (uint16_t)((id_second & 0x7FFU) << 5);
         filter_config.FilterMaskIdLow = 0U;
+
+        if (HAL_CAN_ConfigFilter(handle, &filter_config) != HAL_OK)
+        {
+            Error_Handler();
+        }
+
+        id_index += CAN_FILTER_NUM_ID_PER_BANK;
+        bank_index += 1U;
+    }
+
+    // Extended 29-bit IDs, two per filter bank.
+    id_index = 0U;
+    while ((id_index < ext_count) && (bank_index < CAN_FILTER_NUM_BANKS))
+    {
+        uint32_t id_first = ext_ids[id_index];
+        uint32_t id_second = id_first;
+        if ((id_index + 1U) < ext_count)
+        {
+            id_second = ext_ids[id_index + 1U];
+        }
+
+        filter_config.FilterBank = bank_index;
+        filter_config.FilterFIFOAssignment = (bank_index % 2) ? CAN_FILTER_FIFO0 : CAN_FILTER_FIFO1;
+
+        // EXID[28:0] occupies bits 31:3 of the 32-bit filter register, with IDE (bit 2) set to
+        // mark the entry as an extended ID. Split into the HAL's high/low 16-bit halves.
+        uint32_t reg_first = ((id_first & 0x1FFFFFFFU) << 3) | CAN_ID_EXT;
+        uint32_t reg_second = ((id_second & 0x1FFFFFFFU) << 3) | CAN_ID_EXT;
+
+        filter_config.FilterIdHigh = (uint16_t)(reg_first >> 16);
+        filter_config.FilterIdLow = (uint16_t)(reg_first & 0xFFFFU);
+        filter_config.FilterMaskIdHigh = (uint16_t)(reg_second >> 16);
+        filter_config.FilterMaskIdLow = (uint16_t)(reg_second & 0xFFFFU);
 
         if (HAL_CAN_ConfigFilter(handle, &filter_config) != HAL_OK)
         {
@@ -419,7 +463,12 @@ void CAN_RecievedMessageCallback(uint32_t fifo_num)
 
     new_rx_message.timestamp = HAL_GetTick();
 
-    switch (new_rx_message.rx_header.StdId) {
+    // Extended-ID frames carry their ID in ExtId, not StdId - use whichever the header marks as valid.
+    uint32_t rx_id = (new_rx_message.rx_header.IDE == CAN_ID_EXT)
+        ? new_rx_message.rx_header.ExtId
+        : new_rx_message.rx_header.StdId;
+
+    switch (rx_id) {
         case TEL_HEARTBEAT_ID:
             tel_heartbeat_received = true;
             last_tel_heartbeat_ms = HAL_GetTick();

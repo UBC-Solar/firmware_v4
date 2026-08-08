@@ -37,9 +37,10 @@ void HVC_Init(
         MST_HEARTBEAT_ID,
         MST_VOLT_SUMMARY_ID,
         DIST_FAULT_ID,
-        DIST_HEARTBEAT_ID
+        DIST_HEARTBEAT_ID,
+        CHARGER_STATUS_ID
     };
-    CAN_InitFilterList(_hcan, filter_ids, 7);
+    CAN_InitFilterList(_hcan, filter_ids, 8);
     CAN_Init(_hcan);
 
     DEBUG_IO_print("UART and ADC and I2C initialized.\n");

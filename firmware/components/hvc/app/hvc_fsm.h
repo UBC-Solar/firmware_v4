@@ -61,7 +61,7 @@ typedef enum
 /*============================================================================*/
 /* TIMEOUT CONSTANTS */
 
-#define MOTOR_PC_TIMEOUT_MS         10000U
+#define MOTOR_PC_TIMEOUT_MS         15000U
 #define MPPT_PC_TIMEOUT_MS          10000U
 #define MVP_LV_POWERUP_TIMEOUT_MS   3000U
 #define MST_READY_TIMEOUT_MS        3000U

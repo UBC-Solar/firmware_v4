@@ -409,15 +409,23 @@ void CAN_SendChargerMsg()
     txMessage.tx_header.IDE = CAN_ID_EXT;
     txMessage.tx_header.ExtId = CHARGER_CMD_ID;
     txMessage.tx_header.DLC = 6U; // technically 8 bytes but last 2 are reserved, note this when testing
+    static uint8_t charger_enable = 0;
     static uint8_t charger_switch = 0; // for now charger will always be outputting
 
-    txMessage.data[0] = (uint8_t)(CHARGER_MAX_VOLT_V >> 8);
-    txMessage.data[1] = (uint8_t)CHARGER_MAX_VOLT_V;
-    txMessage.data[2] = (uint8_t)(CHARGER_MAX_CURRENT_A >> 8);
-    txMessage.data[3] = (uint8_t)(CHARGER_MAX_CURRENT_A);
+    uint32_t charger_volt = CHARGER_MAX_VOLT_mV / 100;
+    uint32_t charger_current = CHARGER_MAX_CURRENT_mA / 100;
+    txMessage.data[0] = (uint8_t)(charger_volt >> 8);
+    txMessage.data[1] = (uint8_t)charger_volt;
+    txMessage.data[2] = (uint8_t)(charger_current >> 8);
+    txMessage.data[3] = (uint8_t)(charger_current);
     txMessage.data[4] = charger_switch; // Charger Switch: 0 = Close output (Voltage and current will flow), 1: Open output (Voltage and current will slowly drop to 0)
+    txMessage.data[5] = charger_enable; // Charger Enable: 0 = Charger receives CAN message but will not close output even if byte 4 tells it to (stop/standby mode), 1: Charger will process request from byte 4 (start)
 
     CAN_QueueTxMessage(&txMessage);
+    if (charger_enable == 0)
+    {
+        charger_enable = 1;
+    }
 }
 
 

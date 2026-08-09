@@ -98,8 +98,8 @@ typedef enum
 #define HVC_SUPP_LOW_THRESHOLD_MV   10500
 #define Thermistor_MAX_THRESHOLD_MV 5000U
 #define DISCHARGE_COMPLETE_THRESHOLD_MV 100000U
-#define CHARGER_MAX_VOLT_V          125U
-#define CHARGER_MAX_CURRENT_A       1U
+#define CHARGER_MAX_VOLT_mV         125000U
+#define CHARGER_MAX_CURRENT_mA      4000U
 
 /*============================================================================*/
 /* RATIOS & SCALES */

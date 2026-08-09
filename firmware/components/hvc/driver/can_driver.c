@@ -315,7 +315,8 @@ void CAN_Send_LVCurrent(void)
 
     txMessage.data[0] = (lv_current_mA >> 8) & 0xFF;
     txMessage.data[1] = (lv_current_mA)      & 0xFF;
-
+    txMessage.data[2] = (lv_current_mA >> 8) & 0xFF;
+    txMessage.data[3] = (lv_current_mA)      & 0xFF;
     CAN_QueueTxMessage(&txMessage);
 }
 

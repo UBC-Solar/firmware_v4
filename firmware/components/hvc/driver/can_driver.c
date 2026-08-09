@@ -315,8 +315,6 @@ void CAN_Send_LVCurrent(void)
 
     txMessage.data[0] = (lv_current_mA >> 8) & 0xFF;
     txMessage.data[1] = (lv_current_mA)      & 0xFF;
-    txMessage.data[2] = (lv_current_mA >> 8) & 0xFF;
-    txMessage.data[3] = (lv_current_mA)      & 0xFF;
     CAN_QueueTxMessage(&txMessage);
 }
 
@@ -357,18 +355,17 @@ void CAN_Send_DCDCThermistorTemp(void) {
 
 void CAN_Send_MC_PC (void) {
     ADC_Voltages adc = ADC_GetVoltages();
-    int32_t mppt_precharge_mV  = (int32_t)adc.mppt_precharge  * HVC_MOTOR_PC_SCALE;
     int32_t motor_precharge_mV = (int32_t)adc.motor_precharge * HVC_MOTOR_PC_SCALE;
 
-    DEBUG_IO_print("MPPT Precharge: %d mV, Motor Precharge: %d mV\r\n", mppt_precharge_mV, motor_precharge_mV);
+    DEBUG_IO_print("Motor Precharge: %d mV\r\n", motor_precharge_mV);
 
     CAN_TxMessage_t txMessage = {0};
     txMessage.tx_header.StdId = HVC_MC_PC_ID;
     txMessage.tx_header.DLC = 4;
-    txMessage.data[0] = (mppt_precharge_mV >> 8) & 0xFF;
-    txMessage.data[1] = (mppt_precharge_mV)      & 0xFF;
-    txMessage.data[2] = (motor_precharge_mV >> 8) & 0xFF;
-    txMessage.data[3] = (motor_precharge_mV)      & 0xFF;
+    txMessage.data[0] = (motor_precharge_mV >> 24) & 0xFF;
+    txMessage.data[1] = (motor_precharge_mV >> 16) & 0xFF;
+    txMessage.data[2] = (motor_precharge_mV >> 8)  & 0xFF;
+    txMessage.data[3] = (motor_precharge_mV)       & 0xFF;
     CAN_QueueTxMessage(&txMessage);
 }
 
@@ -381,10 +378,10 @@ void CAN_Send_MPPT_PC (void) {
     CAN_TxMessage_t txMessage = {0};
     txMessage.tx_header.StdId = HVC_MPPT_PC_ID;
     txMessage.tx_header.DLC = 4;
-    txMessage.data[0] = (mppt_precharge_mV >> 8) & 0xFF;
-    txMessage.data[1] = (mppt_precharge_mV)      & 0xFF;
-    txMessage.data[2] = (mppt_precharge_mV >> 8) & 0xFF;
-    txMessage.data[3] = (mppt_precharge_mV)      & 0xFF;
+    txMessage.data[0] = (mppt_precharge_mV >> 24) & 0xFF;
+    txMessage.data[1] = (mppt_precharge_mV >> 16) & 0xFF;
+    txMessage.data[2] = (mppt_precharge_mV >> 8)  & 0xFF;
+    txMessage.data[3] = (mppt_precharge_mV)       & 0xFF;
     CAN_QueueTxMessage(&txMessage);
 }
 

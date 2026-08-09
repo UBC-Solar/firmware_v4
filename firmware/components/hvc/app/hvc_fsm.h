@@ -83,7 +83,7 @@ typedef enum
 #define HVC_HEARTBEAT_INTERVAL_MS   1000U
 
 #define MPPT_PC_DELAY_MS            5000U
-#define MOTOR_PC_DELAY_MS           5000U
+#define MOTOR_PC_DELAY_MS           15000U
 
 
 
@@ -103,7 +103,7 @@ typedef enum
 /* RATIOS & SCALES */
 
 #define HVC_PC_COMPLETE_RATIO       85 // % of HV bus voltage for precharge complete
-#define HVC_MOTOR_PC_SCALE          58
+#define HVC_MOTOR_PC_SCALE          61
 #define SUPP_SENSE_DIVIDER_NUM      5700  // (R13.4 + R13.5)
 #define SUPP_SENSE_DIVIDER_DEN      1000  // R13.5
 #define LV_CURRENT_SENSOR_VOFFSET_MV   330    // VS × 0.1, VS = 3.3V, A3U variant

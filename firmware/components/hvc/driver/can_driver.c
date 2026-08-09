@@ -200,6 +200,7 @@ void CAN_SendAllMessages(void)
         CAN_Send_LVCurrent();
         CAN_Send_SuppVoltage();
         CAN_Send_DCDCThermistorTemp();
+        CAN_Send_PC_Monitoring();
     }
 }
 //Note

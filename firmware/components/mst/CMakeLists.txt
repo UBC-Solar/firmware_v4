@@ -50,6 +50,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/app/can_messages.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/module_data.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/mst_main.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/selftest.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/can_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/gpio_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/spi_driver.c

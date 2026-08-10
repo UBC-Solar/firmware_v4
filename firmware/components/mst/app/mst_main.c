@@ -1,26 +1,28 @@
 #include "mst_main.h"
 
 #include <stdint.h>
-#include <stdio.h>
 
-#include "debug_io.h"
-#include "main.h"
-
-#include "mst_defs.h"
-#include "mst_types.h"
+#include "analysis.h"
 #include "balancing.h"
 #include "can_messages.h"
-#include "analysis.h"
+#include "debug_io.h"
+#include "main.h"
 #include "module_data.h"
-#include "spi.h"
-#include "usart.h"
+#include "mst_defs.h"
+#include "mst_types.h"
+#include "selftest.h"
 
 #include "can_driver.h"
 #include "gpio_driver.h"
 #include "spi_driver.h"
+#include "uart_driver.h"
+
+#include "adc.h"
+#include "spi.h"
+#include "usart.h"
+
 #include "stm32f1xx_hal.h"
 #include "stm32f1xx_hal_gpio.h"
-#include "uart_driver.h"
 
 module_t pack_modules[NUM_MODULES] = {0};
 faults_t pack_faults = {0};
@@ -55,6 +57,7 @@ void IncrementCommError() {
 
 
 void Initialize() {
+    
     // HVC expects MST to pull Fault pin HIGH during initialization
     GPIO_Write(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin, GPIO_PIN_SET);
 
@@ -63,6 +66,7 @@ void Initialize() {
     GPIO_Write(LLIM_DIS_OUT_GPIO_Port, LLIM_DIS_OUT_Pin, GPIO_PIN_SET);
     GPIO_Write(CONTACTOR_DIS_OUT_GPIO_Port, CONTACTOR_DIS_OUT_Pin, GPIO_PIN_SET);
 
+    SelfCheck_Init(&hadc1);
     UART_Init(&huart1);
     CAN_Init(&hcan);
 
@@ -268,49 +272,16 @@ void Debug_IsoSpiTestCycle(void) {
 #endif // UNIT_TEST_ISOSPI
 
 #if (INT_TEST_SLAVE == RUN)
-static bool DoesRegGroupMatch_(uint8_t reg_group1[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES],
-                              uint8_t reg_group2[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES])
-{
-    for (int ic_num = 0; ic_num < SLAVE_NUM_DEVICES; ic_num++)
-    {
-        for (int i = 0; i < SLAVE_REG_SIZE_BYTES; i++)
-        {
-            if (reg_group1[ic_num][i] != reg_group2[ic_num][i])
-                return false;
-        }
-    }
-    return true;
-}
-
 void Debug_SlaveTestCommsCycle(void) {
-    uint8_t test_data[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES] = {
-        {0x55, 0x6E, 0x69, 0x42, 0x43, 0x20}
-#if SLAVE_NUM_DEVICES > 1U
-        , {0x53, 0x6F, 0x6C, 0x61, 0x72, 0x21}
-#endif // SLAVE_NUM_DEVICES > 1
-    };
-
-
-    Slave_Status_t comm_status = {Slave_OK, 0};
-    uint8_t test_data_rx[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES] = {0};
-
-    bool reg_group_match;
-
-    Slave_WakeUp();
-    Slave_WriteRegisterGroup(CMD_WRCOMM, test_data);
-    HAL_Delay(500);
-
-    (void) reg_group_match;
-
-    comm_status = Slave_ReadRegisterGroup(CMD_RDCOMM, test_data_rx);
-    reg_group_match = DoesRegGroupMatch_(test_data, test_data_rx);
-    
-    GPIO_Write(LED_OUT_GPIO_Port, LED_OUT_Pin, reg_group_match);
-    LOG_INFO("Reg group match: %d. Comm error: %d. Config B first byte: %02X", reg_group_match, comm_status.error, slaves[0].config_regs[0][0]);
+    SelfCheck_Comms();
+    SelfCheck_DieTemp();
+    SelfCheck_VREF2();
+    SelfCheck_OpenWire();
+    SelfCheck_OverlapVoltage();
     HAL_Delay(500);
 }
-
 #endif // (INT_TEST_SLAVE == RUN)
+
 #if (INT_TEST_SLAVE_BAL_VOLT == RUN)
 void Debug_SlaveTestBalancingVoltageDrop(void) {
     uint32_t previous_voltages[NUM_MODULES] = {0};
@@ -351,7 +322,8 @@ void Debug_SlaveTestBalancingVoltageDrop(void) {
     for (int module_idx = 0; module_idx < NUM_MODULES; module_idx++) {
         current_voltages[module_idx] = pack_modules[module_idx].voltage_mv;
         int32_t voltage_delta_mv = (int32_t)current_voltages[module_idx] - (int32_t)previous_voltages[module_idx];
-        LOG_INFO("Module %d voltage: %lu mV (bal off) -> %lu mV (bal on). Note: %ld mV diff",
+        LOG_INFO("Module %d voltage: %lu mV (bal off) -> %lu mV (bal on). Note: %ld mV diff",
+
                  module_idx,
                  previous_voltages[module_idx],
                  current_voltages[module_idx],

@@ -51,10 +51,6 @@
 #define CAN_NUM_MODULES_PER_STATS_GROUP     NUM_MODULES / CAN_NUM_STATS_GROUPS
 
 
-// Slave(board)s
-#define SLAVE_NUM_DEVICES 2U // Number of ADBMS1818 ICs daisy chained
-#define SLAVEBOARD_REV 1
-
 /**
  * Enable / disable MST algorithms
  */
@@ -86,6 +82,10 @@
 /**
  * Slaveboards configuration and ADBMS1818 options
  */
+
+#define SLAVE_NUM_DEVICES 2U // Number of ADBMS1818 ICs daisy chained
+#define SLAVEBOARD_REV 1
+#define SLAVE_NUM_INPUTS_PER_DEVICE 18U // Number of cell voltage inputs
 
 #define SLAVE_REG_SIZE_BYTES 6 // All of the ADBMS1818 register groups consist of 6 bytes
 
@@ -135,6 +135,42 @@
 
 
 /**
+ * Selfchecks
+ */
+#define OVERLAP_TEST_REGS 2 // Number of registers overlap voltage is read from.
+                            // One register to compare ADC 1 and ADC 2 (Group C),
+                            // and another to compare ADC 2 and ADC 3 (Group E).
+
+#define PDOWN_REPS 2 // Number of times CMD_ADOW_PDOWN command is called in SelfCheck_OpenWire,
+                     // LTC-6813 data sheet recommends >= 2 repetitions
+#define PUP_REPS 2
+
+#define NUM_TEST_CELLS 2 // Overlap Voltage test reads cells 7 and 13
+
+#define OVERLAP_READINGS_PER_REG 2   // A voltage reading from each ADC is stored in the same register
+#define OVERLAP_READINGS_PER_BOARD 4 // 2 bytes combine to represent a single voltage reading
+
+#define OPEN_WIRE_VOLTAGE -0.400 // If the difference between PUP and PDOWN voltage measurements
+                                 // is less than -400 mV, there is an open wire at the measured cell.
+
+#define VREF_LOWERBOUND_mV 2.990 // Establishes range of acceptable voltages for VREF2 measurement.
+#define VREF_UPPERBOUND_mV 3.014 // (specified on p.30 of ADBMS1818 datasheet)
+
+// Datasheet specifies the ratio 100 / 7.6 to convert to degrees Celsius.
+// Here, the chosen ratio allows us to convert temperature into milliCelsius
+#define DIE_TEMP_CONVERT_RATIO 1000U * 1000U / 76U
+
+#define ST_LTC_TEMPLIMIT_mC 70000   // Maximum acceptable chip temperature for ADBMS1818
+
+#define ST_VOLTAGE_ERROR 0.003f // Tolerated error (in volts) for all voltage measurements
+
+#define ST_DCH_COMPARE_PCT 0.50f// *This is a placeholder value. The actual percentage will be dependent
+                                // on the resistance values chosen for Rdischarge in the
+                                // next PCB design revision (currently v3).
+
+#define ST_DCH_PCT_DELTA 0.01f  // Tolerated difference between measured and expected percentage
+
+/**
  * Firmware-Specific Settings
  */
 // Set current logging level - users can adjust this to filter log output
@@ -156,7 +192,7 @@
 #define UNIT_TEST_IO SKIP // Check if GPIOs work 
 #define UNIT_TEST_CAN SKIP // Test if CAN peripheral can send pulses
 #define UNIT_TEST_ISOSPI SKIP // Test if IsoSPI peripheral can send pulses
-#define INT_TEST_SLAVE SKIP // Test basic communication with slaveboards
+#define INT_TEST_SLAVE RUN // Test basic communication with slaveboards
 #define INT_TEST_SLAVE_BAL_VOLT SKIP // Characterize measured voltage drop when balancing is enabled
 #define INT_TEST_SLAVE_BAL_SCRUT SKIP // Test if scrutineering and balancing modes can be enabled/disabled
 #define INT_TEST_SLAVE_MUX SKIP // Characterize slaveboard multiplexer behaviour

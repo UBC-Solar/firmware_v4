@@ -37,21 +37,25 @@ typedef enum
 } HVC_State_t;
 
 /*============================================================================*/
-/* CAN ID's*/
-#define HVC_FAULT_ID                0x301U
-#define TEL_HEARTBEAT_ID            0x750U                   
-#define HVC_HEARTBEAT_ID            0x302U
-#define LV_POWERUP_SENT_ID          0x303U
-#define HVC_STATUS_ID               0x304U
-#define SHUNT_CURRENT_ID            0x305U
-#define DIST_HEARTBEAT_ID           0x306U 
-#define DIST_FAULT_ID               0x307U
-#define LV_POWERUP_RECIEVED_ID      0x308U
-#define HVC_LV_CURRENT_ID           0x309U
-#define MST_HEARTBEAT_ID            0x310U
-#define MST_VOLT_SUMMARY_ID         0x311U
-#define SUPP_VOLTAGE_ID             0x317U
-#define DCDC_TEMP_VOLTAGE_ID        0x319U
+/* HVC CAN ID's*/
+#define SHUNT_CURRENT_ID            0x320U
+#define HVC_FAULT_ID                0x321U
+#define HVC_HEARTBEAT_ID            0x322U
+#define LV_POWERUP_SENT_ID          0x323U
+#define HVC_STATUS_ID               0x324U
+#define HVC_LV_CURRENT_ID           0x325U
+#define DCDC_TEMP_VOLTAGE_ID        0x326U
+#define SUPP_VOLTAGE_ID             0x327U
+
+/*============================================================================*/
+/* EXTERNAL CAN ID's*/
+#define TEL_HEARTBEAT_ID            0x750U
+#define DIST_HEARTBEAT_ID           0x3A0U
+#define DIST_FAULT_ID               0x3A1U
+#define LV_POWERUP_RECIEVED_ID      0x3A2U
+#define MST_HEARTBEAT_ID            0x200U
+#define MST_VOLT_SUMMARY_ID         0x201U
+
 /*============================================================================*/
 /* TIMEOUT CONSTANTS */
 

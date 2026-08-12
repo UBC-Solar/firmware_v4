@@ -46,6 +46,8 @@ typedef enum
 #define HVC_LV_CURRENT_ID           0x325U
 #define DCDC_TEMP_VOLTAGE_ID        0x326U
 #define SUPP_VOLTAGE_ID             0x327U
+#define HVC_MC_PC_ID                0x328U
+#define HVC_MPPT_PC_ID              0x329U
 
 /*============================================================================*/
 /* EXTERNAL CAN ID's*/
@@ -59,8 +61,8 @@ typedef enum
 /*============================================================================*/
 /* TIMEOUT CONSTANTS */
 
-#define MOTOR_PC_TIMEOUT_MS         3000U
-#define MPPT_PC_TIMEOUT_MS          3000U
+#define MOTOR_PC_TIMEOUT_MS         15000U
+#define MPPT_PC_TIMEOUT_MS          10000U
 #define MVP_LV_POWERUP_TIMEOUT_MS   3000U
 #define MST_READY_TIMEOUT_MS        3000U
 #define MST_CHECK_TIMEOUT_MS        3000U
@@ -81,7 +83,7 @@ typedef enum
 #define HVC_HEARTBEAT_INTERVAL_MS   1000U
 
 #define MPPT_PC_DELAY_MS            5000U
-#define MOTOR_PC_DELAY_MS           5000U
+#define MOTOR_PC_DELAY_MS           15000U
 
 
 
@@ -100,8 +102,8 @@ typedef enum
 /*============================================================================*/
 /* RATIOS & SCALES */
 
-#define HVC_PC_COMPLETE_RATIO       90 // % of HV bus voltage for precharge complete
-#define HVC_MOTOR_PC_SCALE          56
+#define HVC_PC_COMPLETE_RATIO       85 // % of HV bus voltage for precharge complete
+#define HVC_MOTOR_PC_SCALE          61
 #define SUPP_SENSE_DIVIDER_NUM      5700  // (R13.4 + R13.5)
 #define SUPP_SENSE_DIVIDER_DEN      1000  // R13.5
 #define LV_CURRENT_SENSOR_VOFFSET_MV   330    // VS × 0.1, VS = 3.3V, A3U variant

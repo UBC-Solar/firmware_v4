@@ -18,12 +18,7 @@
 #include "spi.h"
 #include "external_lights.h"
 #include "diagnostic.h"
-#include "lcd_app.h"
 #include "car_configs.h"
-
-/* The car config encoding must stay in step with the LCD display encoding */
-_Static_assert(CAR_CONFIG_SPEED_KPH == LCD_APP_KPH || CAR_CONFIG_SPEED_KPH == LCD_APP_MPH,
-               "CAR_CONFIG_SPEED_KPH must be LCD_APP_KPH (1) or LCD_APP_MPH (0)");
 
 /* DRIVE STATE TASK */
 void TasksDriveState(void* argument)
@@ -99,7 +94,7 @@ void TasksExternalLights(void* argument)
 /* LCD UPDATE TASK */
 void TasksLcdUpdate(void *argument)
 {
-    LcdHandlerInit(&hspi1, car_config_speed_units);
+    LcdHandlerInit(&hspi1, car_config_speed_kph ? LCD_APP_KPH : LCD_APP_MPH);
 
     for (;;)
     {

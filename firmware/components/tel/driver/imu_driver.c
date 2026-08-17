@@ -1,3 +1,8 @@
+/******************************************************************************
+* @file    imu_driver.c
+* @brief   reset/boot handling, SH2 feature-enable commands, and sensor report parsing.
+******************************************************************************/
+
 #include "imu_driver.h"
 
 #include "main.h"
@@ -9,40 +14,454 @@
 #define IMU_SHTP_HEADER_LEN     4
 #define IMU_SHTP_LENGTH_MASK    0x7FFF
 #define IMU_RX_BUFFER_LEN       128
+#define IMU_ACCEL_PAYLOAD_LEN   10    
+#define IMU_GYRO_PAYLOAD_LEN   10
+#define IMU_MAG_PAYLOAD_LEN   10
 
-static uint8_t imu_rx_buffer[IMU_RX_BUFFER_LEN];
-static uint16_t imu_rx_len;
+#define IMU_CAN_MESSAGE_AG_LENGTH 8
+#define IMU_CAN_MESSAGE_M_LENGTH 4
 
-bool imu_data_ready(void)
+
+static uint8_t g_IMU_DRIVER_control_seq = 0;   // per-channel sequence counter SHTP requires on writes
+static uint8_t g_IMU_DRIVER_rx_buffer[IMU_RX_BUFFER_LEN];
+static uint16_t g_IMU_DRIVER_rx_len;
+
+/**
+ * @brief Read the I_INTN pin; the BNO086 drives it low when an SHTP packet is ready.
+ *
+ * @return true if a packet is waiting to be read, false otherwise
+ */
+bool ImuDriverDataReady(void)
 {
     return HAL_GPIO_ReadPin(I_INTN_GPIO_Port, I_INTN_Pin) == GPIO_PIN_RESET;
 }
 
-void imu_init(void)
+/**
+ * @brief Reset the BNO086 and read its power-on SHTP advertisement packet.
+ *
+ * @return None
+ */
+void ImuDriverInit(void)
 {
+    uint32_t start;
+    uint8_t header[IMU_SHTP_HEADER_LEN];
+    uint16_t packet_len;
+
     HAL_GPIO_WritePin(I_BOOTN_GPIO_Port, I_BOOTN_Pin, GPIO_PIN_SET);
 
     HAL_GPIO_WritePin(I_NRST_GPIO_Port, I_NRST_Pin, GPIO_PIN_RESET);
     HAL_Delay(IMU_RESET_PULSE_MS);
     HAL_GPIO_WritePin(I_NRST_GPIO_Port, I_NRST_Pin, GPIO_PIN_SET);
 
-    uint32_t start = HAL_GetTick();
-    while (!imu_data_ready()) {
+    start = HAL_GetTick();
+    while (!ImuDriverDataReady()) {
         if ((HAL_GetTick() - start) > IMU_BOOT_WAIT_MS) {
             return;
         }
     }
 
-    uint8_t header[IMU_SHTP_HEADER_LEN];
     if (HAL_I2C_Master_Receive(&hi2c1, IMU_ADDRESS, header, IMU_SHTP_HEADER_LEN, HAL_MAX_DELAY) != HAL_OK) {
         return;
     }
 
-    uint16_t packet_len = ((header[1] << 8) | header[0]) & IMU_SHTP_LENGTH_MASK;
+    packet_len = ((header[1] << 8) | header[0]) & IMU_SHTP_LENGTH_MASK;
     if (packet_len == 0) {
         return;
     }
 
-    imu_rx_len = (packet_len > IMU_RX_BUFFER_LEN) ? IMU_RX_BUFFER_LEN : packet_len;
-    HAL_I2C_Master_Receive(&hi2c1, IMU_ADDRESS, imu_rx_buffer, imu_rx_len, HAL_MAX_DELAY);
+    g_IMU_DRIVER_rx_len = (packet_len > IMU_RX_BUFFER_LEN) ? IMU_RX_BUFFER_LEN : packet_len;
+    HAL_I2C_Master_Receive(&hi2c1, IMU_ADDRESS, g_IMU_DRIVER_rx_buffer, g_IMU_DRIVER_rx_len, HAL_MAX_DELAY);
+}
+
+/**
+ * @brief Send the SH2 Set Feature command to enable accelerometer reports.
+ *
+ * @return None
+ */
+void ImuDriverEnableAccel(void)
+{
+    uint8_t packet[4 + 17];
+    uint16_t total_len = sizeof(packet);
+
+    // --- SHTP header (channel 2 = control) ---
+    packet[0] = total_len & 0xFF;
+    packet[1] = (total_len >> 8) & 0xFF;
+    packet[2] = SHTP_CHANNEL_CONTROL;
+    packet[3] = g_IMU_DRIVER_control_seq++;
+
+    // --- SH2 Set Feature Command payload ---
+    packet[4]  = SH2_REPORT_SET_FEAATURE_CMD;
+    packet[5]  = SH2_REPORT_ACCEL;
+    packet[6]  = 0x00;                                   // feature flags
+    packet[7]  = 0x00; packet[8]  = 0x00;                // change sensitivity
+    packet[9]  = (IMU_ACCEL_REPORT_INTERVAL_US)       & 0xFF;
+    packet[10] = (IMU_ACCEL_REPORT_INTERVAL_US >> 8)  & 0xFF;
+    packet[11] = (IMU_ACCEL_REPORT_INTERVAL_US >> 16) & 0xFF;
+    packet[12] = (IMU_ACCEL_REPORT_INTERVAL_US >> 24) & 0xFF;
+    packet[13] = 0x00; packet[14] = 0x00; packet[15] = 0x00; packet[16] = 0x00; // batch interval
+    packet[17] = 0x00; packet[18] = 0x00; packet[19] = 0x00; packet[20] = 0x00; // sensor-specific config
+
+    HAL_I2C_Master_Transmit(&hi2c1, IMU_ADDRESS, packet, sizeof(packet), HAL_MAX_DELAY);
+}
+
+/**
+ * @brief Send the SH2 Set Feature command to enable gyroscope reports.
+ *
+ * @return None
+ */
+void ImuDriverEnableGyro(void)
+{
+    uint8_t packet[4 + 17];
+    uint16_t total_len = sizeof(packet);
+
+    // --- SHTP header (channel 2 = control) ---
+    packet[0] = total_len & 0xFF;
+    packet[1] = (total_len >> 8) & 0xFF;
+    packet[2] = SHTP_CHANNEL_CONTROL;
+    packet[3] = g_IMU_DRIVER_control_seq++;
+
+    // --- SH2 Set Feature Command payload ---
+    packet[4]  = SH2_REPORT_SET_FEAATURE_CMD;
+    packet[5]  = SH2_REPORT_GYRO;
+    packet[6]  = 0x00;                                   // feature flags
+    packet[7]  = 0x00; packet[8]  = 0x00;                // change sensitivity
+    packet[9]  = (IMU_GYRO_REPORT_INTERVAL_US)       & 0xFF;
+    packet[10] = (IMU_GYRO_REPORT_INTERVAL_US >> 8)  & 0xFF;
+    packet[11] = (IMU_GYRO_REPORT_INTERVAL_US >> 16) & 0xFF;
+    packet[12] = (IMU_GYRO_REPORT_INTERVAL_US >> 24) & 0xFF;
+    packet[13] = 0x00; packet[14] = 0x00; packet[15] = 0x00; packet[16] = 0x00; // batch interval
+    packet[17] = 0x00; packet[18] = 0x00; packet[19] = 0x00; packet[20] = 0x00; // sensor-specific config
+
+    HAL_I2C_Master_Transmit(&hi2c1, IMU_ADDRESS, packet, sizeof(packet), HAL_MAX_DELAY);
+}
+
+/**
+ * @brief Send the SH2 Set Feature command to enable magnetometer reports.
+ *
+ * @return None
+ */
+void ImuDriverEnableMag(void)
+{
+    uint8_t packet[4 + 17];
+    uint16_t total_len = sizeof(packet);
+
+    // --- SHTP header (channel 2 = control) ---
+    packet[0] = total_len & 0xFF;
+    packet[1] = (total_len >> 8) & 0xFF;
+    packet[2] = SHTP_CHANNEL_CONTROL;
+    packet[3] = g_IMU_DRIVER_control_seq++;
+
+    // --- SH2 Set Feature Command payload ---
+    packet[4]  = SH2_REPORT_SET_FEAATURE_CMD;
+    packet[5]  = SH2_REPORT_MAG;
+    packet[6]  = 0x00;                                   // feature flags
+    packet[7]  = 0x00; packet[8]  = 0x00;                // change sensitivity
+    packet[9]  = (IMU_MAG_REPORT_INTERVAL_US)       & 0xFF;
+    packet[10] = (IMU_MAG_REPORT_INTERVAL_US >> 8)  & 0xFF;
+    packet[11] = (IMU_MAG_REPORT_INTERVAL_US >> 16) & 0xFF;
+    packet[12] = (IMU_MAG_REPORT_INTERVAL_US >> 24) & 0xFF;
+    packet[13] = 0x00; packet[14] = 0x00; packet[15] = 0x00; packet[16] = 0x00; // batch interval
+    packet[17] = 0x00; packet[18] = 0x00; packet[19] = 0x00; packet[20] = 0x00; // sensor-specific config
+
+    HAL_I2C_Master_Transmit(&hi2c1, IMU_ADDRESS, packet, sizeof(packet), HAL_MAX_DELAY);
+}
+
+/**
+ * @brief Read one pending SHTP packet off the I2C bus into the driver's RX buffer.
+ *
+ * Peeks the 4-byte SHTP header to determine the packet length, then re-reads
+ * the full packet.
+ *
+ * @return true if a full packet was read successfully, false otherwise
+ */
+static bool ImuDriverReadPacket(void)
+{
+    uint8_t header[IMU_SHTP_HEADER_LEN];
+    uint16_t packet_len;
+
+    if (HAL_I2C_Master_Receive(&hi2c1, IMU_ADDRESS, header, IMU_SHTP_HEADER_LEN, HAL_MAX_DELAY) != HAL_OK) {
+        return false;
+    }
+
+    packet_len = ((header[1] << 8) | header[0]) & IMU_SHTP_LENGTH_MASK;
+    if (packet_len == 0) {
+        return false;
+    }
+
+    g_IMU_DRIVER_rx_len = (packet_len > IMU_RX_BUFFER_LEN) ? IMU_RX_BUFFER_LEN : packet_len;
+    return HAL_I2C_Master_Receive(&hi2c1, IMU_ADDRESS, g_IMU_DRIVER_rx_buffer, g_IMU_DRIVER_rx_len, HAL_MAX_DELAY) == HAL_OK;
+}
+
+/**
+ * @brief Read one pending SHTP packet and parse every sensor report inside it.
+ *
+ * Reads the packet report-by-report, updating whichever fields in data
+ * match a recognized report ID (accel, gyro, mag). Stops at the first
+ * unrecognized report ID, since its length cannot be determined.
+ *
+ * @param data ImuAppData struct to update with any parsed sensor readings
+ * @return true if at least one field in data was updated, false otherwise
+ */
+bool ImuDriverReadReport(ImuAppData *data)
+{
+    uint16_t offset;
+    uint8_t report_id;
+    bool updated;
+    int16_t x, y, z;
+
+    if (!ImuDriverDataReady() || !ImuDriverReadPacket()) {
+        return false;
+    }
+
+    if (g_IMU_DRIVER_rx_buffer[2] != SHTP_CHANNEL_REPORTS) {
+        return false;
+    }
+
+    offset = IMU_SHTP_HEADER_LEN;
+    updated = false;
+
+    while (offset < g_IMU_DRIVER_rx_len) {
+        report_id = g_IMU_DRIVER_rx_buffer[offset];
+
+        switch (report_id) {
+            case 0xFB:  // Base Timestamp Reference — no sensor data, just skip it
+            {
+                offset += 5;
+                break;
+            }
+            case SH2_REPORT_ACCEL:
+            {
+                if (offset + IMU_ACCEL_PAYLOAD_LEN > g_IMU_DRIVER_rx_len)
+                    return updated;
+                x = (int16_t)(g_IMU_DRIVER_rx_buffer[offset + 5] << 8 | g_IMU_DRIVER_rx_buffer[offset + 4]);
+                y = (int16_t)(g_IMU_DRIVER_rx_buffer[offset + 7] << 8 | g_IMU_DRIVER_rx_buffer[offset + 6]);
+                z = (int16_t)(g_IMU_DRIVER_rx_buffer[offset + 9] << 8 | g_IMU_DRIVER_rx_buffer[offset + 8]);
+
+                data->accel_x = (float)x / 256.0f;   // Q8 fixed-point -> m/s^2 (BNO08x accel Q-point = 8)
+                data->accel_y = (float)y / 256.0f;
+                data->accel_z = (float)z / 256.0f;
+                offset += IMU_ACCEL_PAYLOAD_LEN;
+                updated = true;
+                break;
+            }
+            case SH2_REPORT_GYRO:
+            {
+                if (offset + IMU_GYRO_PAYLOAD_LEN > g_IMU_DRIVER_rx_len)
+                    return updated;
+                x = (int16_t)(g_IMU_DRIVER_rx_buffer[offset +  5] << 8 | g_IMU_DRIVER_rx_buffer[offset +  4]);
+                y = (int16_t)(g_IMU_DRIVER_rx_buffer[offset +  7] << 8 | g_IMU_DRIVER_rx_buffer[offset +  6]);
+                z = (int16_t)(g_IMU_DRIVER_rx_buffer[offset +  9] << 8 | g_IMU_DRIVER_rx_buffer[offset +  8]);
+
+                data->gyro_x = (float)x / 512.0f;   // Q9 fixed-point -> rad/s (BNO08x gyro Q-point = 9)
+                data->gyro_y = (float)y / 512.0f;
+                data->gyro_z = (float)z / 512.0f;
+                offset += IMU_GYRO_PAYLOAD_LEN;
+                updated = true;
+                break;
+            }
+
+            case SH2_REPORT_MAG:
+            {
+                if (offset + IMU_MAG_PAYLOAD_LEN > g_IMU_DRIVER_rx_len)
+                    return updated;
+                x = (int16_t)(g_IMU_DRIVER_rx_buffer[offset +  5] << 8 | g_IMU_DRIVER_rx_buffer[offset +  4]);
+                y = (int16_t)(g_IMU_DRIVER_rx_buffer[offset +  7] << 8 | g_IMU_DRIVER_rx_buffer[offset +  6]);
+                z = (int16_t)(g_IMU_DRIVER_rx_buffer[offset +  9] << 8 | g_IMU_DRIVER_rx_buffer[offset +  8]);
+
+                data->mag_x = (float)x / 16.0f;   // Q4 fixed-point -> MicroTesla (BNO08x gyro Q-point = 4)
+                data->mag_y = (float)y / 16.0f;
+                data->mag_z = (float)z / 16.0f;
+                offset += IMU_MAG_PAYLOAD_LEN;
+                updated = true;
+                break;
+            }
+
+            default:
+                return updated;
+        }
+    }
+
+    return updated;
+}
+
+/* Static CAN header definitions */
+static CAN_TxHeaderTypeDef imu_ag_x = {
+    .StdId = IMU_AG_X_CAN_MESSAGE_ID,
+    .ExtId = 0x0000,
+    .IDE   = CAN_ID_STD,
+    .RTR   = CAN_RTR_DATA,
+    .DLC   = IMU_CAN_MESSAGE_AG_LENGTH
+};
+
+static CAN_TxHeaderTypeDef imu_ag_y = {
+    .StdId = IMU_AG_Y_CAN_MESSAGE_ID,
+    .ExtId = 0x0000,
+    .IDE   = CAN_ID_STD,
+    .RTR   = CAN_RTR_DATA,
+    .DLC   = IMU_CAN_MESSAGE_AG_LENGTH
+};
+
+static CAN_TxHeaderTypeDef imu_ag_z = {
+    .StdId = IMU_AG_Z_CAN_MESSAGE_ID,
+    .ExtId = 0x0000,
+    .IDE   = CAN_ID_STD,
+    .RTR   = CAN_RTR_DATA,
+    .DLC   = IMU_CAN_MESSAGE_AG_LENGTH
+};
+static CAN_TxHeaderTypeDef imu_m_x = {
+    .StdId = IMU_M_X_CAN_MESSAGE_ID,
+    .ExtId = 0x0000,
+    .IDE   = CAN_ID_STD,
+    .RTR   = CAN_RTR_DATA,
+    .DLC   = IMU_CAN_MESSAGE_M_LENGTH
+};
+
+static CAN_TxHeaderTypeDef imu_m_y = {
+    .StdId = IMU_M_Y_CAN_MESSAGE_ID,
+    .ExtId = 0x0000,
+    .IDE   = CAN_ID_STD,
+    .RTR   = CAN_RTR_DATA,
+    .DLC   = IMU_CAN_MESSAGE_M_LENGTH
+};
+
+static CAN_TxHeaderTypeDef imu_m_z = {
+    .StdId = IMU_M_Z_CAN_MESSAGE_ID,
+    .ExtId = 0x0000,
+    .IDE   = CAN_ID_STD,
+    .RTR   = CAN_RTR_DATA,
+    .DLC   = IMU_CAN_MESSAGE_M_LENGTH
+};
+
+
+/**
+ * @brief Sends the combined accel_x and gyro_x values over CAN.
+ * @param accel_x Acceleration value for the x-axis.
+ * @param gyro_x  Gyroscope value for the x-axis.
+ */
+void CAN_tx_ag_x_msg(float accel_x, float gyro_x)
+{
+	FloatToBytes float_bytes_x;
+    float_bytes_x.f = accel_x;
+    CAN_comms_Tx_msg_t msg = { .header = imu_ag_x };
+
+    for (int i = 0; i < 4; i++)
+    {
+        msg.data[i] = float_bytes_x.bytes[i];
+    }
+
+    float_bytes_x.f = gyro_x;
+    for (int i = 0; i < 4; i++)
+    {
+        msg.data[i + 4] = float_bytes_x.bytes[i];
+    }
+
+    CAN_comms_Add_Tx_message(&msg);
+    osDelay(2);
+    RADIO_filter_and_queue_msg_tx(&msg);
+    osDelay(2);
+}
+
+/**
+ * @brief Sends the combined accel_y and gyro_y values over CAN.
+ * @param accel_y Acceleration value for the y-axis.
+ * @param gyro_y  Gyroscope value for the y-axis.
+ */
+void CAN_tx_ag_y_msg(float accel_y, float gyro_y)
+{
+	FloatToBytes float_bytes_y;
+    float_bytes_y.f = accel_y;
+    CAN_comms_Tx_msg_t msg = { .header = imu_ag_y };
+
+    for (int i = 0; i < 4; i++)
+    {
+        msg.data[i] = float_bytes_y.bytes[i];
+    }
+
+    float_bytes_y.f = gyro_y;
+    for (int i = 0; i < 4; i++)
+    {
+        msg.data[i + 4] = float_bytes_y.bytes[i];
+    }
+
+    CAN_comms_Add_Tx_message(&msg);
+    osDelay(2);
+    RADIO_filter_and_queue_msg_tx(&msg);
+    osDelay(2);
+}
+
+/**
+ * @brief Sends the combined accel_z and gyro_z values over CAN.
+ * @param accel_z Acceleration value for the z-axis.
+ * @param gyro_z  Gyroscope value for
+ * the z-axis.
+ */
+void CAN_tx_ag_z_msg(float accel_z, float gyro_z)
+{
+	FloatToBytes float_bytes_z;
+    float_bytes_z.f = accel_z;
+    CAN_comms_Tx_msg_t msg = { .header = imu_ag_z };
+
+    for (int i = 0; i < 4; i++)
+    {
+        msg.data[i] = float_bytes_z.bytes[i];
+    }
+
+    float_bytes_z.f = gyro_z;
+    for (int i = 0; i < 4; i++)
+    {
+        msg.data[i + 4] = float_bytes_z.bytes[i];
+    }
+
+    CAN_comms_Add_Tx_message(&msg);
+    osDelay(2);
+    RADIO_filter_and_queue_msg_tx(&msg);
+    osDelay(2);
+}
+
+void CAN_tx_m_x_msg(float mag_x)
+{
+    FloatToBytes float_bytes_x;
+    float_bytes_x.f = mag_x;
+    CAN_comms_Tx_msg_t msg = { .header = imu_m_x };
+
+    for (int i = 0; i < 4; i++)
+    {
+        msg.data[i] = float_bytes_x.bytes[i];
+    }
+    CAN_comms_Add_Tx_message(&msg);
+    osDelay(2);
+    RADIO_filter_and_queue_msg_tx(&msg);
+    osDelay(2);
+}
+
+void CAN_tx_m_y_msg(float mag_y)
+{
+    FloatToBytes float_bytes_y;
+    float_bytes_y.f = mag_y;
+    CAN_comms_Tx_msg_t msg = { .header = imu_m_y };
+
+    for (int i = 0; i < 4; i++)
+    {
+        msg.data[i] = float_bytes_y.bytes[i];
+    }
+    CAN_comms_Add_Tx_message(&msg);
+    osDelay(2);
+    RADIO_filter_and_queue_msg_tx(&msg);
+    osDelay(2);
+}
+
+void CAN_tx_m_z_msg(float mag_z)
+{
+    FloatToBytes float_bytes_z;
+    float_bytes_z.f = mag_z;
+    CAN_comms_Tx_msg_t msg = { .header = imu_m_z };
+
+    for (int i = 0; i < 4; i++)
+    {
+        msg.data[i] = float_bytes_z.bytes[i];
+    }
+    CAN_comms_Add_Tx_message(&msg);
+    osDelay(2);
+    RADIO_filter_and_queue_msg_tx(&msg);
+    osDelay(2);
 }

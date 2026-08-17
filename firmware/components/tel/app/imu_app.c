@@ -1,12 +1,33 @@
+/******************************************************************************
+* @file    imu_app.c
+* @brief   Application-layer orchestration for reading IMU data.
+******************************************************************************/
+
 #include "imu_app.h"
 #include "imu_driver.h"
+#include "main.h"
 
-void imu_app_init(void)
+static ImuAppData g_IMU_APP_data;
+
+/**
+ * @brief Initialize the IMU driver and enable accelerometer, gyroscope, and magnetometer.
+ *
+ * @return None
+ */
+void ImuAppInit(void)
 {
-    imu_init();
+    ImuDriverInit();
+    ImuDriverEnableAccel();
+    ImuDriverEnableGyro();
+    ImuDriverEnableMag();
 }
 
-void imu_app_task(void)
+/**
+ * @brief Poll for and process one pending IMU report, updating the shared IMU data.
+ *
+ * @return None
+ */
+void ImuAppTask(void)
 {
-    // next milestone: parse SHTP_CHANNEL_REPORTS payloads into imu_data_t
+    ImuDriverReadReport(&g_IMU_APP_data);
 }

@@ -25,7 +25,7 @@ void ImuAppInit(void)
 /**
  * @brief Poll for and process one pending IMU report, updating the shared IMU data.
  *
- * @return N/A
+ * @return None
  */
 void ImuAppTask(void)
 {

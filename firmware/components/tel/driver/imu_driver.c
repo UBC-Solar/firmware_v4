@@ -8,6 +8,8 @@
 #include "main.h"
 #include "i2c.h"
 #include "imu_app.h"
+#include "CAN_comms.h"
+#include "telemetry_app.h"
 
 #define IMU_RESET_PULSE_MS      10
 #define IMU_BOOT_WAIT_MS        200
@@ -357,7 +359,7 @@ void CAN_tx_ag_x_msg(float accel_x, float gyro_x)
 
     CAN_comms_Add_Tx_message(&msg);
     osDelay(2);
-    RADIO_filter_and_queue_msg_tx(&msg);
+    TelAppTransmitInternalMsg(&msg);
     osDelay(2);
 }
 
@@ -385,7 +387,7 @@ void CAN_tx_ag_y_msg(float accel_y, float gyro_y)
 
     CAN_comms_Add_Tx_message(&msg);
     osDelay(2);
-    RADIO_filter_and_queue_msg_tx(&msg);
+    TelAppTransmitInternalMsg(&msg);
     osDelay(2);
 }
 
@@ -414,7 +416,7 @@ void CAN_tx_ag_z_msg(float accel_z, float gyro_z)
 
     CAN_comms_Add_Tx_message(&msg);
     osDelay(2);
-    RADIO_filter_and_queue_msg_tx(&msg);
+    TelAppTransmitInternalMsg(&msg);
     osDelay(2);
 }
 
@@ -430,7 +432,7 @@ void CAN_tx_m_x_msg(float mag_x)
     }
     CAN_comms_Add_Tx_message(&msg);
     osDelay(2);
-    RADIO_filter_and_queue_msg_tx(&msg);
+    TelAppTransmitInternalMsg(&msg);
     osDelay(2);
 }
 
@@ -446,7 +448,7 @@ void CAN_tx_m_y_msg(float mag_y)
     }
     CAN_comms_Add_Tx_message(&msg);
     osDelay(2);
-    RADIO_filter_and_queue_msg_tx(&msg);
+    TelAppTransmitInternalMsg(&msg);
     osDelay(2);
 }
 
@@ -462,6 +464,6 @@ void CAN_tx_m_z_msg(float mag_z)
     }
     CAN_comms_Add_Tx_message(&msg);
     osDelay(2);
-    RADIO_filter_and_queue_msg_tx(&msg);
+    TelAppTransmitInternalMsg(&msg);
     osDelay(2);
 }

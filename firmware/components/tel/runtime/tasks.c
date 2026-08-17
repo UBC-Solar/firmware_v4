@@ -20,11 +20,11 @@ void TasksIMU(void* argument)
 {
     (void)argument;
 
-    imu_app_init();
+    ImuAppInit();
 
     for (;;)
     {
-        imu_app_task();
+        ImuAppTask();
         osDelay(IMU_TASK_DELAY);
     }
 }

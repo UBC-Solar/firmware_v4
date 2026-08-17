@@ -4,7 +4,7 @@
 ******************************************************************************/
 
 #include "imu_driver.h"
-
+#include "bitops.h"
 #include "main.h"
 #include "i2c.h"
 #include "imu_app.h"

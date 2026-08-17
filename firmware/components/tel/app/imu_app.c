@@ -29,5 +29,13 @@ void ImuAppInit(void)
  */
 void ImuAppTask(void)
 {
-    ImuDriverReadReport(&g_IMU_APP_data);
+    if (ImuDriverReadReport(&g_IMU_APP_data))
+    {
+        CAN_tx_ag_x_msg(g_IMU_APP_data.accel_x, g_IMU_APP_data.gyro_x);
+        CAN_tx_ag_y_msg(g_IMU_APP_data.accel_y, g_IMU_APP_data.gyro_y);
+        CAN_tx_ag_z_msg(g_IMU_APP_data.accel_z, g_IMU_APP_data.gyro_z);
+        CAN_tx_m_x_msg(g_IMU_APP_data.mag_x);
+        CAN_tx_m_y_msg(g_IMU_APP_data.mag_y);
+        CAN_tx_m_z_msg(g_IMU_APP_data.mag_z);
+    }
 }

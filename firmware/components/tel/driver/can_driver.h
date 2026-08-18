@@ -19,6 +19,13 @@
 #define TEL_FLAGS_CAN_DATA_LENGTH                  1       
 #define TEL_FLAGS_BOOTUP_CAN_ID                    0x751
 
+#define IMU_AG_X_CAN_MESSAGE_ID 0x800
+#define IMU_AG_Y_CAN_MESSAGE_ID 0x801
+#define IMU_AG_Z_CAN_MESSAGE_ID 0x802
+#define IMU_M_X_CAN_MESSAGE_ID 0x803
+#define IMU_M_Y_CAN_MESSAGE_ID 0x804
+#define IMU_M_Z_CAN_MESSAGE_ID 0x805
+
 /* CAN Message Headers */
 extern const CAN_TxHeaderTypeDef time_since_bootup_can_header;
 extern const CAN_TxHeaderTypeDef tel_flags_can_header;

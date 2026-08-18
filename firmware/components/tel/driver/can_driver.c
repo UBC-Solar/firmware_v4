@@ -7,9 +7,10 @@
  * @author  Gregory Bian
  * @date    Jun 30 2026
  */
-#include "can_driver.h"
-#include "can.h"
-#include "CAN_comms.h"
+ #include "can_driver.h"
+ #include "can.h"
+ #include "CAN_comms.h"
+ #include "can_app.h"
 
 const CAN_TxHeaderTypeDef time_since_bootup_can_header = {
     .StdId = TIME_SINCE_BOOTUP_CAN_ID,
@@ -25,8 +26,8 @@ const CAN_TxHeaderTypeDef tel_flags_can_header = {
     .RTR = CAN_RTR_DATA,
     .DLC = TEL_FLAGS_CAN_DATA_LENGTH};
 
- //IMU Can header definitions
-static CAN_TxHeaderTypeDef imu_ag_x = {
+//IMU Can header definitions
+const CAN_TxHeaderTypeDef imu_ag_x = {
     .StdId = IMU_AG_X_CAN_MESSAGE_ID,
     .ExtId = 0x0000,
     .IDE   = CAN_ID_STD,
@@ -34,7 +35,7 @@ static CAN_TxHeaderTypeDef imu_ag_x = {
     .DLC   = IMU_CAN_MESSAGE_AG_LENGTH
 };
 
-static CAN_TxHeaderTypeDef imu_ag_y = {
+const CAN_TxHeaderTypeDef imu_ag_y = {
     .StdId = IMU_AG_Y_CAN_MESSAGE_ID,
     .ExtId = 0x0000,
     .IDE   = CAN_ID_STD,
@@ -42,14 +43,14 @@ static CAN_TxHeaderTypeDef imu_ag_y = {
     .DLC   = IMU_CAN_MESSAGE_AG_LENGTH
 };
 
-static CAN_TxHeaderTypeDef imu_ag_z = {
+const CAN_TxHeaderTypeDef imu_ag_z = {
     .StdId = IMU_AG_Z_CAN_MESSAGE_ID,
     .ExtId = 0x0000,
     .IDE   = CAN_ID_STD,
     .RTR   = CAN_RTR_DATA,
     .DLC   = IMU_CAN_MESSAGE_AG_LENGTH
 };
-static CAN_TxHeaderTypeDef imu_m_x = {
+const CAN_TxHeaderTypeDef imu_m_x = {
     .StdId = IMU_M_X_CAN_MESSAGE_ID,
     .ExtId = 0x0000,
     .IDE   = CAN_ID_STD,
@@ -57,7 +58,7 @@ static CAN_TxHeaderTypeDef imu_m_x = {
     .DLC   = IMU_CAN_MESSAGE_M_LENGTH
 };
 
-static CAN_TxHeaderTypeDef imu_m_y = {
+const CAN_TxHeaderTypeDef imu_m_y = {
     .StdId = IMU_M_Y_CAN_MESSAGE_ID,
     .ExtId = 0x0000,
     .IDE   = CAN_ID_STD,
@@ -65,7 +66,7 @@ static CAN_TxHeaderTypeDef imu_m_y = {
     .DLC   = IMU_CAN_MESSAGE_M_LENGTH
 };
 
-static CAN_TxHeaderTypeDef imu_m_z = {
+const CAN_TxHeaderTypeDef imu_m_z = {
     .StdId = IMU_M_Z_CAN_MESSAGE_ID,
     .ExtId = 0x0000,
     .IDE   = CAN_ID_STD,

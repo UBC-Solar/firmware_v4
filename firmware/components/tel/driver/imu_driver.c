@@ -283,27 +283,21 @@ bool ImuDriverReadReport(ImuAppData *data)
     return updated;
 }
 
-
-/**
- * @brief Sends the combined accel_x and gyro_x values over CAN.
- * @param accel_x Acceleration value for the x-axis.
- * @param gyro_x  Gyroscope value for the x-axis.
- */
-void CAN_tx_ag_x_msg(float accel_x, float gyro_x)
+void CAN_tx_ag_msg(const CAN_TxHeaderTypeDef *header, float accel, float gyro)
 {
-	FloatToBytes float_bytes_x;
-    float_bytes_x.f = accel_x;
-    CAN_comms_Tx_msg_t msg = { .header = imu_ag_x };
+	FloatToBytes float_bytes;
+    CAN_comms_Tx_msg_t msg = { .header = *header  };
 
+    float_bytes.f = accel;
     for (int i = 0; i < 4; i++)
     {
-        msg.data[i] = float_bytes_x.bytes[i];
+        msg.data[i] = float_bytes.bytes[i];
     }
 
-    float_bytes_x.f = gyro_x;
+    float_bytes.f = gyro;
     for (int i = 0; i < 4; i++)
     {
-        msg.data[i + 4] = float_bytes_x.bytes[i];
+        msg.data[i + 4] = float_bytes.bytes[i];
     }
 
     CAN_comms_Add_Tx_message(&msg);
@@ -312,72 +306,15 @@ void CAN_tx_ag_x_msg(float accel_x, float gyro_x)
     osDelay(2);
 }
 
-/**
- * @brief Sends the combined accel_y and gyro_y values over CAN.
- * @param accel_y Acceleration value for the y-axis.
- * @param gyro_y  Gyroscope value for the y-axis.
- */
-void CAN_tx_ag_y_msg(float accel_y, float gyro_y)
+void CAN_tx_m_msg(const CAN_TxHeaderTypeDef *header, float mag)
 {
-	FloatToBytes float_bytes_y;
-    float_bytes_y.f = accel_y;
-    CAN_comms_Tx_msg_t msg = { .header = imu_ag_y };
+    FloatToBytes float_bytes;
+    CAN_comms_Tx_msg_t msg = { .header = *header };
 
+    float_bytes.f = mag;
     for (int i = 0; i < 4; i++)
     {
-        msg.data[i] = float_bytes_y.bytes[i];
-    }
-
-    float_bytes_y.f = gyro_y;
-    for (int i = 0; i < 4; i++)
-    {
-        msg.data[i + 4] = float_bytes_y.bytes[i];
-    }
-
-    CAN_comms_Add_Tx_message(&msg);
-    osDelay(2);
-    TelAppTransmitInternalMsg(&msg);
-    osDelay(2);
-}
-
-/**
- * @brief Sends the combined accel_z and gyro_z values over CAN.
- * @param accel_z Acceleration value for the z-axis.
- * @param gyro_z  Gyroscope value for
- * the z-axis.
- */
-void CAN_tx_ag_z_msg(float accel_z, float gyro_z)
-{
-	FloatToBytes float_bytes_z;
-    float_bytes_z.f = accel_z;
-    CAN_comms_Tx_msg_t msg = { .header = imu_ag_z };
-
-    for (int i = 0; i < 4; i++)
-    {
-        msg.data[i] = float_bytes_z.bytes[i];
-    }
-
-    float_bytes_z.f = gyro_z;
-    for (int i = 0; i < 4; i++)
-    {
-        msg.data[i + 4] = float_bytes_z.bytes[i];
-    }
-
-    CAN_comms_Add_Tx_message(&msg);
-    osDelay(2);
-    TelAppTransmitInternalMsg(&msg);
-    osDelay(2);
-}
-
-void CAN_tx_m_x_msg(float mag_x)
-{
-    FloatToBytes float_bytes_x;
-    float_bytes_x.f = mag_x;
-    CAN_comms_Tx_msg_t msg = { .header = imu_m_x };
-
-    for (int i = 0; i < 4; i++)
-    {
-        msg.data[i] = float_bytes_x.bytes[i];
+        msg.data[i] = float_bytes.bytes[i];
     }
     CAN_comms_Add_Tx_message(&msg);
     osDelay(2);
@@ -385,34 +322,3 @@ void CAN_tx_m_x_msg(float mag_x)
     osDelay(2);
 }
 
-void CAN_tx_m_y_msg(float mag_y)
-{
-    FloatToBytes float_bytes_y;
-    float_bytes_y.f = mag_y;
-    CAN_comms_Tx_msg_t msg = { .header = imu_m_y };
-
-    for (int i = 0; i < 4; i++)
-    {
-        msg.data[i] = float_bytes_y.bytes[i];
-    }
-    CAN_comms_Add_Tx_message(&msg);
-    osDelay(2);
-    TelAppTransmitInternalMsg(&msg);
-    osDelay(2);
-}
-
-void CAN_tx_m_z_msg(float mag_z)
-{
-    FloatToBytes float_bytes_z;
-    float_bytes_z.f = mag_z;
-    CAN_comms_Tx_msg_t msg = { .header = imu_m_z };
-
-    for (int i = 0; i < 4; i++)
-    {
-        msg.data[i] = float_bytes_z.bytes[i];
-    }
-    CAN_comms_Add_Tx_message(&msg);
-    osDelay(2);
-    TelAppTransmitInternalMsg(&msg);
-    osDelay(2);
-}

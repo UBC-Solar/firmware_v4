@@ -5,6 +5,7 @@
 
 #include "imu_app.h"
 #include "imu_driver.h"
+#include "can_driver.h"
 #include "main.h"
 
 static ImuAppData g_IMU_APP_data;
@@ -31,11 +32,11 @@ void ImuAppTask(void)
 {
     if (ImuDriverReadReport(&g_IMU_APP_data))
     {
-        CAN_tx_ag_x_msg(g_IMU_APP_data.accel_x, g_IMU_APP_data.gyro_x);
-        CAN_tx_ag_y_msg(g_IMU_APP_data.accel_y, g_IMU_APP_data.gyro_y);
-        CAN_tx_ag_z_msg(g_IMU_APP_data.accel_z, g_IMU_APP_data.gyro_z);
-        CAN_tx_m_x_msg(g_IMU_APP_data.mag_x);
-        CAN_tx_m_y_msg(g_IMU_APP_data.mag_y);
-        CAN_tx_m_z_msg(g_IMU_APP_data.mag_z);
+        CAN_tx_ag_msg(&imu_ag_x, g_IMU_APP_data.accel_x, g_IMU_APP_data.gyro_x);
+        CAN_tx_ag_msg(&imu_ag_y, g_IMU_APP_data.accel_y, g_IMU_APP_data.gyro_y);
+        CAN_tx_ag_msg(&imu_ag_z, g_IMU_APP_data.accel_z, g_IMU_APP_data.gyro_z);
+        CAN_tx_m_msg(&imu_m_x, g_IMU_APP_data.mag_x);
+        CAN_tx_m_msg(&imu_m_y, g_IMU_APP_data.mag_y);
+        CAN_tx_m_msg(&imu_m_z, g_IMU_APP_data.mag_z);
     }
 }

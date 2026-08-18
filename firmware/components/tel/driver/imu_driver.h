@@ -8,6 +8,7 @@
 
 #include <stdbool.h>
 #include "imu_app.h"
+#include "can_driver.h"
 
 /**
  * @brief Reset the BNO086 and read its power-on SHTP advertisement packet.
@@ -55,5 +56,18 @@ void ImuDriverEnableMag(void);
  * @return true if at least one field in data was updated, false otherwise
  */
 bool ImuDriverReadReport(ImuAppData *data);
+
+/**
+ * @brief Sends the combined accel and gyro values over CAN.
+ * @param accel Acceleration value for the required axis.
+ * @param gyro  Gyroscope value for the required axis.
+ */
+void CAN_tx_ag_msg(const CAN_TxHeaderTypeDef *header, float accel, float gyro);
+
+/**
+ * @brief Sends the combined mag values over CAN.
+ * @param mag Acceleration value for the required axis.
+ */
+void CAN_tx_m_msg(const CAN_TxHeaderTypeDef *header, float mag);
 
 #endif /* __IMU__DRIVER__H__ */

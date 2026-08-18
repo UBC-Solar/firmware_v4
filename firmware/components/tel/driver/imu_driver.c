@@ -10,6 +10,7 @@
 #include "imu_app.h"
 #include "CAN_comms.h"
 #include "telemetry_app.h"
+#include "can_driver.h"
 
 #define IMU_RESET_PULSE_MS      10
 #define IMU_BOOT_WAIT_MS        200
@@ -19,10 +20,6 @@
 #define IMU_ACCEL_PAYLOAD_LEN   10    
 #define IMU_GYRO_PAYLOAD_LEN   10
 #define IMU_MAG_PAYLOAD_LEN   10
-
-#define IMU_CAN_MESSAGE_AG_LENGTH 8
-#define IMU_CAN_MESSAGE_M_LENGTH 4
-
 
 static uint8_t g_IMU_DRIVER_control_seq = 0;   // per-channel sequence counter SHTP requires on writes
 static uint8_t g_IMU_DRIVER_rx_buffer[IMU_RX_BUFFER_LEN];
@@ -285,54 +282,6 @@ bool ImuDriverReadReport(ImuAppData *data)
 
     return updated;
 }
-
-/* Static CAN header definitions */
-static CAN_TxHeaderTypeDef imu_ag_x = {
-    .StdId = IMU_AG_X_CAN_MESSAGE_ID,
-    .ExtId = 0x0000,
-    .IDE   = CAN_ID_STD,
-    .RTR   = CAN_RTR_DATA,
-    .DLC   = IMU_CAN_MESSAGE_AG_LENGTH
-};
-
-static CAN_TxHeaderTypeDef imu_ag_y = {
-    .StdId = IMU_AG_Y_CAN_MESSAGE_ID,
-    .ExtId = 0x0000,
-    .IDE   = CAN_ID_STD,
-    .RTR   = CAN_RTR_DATA,
-    .DLC   = IMU_CAN_MESSAGE_AG_LENGTH
-};
-
-static CAN_TxHeaderTypeDef imu_ag_z = {
-    .StdId = IMU_AG_Z_CAN_MESSAGE_ID,
-    .ExtId = 0x0000,
-    .IDE   = CAN_ID_STD,
-    .RTR   = CAN_RTR_DATA,
-    .DLC   = IMU_CAN_MESSAGE_AG_LENGTH
-};
-static CAN_TxHeaderTypeDef imu_m_x = {
-    .StdId = IMU_M_X_CAN_MESSAGE_ID,
-    .ExtId = 0x0000,
-    .IDE   = CAN_ID_STD,
-    .RTR   = CAN_RTR_DATA,
-    .DLC   = IMU_CAN_MESSAGE_M_LENGTH
-};
-
-static CAN_TxHeaderTypeDef imu_m_y = {
-    .StdId = IMU_M_Y_CAN_MESSAGE_ID,
-    .ExtId = 0x0000,
-    .IDE   = CAN_ID_STD,
-    .RTR   = CAN_RTR_DATA,
-    .DLC   = IMU_CAN_MESSAGE_M_LENGTH
-};
-
-static CAN_TxHeaderTypeDef imu_m_z = {
-    .StdId = IMU_M_Z_CAN_MESSAGE_ID,
-    .ExtId = 0x0000,
-    .IDE   = CAN_ID_STD,
-    .RTR   = CAN_RTR_DATA,
-    .DLC   = IMU_CAN_MESSAGE_M_LENGTH
-};
 
 
 /**

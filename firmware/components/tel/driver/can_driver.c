@@ -25,6 +25,55 @@ const CAN_TxHeaderTypeDef tel_flags_can_header = {
     .RTR = CAN_RTR_DATA,
     .DLC = TEL_FLAGS_CAN_DATA_LENGTH};
 
+ //IMU Can header definitions
+static CAN_TxHeaderTypeDef imu_ag_x = {
+    .StdId = IMU_AG_X_CAN_MESSAGE_ID,
+    .ExtId = 0x0000,
+    .IDE   = CAN_ID_STD,
+    .RTR   = CAN_RTR_DATA,
+    .DLC   = IMU_CAN_MESSAGE_AG_LENGTH
+};
+
+static CAN_TxHeaderTypeDef imu_ag_y = {
+    .StdId = IMU_AG_Y_CAN_MESSAGE_ID,
+    .ExtId = 0x0000,
+    .IDE   = CAN_ID_STD,
+    .RTR   = CAN_RTR_DATA,
+    .DLC   = IMU_CAN_MESSAGE_AG_LENGTH
+};
+
+static CAN_TxHeaderTypeDef imu_ag_z = {
+    .StdId = IMU_AG_Z_CAN_MESSAGE_ID,
+    .ExtId = 0x0000,
+    .IDE   = CAN_ID_STD,
+    .RTR   = CAN_RTR_DATA,
+    .DLC   = IMU_CAN_MESSAGE_AG_LENGTH
+};
+static CAN_TxHeaderTypeDef imu_m_x = {
+    .StdId = IMU_M_X_CAN_MESSAGE_ID,
+    .ExtId = 0x0000,
+    .IDE   = CAN_ID_STD,
+    .RTR   = CAN_RTR_DATA,
+    .DLC   = IMU_CAN_MESSAGE_M_LENGTH
+};
+
+static CAN_TxHeaderTypeDef imu_m_y = {
+    .StdId = IMU_M_Y_CAN_MESSAGE_ID,
+    .ExtId = 0x0000,
+    .IDE   = CAN_ID_STD,
+    .RTR   = CAN_RTR_DATA,
+    .DLC   = IMU_CAN_MESSAGE_M_LENGTH
+};
+
+static CAN_TxHeaderTypeDef imu_m_z = {
+    .StdId = IMU_M_Z_CAN_MESSAGE_ID,
+    .ExtId = 0x0000,
+    .IDE   = CAN_ID_STD,
+    .RTR   = CAN_RTR_DATA,
+    .DLC   = IMU_CAN_MESSAGE_M_LENGTH
+};
+
+
 /**
  * @brief Initialize CAN filter configuration
  * @param can_filter Pointer to CAN filter configuration structure

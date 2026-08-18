@@ -19,6 +19,8 @@
 #define TEL_FLAGS_CAN_DATA_LENGTH                  1       
 #define TEL_FLAGS_BOOTUP_CAN_ID                    0x751
 
+#define IMU_CAN_MESSAGE_AG_LENGTH 8
+#define IMU_CAN_MESSAGE_M_LENGTH 4
 #define IMU_AG_X_CAN_MESSAGE_ID 0x800
 #define IMU_AG_Y_CAN_MESSAGE_ID 0x801
 #define IMU_AG_Z_CAN_MESSAGE_ID 0x802

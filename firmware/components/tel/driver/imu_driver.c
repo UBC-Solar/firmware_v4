@@ -20,6 +20,7 @@
 #define IMU_ACCEL_PAYLOAD_LEN   10    
 #define IMU_GYRO_PAYLOAD_LEN   10
 #define IMU_MAG_PAYLOAD_LEN   10
+#define PACKET_SIZE 21
 
 static uint8_t g_IMU_DRIVER_control_seq = 0;   // per-channel sequence counter SHTP requires on writes
 static uint8_t g_IMU_DRIVER_rx_buffer[IMU_RX_BUFFER_LEN];
@@ -110,7 +111,7 @@ void ImuDriverEnableAccel(void)
  */
 void ImuDriverEnableGyro(void)
 {
-    uint8_t packet[4 + 17];
+    uint8_t packet[PACKET_SIZE]; //SHTP header (4 bytes) + SH2 Payload (17 bytes)
     uint16_t total_len = sizeof(packet);
 
     // --- SHTP header (channel 2 = control) ---

@@ -14,6 +14,7 @@
 #include "rtc.h"
 #include "telemetry_app.h"
 #include "diagnostics.h"
+#include "imu_app.h"
 
 /* IMU TASK */
 void TasksIMU(void* argument)

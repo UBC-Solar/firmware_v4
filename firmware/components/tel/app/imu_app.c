@@ -10,11 +10,6 @@
 
 static ImuAppData g_IMU_APP_data;
 
-/**
- * @brief Initialize the IMU driver and enable accelerometer, gyroscope, and magnetometer.
- *
- * @return None
- */
 void ImuAppInit(void)
 {
     ImuDriverInit();
@@ -23,11 +18,6 @@ void ImuAppInit(void)
     ImuDriverEnableMag();
 }
 
-/**
- * @brief Poll for and process one pending IMU report, updating the shared IMU data.
- *
- * @return None
- */
 void ImuAppTask(void)
 {
     if (ImuDriverReadReport(&g_IMU_APP_data))

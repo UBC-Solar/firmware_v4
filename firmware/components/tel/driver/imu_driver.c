@@ -27,20 +27,21 @@ static uint8_t g_IMU_DRIVER_rx_buffer[IMU_RX_BUFFER_LEN];
 static uint16_t g_IMU_DRIVER_rx_len;
 
 /**
- * @brief Read the I_INTN pin; the BNO086 drives it low when an SHTP packet is ready.
+ * @brief Read one pending SHTP packet off the I2C bus into the driver's RX buffer.
  *
- * @return true if a packet is waiting to be read, false otherwise
+ * Peeks the 4-byte SHTP header to determine the packet length, then re-reads
+ * the full packet.
+ *
+ * @return true if a full packet was read successfully, false otherwise
  */
+ static bool ImuDriverReadPacket(void);
+
+
 bool ImuDriverDataReady(void)
 {
     return HAL_GPIO_ReadPin(I_INTN_GPIO_Port, I_INTN_Pin) == GPIO_PIN_RESET;
 }
 
-/**
- * @brief Reset the BNO086 and read its power-on SHTP advertisement packet.
- *
- * @return None
- */
 void ImuDriverInit(void)
 {
     uint32_t start;
@@ -73,11 +74,6 @@ void ImuDriverInit(void)
     HAL_I2C_Master_Receive(&hi2c1, IMU_ADDRESS, g_IMU_DRIVER_rx_buffer, g_IMU_DRIVER_rx_len, HAL_MAX_DELAY);
 }
 
-/**
- * @brief Send the SH2 Set Feature command to enable accelerometer reports.
- *
- * @return None
- */
 void ImuDriverEnableAccel(void)
 {
     uint8_t packet[PACKET_SIZE]; //SHTP header (4 bytes) + SH2 Payload (17 bytes)
@@ -104,11 +100,6 @@ void ImuDriverEnableAccel(void)
     HAL_I2C_Master_Transmit(&hi2c1, IMU_ADDRESS, packet, sizeof(packet), HAL_MAX_DELAY);
 }
 
-/**
- * @brief Send the SH2 Set Feature command to enable gyroscope reports.
- *
- * @return None
- */
 void ImuDriverEnableGyro(void)
 {
     uint8_t packet[PACKET_SIZE]; 
@@ -135,11 +126,6 @@ void ImuDriverEnableGyro(void)
     HAL_I2C_Master_Transmit(&hi2c1, IMU_ADDRESS, packet, sizeof(packet), HAL_MAX_DELAY);
 }
 
-/**
- * @brief Send the SH2 Set Feature command to enable magnetometer reports.
- *
- * @return None
- */
 void ImuDriverEnableMag(void)
 {
     uint8_t packet[PACKET_SIZE];
@@ -166,14 +152,6 @@ void ImuDriverEnableMag(void)
     HAL_I2C_Master_Transmit(&hi2c1, IMU_ADDRESS, packet, sizeof(packet), HAL_MAX_DELAY);
 }
 
-/**
- * @brief Read one pending SHTP packet off the I2C bus into the driver's RX buffer.
- *
- * Peeks the 4-byte SHTP header to determine the packet length, then re-reads
- * the full packet.
- *
- * @return true if a full packet was read successfully, false otherwise
- */
 static bool ImuDriverReadPacket(void)
 {
     uint8_t header[IMU_SHTP_HEADER_LEN];
@@ -192,16 +170,6 @@ static bool ImuDriverReadPacket(void)
     return HAL_I2C_Master_Receive(&hi2c1, IMU_ADDRESS, g_IMU_DRIVER_rx_buffer, g_IMU_DRIVER_rx_len, HAL_MAX_DELAY) == HAL_OK;
 }
 
-/**
- * @brief Read one pending SHTP packet and parse every sensor report inside it.
- *
- * Reads the packet report-by-report, updating whichever fields in data
- * match a recognized report ID (accel, gyro, mag). Stops at the first
- * unrecognized report ID, since its length cannot be determined.
- *
- * @param data ImuAppData struct to update with any parsed sensor readings
- * @return true if at least one field in data was updated, false otherwise
- */
 bool ImuDriverReadReport(ImuAppData *data)
 {
     uint16_t offset;

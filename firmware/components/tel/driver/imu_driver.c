@@ -142,7 +142,7 @@ void ImuDriverEnableGyro(void)
  */
 void ImuDriverEnableMag(void)
 {
-    uint8_t packet[4 + 17];
+    uint8_t packet[PACKET_SIZE];
     uint16_t total_len = sizeof(packet);
 
     // --- SHTP header (channel 2 = control) ---

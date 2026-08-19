@@ -1,6 +1,11 @@
 /******************************************************************************
 * @file    imu_app.h
 * @brief   Shared types, macros, and public interface for the IMU application layer.
+*
+* This header contains function declarations as well as global variables that concern the IMU like the sensor intervals, lengths addresses, etc.
+*
+* @author Shlok Lande
+* @date Aug 19 2026
 ******************************************************************************/
 
 #ifndef __IMU_H__

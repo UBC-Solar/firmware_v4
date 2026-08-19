@@ -1,6 +1,11 @@
 /******************************************************************************
 * @file    imu_driver.c
 * @brief   reset/boot handling, SH2 feature-enable commands, and sensor report parsing.
+*
+* This file contains functions for enaleing the IMU sensors, reading from them and transmitting them over CAN
+*
+* @author Shlok Lande
+* @date Aug 19 2026
 ******************************************************************************/
 
 #include "imu_driver.h"
@@ -35,6 +40,13 @@ static uint16_t g_IMU_DRIVER_rx_len;
  * @return true if a full packet was read successfully, false otherwise
  */
  static bool ImuDriverReadPacket(void);
+
+ /**
+ * @brief Read the I_INTN pin; the BNO086 drives it low when an SHTP packet is ready.
+ *
+ * @return true if a packet is waiting to be read, false otherwise
+ */
+static bool ImuDriverDataReady(void);
 
 
 bool ImuDriverDataReady(void)

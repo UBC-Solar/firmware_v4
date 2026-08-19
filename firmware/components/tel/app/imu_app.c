@@ -1,6 +1,11 @@
 /******************************************************************************
 * @file    imu_app.c
 * @brief   Application-layer orchestration for reading IMU data.
+*
+* This file contains functions for the initialization of the IMU as well as its RTOS task.
+*
+* @author Shlok Lande
+* @date Aug 19 2026
 ******************************************************************************/
 
 #include "imu_app.h"

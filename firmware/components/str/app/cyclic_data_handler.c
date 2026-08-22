@@ -18,7 +18,7 @@
   CYCLIC DATA DEFINITIONS
 --------------------------------------------------------------------------*/
 
-CYCLIC_DATA(uint32_t, cyclic_speed, MAX_CYCLE_TIME); // Vehicle speed (km/h)
+CYCLIC_DATA(uint32_t, cyclic_speed, MAX_CYCLE_TIME);              // Vehicle speed (km/h)
 
 /*--------------------------------------------------------------------------
   CYCLIC DATA SETTERS

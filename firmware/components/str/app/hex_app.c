@@ -70,11 +70,6 @@ void HexAppUpdate(void)
             display_speed = (uint32_t)((float)display_speed * KMH_TO_MPH_MULTIPLIER);
         }
 
-        if (display_speed > STR_DISPLAY_MAX) // clamp before narrowing so large speeds do not wrap
-        {
-            display_speed = STR_DISPLAY_MAX;
-        }
-
         HexDisplayWriteDecimal((uint8_t)display_speed);
     }
     else

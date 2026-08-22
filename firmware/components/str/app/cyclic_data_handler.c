@@ -19,7 +19,6 @@
 --------------------------------------------------------------------------*/
 
 CYCLIC_DATA(uint32_t, cyclic_speed, MAX_CYCLE_TIME);              // Vehicle speed (km/h)
-CYCLIC_DATA(uint32_t, cyclic_can_rx_timestamp, MAX_CYCLE_TIME);   // Last CAN RX timestamp (ms)
 
 /*--------------------------------------------------------------------------
   CYCLIC DATA SETTERS
@@ -30,11 +29,6 @@ void CyclicDataSetSpeed(uint32_t speed)
     CYCLIC_DATA_SET(cyclic_speed, speed);
 }
 
-void CyclicDataSetCanRxTimestamp(uint32_t timestamp_ms)
-{
-    CYCLIC_DATA_SET(cyclic_can_rx_timestamp, timestamp_ms);
-}
-
 /*--------------------------------------------------------------------------
   CYCLIC DATA GETTERS
 --------------------------------------------------------------------------*/
@@ -42,9 +36,4 @@ void CyclicDataSetCanRxTimestamp(uint32_t timestamp_ms)
 uint32_t* CyclicDataGetSpeed(void)
 {
     return CYCLIC_DATA_GET(cyclic_speed);
-}
-
-uint32_t* CyclicDataGetCanRxTimestamp(void)
-{
-    return CYCLIC_DATA_GET(cyclic_can_rx_timestamp);
 }

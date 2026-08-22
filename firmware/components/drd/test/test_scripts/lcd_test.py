@@ -2,6 +2,9 @@ import can
 import time
 import threading
 import struct
+import platform
+import os
+import glob
 
 """
 Important notes: the python CAN library sends data in little endian meaning the least significant bit and byte is first
@@ -10,6 +13,61 @@ Ex: [1, 0, 0, 0, 0, 0, 0, 0]
 
 
 """
+
+BITRATE = 500000
+
+#Checks system and tries to find a CAN interface
+def _try_bus(channel, interface):
+    try:
+        bus = can.interface.Bus(channel=channel, interface=interface, bitrate=BITRATE)
+        print(f"Using CAN interface={interface} channel={channel}")
+        return bus
+    except Exception as e:
+        print(f"  skip {interface}/{channel}: {e}")
+        return None
+
+def select_can_interface():
+    env_iface = os.environ.get("CAN_INTERFACE")
+    env_channel = os.environ.get("CAN_CHANNEL")
+    if env_iface and env_channel:
+        bus = _try_bus(env_channel, env_iface)
+        if bus is not None:
+            return bus
+        raise RuntimeError(f"Failed to open CAN_INTERFACE={env_iface} CAN_CHANNEL={env_channel}")
+
+    system = platform.system()
+
+    if system == "Windows":
+        candidates = [
+            ("PCAN_USBBUS1", "pcan"),
+            ("COM3", "slcan"),
+        ]
+    elif system == "Darwin":  #for mac
+        candidates = [
+            ("PCAN_USBBUS1", "pcan"), 
+        ]
+        # slcan 
+        for port in sorted(glob.glob("/dev/cu.usbmodem*") + glob.glob("/dev/cu.usbserial*")):
+            candidates.append((port, "slcan"))
+    else:  # Linux
+        candidates = [
+            ("can0", "socketcan"),
+            ("PCAN_USBBUS1", "pcan"),
+            ("/dev/ttyACM0", "slcan"),
+        ]
+
+    for channel, interface in candidates:
+        bus = _try_bus(channel, interface)
+        if bus is not None:
+            return bus
+
+    raise RuntimeError(
+        "No CAN adapter found. Plug in your adapter, or set:\n"
+        "  CAN_INTERFACE=pcan CAN_CHANNEL=PCAN_USBBUS1\n"
+        "  CAN_INTERFACE=slcan CAN_CHANNEL=/dev/cu.usbmodemXXXX\n"
+        "  CAN_INTERFACE=socketcan CAN_CHANNEL=can0"
+    )
+
 
 def send_message(can_id, data, isextended_id=False):
     message = can.Message(arbitration_id=can_id, data=data, is_extended_id=isextended_id)
@@ -275,7 +333,7 @@ class DRDTest:
         send_message(0x623, [safe_value & 0xFF,(safe_value >> 8) & 0xFF,0,0,0,0,0,0]) # clear
 
 if(__name__ == "__main__"):
-    with can.interface.Bus(channel='PCAN_USBBUS1', interface='pcan', bitrate=500000) as bus:
+    with select_can_interface() as bus:
         print("CAN bus initialized")
         drd_test = DRDTest(bus)
         drd_test.clearbus(bus)

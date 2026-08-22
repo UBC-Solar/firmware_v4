@@ -19,10 +19,8 @@
 
 /* CYCLIC DATA SETTERS */
 void CyclicDataSetSpeed(uint32_t speed);
-void CyclicDataSetCanRxTimestamp(uint32_t timestamp_ms);
 
 /* CYCLIC DATA GETTERS */
 uint32_t* CyclicDataGetSpeed(void);
-uint32_t* CyclicDataGetCanRxTimestamp(void);
 
 #endif // CYCLIC_DATA_HANDLER_H

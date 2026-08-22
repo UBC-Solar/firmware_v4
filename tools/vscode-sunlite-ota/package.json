@@ -1,0 +1,145 @@
+{
+  "name": "sunlite-ota",
+  "displayName": "Sunlite OTA",
+  "description": "Build and send the active UBC Solar firmware target to the Sunlite Raspberry Pi OTA gateway.",
+  "version": "0.3.0",
+  "publisher": "ubc-solar",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/UBC-Solar/firmware_v4.git",
+    "directory": "tools/vscode-sunlite-ota"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "extensionDependencies": [
+    "ms-vscode.cmake-tools"
+  ],
+  "categories": [
+    "Debuggers",
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:sunliteOta.flash",
+    "onDebug"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "sunliteOta.flash",
+        "title": "Sunlite OTA: Flash Active Board",
+        "category": "Sunlite OTA"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "sunlite-ota",
+        "label": "Sunlite OTA",
+        "languages": [
+          "c",
+          "cpp"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "properties": {
+              "buildBeforeFlash": {
+                "type": "boolean",
+                "description": "Build the active CMake target before uploading it."
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "name": "Sunlite OTA (active CMake target)",
+            "type": "sunlite-ota",
+            "request": "launch"
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "Sunlite OTA: Flash active CMake target",
+            "description": "Build, upload, and start OTA flashing through the Raspberry Pi gateway.",
+            "body": {
+              "name": "Sunlite OTA (active CMake target)",
+              "type": "sunlite-ota",
+              "request": "launch"
+            }
+          }
+        ]
+      }
+    ],
+    "configuration": {
+      "title": "Sunlite OTA",
+      "properties": {
+        "sunliteOta.host": {
+          "type": "string",
+          "default": "",
+          "description": "Hostname or IP address of the Sunlite Raspberry Pi."
+        },
+        "sunliteOta.user": {
+          "type": "string",
+          "default": "tonychen",
+          "description": "SSH user on the Raspberry Pi."
+        },
+        "sunliteOta.sshPort": {
+          "type": "integer",
+          "default": 22,
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "SSH port on the Raspberry Pi."
+        },
+        "sunliteOta.incomingDirectory": {
+          "type": "string",
+          "default": "/var/lib/sunlite-ota/incoming",
+          "description": "Absolute untrusted-upload directory on the Raspberry Pi."
+        },
+        "sunliteOta.gatewayExecutable": {
+          "type": "string",
+          "default": "/home/tonychen/sunlite/.venv/bin/sunlite-ota",
+          "description": "Absolute path to the sunlite-ota executable on the Raspberry Pi."
+        },
+        "sunliteOta.objcopyPath": {
+          "type": "string",
+          "default": "arm-none-eabi-objcopy",
+          "description": "Local objcopy executable used to convert the active ELF to a raw OTA binary."
+        },
+        "sunliteOta.buildBeforeFlash": {
+          "type": "boolean",
+          "default": true,
+          "description": "Build the active CMake target before uploading it."
+        },
+        "sunliteOta.automaticVersioning": {
+          "type": "boolean",
+          "default": true,
+          "description": "Query the selected board and automatically compile the next monotonic firmware version before flashing."
+        },
+        "sunliteOta.privateKeyPath": {
+          "type": "string",
+          "default": "",
+          "description": "Local Ed25519 private PEM key used to sign development firmware. Never copy it to the Pi."
+        },
+        "sunliteOta.statusTimeout": {
+          "type": "integer",
+          "default": 900,
+          "minimum": 1,
+          "maximum": 3600,
+          "description": "Seconds to wait for the telemetry board to confirm the new firmware."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "check": "node --check extension.js && node --check ota-contract.js && node --test test/*.test.js",
+    "package": "npx @vscode/vsce package"
+  },
+  "files": [
+    "extension.js",
+    "ota-contract.js",
+    "README.md",
+    "LICENSE",
+    "package.json"
+  ]
+}

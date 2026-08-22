@@ -58,6 +58,19 @@
           "imageFileName": "${command:cmake.launchTargetPath}",
         }
       ]
+    },
+    {
+      "name": "Sunlite OTA (active CMake target)",
+      "type": "sunlite-ota",
+      "request": "launch"
+    },
+    {
+      "name": "Develop Sunlite OTA extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/tools/vscode-sunlite-ota"
+      ]
     }
   ]
 }

@@ -10,6 +10,7 @@
 #include "tasks.h"
 #include "CAN_comms.h"
 #include "cmsis_os2.h"
+#include "main.h"
 #include "usart.h"
 #include "rtc.h"
 #include "telemetry_app.h"
@@ -46,6 +47,9 @@ void TimeSinceStartup(void* argument)
 
     for (;;)
     {
+        /* Visible application heartbeat: PB14 is TEL's dedicated debug LED.
+         * Toggling once per task period produces one second on, one second off. */
+        HAL_GPIO_TogglePin(DEBUG_LED_1_GPIO_Port, DEBUG_LED_1_Pin);
         DiagnosticsTimeSinceBootup();
         osDelay(TIME_SINCE_STARTUP_TASK_DELAY); // Delay for specified time
     }

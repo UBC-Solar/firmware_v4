@@ -12,7 +12,11 @@
   "cmake.cmakePath": "cube-cmake",
   "cmake.configureArgs": [
     "-DCMAKE_COMMAND=cube-cmake",
-    "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+    "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+    "-DSUNLITE_OTA_PUBLIC_KEY_FILE=/Users/tonychen/.config/sunlite/firmware-ed25519.pub",
+    "-DSUNLITE_OTA_FIRMWARE_VERSION=3",
+    "-DSUNLITE_OTA_DISPLAY_VERSION=3.0.0",
+    "-DTEL_OTA_ENABLE_TEST_BYPASS=ON"
   ],
   "cmake.preferredGenerators": [
     "Ninja"
@@ -35,5 +39,11 @@
     "source.fixAll": "never",
     "source.organizeImports": "never"
   },
-  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+  "sunliteOta.host": "raspberrypi.local",
+  "sunliteOta.user": "tonychen",
+  "sunliteOta.gatewayExecutable": "/home/tonychen/sunlite/.venv/bin/sunlite-ota",
+  "sunliteOta.privateKeyPath": "/Users/tonychen/.config/sunlite/firmware-ed25519-private.pem",
+  "sunliteOta.objcopyPath": "/Users/tonychen/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-objcopy",
+  "sunliteOta.automaticVersioning": true
 }

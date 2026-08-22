@@ -45,6 +45,7 @@ function(configure_stm32f103rb_bootloader_target target_name)
     set(BOOTLOADER_DIR ${CMAKE_CURRENT_FUNCTION_LIST_DIR})
 
     target_sources(${target_name} PRIVATE
+        ${BOOTLOADER_DIR}/bootloader_boot_request.c
         ${BOOTLOADER_DIR}/bootloader_nucleo_f103rb.c
         ${BOOTLOADER_DIR}/bootloader_crc32.c
         ${BOOTLOADER_DIR}/bootloader_flash.c

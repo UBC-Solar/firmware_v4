@@ -41,6 +41,9 @@ build/
 *.d
 *.su
 *.gch
+*.vsix
+node_modules/
+*-private.pem
 
 # STM32CubeMX
 *.ioc.old

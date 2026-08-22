@@ -84,3 +84,13 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/../../common/bootloader/bootloader_target.cmake)
 add_stm32f103_bootloader_target(${CMAKE_PROJECT_NAME}_bootloader ${CMAKE_CURRENT_SOURCE_DIR})
+
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../common/cmake/sunlite_ota_remote_target.cmake)
+configure_sunlite_ota_remote_target(
+    ${CMAKE_PROJECT_NAME}
+    ${CMAKE_PROJECT_NAME}_bootloader
+    MDI
+    0x4D444920
+    0x10
+    1
+)

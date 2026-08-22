@@ -12,6 +12,9 @@
 #ifndef __CAN_APP__H__
 #define __CAN_APP__H__
 
+#include <stdbool.h>
+#include <stdint.h>
+
 // Definitions for CAN IDs (add or adjust as needed)
 #define RTC_TIMESTAMP_MSG_ID            0x300
 
@@ -128,5 +131,10 @@ static CanFilter_t filter_whitelist[]  __attribute__((unused)) = {
  * @retval None
  */
 void CanAppInit();
+
+/**
+ * @brief Reports whether the explicit Debug-only OTA safety bypass is active.
+ */
+bool TelOtaSafetyTestBypassEnabled(void);
 
 #endif /* __CAN_APP__H__ */

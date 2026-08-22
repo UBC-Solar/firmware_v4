@@ -1,6 +1,6 @@
 # Top level makefile used to make building from the command line simple.
 
-.PHONY: all mdi tel drd hvc mst str nucleo clean help debug release utest
+.PHONY: all mdi tel drd hvc mst str nucleo clean help debug release utest ota-contract-test
 
 debug release Debug Release:
 	@:
@@ -17,6 +17,7 @@ help:
 	@echo "  make mdi release    - Build MDI in Release"
 	@echo "  make nucleo debug   - Build Nucleo-F103RB bootloader/app test"
 	@echo "  make utest          - Run all unit tests"
+	@echo "  make ota-contract-test - Run OTA wire/crypto, CAN transport, and TEL safety tests"
 	@echo "  make utest mdi      - Run unit tests for MDI only"
 	@echo "  make clean          - Remove all build directories"
 
@@ -88,6 +89,11 @@ nucleo:
 utest:
 	@echo "=== Running all unit tests ==="
 # 	cd firmware/components/mdi/ && ./ceedling test:all
+
+ota-contract-test:
+	bash tools/test_ota_contract.sh
+	bash firmware/common/bootloader/tests/run_can_transport_tests.sh
+	bash tools/test_tel_ota_safety.sh
 
 
 clean:

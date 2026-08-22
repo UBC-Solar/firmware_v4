@@ -110,7 +110,7 @@ int main(void)
   MX_TIM2_Init();
   MX_UART5_Init();
   /* USER CODE BEGIN 2 */
-  CanAppInit();
+
   /* USER CODE END 2 */
 
   /* Init scheduler */

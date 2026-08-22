@@ -49,10 +49,11 @@ static void CanFilterInit(CAN_FilterTypeDef *filter)
     filter->FilterBank = 0;
     filter->FilterMode = CAN_FILTERMODE_IDMASK;
     filter->FilterScale = CAN_FILTERSCALE_32BIT;
-    filter->FilterIdHigh = (uint16_t)((DRD_MOTOR_COMMAND_CAN_ID << 5) >> 16);
-    filter->FilterIdLow = (uint16_t)((DRD_MOTOR_COMMAND_CAN_ID << 5) & 0xFFFFU);
-    filter->FilterMaskIdHigh = (uint16_t)((0x7FFU << 5) >> 16);
-    filter->FilterMaskIdLow = (uint16_t)((0x7FFU << 5) & 0xFFFFU);
+    filter->FilterIdHigh = (uint16_t)(DRD_MOTOR_COMMAND_CAN_ID << 5);
+    filter->FilterIdLow = 0U;
+    filter->FilterMaskIdHigh = (uint16_t)(0x7FFU << 5);
+    /* Match IDE and RTR as well as the complete 11-bit standard identifier. */
+    filter->FilterMaskIdLow = 0x0006U;
     filter->FilterFIFOAssignment = CAN_FILTER_FIFO0;
     filter->FilterActivation = ENABLE;
 }

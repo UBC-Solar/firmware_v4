@@ -25,6 +25,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "sunlite_ota_app.h"
+#include "can_app.h"
 #include "tasks.h"
 #include "telemetry_driver.h"
 /* USER CODE END Includes */
@@ -95,10 +97,28 @@ const osThreadAttr_t TasksTimeSinceStartup_attributes = {
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
+uint32_t defaultTaskBuffer[256];
+osStaticThreadDef_t defaultTaskControlBlock;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 128 * 4,
+  .cb_mem = &defaultTaskControlBlock,
+  .cb_size = sizeof(defaultTaskControlBlock),
+  .stack_mem = &defaultTaskBuffer[0],
+  .stack_size = sizeof(defaultTaskBuffer),
   .priority = (osPriority_t) osPriorityNormal,
+};
+
+/* Definitions for TasksOTA */
+osThreadId_t TasksOTAHandle;
+uint32_t TasksOTABuffer[384];
+osStaticThreadDef_t TasksOTAControlBlock;
+const osThreadAttr_t TasksOTA_attributes = {
+  .name = "TasksOTA",
+  .cb_mem = &TasksOTAControlBlock,
+  .cb_size = sizeof(TasksOTAControlBlock),
+  .stack_mem = &TasksOTABuffer[0],
+  .stack_size = sizeof(TasksOTABuffer),
+  .priority = (osPriority_t) osPriorityBelowNormal,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -107,6 +127,7 @@ const osThreadAttr_t defaultTask_attributes = {
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
+void StartTasksOTA(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -117,7 +138,7 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
   */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
-
+  CanAppInit();
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -141,8 +162,14 @@ void MX_FREERTOS_Init(void) {
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
+  /* creation of TasksOTA */
+  TasksOTAHandle = osThreadNew(StartTasksOTA, NULL, &TasksOTA_attributes);
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+
+  if ((defaultTaskHandle == NULL) || (TasksOTAHandle == NULL)) {
+    Error_Handler();
+  }
 
   /* creation of TasksIMU */
   TasksIMUHandle = osThreadNew(TasksIMU, NULL, &TasksIMU_attributes);
@@ -169,12 +196,33 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
+  (void)argument;
   /* Infinite loop */
   for(;;)
   {
     osDelay(1);
   }
   /* USER CODE END StartDefaultTask */
+}
+
+/* USER CODE BEGIN Header_StartTasksOTA */
+/**
+  * @brief  Function implementing the dedicated TasksOTA thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_StartTasksOTA */
+void StartTasksOTA(void *argument) 
+{
+  /* USER CODE BEGIN StartTasksOTA */
+  (void)argument;
+  /* Infinite loop */
+  for(;;)
+  {
+    SunliteOtaAppPoll();
+    osDelay(1);
+  }
+  /* USER CODE END StartTasksOTA */
 }
 
 /* Private application code --------------------------------------------------*/

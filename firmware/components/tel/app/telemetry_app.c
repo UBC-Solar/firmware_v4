@@ -12,6 +12,7 @@
 /* INCLUDES */
 #include "telemetry_app.h"
 #include "telemetry_driver.h"
+#include "car_configs.h"
 #include "can_app.h"
 #include "bitops.h"
 #include "stdbool.h"
@@ -98,7 +99,7 @@ void TelAppTransmitMsg(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
     }
 
     uint32_t can_id = (CAN_comms_Rx_msg->header.IDE == CAN_ID_STD) ? CAN_comms_Rx_msg->header.StdId : CAN_comms_Rx_msg->header.ExtId;
-    if (!CELLULAR && !filter(can_id))
+    if (!car_config_can_msg_all && !filter(can_id))
     {
         return;
     }
@@ -116,7 +117,7 @@ void TelAppTransmitInternalMsg(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
     }
 
     uint32_t can_id = (CAN_comms_Tx_msg->header.IDE == CAN_ID_STD) ? CAN_comms_Tx_msg->header.StdId : CAN_comms_Tx_msg->header.ExtId;
-    if (!CELLULAR && !filter(can_id))
+    if (!car_config_can_msg_all && !filter(can_id))
     {
         return;
     }

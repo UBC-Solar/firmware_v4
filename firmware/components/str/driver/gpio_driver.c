@@ -113,6 +113,12 @@ void GpioPollState(void)
     }
 }
 
+/* GPIO OUTPUTS */
+void GpioDriverToggleDebugLed(void)
+{
+    HAL_GPIO_TogglePin(DEBUG_LED_GPIO_Port, DEBUG_LED_Pin);
+}
+
 /* GPIO INTERRUPTS */
 void StrInterruptHandler(uint16_t toggle)
 {
@@ -121,7 +127,7 @@ void StrInterruptHandler(uint16_t toggle)
         return;
     }
 
-    HAL_GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
+    HAL_GPIO_TogglePin(DEBUG_LED_GPIO_Port, DEBUG_LED_Pin);
 
     gpio_pin_state.cruise_state.cruise_en = !gpio_pin_state.cruise_state.cruise_en;
     if (gpio_pin_state.cruise_state.cruise_en)

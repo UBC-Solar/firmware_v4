@@ -14,6 +14,7 @@
 #include "telemetry_app.h"
 #include "can_driver.h"
 #include "can_app.h"
+#include "gpio_driver.h"
 
 /* STATIC VARIABLES */
 static DiagnosticTEL g_tel_diagnostic_flags = {0};
@@ -32,6 +33,7 @@ void DiagnosticsTimeSinceBootup()
         .header = time_since_bootup_can_header,
     };
 
+    GpioDriverToggleDebugLed();
     CAN_comms_Add_Tx_message(&time_since_bootup_can_tx);
     osDelay(3);
     TelAppTransmitInternalMsg(&time_since_bootup_can_tx);

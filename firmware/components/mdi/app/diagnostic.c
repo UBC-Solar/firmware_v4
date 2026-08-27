@@ -6,6 +6,7 @@
 #include "diagnostic.h"
 
 #include "can_driver.h"
+#include "gpio_driver.h"
 #include "rtd_driver.h"
 
 static MdiDiagnosticFlags s_diagnostic_flags = {0};
@@ -70,6 +71,7 @@ void DiagnosticSendTimeSinceBootup(void)
 	data[2] = (uint8_t)((time_since_bootup_counter >> 16) & 0xFFU);
 	data[3] = (uint8_t)((time_since_bootup_counter >> 24) & 0xFFU);
 
+	GpioDriverToggleDebugLed();
 	CanDriverSend(&mdi_time_since_bootup_header, data);
 	time_since_bootup_counter++;
 }

@@ -7,4 +7,4 @@
 
 #include "main.h"
 
-void GpioDriverToggleDebugLed(void) { HAL_GPIO_TogglePin(MC_LED_GPIO_Port, MC_LED_Pin); }
+void GpioDriverToggleDebugLed(void) { HAL_GPIO_TogglePin(DEBUG_LED_GPIO_Port, DEBUG_LED_Pin); }

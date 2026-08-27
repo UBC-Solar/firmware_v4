@@ -59,12 +59,12 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define ESTOP_GPIO_Pin GPIO_PIN_0
 #define ESTOP_GPIO_GPIO_Port GPIOC
-#define SPARE_CTRL_CURRENT_Pin GPIO_PIN_4
-#define SPARE_CTRL_CURRENT_GPIO_Port GPIOA
+#define SPARE_CURRNT_Pin GPIO_PIN_4
+#define SPARE_CURRNT_GPIO_Port GPIOA
 #define SPARE_MUX_CURRENT_Pin GPIO_PIN_5
 #define SPARE_MUX_CURRENT_GPIO_Port GPIOA
-#define SPARE_CURRENT_Pin GPIO_PIN_6
-#define SPARE_CURRENT_GPIO_Port GPIOA
+#define SPARE_CTRL_CURRENT_Pin GPIO_PIN_6
+#define SPARE_CTRL_CURRENT_GPIO_Port GPIOA
 #define MDI_CURRENT_Pin GPIO_PIN_7
 #define MDI_CURRENT_GPIO_Port GPIOA
 #define DRD_CURRENT_Pin GPIO_PIN_4

@@ -211,21 +211,15 @@ static void process_rx(uint32_t fifo)
     DEBUG_IO_PRINT("CAN RX: ID=0x%03lX data[0]=0x%02X\r\n",
                    msg.rx_header.StdId, msg.data[0]);
 
-    // Startup authorisation: HVC sends 0x303 with bit 0 set to release the board
+    // Startup authorisation: HVC sends LV_POWERUP_ID with bit 0 set to release the board
     // from the STARTUP state once the bus is live and the pack is ready.
-    if (msg.rx_header.StdId == 0x303U && (msg.data[0] & 0x01U))
+    if (msg.rx_header.StdId == LV_POWERUP_ID && (msg.data[0] & 0x01U))
     {
         CAN_driver.startup_received = 1U;
     }
 
-    // HVC fault message: any reception of 0x301 means HVC has entered a fault state.
-    if (msg.rx_header.StdId == 0x301U)
-    {
-        CAN_driver.ext_fault_received = 1U;
-    }
-
-    // External fault: any non-zero byte in 0x304 signals a fault condition.
-    if (msg.rx_header.StdId == 0x304U)
+    // External fault: any non-zero byte in HVC_FAULT_ID signals a fault condition.
+    if (msg.rx_header.StdId == HVC_FAULT_ID)
     {
         for (uint8_t i = 0; i < msg.rx_header.DLC; i++)
         {
@@ -291,7 +285,7 @@ void CAN_Send_Currents(uint8_t drd_mA, uint8_t mdi_mA, uint8_t spare_ctrl_mA,
     CAN_QueueTxMessage(&msg);
 }
 
-void CAN_Send_Fault_0x307(void)
+void CAN_Send_Fault(void)
 {
     CAN_TxMessage_t msg = {0};
     msg.tx_header.StdId = DIST_FAULT_ID;
@@ -302,7 +296,7 @@ void CAN_Send_Fault_0x307(void)
     CAN_QueueTxMessage(&msg);
 }
 
-void CAN_Send_LV_ON_0x303(void)
+void CAN_Send_LV_ON(void)
 {
     CAN_TxMessage_t msg = {0};
     msg.tx_header.StdId = LV_POWERUP_RECIEVED_ID;
@@ -310,6 +304,19 @@ void CAN_Send_LV_ON_0x303(void)
     msg.tx_header.RTR   = CAN_RTR_DATA;
     msg.tx_header.DLC   = 1U;
     msg.data[0]         = 0x01U;
+    CAN_QueueTxMessage(&msg);
+}
+
+
+// Sends the ID of the current firmware branch (DIST_BRANCH_ID). 
+void CAN_Send_Branch_ID(void)
+{
+    CAN_TxMessage_t msg = {0};
+    msg.tx_header.StdId = SEND_DIST_BRANCH_ID;
+    msg.tx_header.IDE   = CAN_ID_STD;
+    msg.tx_header.RTR   = CAN_RTR_DATA;
+    msg.tx_header.DLC   = 1U;
+    msg.data[0]         = DIST_BRANCH_ID;
     CAN_QueueTxMessage(&msg);
 }
 

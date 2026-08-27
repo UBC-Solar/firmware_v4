@@ -4,6 +4,7 @@
  */
 
 #include "hvc_fsm.h"
+#include "main.h"
 #include "debug_io.h"
 #include "main.h"
 #include "stm32f1xx.h"
@@ -143,6 +144,7 @@ void HVC_FSM_Run(void)
     if (timer_elapsed(HVC_HEARTBEAT_INTERVAL_MS, &last_heartbeat_tick))
     {
         CAN_SendHeartbeat();
+        HAL_GPIO_TogglePin(DEBUG_LED_GPIO_Port, DEBUG_LED_Pin);
         DEBUG_IO_PRINT("%lu ms since startup\r\n", ticks.startup); 
     }
 }   

@@ -37,26 +37,32 @@ typedef enum
 } HVC_State_t;
 
 /*============================================================================*/
-/* CAN ID's*/
-#define HVC_FAULT_ID                0x301U
-#define TEL_HEARTBEAT_ID            0x750U                   
-#define HVC_HEARTBEAT_ID            0x302U
-#define LV_POWERUP_SENT_ID          0x303U
-#define HVC_STATUS_ID               0x304U
-#define SHUNT_CURRENT_ID            0x305U
-#define DIST_HEARTBEAT_ID           0x306U 
-#define DIST_FAULT_ID               0x307U
-#define LV_POWERUP_RECIEVED_ID      0x308U
-#define HVC_LV_CURRENT_ID           0x309U
-#define MST_HEARTBEAT_ID            0x310U
-#define MST_VOLT_SUMMARY_ID         0x311U
-#define SUPP_VOLTAGE_ID             0x317U
-#define DCDC_TEMP_VOLTAGE_ID        0x319U
+/* HVC CAN ID's*/
+#define SHUNT_CURRENT_ID            0x320U
+#define HVC_FAULT_ID                0x321U
+#define HVC_HEARTBEAT_ID            0x322U
+#define LV_POWERUP_SENT_ID          0x323U
+#define HVC_STATUS_ID               0x324U
+#define HVC_LV_CURRENT_ID           0x325U
+#define DCDC_TEMP_VOLTAGE_ID        0x326U
+#define SUPP_VOLTAGE_ID             0x327U
+#define HVC_MC_PC_ID                0x328U
+#define HVC_MPPT_PC_ID              0x329U
+
+/*============================================================================*/
+/* EXTERNAL CAN ID's*/
+#define TEL_HEARTBEAT_ID            0x750U
+#define DIST_HEARTBEAT_ID           0x3A0U
+#define DIST_FAULT_ID               0x3A1U
+#define LV_POWERUP_RECIEVED_ID      0x3A2U
+#define MST_HEARTBEAT_ID            0x200U
+#define MST_VOLT_SUMMARY_ID         0x201U
+
 /*============================================================================*/
 /* TIMEOUT CONSTANTS */
 
-#define MOTOR_PC_TIMEOUT_MS         3000U
-#define MPPT_PC_TIMEOUT_MS          3000U
+#define MOTOR_PC_TIMEOUT_MS         15000U
+#define MPPT_PC_TIMEOUT_MS          10000U
 #define MVP_LV_POWERUP_TIMEOUT_MS   3000U
 #define MST_READY_TIMEOUT_MS        3000U
 #define MST_CHECK_TIMEOUT_MS        3000U
@@ -76,7 +82,7 @@ typedef enum
 #define LV_POWERUP_RETRY_MS         500U
 #define HVC_HEARTBEAT_INTERVAL_MS   1000U
 
-#define MPPT_PC_DELAY_MS            15000U
+#define MPPT_PC_DELAY_MS            5000U
 #define MOTOR_PC_DELAY_MS           15000U
 
 
@@ -96,8 +102,8 @@ typedef enum
 /*============================================================================*/
 /* RATIOS & SCALES */
 
-#define HVC_PC_COMPLETE_RATIO       90 // % of HV bus voltage for precharge complete
-#define HVC_MOTOR_PC_SCALE          56
+#define HVC_PC_COMPLETE_RATIO       85 // % of HV bus voltage for precharge complete
+#define HVC_MOTOR_PC_SCALE          61
 #define SUPP_SENSE_DIVIDER_NUM      5700  // (R13.4 + R13.5)
 #define SUPP_SENSE_DIVIDER_DEN      1000  // R13.5
 #define LV_CURRENT_SENSOR_VOFFSET_MV   330    // VS × 0.1, VS = 3.3V, A3U variant

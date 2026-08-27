@@ -84,20 +84,36 @@ void ResumeAllBalancing() {
 }
 
 #if (INT_TEST_SLAVE == RUN || INT_TEST_SLAVE_BAL_VOLT == RUN)
-void Debug_DoBalancing(slave_t slaves[SLAVE_NUM_DEVICES], bool enable) {
+void Debug_SetBalancingForModules(slave_t slaves[SLAVE_NUM_DEVICES], bool module_enables[NUM_MODULES]) {
 
-    for (int device_num = 0; device_num < SLAVE_NUM_DEVICES; device_num++) {
-        if (enable) {
-            slaves[device_num].config_regs[0][4] = 0xFF;
-            slaves[device_num].config_regs[0][5] = 0x0F;
-            slaves[device_num].config_regs[1][0] |= 0xF0;
-        }
-        else {
-            slaves[device_num].config_regs[0][4] = 0x00;
-            slaves[device_num].config_regs[0][5] = 0x00;
-            slaves[device_num].config_regs[1][0] &= (uint8_t)(~0xF0);
+    for (int slave_num = 0; slave_num < SLAVE_NUM_DEVICES; slave_num++) {
+        for (int reg_num = 0; reg_num < SLAVE_NUM_BAL_REG; reg_num++) {
+            for (int val_offset = 0; val_offset < SLAVE_NUM_VAL_PER_BAL_REG; val_offset++) {
+
+                uint8_t module_balance_enables = 0;
+                int module_start_idx = slaves[slave_num].bal_mappings[reg_num][val_offset];
+
+                for (int module_offset = 0; module_offset < SLAVE_NUM_MODULES_PER_BAL_VAL; module_offset++)
+                {
+                    int module_idx = module_start_idx + module_offset;
+
+                    bool if_balance = module_enables[module_idx];
+
+                    pack_modules[module_idx].is_balancing = if_balance;
+                    pack_state.balancing_active |= if_balance;
+                    module_balance_enables |= if_balance << module_offset;
+                }
+
+                int reg_offset = val_offset / 2;
+                int reg_bitshift_bits = (val_offset % 2) * SLAVE_NUM_MODULES_PER_BAL_VAL;
+                uint8_t mask = (uint8_t)(module_balance_enables << reg_bitshift_bits);
+
+                slaves[slave_num].config_regs[reg_num][reg_offset] &= (uint8_t)(~(0x0F << reg_bitshift_bits));
+                slaves[slave_num].config_regs[reg_num][reg_offset] |= mask;
+            }
         }
     }
+
     WriteConfigRegisters(slaves);
 }
 #endif // (INT_TEST_SLAVE == RUN || INT_TEST_SLAVE_BAL_VOLT == RUN)

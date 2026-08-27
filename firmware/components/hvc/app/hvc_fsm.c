@@ -44,6 +44,7 @@ void HVC_FSM_Init(void)
     if (RCC->CSR & RCC_CSR_IWDGRSTF) {
         __HAL_RCC_CLEAR_RESET_FLAGS();
         DEBUG_IO_print("HVC: watchdog reset\r\n");
+        fault_flags.watchdog_reset_error = true;
         hvc_state = FAULT;
     } else {
         hvc_state = HVC_RESET;

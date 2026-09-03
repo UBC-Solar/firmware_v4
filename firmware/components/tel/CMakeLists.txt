@@ -54,6 +54,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/app/diagnostics.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/telemetry_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/gps_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/gps_parser.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/imu_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/can_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/rtc_driver.c

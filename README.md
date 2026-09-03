@@ -1,6 +1,15 @@
 # firmware_v4
 This repository contains all of the firmware for UBC Solar's fourth-generation vehicle, `Cascadia`.
 
+**Recommended Everytime you Open firmware_v4**
+```bash
+git pull
+git submodule update --init --recursive
+cd .\suncan
+git pull
+```
+The submodule update is required everytime for **Suncan** submodule changes. Do it everytime to have up to date dbc file.
+
 Each custom device on the car for which the team has written firmware has its own folder in the `firmware/components/` directory.
 
 

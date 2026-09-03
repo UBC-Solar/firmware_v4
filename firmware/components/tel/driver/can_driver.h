@@ -19,9 +19,19 @@
 #define TEL_FLAGS_CAN_DATA_LENGTH                  1       
 #define TEL_FLAGS_BOOTUP_CAN_ID                    0x751
 
+#define IMU_CAN_MESSAGE_AG_LENGTH 8
+#define IMU_CAN_MESSAGE_M_LENGTH 4
+
 /* CAN Message Headers */
 extern const CAN_TxHeaderTypeDef time_since_bootup_can_header;
 extern const CAN_TxHeaderTypeDef tel_flags_can_header;
+
+extern const CAN_TxHeaderTypeDef imu_ag_x;
+extern const CAN_TxHeaderTypeDef imu_ag_y;
+extern const CAN_TxHeaderTypeDef imu_ag_z;
+extern const CAN_TxHeaderTypeDef imu_m_x;
+extern const CAN_TxHeaderTypeDef imu_m_y;
+extern const CAN_TxHeaderTypeDef imu_m_z;
 
 /**
  * @brief Initializes CAN Comms hardware requirements and configures CAN filters for the TEL subsystem.

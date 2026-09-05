@@ -51,7 +51,7 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, G_WAKE_ON_MOTION_Pin|G_FIX_LED_Pin|DEBUG_LED_1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, G_FIX_LED_Pin|DEBUG_LED_1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, I_NRST_Pin|I_BOOTN_Pin, GPIO_PIN_SET);
@@ -65,14 +65,14 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : G__RESET_Pin G_DIRECTION_Pin */
-  GPIO_InitStruct.Pin = G__RESET_Pin|G_DIRECTION_Pin;
+  /*Configure GPIO pins : G__RESET_Pin G_DIRECTION_Pin G_WAKE_ON_MOTION_Pin */
+  GPIO_InitStruct.Pin = G__RESET_Pin|G_DIRECTION_Pin|G_WAKE_ON_MOTION_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : G_WAKE_ON_MOTION_Pin G_FIX_LED_Pin DEBUG_LED_1_Pin */
-  GPIO_InitStruct.Pin = G_WAKE_ON_MOTION_Pin|G_FIX_LED_Pin|DEBUG_LED_1_Pin;
+  /*Configure GPIO pins : G_FIX_LED_Pin DEBUG_LED_1_Pin */
+  GPIO_InitStruct.Pin = G_FIX_LED_Pin|DEBUG_LED_1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

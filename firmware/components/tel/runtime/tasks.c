@@ -13,6 +13,7 @@
 #include "usart.h"
 #include "rtc.h"
 #include "telemetry_app.h"
+#include "gps_app.h"
 #include "diagnostics.h"
 #include "imu_app.h"
 
@@ -27,6 +28,17 @@ void TasksIMU(void* argument)
     {
         ImuAppTask();
         osDelay(IMU_TASK_DELAY);
+    }
+}
+
+void TasksGPS(void *argument)
+{
+    (void)argument; // Unused parameter
+
+    for (;;)
+    {
+        (void)GpsAppReadRawData();
+        osDelay(GPS_DELAY);
     }
 }
 

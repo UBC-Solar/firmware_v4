@@ -118,7 +118,7 @@ void CAN_comms_init(CAN_comms_config_t* config)
 
 /**
  * @brief Adds a CAN Tx message to the CAN_comms_Tx_queue
- * This function can be called be a user to add a CAN message to the CAN_comms_Tx_queue.
+ *
  * 
  * @param CAN_comms_Tx_msg: Pointer to the CAN_comms_Tx_msg_t struct to be added to the queue
  */

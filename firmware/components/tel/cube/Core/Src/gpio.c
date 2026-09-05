@@ -65,6 +65,9 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+  /* G_WAKE_ON_MOTION is driven BY the receiver (pin 17, WOM output), so the
+     MCU side must be an input. SAFEBOOT_N and RESET_N stay inputs: the manual
+     requires SAFEBOOT_N left open, and RESET_N has an internal pull-up. */
   /*Configure GPIO pins : G__RESET_Pin G_DIRECTION_Pin G_WAKE_ON_MOTION_Pin */
   GPIO_InitStruct.Pin = G__RESET_Pin|G_DIRECTION_Pin|G_WAKE_ON_MOTION_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;

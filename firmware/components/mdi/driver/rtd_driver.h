@@ -26,6 +26,13 @@ typedef enum
  */
 typedef uint8_t RtdFaultFlags;
 
+#define RTD_FAULT_RTD_HIGH   0x80U /* RTD resistance above high threshold */
+#define RTD_FAULT_RTD_LOW    0x40U /* RTD resistance below low threshold */
+#define RTD_FAULT_REFIN_HIGH 0x20U /* REFIN- > 0.85 * VBIAS */
+#define RTD_FAULT_REFIN_LOW  0x10U /* REFIN- < 0.85 * VBIAS */
+#define RTD_FAULT_RTDIN_LOW  0x08U /* RTDIN- < 0.85 * VBIAS */
+#define RTD_FAULT_OVUV       0x04U /* Overvoltage or undervoltage */
+
 /**
  * @brief Reads the latched MAX31865 Fault Status register.
  *
@@ -51,8 +58,8 @@ RtdFaultFlags RtdDriverGetFaults(void);
  * resistance curve. 
  *
  * @param[out] temperature Signed temperature in degrees Celsius (integer).
- * @return RtdStatusOk on success, RtdStatusFault on sensor fault,
- *         or RtdStatusHalError on SPI failure.
+ * @return RtdStatusOk on success, RtdStatusFault on sensor fault or a NULL
+ *         temperature pointer, or RtdStatusHalError on SPI failure.
  */
 RtdStatus RtdDriverGetTemp(int32_t* temperature);
 

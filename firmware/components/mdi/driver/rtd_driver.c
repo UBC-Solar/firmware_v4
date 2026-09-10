@@ -54,6 +54,11 @@ RtdStatus RtdDriverGetTemp(int32_t* temperature)
     uint16_t buffer = 0;
     RtdStatus status;
 
+    if (temperature == NULL)
+    {
+        return RtdStatusFault;
+    }
+
     status = RtdReadResistance(&buffer);
     if (status != RtdStatusOk)
     {

@@ -31,7 +31,7 @@ static const CAN_TxHeaderTypeDef mdi_motor_temp_header = {
 	.ExtId = 0x0000,
 	.IDE = CAN_ID_STD,
 	.RTR = CAN_RTR_DATA,
-	.DLC = 5
+	.DLC = 6
 };
 
 /**
@@ -78,27 +78,35 @@ void DiagnosticSendRtdTemp(void)
 {
 	int32_t rtd_temp_c = 0;
 	RtdStatus rtd_status = RtdDriverGetTemp(&rtd_temp_c);
+	RtdFaultFlags faults = RtdDriverGetFaults();
 	bool rtd_read_success = (rtd_status == RtdStatusOk);
-	if (!rtd_read_success)
+
+	s_diagnostic_flags.bits.mdi_rtd_fault = (faults != 0U);
+	s_diagnostic_flags.bits.mdi_rtd_comm_error = (rtd_status == RtdStatusHalError);
+
+	if (rtd_read_success)
 	{
-		return;
+		if (!s_diagnostic_flags.bits.mdi_motor_over_temp && rtd_temp_c >= MOTOR_OVER_TEMP_SET_C)
+		{
+			DiagnosticSetMotorOverTemp(true);
+		}
+		else if (s_diagnostic_flags.bits.mdi_motor_over_temp && rtd_temp_c <= (MOTOR_OVER_TEMP_SET_C - 5)) // cancels out noise
+		{
+			DiagnosticSetMotorOverTemp(false);
+		}
+	}
+	else
+	{
+		rtd_temp_c = 0;
 	}
 
-	if (!s_diagnostic_flags.bits.mdi_motor_over_temp && rtd_temp_c >= MOTOR_OVER_TEMP_SET_C)
-	{
-		DiagnosticSetMotorOverTemp(true);
-	}
-	else if (s_diagnostic_flags.bits.mdi_motor_over_temp && rtd_temp_c <= (MOTOR_OVER_TEMP_SET_C - 5)) // cancels out noise
-	{
-		DiagnosticSetMotorOverTemp(false);
-	}
-
-	uint8_t data[5];
+	uint8_t data[6];
 	data[0] = (uint8_t)(rtd_read_success);
 	data[1] = (uint8_t)(rtd_temp_c & 0xFFU);
 	data[2] = (uint8_t)((rtd_temp_c >> 8) & 0xFFU);
 	data[3] = (uint8_t)((rtd_temp_c >> 16) & 0xFFU);
 	data[4] = (uint8_t)((rtd_temp_c >> 24) & 0xFFU);
+	data[5] = (uint8_t)faults;
 
 	CanDriverSend(&mdi_motor_temp_header, data);
 }

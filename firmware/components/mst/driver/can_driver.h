@@ -20,14 +20,14 @@
 #define CAN_FILTER_NUM_BANKS 14U
 #define CAN_FILTER_NUM_ID_PER_BANK 2U
 
-/** 
+/**
  * Maximum number of CAN messages allowed at once inside the CAN queue.
  * Change as needed to accomodate all CAN messages transmitted around the same time
  */
 #define CAN_TX_QUEUE_CAPACITY 32U
 
 
-/** 
+/**
  * CAN types
  */
 typedef struct {
@@ -51,20 +51,51 @@ typedef struct {
 
 
 
-/** 
+/**
  * Functions
  */
+
+/**
+ * @brief Configure STM32 CAN filter banks so that we only receive the listed standard CAN IDs
+ *
+ * @param handle CAN handle for the peripheral being configured
+ * @param std_ids Array of standard 11-bit CAN IDs to accept
+ * @param count Number of IDs in std_ids
+ */
 void CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size_t count);
+
+/**
+ * @brief Start the CAN driver and peripheral
+ *
+ * @param handle CAN handle for the peripheral to use
+ */
 void CAN_Init(CAN_HandleTypeDef *handle);
 
+/**
+ * @brief Enqueue a frame for transmission
+ *
+ * @param message Pointer to buffer containing message to queue
+ */
 void CAN_QueueTxMessage(CAN_TxMessage_t *message);
 
-void CAN_SendMessageXXX();
 #if (UNIT_TEST_CAN == RUN)
+/**
+ * @brief Queue a fixed debug frame for CAN hardware tests
+ */
 void CAN_SendMessgeDebug();
 #endif // UNIT_TEST_CAN
 
+/**
+ * @brief Consume one received frame from the RX FIFO
+ */
 void CAN_RecievedMessageCallback();
 
+/**
+ * @brief Advance the TX queue on mailbox-complete interrupt
+ */
 void CAN_TxCompleteCallback();
+
+/**
+ * @brief Recover the TX queue on per-mailbox transmit errors
+ */
 void CAN_ErrorCallback();

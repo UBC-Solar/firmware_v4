@@ -194,9 +194,46 @@ typedef enum {
     CMD_UNMUTE  = 0x0029        // Unmute discharge
 } Slave_Command_t;
 
+/**
+ * @brief Prepare the ADBMS1818 driver for use
+ *
+ * @param SPI_handle HAL SPI handle for communication to battery monitoring hardware
+ */
 void Slave_Init(SPI_HandleTypeDef *SPI_handle);
+
+/**
+ * @brief Wake the ADBMS1818 chain from sleep
+ */
 void Slave_WakeUp(void);
+
+/**
+ * @brief Send an ADBMS1818 command
+ *
+ * @param command The 2-byte command to send
+ */
 void Slave_SendCmd(Slave_Command_t command);
+
+/**
+ * @brief Run a conversion command and wait for completion
+ *
+ * @param command The 2-byte (polling) command to send
+ * @return Slave_OK once conversions complete, or Slave_ERROR_TIMEOUT or a HAL-derived error otherwise
+ */
 Slave_Status_t Slave_SendCmdAndPoll(Slave_Command_t command);
+
+/**
+ * @brief Push a register group to every device in the chain
+ *
+ * @param command A write command specifying which register group to write
+ * @param tx_data 2-dimensional array of size SLAVE_NUM_DEVICES x SLAVE_REG_SIZE_BYTES with data to write
+ */
 void Slave_WriteRegisterGroup(Slave_Command_t command, uint8_t tx_data[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES]);
+
+/**
+ * @brief Pull a register group from every device in the chain
+ *
+ * @param command A read command specifying which register group to read
+ * @param rx_data 2-dimensional array of size SLAVE_NUM_DEVICES x SLAVE_REG_SIZE_BYTES to copy received data to
+ * @return Slave_OK if all PECs are valid, Slave_ERROR_PEC on CRC mismatch, or a HAL-derived error otherwise
+ */
 Slave_Status_t Slave_ReadRegisterGroup(Slave_Command_t command, uint8_t rx_data[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES]);

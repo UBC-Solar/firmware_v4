@@ -30,12 +30,7 @@ pack_state_t pack_state = {0};
 slave_t slaves[SLAVE_NUM_DEVICES] = {0};
 
 
-void Fault_() {
-    GPIO_Write(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin, GPIO_PIN_SET);
-}
-
-
-void IncrementCommError() {
+void IncrementCommError_() {
     #if !ISOSPI_CONNECTED
     return;
     #endif
@@ -108,7 +103,7 @@ void CollectModuleData() {
     RequestVoltageMeasurement();
     uint32_t voltage_measure_end_ms = HAL_GetTick();
     if (RetrieveVoltageMeasurement(slaves, pack_modules) != Slave_OK) {
-        IncrementCommError();
+        IncrementCommError_();
     }
     else {
         pack_state.error_comm_fail = false;
@@ -128,7 +123,7 @@ void CollectModuleData() {
         HAL_Delay(5);
         RequestTemperatureMeasurement();
         if (RetrieveTemperatureMeasurement(slaves, pack_modules) != Slave_OK) {
-            IncrementCommError();
+            IncrementCommError_();
         }
         else {
             pack_state.error_comm_fail = false;
@@ -137,7 +132,7 @@ void CollectModuleData() {
     #else // TEMP_STRATEGY_ALL_AT_ONCE is false
     RequestTemperatureMeasurement();
     if (RetrieveTemperatureMeasurement(slaves, pack_modules) != Slave_OK) {
-        IncrementCommError();
+        IncrementCommError_();
     }
     else {
         pack_state.error_comm_fail = false;
@@ -174,7 +169,7 @@ void AnalyzeModuleData() {
 
     if (pack_faults.raw != 0) {
         LOG_ERROR("Pack fault bits were not zero");
-        Fault_();
+        GPIO_Write(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin, GPIO_PIN_SET);
     }
     
     if (pack_warnings.raw != 0) {
@@ -372,7 +367,7 @@ void Debug_SlaveTestBalancingVoltageDrop(void) {
     HAL_Delay(500);
     RequestVoltageMeasurement();
     if (RetrieveVoltageMeasurement(slaves, pack_modules) != Slave_OK) {
-        IncrementCommError();
+        IncrementCommError_();
     }
     ComputePackStatistics(pack_modules, &pack_state);
     #if CAN_CONNECTED
@@ -391,7 +386,7 @@ void Debug_SlaveTestBalancingVoltageDrop(void) {
     HAL_Delay(500);
     RequestVoltageMeasurement();
     if (RetrieveVoltageMeasurement(slaves, pack_modules) != Slave_OK) {
-        IncrementCommError();
+        IncrementCommError_();
     }
     ComputePackStatistics(pack_modules, &pack_state);
     #if CAN_CONNECTED

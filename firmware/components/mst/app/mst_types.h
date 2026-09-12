@@ -11,8 +11,8 @@
  */
 typedef union {
     struct {
-        bool fault_under_voltage : 1;
         bool fault_over_voltage : 1;
+        bool fault_under_voltage : 1;
         bool fault_over_temperature : 1;
         bool fault_under_temperature : 1; // most likely a measurement failure
 
@@ -24,8 +24,8 @@ typedef union {
 
 typedef union {
     struct {
-        bool warn_low_voltage : 1;
         bool warn_high_voltage : 1;
+        bool warn_low_voltage : 1;
         bool warn_high_temperature : 1;
 
         uint8_t _reserved : 5;
@@ -39,8 +39,8 @@ typedef struct {
     // it'll take ~13 years for this to overflow
     uint32_t mainloop_count;
 
-    bool balancing_active;
-    bool balancing_enable;
+    bool balancing_active; // indicates if any modules are currently balancing 
+    bool balancing_enable; // state of balance enable pin. Determines if balancing algorithm is ran at all
     bool scrutineering_enable;
 
     bool llim_enable;

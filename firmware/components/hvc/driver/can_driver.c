@@ -229,18 +229,28 @@ void CAN_SendFaultMsg()
     CAN_TxMessage_t txMessage = {0};
 
     txMessage.tx_header.StdId = HVC_FAULT_ID;
-    txMessage.tx_header.DLC = 2;
+    txMessage.tx_header.DLC = 3;
     txMessage.data[0] = (fault_flags.estop << 7) |
                         (fault_flags.imd_fault << 6) | 
                         (fault_flags.masterboard_fault << 5) |
                         (fault_flags.overcurrent << 4) | 
                         (fault_flags.undercurrent << 3) | 
                         (fault_flags.dist_fault << 2) |
-                        (fault_flags.dcdc_fault << 1) | 
-                        (fault_flags.tel_heartbeat_timeout << 0);
+                        (fault_flags.dcdc_fault << 1) |
+                        (fault_flags.watchdog_fired << 0);
 
-    txMessage.data[1] = (fault_flags.mst_heartbeat_timeout << 7) |
-                        (fault_flags.dist_heartbeat_timeout << 6);  
+    txMessage.data[1] = (fault_flags.MvpLvPowerup_timeout << 7) |
+                        (fault_flags.MST_Ready_timeout << 6) |
+                        (fault_flags.MST_Check_timeout << 5) |
+                        (fault_flags.MotorDischarge_timeout << 4) |
+                        (fault_flags.MotorPrecharge_timeout << 3) |
+                        (fault_flags.MpptPrecharge_timeout << 2) |
+                        (fault_flags.LvPowerup_timeout << 1) |
+                        (fault_flags.tel_heartbeat_timeout << 0);
+                        
+    
+    txMessage.data[2] = (fault_flags.mst_heartbeat_timeout << 7) |
+                        (fault_flags.dist_heartbeat_timeout << 6);
 
     CAN_QueueTxMessage(&txMessage);
 }

@@ -96,7 +96,7 @@ typedef enum
 /*============================================================================*/
 /* THRESHOLD CONSTANTS */
 #define HVC_SUPP_LOW_THRESHOLD_MV   10500
-#define Thermistor_MAX_THRESHOLD_MV 5000U
+#define DCDC_TEMP_MAX_MV 5000U
 #define DISCHARGE_COMPLETE_THRESHOLD_MV 100000U
 
 /*============================================================================*/
@@ -130,6 +130,16 @@ typedef struct
 } HVC_Ticks_t;
 
 typedef struct {
+    /*Timeout faults for relevent states*/
+    bool MvpLvPowerup_timeout;
+    bool MST_Ready_timeout;
+    bool MST_Check_timeout;
+    bool MotorDischarge_timeout;
+    bool MotorPrecharge_timeout;
+    bool MpptPrecharge_timeout;
+    bool LvPowerup_timeout;
+
+    /*General faults*/
     bool estop;
     bool imd_fault;
     bool masterboard_fault;
@@ -137,6 +147,10 @@ typedef struct {
     bool dcdc_fault;
     bool overcurrent;
     bool undercurrent;
+    bool watchdog_fired;
+    bool dcdc_thermistor;
+    
+    /*Heartbeat timeout faults*/
     bool tel_heartbeat_timeout;
     bool mst_heartbeat_timeout;
     bool dist_heartbeat_timeout;

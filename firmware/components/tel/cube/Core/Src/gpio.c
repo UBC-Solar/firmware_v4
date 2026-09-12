@@ -51,41 +51,42 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, G_FIX_LED_Pin|DEBUG_LED_1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(G_SAFEBOOT_GPIO_Port, G_SAFEBOOT_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, I_NRST_Pin|I_BOOTN_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(DEBUG_LED_1_GPIO_Port, DEBUG_LED_1_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, I_NRST_Pin|I_BOOTN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, R_RTS_Pin|R_RESET_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : G_SAFEBOOT_Pin MCU_WHEEL_TICK_Pin R_RSSI_Pin */
-  GPIO_InitStruct.Pin = G_SAFEBOOT_Pin|MCU_WHEEL_TICK_Pin|R_RSSI_Pin;
+  /*Configure GPIO pin : G_SAFEBOOT_Pin */
+  GPIO_InitStruct.Pin = G_SAFEBOOT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(G_SAFEBOOT_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : MCU_WHEEL_TICK_Pin R_RSSI_Pin */
+  GPIO_InitStruct.Pin = MCU_WHEEL_TICK_Pin|R_RSSI_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /* G_WAKE_ON_MOTION is driven BY the receiver (pin 17, WOM output), so the
-     MCU side must be an input. SAFEBOOT_N and RESET_N stay inputs: the manual
-     requires SAFEBOOT_N left open, and RESET_N has an internal pull-up. */
-  /*Configure GPIO pins : G__RESET_Pin G_DIRECTION_Pin G_WAKE_ON_MOTION_Pin */
-  GPIO_InitStruct.Pin = G__RESET_Pin|G_DIRECTION_Pin|G_WAKE_ON_MOTION_Pin;
+  /*Configure GPIO pins : G__RESET_Pin G_DIRECTION_Pin G_WAKE_ON_MOTION_Pin G_FIX_LED_Pin */
+  GPIO_InitStruct.Pin = G__RESET_Pin|G_DIRECTION_Pin|G_WAKE_ON_MOTION_Pin|G_FIX_LED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : G_FIX_LED_Pin DEBUG_LED_1_Pin */
-  GPIO_InitStruct.Pin = G_FIX_LED_Pin|DEBUG_LED_1_Pin;
+  /*Configure GPIO pin : DEBUG_LED_1_Pin */
+  GPIO_InitStruct.Pin = DEBUG_LED_1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : R_CTS_Pin */
-  GPIO_InitStruct.Pin = R_CTS_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  HAL_GPIO_Init(DEBUG_LED_1_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : I_NRST_Pin I_BOOTN_Pin */
   GPIO_InitStruct.Pin = I_NRST_Pin|I_BOOTN_Pin;
@@ -94,11 +95,11 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : I_INTN_Pin */
-  GPIO_InitStruct.Pin = I_INTN_Pin;
+  /*Configure GPIO pins : I_INTN_Pin R_CTS_Pin */
+  GPIO_InitStruct.Pin = I_INTN_Pin|R_CTS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(I_INTN_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : R_RTS_Pin */
   GPIO_InitStruct.Pin = R_RTS_Pin;

@@ -44,6 +44,7 @@ void HVC_FSM_Init(void)
     if (RCC->CSR & RCC_CSR_IWDGRSTF) {
         __HAL_RCC_CLEAR_RESET_FLAGS();
         DEBUG_IO_print("HVC: watchdog reset\r\n");
+        fault_flags.watchdog_fired = true;
         hvc_state = FAULT;
     } else {
         hvc_state = HVC_RESET;
@@ -64,6 +65,7 @@ void HVC_FSM_Run(void)
     log_state_change(hvc_state, prev_hvc_state);
     prev_hvc_state = hvc_state;
 #endif // DEBUG
+
     if (tel_dist_heartbeat_check_enabled) {
         if (HAL_GetTick() - last_tel_heartbeat_ms > HEARTBEAT_TIMEOUT_MS) {
             DEBUG_IO_print("TEL heartbeat timeout\r\n");
@@ -83,13 +85,26 @@ void HVC_FSM_Run(void)
 
     if (fault_flags.dist_fault || fault_flags.imd_fault || fault_flags.estop ||
         fault_flags.dcdc_fault || fault_flags.masterboard_fault ||
-        fault_flags.overcurrent || fault_flags.undercurrent || fault_flags.tel_heartbeat_timeout ||
-        fault_flags.mst_heartbeat_timeout || fault_flags.dist_heartbeat_timeout
-        )
+        fault_flags.overcurrent || fault_flags.undercurrent || 
+        fault_flags.watchdog_fired || fault_flags.tel_heartbeat_timeout ||
+        fault_flags.mst_heartbeat_timeout || fault_flags.dist_heartbeat_timeout ||
+        fault_flags.MvpLvPowerup_timeout || fault_flags.MST_Ready_timeout ||
+        fault_flags.MST_Check_timeout || fault_flags.MotorDischarge_timeout ||
+        fault_flags.MotorPrecharge_timeout || fault_flags.MpptPrecharge_timeout ||
+        fault_flags.LvPowerup_timeout || fault_flags.dcdc_thermistor)
     {
         hvc_state = FAULT; // override with fault.
-        hvc_state = FAULT;
         log_fault_cause();
+    }
+    CAN_SendAllMessages();
+    check_supp_voltage();
+    
+    static uint32_t last_heartbeat_tick = 0U;
+    ticks.startup = HAL_GetTick();
+    if (timer_elapsed(HVC_HEARTBEAT_INTERVAL_MS, &last_heartbeat_tick))
+    {
+        CAN_SendHeartbeat();
+        DEBUG_IO_PRINT("%lu ms since startup\r\n", ticks.startup); 
     }
 
     switch (hvc_state) {
@@ -136,15 +151,7 @@ void HVC_FSM_Run(void)
         default:
             Fault();
             break;
-    }
-    
-    static uint32_t last_heartbeat_tick = 0U;
-    ticks.startup = HAL_GetTick();
-    if (timer_elapsed(HVC_HEARTBEAT_INTERVAL_MS, &last_heartbeat_tick))
-    {
-        CAN_SendHeartbeat();
-        DEBUG_IO_PRINT("%lu ms since startup\r\n", ticks.startup); 
-    }
+    }    
 }   
 
 /*============================================================================*/
@@ -155,14 +162,12 @@ void ESTOPCallback(void)
     GPIO_Write(ESTOP_LED_GPIO_Port, ESTOP_LED_Pin, GPIO_PIN_SET);
     fault_flags.estop = true;
     DEBUG_IO_PRINT("ESTOP Pressed\r\n");
-    hvc_state = FAULT;
 }
 
 void IMDFaultCallback(void)
 {
     fault_flags.imd_fault = true;
     DEBUG_IO_PRINT("IMD Fault\r\n");
-    hvc_state = FAULT;
 }
 
 void MasterboardFaultCallback(bool if_fault)
@@ -171,6 +176,7 @@ void MasterboardFaultCallback(bool if_fault)
         fault_flags.masterboard_fault = true;
         DEBUG_IO_PRINT("Masterboard Fault\r\n");
     }
+    
 }
 
 void HVCurrentAlertCallback(void)
@@ -183,17 +189,13 @@ void HVCurrentAlertCallback(void)
         DEBUG_IO_PRINT("Undercurrent Fault\r\n");
 
     }
-    hvc_state = FAULT;
 }
 
 void DCDCFaultCallback(void)
 {
     fault_flags.dcdc_fault = true;
     DEBUG_IO_PRINT("DCDC_Active Fault\r\n");
-    hvc_state = FAULT;
 }
-
-
 
 /*============================================================================*/
 /* HELPERS */

@@ -193,7 +193,7 @@ void CAN_SendMessageXXX()
  */
 void CAN_SendAllMessages(void)
 {
-    if (timer_elapsed(CAN_TX_INTERVAL_MS, &ticks.generic)) {
+    if (timer_elapsed(CAN_TX_INTERVAL_MS, &ticks.can_send)) {
         CAN_SendStatusMsg();
         CAN_SendFaultMsg();
         CAN_Send_ShuntCurrent();
@@ -295,7 +295,7 @@ void CAN_LV_PowerupMessage()
     INA228_Read_Shunt_Voltage();
 
     int32_t current_mA = INA228_Get_Shunt_Current_mA();
-    DEBUG_IO_print("Shunt Current:%d mA \r\n", current_mA);
+    //DEBUG_IO_print("Shunt Current:%d mA \r\n", current_mA);
 
     CAN_TxMessage_t txMessage = {0};
 
@@ -319,7 +319,7 @@ void CAN_Send_LVCurrent(void)
     int16_t lv_current_mA = (int16_t)calc_mA;  // safe: range is well within int16_t    
     CAN_TxMessage_t txMessage = {0};
 
-    DEBUG_IO_print("LV_Current: %d mA\r\n", lv_current_mA);
+    //DEBUG_IO_print("LV_Current: %d mA\r\n", lv_current_mA);
 
     txMessage.tx_header.StdId = HVC_LV_CURRENT_ID;  
     txMessage.tx_header.DLC = 2;
@@ -334,7 +334,7 @@ void CAN_Send_SuppVoltage(void)
     ADC_Voltages adc = ADC_GetVoltages();
     uint32_t actual_mV = (uint32_t)adc.supp_sense * SUPP_SENSE_DIVIDER_NUM / SUPP_SENSE_DIVIDER_DEN;
 
-    DEBUG_IO_print("SUPP Voltage: %d mV\r\n", actual_mV);
+    //DEBUG_IO_print("SUPP Voltage: %d mV\r\n", actual_mV);
 
     CAN_TxMessage_t txMessage = {0};
     txMessage.tx_header.StdId = SUPP_VOLTAGE_ID;
@@ -352,7 +352,7 @@ void CAN_Send_DCDCThermistorTemp(void) {
     int32_t dcdc_temp = ThermistorVoltToTemp_(adc.dcdc_thermistor * 1000); //mV to uV
     //converted to mC
 
-    DEBUG_IO_print("DCDC Temp: %d mV\r\n", dcdc_temp);
+    //DEBUG_IO_print("DCDC Temp: %d mV\r\n", dcdc_temp);
 
     CAN_TxMessage_t txMessage = {0};
     txMessage.tx_header.StdId = DCDC_TEMP_VOLTAGE_ID;
@@ -368,7 +368,7 @@ void CAN_Send_MC_PC (void) {
     ADC_Voltages adc = ADC_GetVoltages();
     int32_t motor_precharge_mV = (int32_t)adc.motor_precharge * HVC_MOTOR_PC_SCALE;
 
-    DEBUG_IO_print("Motor Precharge: %d mV\r\n", motor_precharge_mV);
+    //DEBUG_IO_print("Motor Precharge: %d mV\r\n", motor_precharge_mV);
 
     CAN_TxMessage_t txMessage = {0};
     txMessage.tx_header.StdId = HVC_MC_PC_ID;
@@ -384,7 +384,7 @@ void CAN_Send_MPPT_PC (void) {
     ADC_Voltages adc = ADC_GetVoltages();
     int32_t mppt_precharge_mV = (int32_t)adc.mppt_precharge * HVC_MOTOR_PC_SCALE;
 
-    DEBUG_IO_print("MPPT Precharge: %d mV\r\n", mppt_precharge_mV);
+    //DEBUG_IO_print("MPPT Precharge: %d mV\r\n", mppt_precharge_mV);
 
     CAN_TxMessage_t txMessage = {0};
     txMessage.tx_header.StdId = HVC_MPPT_PC_ID;

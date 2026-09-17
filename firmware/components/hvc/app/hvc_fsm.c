@@ -91,7 +91,7 @@ void HVC_FSM_Run(void)
         fault_flags.MvpLvPowerup_timeout || fault_flags.MST_Ready_timeout ||
         fault_flags.MST_Check_timeout || fault_flags.MotorDischarge_timeout ||
         fault_flags.MotorPrecharge_timeout || fault_flags.MpptPrecharge_timeout ||
-        fault_flags.LvPowerup_timeout || fault_flags.dcdc_thermistor);
+        fault_flags.LvPowerup_timeout || fault_flags.dcdc_thermistor)
     {
         hvc_state = FAULT; // override with fault.
         log_fault_cause();

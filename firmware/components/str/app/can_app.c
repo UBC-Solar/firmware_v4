@@ -109,8 +109,8 @@ void TransmitDriveControlState(void)
 
     HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
 
-    bool cruise_inc_event = gpio_pin_state.cruise_state.cruise_inc;
-    bool cruise_dec_event = gpio_pin_state.cruise_state.cruise_dec;
+    bool cruise_inc_flag = gpio_pin_state.cruise_state.cruise_inc;
+    bool cruise_dec_flag = gpio_pin_state.cruise_state.cruise_dec;
 
     gpio_pin_state.cruise_state.cruise_inc = false;
     gpio_pin_state.cruise_state.cruise_dec = false;
@@ -135,7 +135,7 @@ void TransmitDriveControlState(void)
     data[2] = (uint8_t)((cruise_set_velocity_kmh >> 8) & 0xFFU);
 
     data[3] =
-        (((uint8_t)cruise_inc_event & 0x1U) << 0) |
+        (((uint8_t)cruise_inc_flag & 0x1U) << 0) |
         (((uint8_t)cruise_dec_event & 0x1U) << 1);
 
     memcpy(msg.data, data, CAN_DATA_SIZE);

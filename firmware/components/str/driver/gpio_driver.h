@@ -58,6 +58,11 @@ extern volatile StrGpioCtx gpio_pin_state;
 
 /* FUNCTION PROTOTYPES */
 /**
+ * @brief Initializes STR GPIO state from the current physical pin levels.
+ */
+void GPIOInitState(void);
+
+/**
  * @brief Handles STR GPIO interrupt events.
  * @param GPIO_Pin GPIO pin that triggered the interrupt.
  */

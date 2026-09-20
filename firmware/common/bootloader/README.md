@@ -22,6 +22,15 @@ The current software acceptance pass covers TEL, MDI, DRD, and STR. HVC and MST
 remain in the shared target registry, but their board integrations are outside
 this pass and must not be inferred from the results below.
 
+## Direct CAN flashing
+
+For a laptop connected directly to CAN through PCAN, use
+[`tools/bootloader_send_can.py`](../../../tools/bootloader_send_can.py).
+It queries and flashes MDI, DRD, or STR individually using the existing signed
+protocol. The Pi and TEL gateway are not required. All boards can remain on the
+bus, but TEL self-updates still require UART. See the
+[PCAN setup and flash instructions](../../../tools/README-can-flash.md).
+
 ## Complete routed OTA path
 
 The same version-1 `SU` protocol is carried across every hop:

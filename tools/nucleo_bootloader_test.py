@@ -3,10 +3,8 @@ import argparse
 import datetime
 import serial
 
-
 def format_ascii(data):
     return "".join(chr(byte) if 32 <= byte <= 126 else "." for byte in data)
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument("port", help="example: /dev/cu.usbserialXXXX")

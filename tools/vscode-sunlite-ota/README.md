@@ -10,6 +10,12 @@ by the running TEL application over CAN.
 It is a one-shot flash operation. Breakpoints, stepping, and SWO still require
 J-Link or ST-Link.
 
+This is the OTA framework path. For the separate local laptop → PCAN → board
+workflow, see the [direct CAN guide](../README-can-flash.md). That CLI does not
+use this extension or the Pi gateway. Both paths use the same signed application
+format and board bootloader on MDI, DRD, and STR, and share the installed
+firmware-version counter. Run one path at a time on a given bus.
+
 ## One-time signing key
 
 Create a development key on the laptop. Never copy the private key to the Pi:

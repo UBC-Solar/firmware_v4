@@ -5,11 +5,15 @@ on:
     paths:
       - 'firmware/**'
       - 'Makefile'
+      - 'Gemfile'
+      - 'Gemfile.lock'
       - '.github/workflows/firmware_all.yml'
   pull_request:
     paths:
       - 'firmware/**'
       - 'Makefile'
+      - 'Gemfile'
+      - 'Gemfile.lock'
       - '.github/workflows/firmware_all.yml'
   workflow_dispatch:
 
@@ -19,7 +23,8 @@ jobs:
     strategy:
       matrix:
         module: [mdi, tel, drd, hvc, mst, str]
-        mode: [Release]
+        # Makefile mode selectors are lowercase; uppercase Release builds Debug.
+        mode: [debug, release]
     
     steps:
       - uses: actions/checkout@v4
@@ -56,10 +61,12 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
+          bundler-cache: true
 
-      - name: Install Ceedling
-        run: gem install --no-document ceedling
-
-      - name: Run All Unit Tests
+      - name: Install native compiler
         run: |
-          make utest
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+
+      - name: Run SIL tests and verify nonzero executed test count
+        run: make utest

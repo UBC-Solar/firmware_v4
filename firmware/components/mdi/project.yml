@@ -14,16 +14,11 @@
     - app
     - driver
     - ../../test/support
-    - test/support
   :include:
     - app
     - driver
     - ../../test/support
     - cube/Core/Inc
-    - ../../common/CAN_comms
-    - ../../common/debug_io
-    - ../../common/cyclic_data
-    - test/support
 
 :plugins:
   :enabled:

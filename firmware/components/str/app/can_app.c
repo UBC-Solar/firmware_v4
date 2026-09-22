@@ -136,7 +136,7 @@ void TransmitDriveControlState(void)
 
     data[3] =
         (((uint8_t)cruise_inc_flag & 0x1U) << 0) |
-        (((uint8_t)cruise_dec_event & 0x1U) << 1);
+        (((uint8_t)cruise_dec_flag & 0x1U) << 1);
 
     memcpy(msg.data, data, CAN_DATA_SIZE);
 

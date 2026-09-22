@@ -107,15 +107,11 @@ void TransmitDriveControlState(void)
 
     uint8_t data[CAN_DATA_SIZE] = {0};
 
-    HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
-
     bool cruise_inc_flag = gpio_pin_state.cruise_state.cruise_inc;
     bool cruise_dec_flag = gpio_pin_state.cruise_state.cruise_dec;
 
     gpio_pin_state.cruise_state.cruise_inc = false;
     gpio_pin_state.cruise_state.cruise_dec = false;
-
-    HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
     if (gpio_pin_state.cruise_state.cruise_en)
     {

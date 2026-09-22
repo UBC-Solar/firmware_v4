@@ -140,6 +140,7 @@ typedef struct {
     bool tel_heartbeat_timeout;
     bool mst_heartbeat_timeout;
     bool dist_heartbeat_timeout;
+    bool watchdog_reset_error;
 } HVC_FaultFlags_t;
 /*============================================================================*/
 /* SHARED STATE — defined in hvc_fsm.c */

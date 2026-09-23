@@ -48,6 +48,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/tasks.c
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/interrupts.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/imu_app.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/gps_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/can_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/rtc_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/diagnostics.c
@@ -55,6 +56,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/imu_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/can_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/gpio_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/gps_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/rtc_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/telemetry_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/CAN_comms/CAN_comms.c

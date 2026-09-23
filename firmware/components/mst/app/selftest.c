@@ -19,18 +19,18 @@ extern const slave_t slaves[SLAVE_NUM_DEVICES];
 uint32_t Get_ADC_Noise(ADC_HandleTypeDef *hadc)
 {
     uint32_t seed = 0;
-    
-    for(int i = 0; i < 16; i++)
+
+    for(int i = 0; i < 32; i++)
     {
         HAL_ADC_Start(hadc);
         if (HAL_ADC_PollForConversion(hadc, 10) == HAL_OK)
         {
             // Grab the lowest bit of the ADC reading (the most volatile/noisy bit)
-            seed |= (HAL_ADC_GetValue(hadc) & 0x01); 
+            seed |= (HAL_ADC_GetValue(hadc) & 0x01);
         }
         HAL_ADC_Stop(hadc);
 
-        seed <<= 1; // Shift over to build up a multi-bit value
+        seed <<= 1; // Shift over to build up a multi-bit value. Note that "<<=" is the "left bitshift and assignment" operator
     }
     LOG_DEBUG("Self Check init complete. Using random seed: %x", seed);
     return seed;
@@ -57,7 +57,7 @@ static bool DoesRegGroupMatch_(uint8_t reg_group1[SLAVE_NUM_DEVICES][SLAVE_REG_S
     return true;
 }
 
-Slave_Status_t SelfCheck_Comms() {
+Slave_Status_t SelfCheck_Comms(void) {
     uint8_t test_data[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES] = {0};
 
     LOG_DEBUG("Starting communication check");
@@ -74,12 +74,26 @@ Slave_Status_t SelfCheck_Comms() {
     bool reg_group_match;
 
     Slave_WakeUp();
+    // Note: Slave_WriteRegisterGroup returns void, so a write failure can
+    // only be detected via the subsequent readback comparison.
     Slave_WriteRegisterGroup(CMD_WRCOMM, test_data);
 
     comm_status = Slave_ReadRegisterGroup(CMD_RDCOMM, test_data_rx);
+    if (comm_status.error != Slave_OK)
+    {
+        LOG_DEBUG("Comm readback failed. Comm error: %d.", comm_status.error);
+        return comm_status;
+    }
+
     reg_group_match = DoesRegGroupMatch_(test_data, test_data_rx);
-    
+
     LOG_DEBUG("Reg group match: %d. Comm error: %d.", reg_group_match, comm_status.error);
+
+    if (!reg_group_match)
+    {
+        comm_status.error = Slave_ERROR_SELFTEST;
+        comm_status.device_num = 0; // Mismatch is pack-wide; cannot isolate a single device
+    }
 
     return comm_status;
 }
@@ -115,7 +129,7 @@ Slave_Status_t SelfCheck_DieTemp(void)
         itmp_mC[board] = (uint32_t) itmp_adc[board] * DIE_TEMP_CONVERT_RATIO;
         LOG_DEBUG("Slaveboard number %d internal IC temperature: %u m°C\r\n", board, itmp_mC[board]);
 
-        if (itmp_mC[board] >= ST_LTC_TEMPLIMIT_mC)
+        if (itmp_mC[board] >= ADBMS_TEMPLIMIT_mC)
         {
             status.error = Slave_ERROR_SELFTEST;
             status.device_num = board + 1;
@@ -176,19 +190,19 @@ Slave_Status_t SelfCheck_VREF2(void)
 
 /**
  * @brief Checks for any open wires between the ADCs of the ADBMS1818 and the external cells, making use of the ADOW
- *	 	  command (see datasheet p.32). Returns 3-digit error code:
- *	 	  1st digit is the board where the open wire is found, other 2 indicate the module number of the open wire.
- *	 	  (e.g. returns an device_num of 214 for an error on module 14 of the 2nd board).
+ *        command (see datasheet p.32).
  *
- * @return OK if no open wires detected. Error code as described above if detected.
+ * @return OK if no open wires detected. Slave_ERROR_SELFTEST with device_num set to
+ *         the 1-indexed board number of the first open wire detected otherwise.
  **/
 Slave_Status_t SelfCheck_OpenWire(void)
 {
     // Stores converted voltage values measured at each pin on the ADBMS1818 for both slave boards
-    module_t modules_PUP[32] = {0};
-    module_t modules_PDOWN[32] = {0};
+    module_t modules_PUP[NUM_MODULES] = {0};
+    module_t modules_PDOWN[NUM_MODULES] = {0};
 
     Slave_Status_t status = {Slave_OK, 0};
+    Slave_Error_t err;
 
     LOG_DEBUG("Running open wire self-check with %d pull-up and %d pull-down repetitions.", PUP_REPS, PDOWN_REPS);
 
@@ -202,8 +216,13 @@ Slave_Status_t SelfCheck_OpenWire(void)
     }
 
     // Read cell voltages from register after pull-up current is applied.
-    if (RetrieveVoltageMeasurement((slave_t *)slaves, modules_PUP) != Slave_OK)
+    err = RetrieveVoltageMeasurement((slave_t *)slaves, modules_PUP);
+    if (err != Slave_OK)
+    {
+        status.error = err;
+        status.device_num = 0;
         return status;
+    }
 
     // Send open wire check command PDOWN_REPS times for PDOWN to allow capacitors to fully charge before
     // reading voltage register data.
@@ -215,25 +234,32 @@ Slave_Status_t SelfCheck_OpenWire(void)
     }
 
     // Read cell voltages from register after pull-down current is applied.
-    if (RetrieveVoltageMeasurement((slave_t *)slaves, modules_PDOWN) != Slave_OK)
+    err = RetrieveVoltageMeasurement((slave_t *)slaves, modules_PDOWN);
+    if (err != Slave_OK)
+    {
+        status.error = err;
+        status.device_num = 0;
         return status;
+    }
 
-    // Take the difference between pull-up and pull-down measurements for cells 2 to 18. 
-    // If the absolute value of this difference is > 400mV at module = n, then module = n-1 is open.
+    // Take the signed difference (PUP - PDOWN) for cells 2 to NUM_MODULES.
+    // Per ADBMS1818 datasheet p.32, a difference < -400 mV indicates an open
+    // wire at module n (absolute value must NOT be used: a healthy cell reads
+    // nearly the same voltage in both phases, i.e. diff ~= 0).
     for (int module = 1; module < NUM_MODULES; module++)
     {
-        uint32_t volt_diff_mv = modules_PUP[module].voltage_mv > modules_PDOWN[module].voltage_mv ?
-            modules_PUP[module].voltage_mv - modules_PDOWN[module].voltage_mv :
-            modules_PDOWN[module].voltage_mv - modules_PUP[module].voltage_mv;
+        int32_t volt_diff_mv = (int32_t)modules_PUP[module].voltage_mv -
+                               (int32_t)modules_PDOWN[module].voltage_mv;
 
-        if (volt_diff_mv < OPEN_WIRE_VOLTAGE)
+        if (volt_diff_mv < OPEN_WIRE_VOLTAGE_mV)
         {
-            LOG_DEBUG("Open wire self-check failed at module %d (board %d) with voltage difference %lu mV",
+            unsigned board = (unsigned)module / (NUM_MODULES / SLAVE_NUM_DEVICES);
+            LOG_DEBUG("Open wire self-check failed at module %d (board %d) with voltage difference %ld mV",
                 module,
-                module / (NUM_MODULES / SLAVE_NUM_DEVICES),
-                volt_diff_mv);
+                board,
+                (long)volt_diff_mv);
             status.error = Slave_ERROR_SELFTEST;
-            status.device_num = module / (NUM_MODULES / SLAVE_NUM_DEVICES);
+            status.device_num = board + 1;
             return status;
         }
     }
@@ -307,7 +333,7 @@ Slave_Status_t SelfCheck_OverlapVoltage(void)
                 (ADC1_voltage - ADC2_voltage) : 
                 (ADC2_voltage - ADC1_voltage);
 
-            if (delta > ST_VOLTAGE_ERROR)
+            if (delta > ADBMS_VOLTAGE_ERROR_mV)
             {
                 LOG_DEBUG("Overlap voltage mismatch on board %d cell %d: ADC1=%lu mV ADC2=%lu mV delta=%lu mV",
                     board,

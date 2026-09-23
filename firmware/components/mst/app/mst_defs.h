@@ -150,25 +150,20 @@
 #define OVERLAP_READINGS_PER_REG 2   // A voltage reading from each ADC is stored in the same register
 #define OVERLAP_READINGS_PER_BOARD 4 // 2 bytes combine to represent a single voltage reading
 
-#define OPEN_WIRE_VOLTAGE -0.400 // If the difference between PUP and PDOWN voltage measurements
+#define OPEN_WIRE_VOLTAGE_mV -400 // If the signed difference (PUP - PDOWN) voltage measurement
                                  // is less than -400 mV, there is an open wire at the measured cell.
 
-#define VREF_LOWERBOUND_mV 2.990 // Establishes range of acceptable voltages for VREF2 measurement.
-#define VREF_UPPERBOUND_mV 3.014 // (specified on p.30 of ADBMS1818 datasheet)
+#define VREF_LOWERBOUND_mV 2990U // Establishes range of acceptable voltages for VREF2 measurement.
+#define VREF_UPPERBOUND_mV 3014U // (specified on p.30 of ADBMS1818 datasheet: 2.990V to 3.014V)
 
 // Datasheet specifies the ratio 100 / 7.6 to convert to degrees Celsius.
 // Here, the chosen ratio allows us to convert temperature into milliCelsius
 #define DIE_TEMP_CONVERT_RATIO 1000U * 1000U / 76U
 
-#define ST_LTC_TEMPLIMIT_mC 70000   // Maximum acceptable chip temperature for ADBMS1818
+#define ADBMS_TEMPLIMIT_mC 70000   // Maximum acceptable chip temperature for ADBMS1818
 
-#define ST_VOLTAGE_ERROR 0.003f // Tolerated error (in volts) for all voltage measurements
+#define ADBMS_VOLTAGE_ERROR_mV 3 // Tolerated error (in millivolts) for all voltage measurements
 
-#define ST_DCH_COMPARE_PCT 0.50f// *This is a placeholder value. The actual percentage will be dependent
-                                // on the resistance values chosen for Rdischarge in the
-                                // next PCB design revision (currently v3).
-
-#define ST_DCH_PCT_DELTA 0.01f  // Tolerated difference between measured and expected percentage
 
 /**
  * Firmware-Specific Settings

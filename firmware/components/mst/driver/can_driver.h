@@ -78,7 +78,6 @@ void CAN_Init(CAN_HandleTypeDef *handle);
  */
 void CAN_QueueTxMessage(CAN_TxMessage_t *message);
 
-void CAN_SendMessageXXX();
 #if (UNIT_TEST_CAN == RUN)
 /**
  * @brief Queue a fixed debug frame for CAN hardware tests

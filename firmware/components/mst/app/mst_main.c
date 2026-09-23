@@ -30,12 +30,35 @@ pack_state_t pack_state = {0};
 slave_t slaves[SLAVE_NUM_DEVICES] = {0};
 
 
-void Fault_() {
-    GPIO_Write(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin, GPIO_PIN_SET);
+/**
+ * @brief Handles when there have been too many IsoSPI errors within a set interval. 
+ * For a BMS with a single-direction IsoSPI topology, the best action is to spin here forever and report a fault.
+ * For a BMS with an IsoSPI ring topology, the best action would be to attempt switching IsoSPI bus direction.
+
+ * This function does NOT disable interrupt so that we keep transmitting CAN messages.
+ * This means that after entering this function, if CAN bus fails, we can still enter the more drastic Error_Handler.
+ * 
+ */
+void IsoSpiErrorHandler_() {
+    HAL_GPIO_WritePin(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin, GPIO_PIN_SET);
+    
+    GPIO_Write(HLIM_DIS_OUT_GPIO_Port, HLIM_DIS_OUT_Pin, GPIO_PIN_SET);
+    GPIO_Write(LLIM_DIS_OUT_GPIO_Port, LLIM_DIS_OUT_Pin, GPIO_PIN_SET);
+    GPIO_Write(CONTACTOR_DIS_OUT_GPIO_Port, CONTACTOR_DIS_OUT_Pin, GPIO_PIN_SET);
+
+    while (true) {
+        CAN_SendHeartbeatMessage();
+        GPIO_Toggle(LED_OUT_GPIO_Port, LED_OUT_Pin);
+        HAL_Delay(1000);
+    }
 }
 
 
-void IncrementCommError() {
+/**
+ * @brief Handles any IsoSPI errors generated from driver layer during mainloop execution.
+ * If too many errors occur within a set interval, then execution will enter IsoSpiErrorHandler_.
+ */
+void IncrementIsoSpiError_() {
     #if !ISOSPI_CONNECTED
     return;
     #endif
@@ -44,11 +67,12 @@ void IncrementCommError() {
     LOG_ERROR("SPI communication error!");
     if (current_time - pack_state.last_comm_fail_time >= CONSECUTIVE_TIMEFRAME_MS) {
         pack_state.num_consecutive_comm_fails = 0;
-        pack_state.error_comm_fail = true;
         pack_state.last_comm_fail_time = HAL_GetTick();
     }
-
+    
+    pack_state.error_comm_fail = true;
     pack_state.num_consecutive_comm_fails++;
+    pack_state.num_total_comm_fails++;
     if (pack_state.num_consecutive_comm_fails >= NUM_CONSECUTIVE_COMM_ERR) {
         ERROR_HANDLER_LOGGED();
     }
@@ -108,7 +132,7 @@ void CollectModuleData() {
     RequestVoltageMeasurement();
     uint32_t voltage_measure_end_ms = HAL_GetTick();
     if (RetrieveVoltageMeasurement(slaves, pack_modules) != Slave_OK) {
-        IncrementCommError();
+        IncrementIsoSpiError_();
     }
     else {
         pack_state.error_comm_fail = false;
@@ -128,7 +152,7 @@ void CollectModuleData() {
         HAL_Delay(5);
         RequestTemperatureMeasurement();
         if (RetrieveTemperatureMeasurement(slaves, pack_modules) != Slave_OK) {
-            IncrementCommError();
+            IncrementIsoSpiError_();
         }
         else {
             pack_state.error_comm_fail = false;
@@ -137,7 +161,7 @@ void CollectModuleData() {
     #else // TEMP_STRATEGY_ALL_AT_ONCE is false
     RequestTemperatureMeasurement();
     if (RetrieveTemperatureMeasurement(slaves, pack_modules) != Slave_OK) {
-        IncrementCommError();
+        IncrementIsoSpiError_();
     }
     else {
         pack_state.error_comm_fail = false;
@@ -174,7 +198,7 @@ void AnalyzeModuleData() {
 
     if (pack_faults.raw != 0) {
         LOG_ERROR("Pack fault bits were not zero");
-        Fault_();
+        GPIO_Write(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin, GPIO_PIN_SET);
     }
     
     if (pack_warnings.raw != 0) {
@@ -372,7 +396,7 @@ void Debug_SlaveTestBalancingVoltageDrop(void) {
     HAL_Delay(500);
     RequestVoltageMeasurement();
     if (RetrieveVoltageMeasurement(slaves, pack_modules) != Slave_OK) {
-        IncrementCommError();
+        IncrementIsoSpiError_();
     }
     ComputePackStatistics(pack_modules, &pack_state);
     #if CAN_CONNECTED
@@ -391,7 +415,7 @@ void Debug_SlaveTestBalancingVoltageDrop(void) {
     HAL_Delay(500);
     RequestVoltageMeasurement();
     if (RetrieveVoltageMeasurement(slaves, pack_modules) != Slave_OK) {
-        IncrementCommError();
+        IncrementIsoSpiError_();
     }
     ComputePackStatistics(pack_modules, &pack_state);
     #if CAN_CONNECTED

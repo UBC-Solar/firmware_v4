@@ -37,14 +37,14 @@
 /**
  * CAN messages
  */
-#define CAN_STATUS_ID                       0x310
+#define CAN_STATUS_ID                       0x200
 #define CAN_STATUS_PERIOD_MS                1000
-#define CAN_MODULE_VOLT_SUMMARY_ID          0x311
-#define CAN_MODULE_TEMP_SUMMARY_ID          0x312
-#define CAN_MODULE_VOLT_DATA_ID_START       0x320
-#define CAN_MODULE_TEMP_DATA_ID_START       0x340
-#define CAN_MODULE_STATUS_ID_START          0x360
-#define CAN_BALANCE_DATA_ID                 0x380
+#define CAN_MODULE_VOLT_SUMMARY_ID          0x201
+#define CAN_MODULE_TEMP_SUMMARY_ID          0x202
+#define CAN_MODULE_VOLT_DATA_ID_START       0x210
+#define CAN_MODULE_TEMP_DATA_ID_START       0x220
+#define CAN_MODULE_STATUS_ID_START          0x230
+#define CAN_BALANCE_DATA_ID                 0x203
 #define CAN_NUM_DATA_GROUPS                 8U
 #define CAN_NUM_MODULES_PER_DATA_GROUP      NUM_MODULES / CAN_NUM_DATA_GROUPS
 #define CAN_NUM_STATS_GROUPS                4U
@@ -64,6 +64,10 @@
 // Runs the mainloop. Should be enabled unless running a test
 #define RUN_MAIN_LOOP true
 
+// Number of times mainloop has to run before we have all data.
+// This is useful if we don't plan on measuring all cell data on every loop iteration
+#define NUM_INIT_MAINLOOPS 4
+
 // If false, will not halt even if IsoSPI comms fail
 #define ISOSPI_CONNECTED true
 
@@ -78,9 +82,13 @@
 // If false, send one group of modules' data CAN messages each mainloop
 #define CAN_STRATEGY_ALL_AT_ONCE false
 
+// If true, override all real battery measurements with fake, constant values (3.6V, 21 degrees C for every module)
+// If false, battery data measurement and analysis runs as normal
+#define GENERATE_FAKE_BATTERY_DATA false
+
 // During testing, slaveboard / SBT temperature circuitry were damaged
 // and report incorrect temperatures. If true, ignore all temperature warnings / faults
-#define IGNORE_TEMPEREATURE_VALUES true
+#define IGNORE_TEMPEREATURE_VALUES false
 
 
 /**

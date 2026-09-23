@@ -35,6 +35,10 @@ typedef union {
 
 
 typedef struct {
+    // Max value of 4,294,967,295. At a mainloop execution rate of ~10Hz,
+    // it'll take ~13 years for this to overflow
+    uint32_t mainloop_count;
+
     bool balancing_active;
     bool balancing_enable;
     bool scrutineering_enable;

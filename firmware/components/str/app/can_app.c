@@ -14,11 +14,11 @@
 #include "main.h"
 #include "gpio_app.h"
 #include "stm32f1xx_hal_gpio.h"
+#include "stm32f1xx_hal.h"
 
 #include <string.h>
 
 /* DEFINES */
-#define STR_DISPLAY_MAX 99U
 #define STR_WHEEL_RADIUS_M 0.283f
 #define M_PI 3.14159
 
@@ -75,6 +75,24 @@ void SteeringCanRxHandler(uint32_t msg_id, uint8_t* data)
     {
         SteeringVelocityCanMsgHandler(data);
     }
+    else if (msg_id == DRD_MOTOR_COMMAND_CAN_ID)
+    {
+        SteeringSpeedUnitsCanMsgHandler(data);
+    }
+}
+
+/**
+ * @brief Extracts the driver-selected speed units from a DRD motor command frame.
+ * @param data Pointer to the motor command CAN payload.
+ */
+void SteeringSpeedUnitsCanMsgHandler(uint8_t* data)
+{
+    if (data == NULL)
+    {
+        return;
+    }
+
+    HexAppSetSpeedUnits((data[4] >> 2) & 0x01U); // Motor Command bit 34
 }
 
 /**

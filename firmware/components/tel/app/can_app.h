@@ -27,6 +27,13 @@
 
 #define GPS_LONG_LAT_ID                     0x756
 
+#define IMU_AG_X_CAN_MESSAGE_ID 0x800
+#define IMU_AG_Y_CAN_MESSAGE_ID 0x801
+#define IMU_AG_Z_CAN_MESSAGE_ID 0x802
+#define IMU_M_X_CAN_MESSAGE_ID 0x803
+#define IMU_M_Y_CAN_MESSAGE_ID 0x804
+#define IMU_M_Z_CAN_MESSAGE_ID 0x805
+
 #define DRD_MOTOR_COMMAND_ID                0x401
 
 #define ECU_STATUS_ID                       0x450
@@ -120,6 +127,13 @@ static CanFilter_t filter_whitelist[]  __attribute__((unused)) = {
     { MDU_FRAME_2_ID,                       5,     0               },
     { OBC_STATUS_ID,                        1,     0               },
     { GPS_LONG_LAT_ID,                      1,     0               },
+
+    { IMU_AG_X_CAN_MESSAGE_ID,              1,     0               },
+    { IMU_AG_Y_CAN_MESSAGE_ID,              1,     0               },
+    { IMU_AG_Z_CAN_MESSAGE_ID,              1,     0               },
+    { IMU_M_X_CAN_MESSAGE_ID,               1,     0               },
+    { IMU_M_Y_CAN_MESSAGE_ID,               1,     0               },
+    { IMU_M_Z_CAN_MESSAGE_ID,               1,     0               },
 };
 
 /**

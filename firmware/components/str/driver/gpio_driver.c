@@ -129,6 +129,12 @@ static void HandleCruiseInterrupt(uint16_t GPIO_Pin)
     }
 }
 
+/* GPIO OUTPUTS */
+void GpioDriverToggleDebugLed(void)
+{
+    HAL_GPIO_TogglePin(DEBUG_LED_GPIO_Port, DEBUG_LED_Pin);
+}
+
 /* GPIO INTERRUPTS */
 /**
  * @brief Handles STR GPIO interrupt events.

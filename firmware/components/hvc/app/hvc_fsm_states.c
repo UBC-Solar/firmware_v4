@@ -218,7 +218,7 @@ void MotorDischarge()
 /**
  * @brief Closes motor precharge contactor and waits for bus voltage to reach threshold.
  *
- * Exit Condition: motor_precharge ADC >= HVC_PC_COMPLETE_RATIO% of HV bus voltage.
+ * Exit Condition: motor_precharge ADC >= HVC_PC_COMPLETE_RATIO% of HV bus voltage and at least MOTOR_PC_DELAY_MS has elapsed.
  * Exit State: MPPT_PRECHARGE
  *
  * Exit Condition: Timeout (MOTOR_PC_TIMEOUT_MS).
@@ -226,7 +226,7 @@ void MotorDischarge()
  */
 void MotorPrecharge(void)
 {
-    
+
     static bool pc_started = false;
 
     if (!pc_started) {
@@ -235,10 +235,12 @@ void MotorPrecharge(void)
         ticks.generic = HAL_GetTick();
     }
 
+    CAN_Send_PC_Monitoring();
+
     #if(INT_TEST_PRECHARGE == SKIP)
         ADC_Voltages adc = ADC_GetVoltages();
-        if ((int64_t) adc.motor_precharge >= 
-            (int64_t) mst_pack_voltage_mv / HVC_MOTOR_PC_SCALE * HVC_PC_COMPLETE_RATIO / 100)
+        if (((int64_t) adc.motor_precharge >= 
+            (int64_t) mst_pack_voltage_mv / HVC_MOTOR_PC_SCALE * HVC_PC_COMPLETE_RATIO / 100) && (HAL_GetTick() - ticks.generic >= MOTOR_PC_DELAY_MS))
         {
             pc_started = false;
             ticks.generic = HAL_GetTick();
@@ -266,7 +268,7 @@ void MotorPrecharge(void)
 /**
  * @brief Closes MPPT precharge contactor and waits for bus voltage to reach threshold.
  *
- * Exit Condition: mppt_precharge ADC >= HVC_PC_COMPLETE_RATIO% of HV bus voltage.
+ * Exit Condition: mppt_precharge ADC >= HVC_PC_COMPLETE_RATIO% of HV bus voltage and at least MPPT_PC_DELAY_MS has elapsed.
  * Exit State: CLOSE_LLIM
  *
  * Exit Condition: Timeout (MPPT_PC_TIMEOUT_MS).
@@ -274,7 +276,7 @@ void MotorPrecharge(void)
  */
 void MpptPrecharge(void)
 {
-    
+
     static bool pc_started = false;
 
     if (!pc_started) {
@@ -283,10 +285,12 @@ void MpptPrecharge(void)
         ticks.generic = HAL_GetTick();
     }
 
+    CAN_Send_PC_Monitoring();
+
     #if (INT_TEST_PRECHARGE == SKIP)
     ADC_Voltages adc = ADC_GetVoltages();
-    if ((int64_t) adc.mppt_precharge >= 
-        (int64_t) mst_pack_voltage_mv / HVC_MOTOR_PC_SCALE * HVC_PC_COMPLETE_RATIO / 100)
+    if (((int64_t) adc.mppt_precharge >= 
+        (int64_t) mst_pack_voltage_mv / HVC_MOTOR_PC_SCALE * HVC_PC_COMPLETE_RATIO / 100) && (HAL_GetTick() - ticks.generic >= MPPT_PC_DELAY_MS))
     {
         pc_started = false;
         ticks.generic = HAL_GetTick();

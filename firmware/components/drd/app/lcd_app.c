@@ -330,16 +330,6 @@ uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* moto
         sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_COMM_FLT_CHARS);
         fault_count++;
     }
-    if (motor_faults->throttle_adc_outofrange)
-    {
-        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_THROT_ADC_OOR_FLT_CHARS);
-        fault_count++;
-    }
-    if (motor_faults->throttle_adc_mismatch)
-    {
-        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_THROT_ADC_MISMATCH_FLT_CHARS);
-        fault_count++;
-    }
 
     return fault_count;
 }
@@ -435,6 +425,16 @@ uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings)
     if (warnings->pack_overdischarge)
     {
         sprintf(g_warning_char[warning_count], "%s", LCD_APP_PACK_OD_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->throttle_adc_outofrange)
+    {
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_MTR_THROT_ADC_OOR_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->throttle_adc_mismatch)
+    {
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_MTR_THROT_ADC_MISMATCH_WARN_CHARS);
         warning_count++;
     }
 

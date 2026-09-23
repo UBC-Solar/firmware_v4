@@ -14,16 +14,19 @@
 #include "rtc.h"
 #include "telemetry_app.h"
 #include "diagnostics.h"
+#include "imu_app.h"
 
 /* IMU TASK */
 void TasksIMU(void* argument)
 {
-    (void)argument; // Unused parameter
+    (void)argument;
+
+    ImuAppInit();
 
     for (;;)
     {
-        // TODO: Implement IMU data acquisition and processing
-        osDelay(osWaitForever);
+        ImuAppTask();
+        osDelay(IMU_TASK_DELAY);
     }
 }
 

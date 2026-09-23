@@ -223,7 +223,7 @@ bool INA228_IsOvercurrent(void)
     DEBUG_IO_print("INA228 DIAG_ALRT: 0x%04X\n\r", diag_alrt);
 
     // check bit 11 — SOVL flag — overcurrent
-    if (diag_alrt & (1U << 11)) {
+    if (diag_alrt & (1U << 6)) {
         return true;
     }
     return false;  // bit 10 — SUVL flag — undercurrent

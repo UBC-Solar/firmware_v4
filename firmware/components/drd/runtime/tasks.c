@@ -18,6 +18,7 @@
 #include "spi.h"
 #include "external_lights.h"
 #include "diagnostic.h"
+#include "car_configs.h"
 
 /* DRIVE STATE TASK */
 void TasksDriveState(void* argument)
@@ -93,7 +94,7 @@ void TasksExternalLights(void* argument)
 /* LCD UPDATE TASK */
 void TasksLcdUpdate(void *argument)
 {
-    LcdHandlerInit(&hspi1, (volatile uint8_t) LCD_APP_KPH);
+    LcdHandlerInit(&hspi1, car_config_speed_kph ? LCD_APP_KPH : LCD_APP_MPH);
 
     for (;;)
     {

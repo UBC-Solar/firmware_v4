@@ -76,8 +76,6 @@ typedef struct
     volatile bool overvoltage_fault;
     volatile bool fet_thermistor_error;
     volatile bool motor_comm_fault;
-    volatile bool throttle_adc_outofrange;
-    volatile bool throttle_adc_mismatch;
 } LcdAppMotorFaults;
 
 typedef struct
@@ -89,6 +87,8 @@ typedef struct
     volatile bool no_ecu_message;
     volatile bool pack_overdischarge;
     volatile bool pack_overcharge;
+    volatile bool throttle_adc_outofrange;
+    volatile bool throttle_adc_mismatch;
 } LcdAppWarnings;
 
 typedef enum
@@ -144,8 +144,6 @@ void LcdHandlerSetMotorOvercurrentFault(bool fault);
 void LcdHandlerSetMotorOvervoltageFault(bool fault);
 void LcdHandlerSetMotorFetThermistorError(bool fault);
 void LcdHandlerSetMotorCommFault(bool fault);
-void LcdHandlerSetMotorThrottleAdcOutOfRange(bool fault);
-void LcdHandlerSetMotorThrottleAdcMismatch(bool fault);
 
 /* LCD HANDLER WARNING DATA SETTERS */
 void LcdHandlerSetLowVoltWarning(bool warning);
@@ -155,6 +153,8 @@ void LcdHandlerSetHighTempWarning(bool warning);
 void LcdHandlerSetNoEcuMessageWarning(bool warning);
 void LcdHandlerSetPackOverdischargeWarning(bool warning);
 void LcdHandlerSetPackOverchargeWarning(bool warning);  
+void LcdHandlerSetMotorThrottleAdcOutOfRange(bool warning);
+void LcdHandlerSetMotorThrottleAdcMismatch(bool warning);
 
 
 #endif /* __LCD_HANDLER_H */

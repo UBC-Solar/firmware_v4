@@ -68,4 +68,9 @@ void GPIOInitState(void);
  */
 void StrInterruptHandler(uint16_t GPIO_Pin);
 
+/**
+ * @brief Toggles the state of the debug LED.
+ */
+void GpioDriverToggleDebugLed(void);
+
 #endif /* __GPIO_DRIVER_H__ */

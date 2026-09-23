@@ -104,6 +104,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  pack_state.mainloop_count = 1;
   while (1)
   {
     /**
@@ -115,6 +116,7 @@ int main(void)
     AnalyzeModuleData();
     DriveOutputs();
     SendCanMessages();
+    pack_state.mainloop_count++;
     #endif // RUN_MAIN_LOOP
 
     /**

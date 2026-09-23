@@ -2,6 +2,7 @@
 
 #include "CAN_comms.h"
 #include "can_driver.h"
+#include "gpio_driver.h"
 
 static uint32_t g_time_since_bootup = 0U;
 
@@ -15,6 +16,7 @@ void DiagnosticTimeSinceBootup()
         .data[3] = (g_time_since_bootup & 0xFF000000U) >> 24,
         .header = time_since_bootup_can_header,
     };
+    GpioDriverToggleDebugLed();
     CAN_comms_Add_Tx_message(&time_since_bootup_can_tx);
 }
 

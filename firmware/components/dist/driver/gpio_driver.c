@@ -1,4 +1,5 @@
 #include "gpio_driver.h"
+#include "dist_main.h"
 #include "stm32f1xx_hal_gpio.h"
 #include "main.h"
 
@@ -44,12 +45,18 @@ void CTRL_Enable_All(void) {
     GPIO_Write(SPARE_CTRL_GPIO_Port, SPARE_CTRL_Pin, GPIO_PIN_SET);
     GPIO_Write(MDI_CTRL_GPIO_Port,   MDI_CTRL_Pin,   GPIO_PIN_SET);
     GPIO_Write(DRD_CTRL_GPIO_Port,   DRD_CTRL_Pin,   GPIO_PIN_SET);
+#ifndef SPARE_MUX_BENCHTOP
+    GPIO_Write(SPARE_MUX_CTRL_GPIO_Port, SPARE_MUX_CTRL_Pin, GPIO_PIN_SET);
+#endif // SPARE_MUX_BENCHTOP
 }
 
 void CTRL_Disable_All(void) {
     GPIO_Write(SPARE_CTRL_GPIO_Port, SPARE_CTRL_Pin, GPIO_PIN_RESET);
     GPIO_Write(MDI_CTRL_GPIO_Port,   MDI_CTRL_Pin,   GPIO_PIN_RESET);
     GPIO_Write(DRD_CTRL_GPIO_Port,   DRD_CTRL_Pin,   GPIO_PIN_RESET);
+#ifndef SPARE_MUX_BENCHTOP
+    GPIO_Write(SPARE_MUX_CTRL_GPIO_Port, SPARE_MUX_CTRL_Pin, GPIO_PIN_RESET);
+#endif // SPARE_MUX_BENCHTOP
 }
 
 /*============================================================================*/

@@ -21,7 +21,7 @@ bool IwdgDriverIsReset()
 
 void IwdgDriverResetHandle()
 {
-    HAL_GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
+    HAL_GPIO_TogglePin(DEBUG_LED_GPIO_Port, DEBUG_LED_Pin);
     HAL_Delay(50);
     IwdgDriverRefresh(&hiwdg);
 }

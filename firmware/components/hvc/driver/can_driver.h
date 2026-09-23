@@ -68,13 +68,12 @@ void CAN_SendHeartbeat();
 void CAN_Send_ShuntCurrent();
 void CAN_Send_LVCurrent();
 void CAN_Send_SuppVoltage();
-void CAN_Send_DCDCThermistorTemp();
+void CAN_Send_DCDCThermistorTemp(void);
 void CAN_Send_MC_PC();
 void CAN_Send_MPPT_PC();
 void CAN_Send_PC_Monitoring();
 void CAN_SendStatusMsg();
 void CAN_SendFaultMsg();
-
 
 #if (INT_TEST_CAN == RUN)
 void CAN_SendMessgeDebug();

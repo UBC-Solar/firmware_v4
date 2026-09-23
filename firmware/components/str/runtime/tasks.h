@@ -17,7 +17,7 @@
 void StartHexDisplayTask(void *argument);
 
 /**
- * @brief FreeRTOS task for polling and transmitting steering wheel outputs.
+ * @brief FreeRTOS task for transmitting interrupt-driven steering wheel state.
  * @param argument Task argument provided by the RTOS.
  */
 void StartSteeringOutputsTask(void *argument);

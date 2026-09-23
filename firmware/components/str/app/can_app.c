@@ -111,7 +111,7 @@ void SteeringVelocityCanMsgHandler(uint8_t* data)
     uint32_t velocity_kmh = (uint32_t)(velocity_mps * 3.6f);
 
     CyclicDataSetSpeed(velocity_kmh);
-    GpioAppSetVelocity(velocity_kmh); // Cruise control still uses gpio_app velocity state
+    GPIOAppSetVehicleVelocity(velocity_kmh);
 }
 
 /* CAN TX */
@@ -125,9 +125,15 @@ void TransmitDriveControlState(void)
 
     uint8_t data[CAN_DATA_SIZE] = {0};
 
+    bool cruise_inc_flag = gpio_pin_state.cruise_state.cruise_inc;
+    bool cruise_dec_flag = gpio_pin_state.cruise_state.cruise_dec;
+
+    gpio_pin_state.cruise_state.cruise_inc = false;
+    gpio_pin_state.cruise_state.cruise_dec = false;
+
     if (gpio_pin_state.cruise_state.cruise_en)
     {
-        cruise_set_velocity_kmh = (uint16_t)ReadCruiseSetVelocity();
+        cruise_set_velocity_kmh = (uint16_t)GPIOAppGetCruiseVelocity();
     }
 
     data[0] =
@@ -143,8 +149,8 @@ void TransmitDriveControlState(void)
     data[2] = (uint8_t)((cruise_set_velocity_kmh >> 8) & 0xFFU);
 
     data[3] =
-    (((uint8_t)gpio_pin_state.cruise_state.cruise_inc & 0x1U) << 0) |
-    (((uint8_t)gpio_pin_state.cruise_state.cruise_dec & 0x1U) << 1);
+        (((uint8_t)cruise_inc_flag & 0x1U) << 0) |
+        (((uint8_t)cruise_dec_flag & 0x1U) << 1);
 
     memcpy(msg.data, data, CAN_DATA_SIZE);
 

@@ -22,22 +22,55 @@ typedef enum
 } RtdStatus;
 
 /**
+ * @brief Raw MAX31865 Fault Status register bits (D7 through D2).
+ */
+typedef uint8_t RtdFaultFlags;
+
+#define RTD_FAULT_RTD_HIGH   0x80U /* RTD resistance above high threshold */
+#define RTD_FAULT_RTD_LOW    0x40U /* RTD resistance below low threshold */
+#define RTD_FAULT_REFIN_HIGH 0x20U /* REFIN- > 0.85 * VBIAS */
+#define RTD_FAULT_REFIN_LOW  0x10U /* REFIN- < 0.85 * VBIAS */
+#define RTD_FAULT_RTDIN_LOW  0x08U /* RTDIN- < 0.85 * VBIAS */
+#define RTD_FAULT_OVUV       0x04U /* Overvoltage or undervoltage */
+
+/**
+ * @brief Reads the latched MAX31865 Fault Status register.
+ *
+ * @param[out] faults Raw fault bits from register 0x07. Unused bits D1 and D0
+ *                    are masked off.
+ * @return RtdStatusOk on success, RtdStatusFault on invalid input, or
+ *         RtdStatusHalError on an SPI failure.
+ */
+RtdStatus RtdDriverReadFaults(RtdFaultFlags* faults);
+
+/**
+ * @brief Gets the debounced MAX31865 fault flags.
+ *
+ * @return Fault bits after the configured number of consecutive faulted
+ *         readings, or zero when no debounced fault is active.
+ */
+RtdFaultFlags RtdDriverGetFaults(void);
+
+/**
  * @brief Reads motor temperature from the MAX31865 RTD interface.
  *
  * Converts the 15-bit RTD ADC code to degrees Celsius using the PT1000
  * resistance curve. 
  *
  * @param[out] temperature Signed temperature in degrees Celsius (integer).
- * @return RtdStatusOk on success, RtdStatusFault on sensor fault,
- *         or RtdStatusHalError on SPI failure.
+ * @return RtdStatusOk on success, RtdStatusFault on sensor fault or a NULL
+ *         temperature pointer, or RtdStatusHalError on SPI failure or when the
+ *         MAX31865 config read-back does not match (chip missing or reset; the
+ *         chip is reconfigured for the next read).
  */
 RtdStatus RtdDriverGetTemp(int32_t* temperature);
 
 /**
  * @brief Initializes breakout board for temperature measurement.
  *
- * Configures 3-wire PT1000, auto-conversion, VBIAS enabled, and 60 Hz filter.
- * Clears any fault latched during power-up or VBIAS settling.
+ * Configures 3-wire PT1000, auto-conversion, VBIAS enabled, 60 Hz filter, and
+ * RTD low/high fault thresholds (-40C / 200C). Clears any fault latched during
+ * power-up or VBIAS settling.
  *
  * Call once after SPI1 is initialized.
  */

@@ -20,6 +20,10 @@
 #define RTD_LSB_REG_R 0x02
 #define FAULT_STATUS_REG_R 0x07
 #define CONFIG_REG_W 0x80
+#define HIGH_FAULT_THRESH_MSB_REG_W 0x83
+#define HIGH_FAULT_THRESH_LSB_REG_W 0x84
+#define LOW_FAULT_THRESH_MSB_REG_W 0x85
+#define LOW_FAULT_THRESH_LSB_REG_W 0x86
 
 // Config Register Bits
 #define CONFIG_VBIAS 0x80    // V_BIAS enabled
@@ -31,10 +35,18 @@
 #define CONFIG_FILT50HZ 0x00 // 60Hz filter
 #define RTD_FAULT_MASK 0xFCU // only D7 through D2 are fault bits
 #define RTD_FAULT_DEBOUNCE_COUNT 5U // Report after 5 consecutive faulted reads
+#define CONFIG_SELF_CLEARING_BITS (CONFIG_1SHOT | CONFIG_FAULTCLR) // Read back as 0
+
+/* Readings outside -40C..200C set the RTD_LOW / RTD_HIGH fault bits. A shorted
+ * RTD would otherwise read as a valid ~-240C.
+ */
+#define RTD_HIGH_FAULT_THRESHOLD 0x71A6U // 200C: 1770 ohm, ADC code 14547
+#define RTD_LOW_FAULT_THRESHOLD 0x3652U  // -40C: 846 ohm, ADC code 6953
 
 // PRIVATE FUNCTION PROTOTYPES
 static bool RtdWriteRegister(uint8_t address_with_write_bit, uint8_t data);
 static bool RtdReadRegister(uint8_t address_read, uint8_t* data);
+static RtdStatus RtdCheckConfig(void);
 static RtdStatus RtdReadResistance(uint16_t* buffer);
 static void RtdResistanceToTemp(uint16_t buffer, int32_t* temp);
 static void RtdClearFault(void);
@@ -57,6 +69,12 @@ RtdStatus RtdDriverGetTemp(int32_t* temperature)
     if (temperature == NULL)
     {
         return RtdStatusFault;
+    }
+
+    status = RtdCheckConfig();
+    if (status != RtdStatusOk)
+    {
+        return status;
     }
 
     status = RtdReadResistance(&buffer);
@@ -97,6 +115,12 @@ void RtdDriverInit(void)
     s_rtd_config = CONFIG_VBIAS | CONFIG_AUTO | CONFIG_3WIRE | CONFIG_FILT50HZ;
     s_consecutive_faults = 0U;
     s_debounced_faults = 0U;
+
+    /* Thresholds first so the first auto conversion is checked against them. */
+    RtdWriteRegister(HIGH_FAULT_THRESH_MSB_REG_W, (uint8_t)(RTD_HIGH_FAULT_THRESHOLD >> 8));
+    RtdWriteRegister(HIGH_FAULT_THRESH_LSB_REG_W, (uint8_t)(RTD_HIGH_FAULT_THRESHOLD & 0xFFU));
+    RtdWriteRegister(LOW_FAULT_THRESH_MSB_REG_W, (uint8_t)(RTD_LOW_FAULT_THRESHOLD >> 8));
+    RtdWriteRegister(LOW_FAULT_THRESH_LSB_REG_W, (uint8_t)(RTD_LOW_FAULT_THRESHOLD & 0xFFU));
     RtdWriteRegister(CONFIG_REG_W, s_rtd_config);
 
     /* Clear any fault latched during power-up / VBIAS settling. */
@@ -180,6 +204,33 @@ RtdStatus RtdDriverReadFaults(RtdFaultFlags* faults)
 RtdFaultFlags RtdDriverGetFaults(void)
 {
     return s_debounced_faults;
+}
+
+/*
+ * @brief:      Reads back the config register to confirm the MAX31865 is connected
+ *              and still configured. A missing chip does not cause an SPI HAL
+ *              error (MISO just reads 0x00 or 0xFF), and a chip that reset loses
+ *              its config and stops converting, so both would produce
+ *              a fake "good" temperature. On a mismatch the chip is reconfigured
+ *              so the next read can recover.
+ * @returns:    RtdStatusOk if the config matches, RtdStatusHalError otherwise.
+ */
+static RtdStatus RtdCheckConfig(void)
+{
+    uint8_t config = 0;
+
+    if (RtdReadRegister(CONFIG_REG_R, &config))
+    {
+        return RtdStatusHalError;
+    }
+
+    if ((uint8_t)(config & ~CONFIG_SELF_CLEARING_BITS) != s_rtd_config)
+    {
+        RtdDriverInit();
+        return RtdStatusHalError;
+    }
+
+    return RtdStatusOk;
 }
 
 static RtdStatus RtdReadResistance(uint16_t* buffer)

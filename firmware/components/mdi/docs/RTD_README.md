@@ -29,6 +29,7 @@ Returns: Nothing
 What it does:
 - Configures the chip for auto-conversion mode
 - Sets up 3-wire RTD connection
+- Sets RTD fault thresholds to -40°C / 200°C (`RTD_LOW_FAULT_THRESHOLD` / `RTD_HIGH_FAULT_THRESHOLD`) so a shorted or open RTD sets `RTD_FAULT_RTD_LOW` / `RTD_FAULT_RTD_HIGH`
 - Clears debounce state and any power-up latched fault
 
 When to call: Once during system startup, after SPI is initialized.
@@ -47,11 +48,13 @@ Parameters:
 Returns:
 - RtdStatusOk - Temperature read successfully; value is trustworthy
 - RtdStatusFault - Sensor/wiring fault bit set, or a NULL temperature pointer
-- RtdStatusHalError - SPI communication error (HAL failure)
+- RtdStatusHalError - SPI communication error (HAL failure), or the config register read-back does not match
 
 When to call: Whenever you want a temperature reading (e.g., in main loop).
 
 If the MAX31865 data-register fault bit (D0) is set, this function reads the Fault Status register, updates debounce state, clears the latched chip fault, and returns `RtdStatusFault` without converting a temperature.
+
+Before reading the temperature, the config register is read back. A missing MAX31865 does not cause an SPI HAL error (MISO just reads 0x00 or 0xFF), and a chip that reset loses its config and stops converting. Either one would look like a valid ~-259°C reading. On a mismatch the driver re-runs `RtdDriverInit()` and returns `RtdStatusHalError`, so the next read can recover.
 
 ---
 
@@ -122,6 +125,7 @@ int main(void){
 - Designed for PT1000 sensors (1000Ω at 0°C)
 - Temperature coefficient: 0.00385 Ω/Ω/°C
 - Typical operating range: -80°C to +250°C (for our specific sensor)
+- Readings outside -40°C to 200°C are reported as RTD low/high faults
 
 ### Conversion Formula
 The library converts the 15-bit resistance ratio from the MAX31865 into temperature:
@@ -131,7 +135,7 @@ The library converts the 15-bit resistance ratio from the MAX31865 into temperat
 Example: If resistance = 1038.5Ω, then temperature = 10°C
 
 ### SPI Communication
-- Chip select (CS) is controlled automatically
+- Chip select (CS) is controlled automatically and idles high (set in `mdi.ioc`)
 - Write operations: Address byte (bit 7 = 1) followed by data byte
 - Read operations: Address byte (bit 7 = 0) followed by dummy byte, data received during 2nd byte
 
@@ -141,4 +145,5 @@ Example: If resistance = 1038.5Ω, then temperature = 10°C
 - Temperature is returned as an integer (no decimal places) and may be negative
 - Do not use a previous good temperature across a faulted sample
 - Motor-temp CAN `0x502` (DLC 6): byte 0 success, bytes 1–4 little-endian int32 °C, byte 5 debounced fault flags
-- Diagnostic flags CAN `0x501` bit 3 is RTD fault, bit 4 is RTD SPI/comm error
+- Diagnostic flags CAN `0x501` bit 3 is RTD fault, bit 4 is RTD SPI/comm error (including a missing or reset MAX31865)
+- Only `RTD_FAULT_RTD_HIGH`, `RTD_FAULT_RTD_LOW` and `RTD_FAULT_OVUV` can appear in practice; the REFIN/RTDIN bits are only set by a fault-detection cycle, which this driver does not run

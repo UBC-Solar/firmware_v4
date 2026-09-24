@@ -59,15 +59,18 @@ RtdFaultFlags RtdDriverGetFaults(void);
  *
  * @param[out] temperature Signed temperature in degrees Celsius (integer).
  * @return RtdStatusOk on success, RtdStatusFault on sensor fault or a NULL
- *         temperature pointer, or RtdStatusHalError on SPI failure.
+ *         temperature pointer, or RtdStatusHalError on SPI failure or when the
+ *         MAX31865 config read-back does not match (chip missing or reset; the
+ *         chip is reconfigured for the next read).
  */
 RtdStatus RtdDriverGetTemp(int32_t* temperature);
 
 /**
  * @brief Initializes breakout board for temperature measurement.
  *
- * Configures 3-wire PT1000, auto-conversion, VBIAS enabled, and 60 Hz filter.
- * Clears any fault latched during power-up or VBIAS settling.
+ * Configures 3-wire PT1000, auto-conversion, VBIAS enabled, 60 Hz filter, and
+ * RTD low/high fault thresholds (-40C / 200C). Clears any fault latched during
+ * power-up or VBIAS settling.
  *
  * Call once after SPI1 is initialized.
  */

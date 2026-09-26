@@ -1,6 +1,71 @@
+/******************************************************************************
+* @file    imu_driver.h
+* @brief   Public interface for the BNO086 IMU SHTP/I2C driver.
+*
+* This file headers contains function headers for the IMU drivers
+*
+* @author Shlok Lande
+* @date Aug 19 2026
+******************************************************************************/
+
 #ifndef __IMU__DRIVER__H__
 #define __IMU__DRIVER__H__
 
-void imu_init();
+#include <stdbool.h>
+#include "imu_app.h"
+#include "can_driver.h"
+
+/**
+ * @brief Reset the BNO086 and read its power-on SHTP advertisement packet.
+ *
+ * @return None
+ */
+void ImuDriverInit(void);
+
+/**
+ * @brief Send the SH2 Set Feature command to enable accelerometer reports.
+ *
+ * @return None
+ */
+void ImuDriverEnableAccel(void);
+
+/**
+ * @brief Send the SH2 Set Feature command to enable gyroscope reports.
+ *
+ * @return None
+ */
+void ImuDriverEnableGyro(void);
+
+/**
+ * @brief Send the SH2 Set Feature command to enable magnetometer reports.
+ *
+ * @return None
+ */
+void ImuDriverEnableMag(void);
+
+/**
+ * @brief Read one pending SHTP packet and parse every sensor report inside it.
+ *
+ * Read the packet report-by-report, updating whichever fields in data
+ * match a recognized report ID (accel, gyro, mag). Stops at the first
+ * unrecognized report ID, since its length cannot be safely determined.
+ *
+ * @param data ImuAppData struct to update with any parsed sensor readings
+ * @return true if at least one field in data was updated, false otherwise
+ */
+bool ImuDriverReadReport(ImuAppData *data);
+
+/**
+ * @brief Sends the combined accel and gyro values over CAN.
+ * @param accel Acceleration value for the required axis.
+ * @param gyro  Gyroscope value for the required axis.
+ */
+void CAN_tx_ag_msg(const CAN_TxHeaderTypeDef *header, float accel, float gyro);
+
+/**
+ * @brief Sends the combined mag values over CAN.
+ * @param mag Acceleration value for the required axis.
+ */
+void CAN_tx_m_msg(const CAN_TxHeaderTypeDef *header, float mag);
 
 #endif /* __IMU__DRIVER__H__ */

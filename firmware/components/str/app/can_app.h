@@ -37,4 +37,10 @@ void SteeringCanRxHandler(uint32_t msg_id, uint8_t* data);
  */
 void TransmitDriveControlState(void);
 
+/**
+ * @brief Extracts the driver-selected speed units from a DRD motor command frame.
+ * @param data Pointer to the motor command CAN payload.
+ */
+void SteeringSpeedUnitsCanMsgHandler(uint8_t* data);
+
 #endif /* __CAN_APP_H__ */

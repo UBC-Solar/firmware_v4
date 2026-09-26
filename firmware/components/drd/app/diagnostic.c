@@ -16,6 +16,7 @@
 #include "iwdg_driver.h"
 #include "lcd_handler.h"
 #include "drive_state.h"
+#include "gpio_driver.h"
 #include "soc.h"
 
 /* Static Variables */
@@ -89,6 +90,7 @@ void DiagnosticTimeSinceBootup()
         .data[3] = (g_time_since_bootup & 0xFF000000U) >> 24,
         .header = time_since_bootup_can_header,
     };
+    GpioDriverToggleDebugLed();
     CAN_comms_Add_Tx_message(&time_since_bootup_can_tx);
 }
 

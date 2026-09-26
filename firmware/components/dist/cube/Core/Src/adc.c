@@ -94,7 +94,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     PC4     ------> ADC1_IN14
     PB1     ------> ADC1_IN9
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_1|SPARE_CTRL_CURRENT_Pin|SPARE_MUX_CURRENT_Pin|SPARE_CURRENT_Pin
+    GPIO_InitStruct.Pin = GPIO_PIN_1|SPARE_CURRNT_Pin|SPARE_MUX_CURRENT_Pin|SPARE_CTRL_CURRENT_Pin
                           |MDI_CURRENT_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -133,7 +133,7 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
     PC4     ------> ADC1_IN14
     PB1     ------> ADC1_IN9
     */
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_1|SPARE_CTRL_CURRENT_Pin|SPARE_MUX_CURRENT_Pin|SPARE_CURRENT_Pin
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_1|SPARE_CURRNT_Pin|SPARE_MUX_CURRENT_Pin|SPARE_CTRL_CURRENT_Pin
                           |MDI_CURRENT_Pin);
 
     HAL_GPIO_DeInit(DRD_CURRENT_GPIO_Port, DRD_CURRENT_Pin);

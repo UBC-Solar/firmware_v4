@@ -64,6 +64,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/app
     ${CMAKE_CURRENT_SOURCE_DIR}/driver
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/debug_io
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/car_configs
 )
 
 # Add project symbols (macros)

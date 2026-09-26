@@ -22,11 +22,11 @@
 void StrState(void);
 
 /**
- * @brief Stores the latest vehicle velocity.
+ * @brief Stores the latest vehicle velocity for GPIO app state.
  * @param velocity_kmh Vehicle velocity in km/h.
  * @return Stored vehicle velocity in km/h.
  */
-uint32_t GetVelocity(uint32_t velocity_kmh);
+uint32_t GpioAppSetVelocity(uint32_t velocity_kmh);
 
 /**
  * @brief Reads the latest stored vehicle velocity.

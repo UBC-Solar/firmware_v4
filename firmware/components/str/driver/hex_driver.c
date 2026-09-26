@@ -54,6 +54,10 @@ bool HexDisplayInit(void)
         return false;
     }
 
+    // Display dashes on initialization
+    HexDisplayWriteReg(AS1115_REG_DIGIT0, 0x0A);
+    HexDisplayWriteReg(AS1115_REG_DIGIT1, 0x0A);
+
     return true;
 }
 

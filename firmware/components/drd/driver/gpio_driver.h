@@ -74,5 +74,9 @@ void SetBrakeLedPin(GPIO_TypeDef* port, uint16_t pin, uint8_t brake_on);
  * @return Pin state (0 or 1).
  */
 uint8_t ReadHazardPin(GPIO_TypeDef* port, uint16_t pin);
+/**
+ * @brief Toggles the state of the debug LED.
+ */
+void GpioDriverToggleDebugLed(void);
 
 #endif //__DRIVERS_H__

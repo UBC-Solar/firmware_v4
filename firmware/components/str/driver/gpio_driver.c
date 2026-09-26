@@ -48,6 +48,8 @@ void CruiseState(uint32_t velocity)
 
     if (!gpio_pin_state.cruise_state.cruise_en || (velocity == 0U))
     {
+        gpio_pin_state.cruise_state.cruise_inc = false;
+        gpio_pin_state.cruise_state.cruise_dec = false;
         last_cruise_inc = cruise_inc_now;
         last_cruise_dec = cruise_dec_now;
         return;
@@ -55,15 +57,23 @@ void CruiseState(uint32_t velocity)
 
     if (cruise_inc_now && !last_cruise_inc)
     {
-        if (cruise_set_velocity_kmh > 0U)
-        {
-            cruise_set_velocity_kmh--;
-        }
+        cruise_set_velocity_kmh++;
+        gpio_pin_state.cruise_state.cruise_inc = true;
+    }
+    else {
+        gpio_pin_state.cruise_state.cruise_inc = false;
     }
 
     if (cruise_dec_now && !last_cruise_dec)
     {
-        cruise_set_velocity_kmh++;
+        if (cruise_set_velocity_kmh > 0U)
+        {
+            cruise_set_velocity_kmh--;
+        }
+        gpio_pin_state.cruise_state.cruise_dec = true;
+    }
+    else {
+        gpio_pin_state.cruise_state.cruise_dec = false;
     }
 
     last_cruise_inc = cruise_inc_now;
@@ -103,6 +113,12 @@ void GpioPollState(void)
     }
 }
 
+/* GPIO OUTPUTS */
+void GpioDriverToggleDebugLed(void)
+{
+    HAL_GPIO_TogglePin(DEBUG_LED_GPIO_Port, DEBUG_LED_Pin);
+}
+
 /* GPIO INTERRUPTS */
 void StrInterruptHandler(uint16_t toggle)
 {
@@ -111,7 +127,7 @@ void StrInterruptHandler(uint16_t toggle)
         return;
     }
 
-    HAL_GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
+    HAL_GPIO_TogglePin(DEBUG_LED_GPIO_Port, DEBUG_LED_Pin);
 
     gpio_pin_state.cruise_state.cruise_en = !gpio_pin_state.cruise_state.cruise_en;
     if (gpio_pin_state.cruise_state.cruise_en)

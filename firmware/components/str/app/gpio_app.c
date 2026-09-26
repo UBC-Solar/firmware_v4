@@ -26,7 +26,7 @@ void StrState(void)
     CruiseState(ReadCurrentVelocity());
 }
 
-uint32_t GetVelocity(uint32_t velocity)
+uint32_t GpioAppSetVelocity(uint32_t velocity)
 {
     s_current_velocity_kmh = velocity;
     return s_current_velocity_kmh;

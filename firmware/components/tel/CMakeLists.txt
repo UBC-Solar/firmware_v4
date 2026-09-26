@@ -54,6 +54,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/app/telemetry_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/imu_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/can_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/gpio_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/rtc_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/telemetry_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/CAN_comms/CAN_comms.c
@@ -67,6 +68,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/debug_io
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/CAN_comms
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/car_configs
 )
 
 # Add project symbols (macros)

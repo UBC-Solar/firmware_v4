@@ -8,16 +8,17 @@
 
 #include "CAN_comms.h"
 #include "can_driver.h"
+#include "cyclic_data_handler.h"
 #include "gpio_driver.h"
 #include "hex_app.h"
 #include "main.h"
 #include "gpio_app.h"
 #include "stm32f1xx_hal_gpio.h"
+#include "stm32f1xx_hal.h"
 
 #include <string.h>
 
 /* DEFINES */
-#define STR_DISPLAY_MAX 99U
 #define STR_WHEEL_RADIUS_M 0.283f
 #define M_PI 3.14159
 
@@ -74,6 +75,24 @@ void SteeringCanRxHandler(uint32_t msg_id, uint8_t* data)
     {
         SteeringVelocityCanMsgHandler(data);
     }
+    else if (msg_id == DRD_MOTOR_COMMAND_CAN_ID)
+    {
+        SteeringSpeedUnitsCanMsgHandler(data);
+    }
+}
+
+/**
+ * @brief Extracts the driver-selected speed units from a DRD motor command frame.
+ * @param data Pointer to the motor command CAN payload.
+ */
+void SteeringSpeedUnitsCanMsgHandler(uint8_t* data)
+{
+    if (data == NULL)
+    {
+        return;
+    }
+
+    HexAppSetSpeedUnits((data[4] >> 2) & 0x01U); // Motor Command bit 34
 }
 
 /**
@@ -91,7 +110,8 @@ void SteeringVelocityCanMsgHandler(uint8_t* data)
     float velocity_mps = (STR_WHEEL_RADIUS_M * 2.0f * (float)M_PI * (float)rpm) / 60.0f;
     uint32_t velocity_kmh = (uint32_t)(velocity_mps * 3.6f);
 
-    GetVelocity(velocity_kmh);
+    CyclicDataSetSpeed(velocity_kmh);
+    GpioAppSetVelocity(velocity_kmh); // Cruise control still uses gpio_app velocity state
 }
 
 /* CAN TX */
@@ -121,6 +141,10 @@ void TransmitDriveControlState(void)
 
     data[1] = (uint8_t)(cruise_set_velocity_kmh & 0xFFU);
     data[2] = (uint8_t)((cruise_set_velocity_kmh >> 8) & 0xFFU);
+
+    data[3] =
+    (((uint8_t)gpio_pin_state.cruise_state.cruise_inc & 0x1U) << 0) |
+    (((uint8_t)gpio_pin_state.cruise_state.cruise_dec & 0x1U) << 1);
 
     memcpy(msg.data, data, CAN_DATA_SIZE);
 

@@ -8,5 +8,5 @@ void DoBalancing(pack_state_t *pack_state, module_t pack_modules[NUM_MODULES], s
 void PauseAllBalancing();
 void ResumeAllBalancing();
 #if (INT_TEST_SLAVE == RUN || INT_TEST_SLAVE_BAL_VOLT == RUN)
-void Debug_DoBalancing(slave_t slaves[SLAVE_NUM_DEVICES], bool enable);
+void Debug_SetBalancingForModules(slave_t slaves[SLAVE_NUM_DEVICES], bool module_enables[NUM_MODULES]);
 #endif // (INT_TEST_SLAVE == RUN || INT_TEST_SLAVE_BAL_VOLT == RUN)

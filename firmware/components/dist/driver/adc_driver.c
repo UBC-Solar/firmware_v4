@@ -1,7 +1,7 @@
 #include "adc_driver.h"
 
 /* TPS2596 current monitor gain: IILM/IOUT = 657 µA/A (typical, datasheet Eq. 6) */
-#define GIMON              (657e-6f)
+#define GIMON              (653e-6f)
 
 /* RILM resistor values per channel — sets both the current limit and monitor scale */
 #define RILM_DRD           910.0f
@@ -12,6 +12,9 @@
 
 #define ADC_VREF           3.3f
 #define ADC_COUNTS         4095.0f
+
+#define EFUSE_CORRECTION_SLOPE 0.961085f
+#define EFUSE_CORRECTION_OFFSET 0.00328378f
 
 void ADC_Driver_Init(void)
 {
@@ -49,6 +52,14 @@ static float ilm_to_amps(uint16_t raw, float rilm)
     return vilm / (GIMON * rilm);
 }
 
+/* Correction for 910Ω channels from tests: measured = 0.961085×actual - 3.28378 mA
+ * Inverted: actual = (measured + 3.28378 mA) / 0.961085 
+ See BMS testing / DIST / efuse on monday*/
+static float correct_910(float amps)
+{
+    return (amps + EFUSE_CORRECTION_OFFSET) / EFUSE_CORRECTION_SLOPE;
+}
+
 uint16_t ADC_Read_ESTOP(void)
 {
     return adc_read_channel(ADC_CHANNEL_10); /* PC0 */
@@ -58,11 +69,11 @@ AdcCurrentReadings ADC_Read_Currents(void)
 {
     AdcCurrentReadings readings;
 
-    readings.drd        = ilm_to_amps(adc_read_channel(ADC_CHANNEL_14), RILM_DRD);        /* PC4 */
+    readings.drd        = correct_910(ilm_to_amps(adc_read_channel(ADC_CHANNEL_14), RILM_DRD));        /* PC4 */
     readings.mdi        = ilm_to_amps(adc_read_channel(ADC_CHANNEL_7),  RILM_MDI);        /* PA7 */
-    readings.spare_ctrl = ilm_to_amps(adc_read_channel(ADC_CHANNEL_4),  RILM_SPARE_CTRL); /* PA4 */
-    readings.spare_mux  = ilm_to_amps(adc_read_channel(ADC_CHANNEL_5),  RILM_SPARE_MUX);  /* PA5 */
-    readings.spare      = ilm_to_amps(adc_read_channel(ADC_CHANNEL_6),  RILM_SPARE);      /* PA6 */
+    readings.spare      = correct_910(ilm_to_amps(adc_read_channel(ADC_CHANNEL_4),  RILM_SPARE));      /* PA4 */
+    readings.spare_mux  = correct_910(ilm_to_amps(adc_read_channel(ADC_CHANNEL_5),  RILM_SPARE_MUX));  /* PA5 */
+    readings.spare_ctrl = correct_910(ilm_to_amps(adc_read_channel(ADC_CHANNEL_6),  RILM_SPARE_CTRL)); /* PA6 */
 
     return readings;
 }

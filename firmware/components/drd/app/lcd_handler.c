@@ -21,6 +21,8 @@ static LcdAppBattFaults g_lcd_batt_faults = {0};
 static LcdAppMotorFaults g_lcd_motor_faults = {0};
 static LcdAppWarnings g_lcd_warnings = {0};
 static LcdAppTemperature g_lcd_temperatures[8] = {0};
+static volatile uint32_t g_lcd_test_speed = 10;
+static volatile uint32_t* g_lcd_test_speed_ptr = &g_lcd_test_speed;
 static uint8_t g_lcd_page = 1;
 static bool g_str_change_page_flag = false;
 static volatile bool g_prev_change_page = false;
@@ -84,7 +86,7 @@ void LcdHandlerPageController(void)
     switch (g_lcd_page)
     {
     case DRIVE_PAGE:
-        LcdAppDisplaySpeedDrivePage(g_lcd_data.speed, g_lcd_data.speed_units);
+        LcdAppDisplaySpeedDrivePage(g_lcd_test_speed_ptr, g_lcd_data.speed_units);
         LcdAppDisplaySocDrivePage((volatile uint32_t*)g_lcd_data.soc);
         LcdAppDisplayDriveModeDrivePage(g_lcd_data.drive_mode);
         LcdAppDisplayDriveStateDrivePage((volatile DriveStateStates*) g_lcd_data.drive_state);

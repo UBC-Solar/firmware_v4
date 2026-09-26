@@ -64,6 +64,20 @@ const osThreadAttr_t TasksIMU_attributes = {
   .priority = (osPriority_t) osPriorityLow,
 };
 
+/* Definitions for TasksCanload */
+osThreadId_t TasksCanloadHandle;
+uint32_t TasksCanloadBuffer[128];
+osStaticThreadDef_t TasksCanloadControlBlock;
+
+const osThreadAttr_t TasksCanload_attributes = {
+  .name = "TasksCanload",
+  .cb_mem = &TasksCanloadControlBlock,
+  .cb_size = sizeof(TasksCanloadControlBlock),
+  .stack_mem = &TasksCanloadBuffer[0],
+  .stack_size = sizeof(TasksCanloadBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
+
 /* Definitions for TasksDiagnostics */
 osThreadId_t TasksDiagnosticsHandle;
 uint32_t TasksDiagnosticsBuffer[128];
@@ -146,6 +160,8 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of TasksIMU */
   TasksIMUHandle = osThreadNew(TasksIMU, NULL, &TasksIMU_attributes);
+  /* creation of TasksCanload */
+  TasksCanloadHandle = osThreadNew(TasksCanload, NULL, &TasksCanload_attributes);
   /* creation of TasksDiagnostics */
   TasksDiagnosticsHandle = osThreadNew(TasksDiagnostics, NULL, &TasksDiagnostics_attributes);
   /* creation of TasksTimeSinceStartup*/

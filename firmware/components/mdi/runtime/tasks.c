@@ -2,6 +2,7 @@
 
 #include "can_app.h"
 #include "diagnostic.h"
+#include "mcu_sense_driver.h"
 #include "mdi_driver.h"
 #include "rtd_driver.h"
 #include "main.h"
@@ -10,6 +11,7 @@ void AppMain(void)
 {
     CanAppInit();
     RtdDriverInit();
+    McuSenseDriverInit();
     DiagnosticInit();
     DiagnosticSendFlags();
 
@@ -25,6 +27,7 @@ void AppMain(void)
         {
             DiagnosticSendTimeSinceBootup();
             DiagnosticSendRtdTemp();
+            DiagnosticSendMcuHealth();
             DiagnosticSendFlags();
             last_diagnostic_tick = now;
         }

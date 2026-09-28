@@ -23,6 +23,7 @@
 #define DRD_TIME_SINCE_BOOTUP_ID            0x404
 #define MDI_TIME_SINCE_BOOTUP_ID            0x500
 #define MDI_MOTOR_TEMP_ID                   0x502
+#define MDI_MCU_HEALTH_ID                   0x503
 #define STR_TIME_SINCE_BOOTUP_ID            0x582
 #define TEL_TIME_SINCE_BOOTUP_ID            0x750
 
@@ -90,6 +91,7 @@ static CanFilter_t filter_whitelist[]  __attribute__((unused)) = {
     { MDI_TIME_SINCE_BOOTUP_ID,             1,     0               },
     { MDI_DIAGNOSTICS_ID,                   1,     0               },
     { MDI_MOTOR_TEMP_ID,                    1,     0               },
+    { MDI_MCU_HEALTH_ID,                    1,     0               },
     { STR_DIAGNOSTICS_ID,                   1,     0               },
     { STR_TIME_SINCE_BOOTUP_ID,             1,     0               },
     { BMS_VOLTAGE_SUMMARY_VOLTAGE_ID,       10,    0               },

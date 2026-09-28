@@ -7,6 +7,7 @@
 
 #include "can_driver.h"
 #include "gpio_driver.h"
+#include "mcu_sense_driver.h"
 #include "rtd_driver.h"
 
 static MdiDiagnosticFlags s_diagnostic_flags = {0};
@@ -33,6 +34,14 @@ static const CAN_TxHeaderTypeDef mdi_motor_temp_header = {
 	.IDE = CAN_ID_STD,
 	.RTR = CAN_RTR_DATA,
 	.DLC = 6
+};
+
+static const CAN_TxHeaderTypeDef mdi_mcu_health_header = {
+	.StdId = MDI_MCU_HEALTH_CAN_ID,
+	.ExtId = 0x0000,
+	.IDE = CAN_ID_STD,
+	.RTR = CAN_RTR_DATA,
+	.DLC = 4
 };
 
 /**
@@ -111,6 +120,20 @@ void DiagnosticSendRtdTemp(void)
 	data[5] = (uint8_t)faults;
 
 	CanDriverSend(&mdi_motor_temp_header, data);
+}
+
+void DiagnosticSendMcuHealth(void)
+{
+	uint16_t vdd_mv = McuSenseDriverReadVddMv();
+	int16_t temp_c = McuSenseDriverReadTempC();
+
+	uint8_t data[4];
+	data[0] = (uint8_t)(vdd_mv & 0xFFU);
+	data[1] = (uint8_t)((vdd_mv >> 8) & 0xFFU);
+	data[2] = (uint8_t)((uint16_t)temp_c & 0xFFU);
+	data[3] = (uint8_t)(((uint16_t)temp_c >> 8) & 0xFFU);
+
+	CanDriverSend(&mdi_mcu_health_header, data);
 }
 
 void DiagnosticSendFlags(void)

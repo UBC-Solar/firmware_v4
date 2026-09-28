@@ -23,6 +23,13 @@
 void TasksIMU(void* argument);
 
 /**
+ * @brief   GPS task function
+ * @param   argument: Not used
+ * @retval  None
+ */
+void TasksGPS(void* argument);
+
+/**
  * @brief   Diagnostics task function
  * @param   argument: Not used
  * @retval  None

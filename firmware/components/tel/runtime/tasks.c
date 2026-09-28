@@ -15,6 +15,7 @@
 #include "telemetry_app.h"
 #include "diagnostics.h"
 #include "imu_app.h"
+#include "gps_app.h"
 
 /* IMU TASK */
 void TasksIMU(void* argument)
@@ -27,6 +28,20 @@ void TasksIMU(void* argument)
     {
         ImuAppTask();
         osDelay(IMU_TASK_DELAY);
+    }
+}
+
+/* GPS TASK */
+void TasksGPS(void* argument)
+{
+    (void)argument;
+
+    GpsAppInit();
+
+    for (;;)
+    {
+        GpsAppTask();
+        osDelay(GPS_TASK_DELAY);
     }
 }
 

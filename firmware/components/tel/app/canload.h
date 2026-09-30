@@ -4,6 +4,8 @@
 *
 * This header contains function declarations for the canload
 *
+* Monday Update explaining the IDs and high level understanding of how CAN laod works: https://ubcsolar26.monday.com/boards/9565346490/pulses/13086882321/posts/5590202228
+*
 * @author Shlok Lande
 * @date Sep 21 2026
 ******************************************************************************/

@@ -12,8 +12,6 @@
 #ifndef __CAN_APP__H__
 #define __CAN_APP__H__
 
-#include "canload.h"
-
 // Definitions for CAN IDs (add or adjust as needed)
 #define RTC_TIMESTAMP_MSG_ID            0x300
 
@@ -154,13 +152,5 @@ void CanAppInit();
  */
 void CAN_tx_canload_msg();
 
-/** CANload HEADER DEFINITION */
-CAN_TxHeaderTypeDef CANLOAD_busload = {
-    .StdId = CANLOAD_MSG_ID,
-    .ExtId = 0x0000,
-    .IDE = CAN_ID_STD,
-    .RTR = CAN_RTR_DATA,
-    .DLC = CANLOAD_DATA_LENGTH,
-};
 
 #endif /* __CAN_APP__H__ */

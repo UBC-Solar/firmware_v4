@@ -11,6 +11,7 @@
  #include "can.h"
  #include "CAN_comms.h"
  #include "can_app.h"
+ #include "canload.h"
 
 const CAN_TxHeaderTypeDef time_since_bootup_can_header = {
     .StdId = TIME_SINCE_BOOTUP_CAN_ID,
@@ -72,6 +73,15 @@ const CAN_TxHeaderTypeDef imu_m_z = {
     .IDE   = CAN_ID_STD,
     .RTR   = CAN_RTR_DATA,
     .DLC   = IMU_CAN_MESSAGE_M_LENGTH
+};
+
+/** CANload HEADER DEFINITION */
+const CAN_TxHeaderTypeDef CANLOAD_busload = {
+    .StdId = CANLOAD_MSG_ID,
+    .ExtId = 0x0000,
+    .IDE = CAN_ID_STD,
+    .RTR = CAN_RTR_DATA,
+    .DLC = CANLOAD_DATA_LENGTH,
 };
 
 

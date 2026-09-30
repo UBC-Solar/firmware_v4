@@ -22,14 +22,6 @@ static uint32_t can_total_bits = 0;
 static uint64_t currentIdx = 0; // Always increments and needs large enough data type to avoid overflow
 static uint32_t circularBuffer[WINDOW_SIZE] = {0};
 
-/** CAN HEADER DEFINITION */
-CAN_TxHeaderTypeDef CANLOAD_busload = {
-    .StdId = CANLOAD_MSG_ID,
-    .ExtId = 0x0000,
-    .IDE = CAN_ID_STD,
-    .RTR = CAN_RTR_DATA,
-    .DLC = CANLOAD_DATA_LENGTH,
-};
 
  void CanloadCalculateMessageBits(uint32_t DLC, uint32_t IDE)
  {

@@ -28,57 +28,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 project(${CMAKE_PROJECT_NAME})
 message("Build type: " ${CMAKE_BUILD_TYPE})
 
-set(FW_UPDATE_TARGET_ID "0x54454C45" CACHE STRING "32-bit Firmware update target ID")
-set(FW_UPDATE_HARDWARE_REVISION "1" CACHE STRING "TEL hardware revision")
-set(FW_UPDATE_FIRMWARE_VERSION "1" CACHE STRING "Monotonic OTA firmware version")
-set(FW_UPDATE_DISPLAY_VERSION "dev-${FW_UPDATE_FIRMWARE_VERSION}" CACHE STRING "Human-readable firmware version")
-set(FW_UPDATE_MINIMUM_BOOTLOADER_VERSION "1" CACHE STRING "Minimum bootloader version")
-set(FW_UPDATE_PUBLIC_KEY_FILE "" CACHE FILEPATH "Ed25519 public PEM compiled into the bootloader")
-
-string(TOLOWER "${CMAKE_BUILD_TYPE}" FW_UPDATE_BUILD_TYPE_LOWER)
-option(TEL_OTA_ENABLE_TEST_BYPASS
-    "Bypass TEL's OTA vehicle-state interlock (Debug bench use only)"
-    OFF)
-if(TEL_OTA_ENABLE_TEST_BYPASS AND
-   FW_UPDATE_BUILD_TYPE_LOWER STREQUAL "debug")
-    set(TEL_OTA_ENABLE_TEST_BYPASS_VALUE 1)
-    message(WARNING
-        "TEL OTA vehicle-state interlock is bypassed; do not deploy this build on a vehicle")
-else()
-    set(TEL_OTA_ENABLE_TEST_BYPASS_VALUE 0)
-    if(TEL_OTA_ENABLE_TEST_BYPASS)
-        message(STATUS
-            "Ignoring TEL_OTA_ENABLE_TEST_BYPASS outside a Debug build")
-    endif()
-endif()
-
-set(FW_UPDATE_BOOTLOADER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../common/bootloader)
-set(FW_UPDATE_MONOCYPHER_DIR ${FW_UPDATE_BOOTLOADER_DIR}/third_party/monocypher)
-set(FW_UPDATE_GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
-set(FW_UPDATE_PUBLIC_KEY_HEADER ${FW_UPDATE_GENERATED_DIR}/fw_update_public_key.h)
-file(MAKE_DIRECTORY ${FW_UPDATE_GENERATED_DIR})
-
-if(FW_UPDATE_PUBLIC_KEY_FILE)
-    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
-        "${FW_UPDATE_PUBLIC_KEY_FILE}")
-    find_package(Python3 REQUIRED COMPONENTS Interpreter)
-    execute_process(
-        COMMAND ${Python3_EXECUTABLE}
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../../tools/export_ed25519_public_key.py
-            --input ${FW_UPDATE_PUBLIC_KEY_FILE}
-            --output ${FW_UPDATE_PUBLIC_KEY_HEADER}
-        COMMAND_ERROR_IS_FATAL ANY
-    )
-    set(FW_UPDATE_PUBLIC_KEY_CONFIGURED 1)
-else()
-    message(WARNING "FW_UPDATE_PUBLIC_KEY_FILE is unset; TEL OTA will fail closed until a key is configured")
-    file(WRITE ${FW_UPDATE_PUBLIC_KEY_HEADER}
-        "#ifndef FW_UPDATE_PUBLIC_KEY_H\n#define FW_UPDATE_PUBLIC_KEY_H\n"
-        "#include <stdint.h>\nstatic const uint8_t fw_update_public_key[32] = {0};\n"
-        "#endif\n")
-    set(FW_UPDATE_PUBLIC_KEY_CONFIGURED 0)
-endif()
-
 # Enable CMake support for ASM and C languages
 enable_language(C ASM)
 
@@ -87,10 +36,6 @@ add_executable(${CMAKE_PROJECT_NAME})
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cube/cmake/stm32cubemx)
-
-target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
-    -T "${CMAKE_CURRENT_SOURCE_DIR}/cube/STM32F103XX_FLASH.ld"
-)
 
 # Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
@@ -104,7 +49,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/interrupts.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/imu_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/can_app.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/app/tel_ota_safety.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/rtc_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/diagnostics.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/telemetry_app.c
@@ -113,11 +57,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/rtc_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/telemetry_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/CAN_comms/CAN_comms.c
-    ${FW_UPDATE_BOOTLOADER_DIR}/fw_update_app.c
-    ${FW_UPDATE_BOOTLOADER_DIR}/fw_update_can.c
-    ${FW_UPDATE_BOOTLOADER_DIR}/fw_update_can_transport.c
-    ${FW_UPDATE_BOOTLOADER_DIR}/fw_update_protocol.c
-    ${FW_UPDATE_BOOTLOADER_DIR}/bootloader_boot_request.c
 )
 
 # Add include paths
@@ -128,19 +67,12 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/debug_io
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/CAN_comms
-    ${FW_UPDATE_BOOTLOADER_DIR}
-    ${FW_UPDATE_GENERATED_DIR}
 )
 
 # Add project symbols (macros)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined symbols
-    FW_UPDATE_TARGET_ID=${FW_UPDATE_TARGET_ID}U
-    FW_UPDATE_HARDWARE_REVISION=${FW_UPDATE_HARDWARE_REVISION}U
-    FW_UPDATE_FIRMWARE_VERSION=${FW_UPDATE_FIRMWARE_VERSION}U
-    FW_UPDATE_PUBLIC_KEY_CONFIGURED=${FW_UPDATE_PUBLIC_KEY_CONFIGURED}
-    TEL_OTA_ENABLE_TEST_BYPASS=${TEL_OTA_ENABLE_TEST_BYPASS_VALUE}
-    FW_UPDATE_SLOT_SIZE_BYTES=225280U
+    
 )
 
 # Remove wrong libob.a library dependency when using cpp files
@@ -151,38 +83,4 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
 
     # Add user defined libraries
-)
-
-include(${CMAKE_CURRENT_SOURCE_DIR}/../../common/bootloader/bootloader_target.cmake)
-add_stm32f103_bootloader_target(${CMAKE_PROJECT_NAME}_bootloader ${CMAKE_CURRENT_SOURCE_DIR})
-
-target_sources(${CMAKE_PROJECT_NAME}_bootloader PRIVATE
-    ${FW_UPDATE_BOOTLOADER_DIR}/bootloader_tel.c
-    ${FW_UPDATE_BOOTLOADER_DIR}/bootloader_boot_request.c
-    ${FW_UPDATE_BOOTLOADER_DIR}/bootloader_crc32.c
-    ${FW_UPDATE_BOOTLOADER_DIR}/bootloader_flash.c
-    ${FW_UPDATE_BOOTLOADER_DIR}/bootloader_metadata.c
-    ${FW_UPDATE_BOOTLOADER_DIR}/bootloader_sha256.c
-    ${FW_UPDATE_BOOTLOADER_DIR}/fw_update_bootloader_engine.c
-    ${FW_UPDATE_BOOTLOADER_DIR}/fw_update_protocol.c
-    ${FW_UPDATE_MONOCYPHER_DIR}/monocypher.c
-    ${FW_UPDATE_MONOCYPHER_DIR}/monocypher-ed25519.c
-)
-target_include_directories(${CMAKE_PROJECT_NAME}_bootloader PRIVATE
-    ${FW_UPDATE_GENERATED_DIR}
-    ${FW_UPDATE_MONOCYPHER_DIR}
-)
-target_compile_definitions(${CMAKE_PROJECT_NAME}_bootloader PRIVATE
-    FW_UPDATE_TARGET_ID=${FW_UPDATE_TARGET_ID}U
-    FW_UPDATE_HARDWARE_REVISION=${FW_UPDATE_HARDWARE_REVISION}U
-    FW_UPDATE_PUBLIC_KEY_CONFIGURED=${FW_UPDATE_PUBLIC_KEY_CONFIGURED}
-    BOOTLOADER_APP_MAX_SIZE_BYTES=225280U
-    BOOTLOADER_METADATA_PAGE_ADDRESS=0x0803F000U
-    BOOTLOADER_METADATA_BACKUP_PAGE_ADDRESS=0x0803F800U
-)
-target_compile_options(${CMAKE_PROJECT_NAME}_bootloader PRIVATE -Os)
-
-file(GENERATE
-    OUTPUT "$<TARGET_FILE:${CMAKE_PROJECT_NAME}>.ota.json"
-    CONTENT "{\n  \"schema\": 1,\n  \"targetId\": \"${FW_UPDATE_TARGET_ID}\",\n  \"hardwareRevisionMin\": ${FW_UPDATE_HARDWARE_REVISION},\n  \"hardwareRevisionMax\": ${FW_UPDATE_HARDWARE_REVISION},\n  \"firmwareVersion\": ${FW_UPDATE_FIRMWARE_VERSION},\n  \"displayVersion\": \"${FW_UPDATE_DISPLAY_VERSION}\",\n  \"minimumBootloaderVersion\": ${FW_UPDATE_MINIMUM_BOOTLOADER_VERSION}\n}\n"
 )

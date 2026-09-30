@@ -2,7 +2,6 @@
   "cmake.sourceDirectory": [
     "${workspaceFolder}/firmware/components/tel",
     "${workspaceFolder}/firmware/components/mdi",
-    "${workspaceFolder}/firmware/components/nucleo_f103rb",
     "${workspaceFolder}/firmware/components/drd",
     "${workspaceFolder}/firmware/components/hvc",
     "${workspaceFolder}/firmware/components/mst",
@@ -12,11 +11,7 @@
   "cmake.cmakePath": "cube-cmake",
   "cmake.configureArgs": [
     "-DCMAKE_COMMAND=cube-cmake",
-    "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
-    "-DFW_UPDATE_PUBLIC_KEY_FILE=/Users/tonychen/.config/firmware-flash/firmware-ed25519.pub",
-    "-DFW_UPDATE_FIRMWARE_VERSION=3",
-    "-DFW_UPDATE_DISPLAY_VERSION=3.0.0",
-    "-DTEL_OTA_ENABLE_TEST_BYPASS=ON"
+    "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
   ],
   "cmake.preferredGenerators": [
     "Ninja"

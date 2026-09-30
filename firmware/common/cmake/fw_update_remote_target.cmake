@@ -98,7 +98,6 @@ function(configure_fw_update_remote_target
 
     target_sources(${bootloader_target} PRIVATE
         "${ota_bootloader_dir}/bootloader_can.c"
-        "${ota_bootloader_dir}/bootloader_boot_request.c"
         "${ota_bootloader_dir}/bootloader_crc32.c"
         "${ota_bootloader_dir}/bootloader_flash.c"
         "${ota_bootloader_dir}/bootloader_metadata.c"

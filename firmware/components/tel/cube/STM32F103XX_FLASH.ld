@@ -56,8 +56,7 @@ ENTRY(Reset_Handler)
 MEMORY
 {
 RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 48K
-/* Final two 2 KiB pages are reserved for redundant signed OTA metadata. */
-FLASH (rx)      : ORIGIN = 0x8008000, LENGTH = 220K
+FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 256K
 }
 
 /* Highest address of the user mode stack */

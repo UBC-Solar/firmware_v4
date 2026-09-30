@@ -4,7 +4,7 @@ This directory contains the shared bootloader core for STM32F103 boards.
 
 ## Car-board layout
 
-All six STM32F103RC application/bootloader pairs use the same protected layout:
+The MDI, DRD, and STR STM32F103RC application/bootloader pairs use the same protected layout:
 
 - bootloader: `0x08000000` through `0x08007FFF` (`32 KiB`)
 - application: `0x08008000` through `0x0803EFFF` (`220 KiB`)
@@ -18,9 +18,7 @@ vector before jumping and writes the first eight vector bytes last during an
 update. An interrupted write therefore returns to the bootloader instead of
 booting a partial image.
 
-The current software acceptance pass covers TEL, MDI, DRD, and STR. HVC and MST
-remain in the shared target registry, but their board integrations are outside
-this pass and must not be inferred from the results below.
+Direct CAN integration covers MDI, DRD, and STR. Other boards are unchanged.
 
 ## Direct CAN flashing
 
@@ -35,8 +33,7 @@ bus, but TEL self-updates still require UART. See the
 
 The supported host workflow is laptop → PCAN → MDI, DRD, or STR.
 See [setup, provisioning, and flash commands](../../../tools/README-can-flash.md).
-The Pi/SSH VS Code extension has been removed. TEL's legacy UART implementation
-is retained for existing firmware compatibility; it is not a direct CAN target.
+The Pi/SSH VS Code extension has been removed. TEL is not a direct CAN target and its firmware is unchanged by this feature.
 
 | Board | Target ID | CAN node | Bootloader pins |
 | --- | --- | --- | --- |
@@ -88,15 +85,6 @@ make fw-update-test
 make can-flash-test PYTHON=.venv/bin/python
 ```
 
-## Nucleo-F103RB Test Layout
-
-- Bootloader flash: `0x08000000` through `0x08007FFF` (`32 KiB`)
-- Application flash: `0x08008000` through `0x0801FFFF` (`96 KiB`)
-- SRAM: `0x20000000` through `0x20004FFF` (`20 KiB`)
-
-Use `STM32F103RB_BOOTLOADER_FLASH.ld` for the bootloader and build the test
-application with flash origin `0x08008000` and flash length `96K`.
-
 ## Boot entry decision
 
 `BootloaderRun()` enters update mode when:
@@ -136,70 +124,6 @@ Example:
 ```sh
 cmake --build firmware/components/mdi/build --target mdi_bootloader
 ```
-
-For a Nucleo-F103RB target, pass the RB linker script and apply the RB compile
-definitions:
-
-```cmake
-include(path/to/bootloader_target.cmake)
-add_stm32f103_bootloader_target(nucleo_bootloader ${CMAKE_CURRENT_SOURCE_DIR}
-    path/to/STM32F103RB_BOOTLOADER_FLASH.ld)
-configure_stm32f103rb_bootloader_target(nucleo_bootloader)
-```
-
-The standalone Nucleo smoke-test target lives in
-`firmware/components/nucleo_f103rb`:
-
-```sh
-make nucleo debug
-```
-
-It emits:
-
-- `firmware/components/nucleo_f103rb/build/nucleo_f103rb_bootloader.bin`
-- `firmware/components/nucleo_f103rb/build/nucleo_f103rb_app.bin`
-
-## Nucleo legacy UART prototype
-
-The separate Nucleo-F103RB prototype predates the signed update protocol. Its
-simple `UBSL` sender is retained only for Nucleo bring-up. It uses USART3 with
-the STM32F1 partial
-remap onto the PC10/PC11 pins:
-
-- PC10: USART3 TX
-- PC11: USART3 RX
-- baud: `115200`
-- protocol magic: `UBSL`
-- header: `UBSL` + little-endian `uint32_t image_size` + little-endian
-  `uint32_t crc32`
-- payload: raw application `.bin` bytes built for `0x08008000`
-
-The bootloader erases only the application region needed by the incoming image,
-streams the payload into flash, CRC-checks the full image, and writes the first
-8 bytes of the application vector table last. This keeps an interrupted update
-from looking like a valid application.
-
-Prototype flow:
-
-```sh
-make nucleo debug
-
-STM32_Programmer_CLI -c port=SWD \
-  -w firmware/components/nucleo_f103rb/build/nucleo_f103rb_bootloader.bin \
-  0x08000000
-STM32_Programmer_CLI -c port=SWD -rst
-```
-
-Hold the blue button during reset to enter update mode, then send the app image
-over a 3.3 V USB-UART adapter wired to PC10/PC11:
-
-```sh
-python3 tools/bootloader_send_uart.py \
-  /dev/cu.usbserialXXXX \
-  firmware/components/nucleo_f103rb/build/nucleo_f103rb_app.bin
-```
-
-After a successful update, the bootloader jumps to the new app.
 
 ## Naming and compatibility
 

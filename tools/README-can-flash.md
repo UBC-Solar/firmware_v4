@@ -3,8 +3,7 @@
 `bootloader_send_can.py` flashes an application directly from the laptop through
 a USB-to-CAN adapter, without the Pi or TEL gateway. It supports MDI, DRD, and
 STR on the existing 500 kbit/s classic CAN bus. All boards can remain connected;
-`--board` selects one destination. TEL's own bootloader is currently UART-only.
-HVC, MST, and the legacy Nucleo UART prototype are not supported by this tool.
+`--board` selects one destination. TEL, HVC, and MST are not supported by this tool.
 
 The tool uses the selected ELF's CMake-generated `.elf.ota.json` sidecar,
 asks the running application to enter its bootloader, transfers the image with

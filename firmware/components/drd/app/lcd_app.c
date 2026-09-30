@@ -561,7 +561,9 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data)
         LcdDriverClearBoundingBox(LCD_APP_MTR_CONT_X + LCD_APP_TEMP_MTR_OFFSET,LCD_APP_MTR_THERM_Y,LCD_DRIVER_BOTTOM_RIGHT_X,LCD_DRIVER_BOTTOM_RIGHT_Y);
         break;
     default:
-        return;
+        temp_x = LCD_APP_MTR_THERM_X;
+        temp_y = LCD_APP_MTR_THERM_Y;
+        break;
     }
 
     LcdDriverDrawText(temp_label, temp_x, temp_y, LCD_APP_TEMP_LABEL_FONT, LCD_APP_TEMP_SPACING);

@@ -1,4 +1,4 @@
-/******************************************************************************
+/*
 * @file    canload.h
 * @brief   function headers used by canload.c
 *
@@ -8,7 +8,7 @@
 *
 * @author Shlok Lande
 * @date Sep 21 2026
-******************************************************************************/
+*/
 
 #ifndef INC_CANBUSLOAD_H_
 #define INC_CANBUSLOAD_H_
@@ -46,7 +46,7 @@
  *
  * @return The total number of CAN bus bits in the sliding window as a float.
  */
- float CanloadCalculateTotalBits();
+static float CanloadCalculateTotalBits();
 
   /**
  * @brief Calculates the current bus load as a percentage.
@@ -59,7 +59,7 @@
  *
  * @return The current bus load as a percentage as a float.
  */
-float CanloadCalculateBusLoad();
+static float CanloadCalculateBusLoad();
 
 /**
  * @brief Returns the current bus load as a percentage.

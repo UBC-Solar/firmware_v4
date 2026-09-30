@@ -1,4 +1,4 @@
-/******************************************************************************
+/*
 * @file    canload.c
 * @brief   Function to determine how much of the CAN bus is being occupied at a given time
 *
@@ -6,7 +6,7 @@
 *
 * @author Shlok Lande
 * @date Sep 21 2026
-******************************************************************************/
+*/
 
 #include "canload.h"
 #include "can_driver.h"
@@ -70,7 +70,7 @@ void CanloadUpdateSlidingWindow()
 }
 
 
- float CanloadCalculateTotalBits()
+static float CanloadCalculateTotalBits()
  {
      uint32_t sliding_sum = 0;
      for (uint8_t i = 0; i < WINDOW_SIZE; i++)
@@ -81,7 +81,7 @@ void CanloadUpdateSlidingWindow()
  }
 
 
-float CanloadCalculateBusLoad()
+static float CanloadCalculateBusLoad()
 {
 	  float total_bits = (float) CanloadCalculateTotalBits();
 	  float window_duration_seconds = (float) WINDOW_SIZE * (float) (CANLOAD_MSG_RATE / 1000.0f);
@@ -97,12 +97,3 @@ float CanloadCalculateBusLoad()
      return CanloadCalculateBusLoad();
  }
  
- void CAN_tx_canload_msg() {
-     CAN_comms_Tx_msg_t CAN_comms_Tx_msg = {
-         .data[0] = (uint8_t) CanloadGetBusLoad(),
-         .header = CANLOAD_busload
-     };  
- 
-   CanloadCalculateMessageBits(CAN_comms_Tx_msg.header.DLC, CAN_comms_Tx_msg.header.IDE);
-   CAN_comms_Add_Tx_message(&CAN_comms_Tx_msg);
- }

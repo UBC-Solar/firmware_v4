@@ -6,12 +6,12 @@
 #include "mdi_driver.h"
 #include "rtd_driver.h"
 #include "main.h"
-#include "sunlite_ota_can_app.h"
+#include "fw_update_can_app.h"
 
 void AppMain(void)
 {
     CanAppInit();
-    SunliteOtaCanAppInit(&hcan);
+    FirmwareUpdateCanAppInit(&hcan);
     RtdDriverInit();
     DiagnosticInit();
     DiagnosticSendFlags();
@@ -22,7 +22,7 @@ void AppMain(void)
 
     for (;;)
     {
-        SunliteOtaCanAppPoll();
+        FirmwareUpdateCanAppPoll();
         uint32_t now = HAL_GetTick();
 
         if ((uint32_t)(now - last_diagnostic_tick) >= MDI_DIAGNOSTICS_DELAY)

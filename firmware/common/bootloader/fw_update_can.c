@@ -1,19 +1,19 @@
-#include "sunlite_ota_can.h"
+#include "fw_update_can.h"
 
 #include <string.h>
 
-#define SUNLITE_OTA_TARGET_MDI 0x4D444920U
-#define SUNLITE_OTA_TARGET_DRD 0x44524420U
-#define SUNLITE_OTA_TARGET_STR 0x53545220U
-#define SUNLITE_OTA_TARGET_HVC 0x48564320U
-#define SUNLITE_OTA_TARGET_MST 0x4D535420U
+#define FW_UPDATE_TARGET_MDI 0x4D444920U
+#define FW_UPDATE_TARGET_DRD 0x44524420U
+#define FW_UPDATE_TARGET_STR 0x53545220U
+#define FW_UPDATE_TARGET_HVC 0x48564320U
+#define FW_UPDATE_TARGET_MST 0x4D535420U
 
 static bool SendCanFrame(void *user,
                          uint32_t extended_id,
                          const uint8_t data[8],
                          uint8_t dlc)
 {
-    SunliteOtaCanLink *link = (SunliteOtaCanLink *)user;
+    FirmwareUpdateCanLink *link = (FirmwareUpdateCanLink *)user;
     if ((link == NULL) || (link->handle == NULL) || (dlc > 8U)) {
         return false;
     }
@@ -37,7 +37,7 @@ static bool SendCanFrame(void *user,
     return sent;
 }
 
-static bool ConfigureReceiveFilter(SunliteOtaCanLink *link)
+static bool ConfigureReceiveFilter(FirmwareUpdateCanLink *link)
 {
     CAN_FilterTypeDef filter = {0};
     uint32_t id = link->transport.receive_id;
@@ -48,14 +48,14 @@ static bool ConfigureReceiveFilter(SunliteOtaCanLink *link)
     filter.FilterMaskIdHigh = filter.FilterIdHigh;
     filter.FilterMaskIdLow = filter.FilterIdLow;
     filter.FilterFIFOAssignment = CAN_FILTER_FIFO1;
-    filter.FilterBank = SUNLITE_OTA_CAN_FILTER_BANK;
+    filter.FilterBank = FW_UPDATE_CAN_FILTER_BANK;
     filter.FilterMode = CAN_FILTERMODE_IDLIST;
     filter.FilterScale = CAN_FILTERSCALE_32BIT;
     filter.FilterActivation = ENABLE;
     return HAL_CAN_ConfigFilter(link->handle, &filter) == HAL_OK;
 }
 
-bool SunliteOtaCanLinkInit(SunliteOtaCanLink *link,
+bool FirmwareUpdateCanLinkInit(FirmwareUpdateCanLink *link,
                            CAN_HandleTypeDef *handle,
                            uint8_t local_address,
                            uint8_t peer_address)
@@ -65,12 +65,12 @@ bool SunliteOtaCanLinkInit(SunliteOtaCanLink *link,
     }
     memset(link, 0, sizeof(*link));
     link->handle = handle;
-    SunliteOtaCanInit(&link->transport,
+    FirmwareUpdateCanInit(&link->transport,
                       local_address,
                       peer_address,
                       SendCanFrame,
                       link,
-                      SUNLITE_OTA_CAN_DEFAULT_TIMEOUT_MS);
+                      FW_UPDATE_CAN_DEFAULT_TIMEOUT_MS);
     if (!ConfigureReceiveFilter(link)) {
         return false;
     }
@@ -84,25 +84,25 @@ bool SunliteOtaCanLinkInit(SunliteOtaCanLink *link,
     return link->initialized;
 }
 
-bool SunliteOtaCanLinkSetPeer(SunliteOtaCanLink *link,
+bool FirmwareUpdateCanLinkSetPeer(FirmwareUpdateCanLink *link,
                               uint8_t peer_address)
 {
     if ((link == NULL) || !link->initialized) {
         return false;
     }
     uint8_t previous_peer = link->transport.peer_address;
-    if (!SunliteOtaCanSetPeer(&link->transport, peer_address)) {
+    if (!FirmwareUpdateCanSetPeer(&link->transport, peer_address)) {
         return false;
     }
     if (ConfigureReceiveFilter(link)) {
         return true;
     }
-    (void)SunliteOtaCanSetPeer(&link->transport, previous_peer);
+    (void)FirmwareUpdateCanSetPeer(&link->transport, previous_peer);
     (void)ConfigureReceiveFilter(link);
     return false;
 }
 
-void SunliteOtaCanLinkPoll(SunliteOtaCanLink *link)
+void FirmwareUpdateCanLinkPoll(FirmwareUpdateCanLink *link)
 {
     if ((link == NULL) || !link->initialized) {
         return;
@@ -120,76 +120,76 @@ void SunliteOtaCanLinkPoll(SunliteOtaCanLink *link)
         if ((header.IDE == CAN_ID_EXT) &&
             (header.RTR == CAN_RTR_DATA) &&
             (header.DLC <= 8U)) {
-            (void)SunliteOtaCanOnFrame(&link->transport,
+            (void)FirmwareUpdateCanOnFrame(&link->transport,
                                        header.ExtId,
                                        data,
                                        (uint8_t)header.DLC,
                                        HAL_GetTick());
         }
     }
-    SunliteOtaCanPoll(&link->transport, HAL_GetTick());
+    FirmwareUpdateCanPoll(&link->transport, HAL_GetTick());
 }
 
-bool SunliteOtaCanLinkSendFrame(SunliteOtaCanLink *link,
+bool FirmwareUpdateCanLinkSendFrame(FirmwareUpdateCanLink *link,
                                 const uint8_t *encoded,
                                 size_t encoded_length)
 {
     return (link != NULL) && link->initialized &&
-           SunliteOtaCanSendFrame(&link->transport,
+           FirmwareUpdateCanSendFrame(&link->transport,
                                   encoded,
                                   encoded_length,
                                   HAL_GetTick());
 }
 
-bool SunliteOtaCanLinkPeekFrame(const SunliteOtaCanLink *link,
+bool FirmwareUpdateCanLinkPeekFrame(const FirmwareUpdateCanLink *link,
                                 const uint8_t **encoded,
                                 size_t *encoded_length)
 {
     return (link != NULL) && link->initialized &&
-           SunliteOtaCanPeekFrame(&link->transport,
+           FirmwareUpdateCanPeekFrame(&link->transport,
                                   encoded,
                                   encoded_length);
 }
 
-void SunliteOtaCanLinkConsumeFrame(SunliteOtaCanLink *link)
+void FirmwareUpdateCanLinkConsumeFrame(FirmwareUpdateCanLink *link)
 {
     if (link != NULL) {
-        SunliteOtaCanConsumeFrame(&link->transport);
+        FirmwareUpdateCanConsumeFrame(&link->transport);
     }
 }
 
-bool SunliteOtaCanLinkTxBusy(const SunliteOtaCanLink *link)
+bool FirmwareUpdateCanLinkTxBusy(const FirmwareUpdateCanLink *link)
 {
-    return (link != NULL) && SunliteOtaCanTxBusy(&link->transport);
+    return (link != NULL) && FirmwareUpdateCanTxBusy(&link->transport);
 }
 
-void SunliteOtaCanLinkAbort(SunliteOtaCanLink *link)
+void FirmwareUpdateCanLinkAbort(FirmwareUpdateCanLink *link)
 {
     if (link != NULL) {
-        SunliteOtaCanAbort(&link->transport);
+        FirmwareUpdateCanAbort(&link->transport);
     }
 }
 
-bool SunliteOtaCanTargetToNode(uint32_t target_id, uint8_t *node_id)
+bool FirmwareUpdateCanTargetToNode(uint32_t target_id, uint8_t *node_id)
 {
     if (node_id == NULL) {
         return false;
     }
     switch (target_id) {
-    case SUNLITE_OTA_TARGET_MDI:
-        *node_id = SUNLITE_OTA_CAN_NODE_MDI;
+    case FW_UPDATE_TARGET_MDI:
+        *node_id = FW_UPDATE_CAN_NODE_MDI;
         return true;
-    case SUNLITE_OTA_TARGET_DRD:
-        *node_id = SUNLITE_OTA_CAN_NODE_DRD;
+    case FW_UPDATE_TARGET_DRD:
+        *node_id = FW_UPDATE_CAN_NODE_DRD;
         return true;
-    case SUNLITE_OTA_TARGET_STR:
-        *node_id = SUNLITE_OTA_CAN_NODE_STR;
+    case FW_UPDATE_TARGET_STR:
+        *node_id = FW_UPDATE_CAN_NODE_STR;
         return true;
-    case SUNLITE_OTA_TARGET_HVC:
-        *node_id = SUNLITE_OTA_CAN_NODE_HVC;
+    case FW_UPDATE_TARGET_HVC:
+        *node_id = FW_UPDATE_CAN_NODE_HVC;
         return true;
-    case SUNLITE_OTA_TARGET_MST:
-        *node_id = SUNLITE_OTA_CAN_NODE_MST;
+    case FW_UPDATE_TARGET_MST:
+        *node_id = FW_UPDATE_CAN_NODE_MST;
         return true;
     default:
         return false;

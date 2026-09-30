@@ -90,7 +90,7 @@ bool TelOtaSafetyTestBypassEnabled(void)
 /**
  * @brief TEL OTA interlock used for both local and gateway-routed updates.
  */
-bool SunliteOtaBoardUpdateAllowed(void)
+bool FirmwareUpdateBoardUpdateAllowed(void)
 {
     if (TelOtaSafetyTestBypassEnabled()) {
         return true;
@@ -106,7 +106,7 @@ bool SunliteOtaBoardUpdateAllowed(void)
 /**
  * @brief Yield the dedicated OTA task while waiting for routed CAN traffic.
  */
-void SunliteOtaBoardYield(void)
+void FirmwareUpdateBoardYield(void)
 {
     osDelay(1U);
 }

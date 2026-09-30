@@ -48,22 +48,22 @@ static void ResetFixture(void)
 static void TestOneTrialLaunchAndConfirmation(void)
 {
     ResetFixture();
-    assert(SunliteOtaArmTrialBoot());
+    assert(FirmwareUpdateArmTrialBoot());
     assert((test_bkp_registers.DR8 & 0xFFFFU) == TRIAL_ARMED);
     assert((test_bkp_registers.DR9 & 0xFFFFU) == TRIAL_ARMED_CHECK);
-    assert(!SunliteOtaTrialBootRequiresRecovery());
+    assert(!FirmwareUpdateTrialBootRequiresRecovery());
 
-    assert(SunliteOtaPrepareAppLaunch());
+    assert(FirmwareUpdatePrepareAppLaunch());
     assert((test_bkp_registers.DR8 & 0xFFFFU) == TRIAL_LAUNCHED);
     assert((test_bkp_registers.DR9 & 0xFFFFU) == TRIAL_LAUNCHED_CHECK);
-    assert(SunliteOtaTrialBootRequiresRecovery());
-    assert(!SunliteOtaPrepareAppLaunch());
+    assert(FirmwareUpdateTrialBootRequiresRecovery());
+    assert(!FirmwareUpdatePrepareAppLaunch());
 
-    assert(SunliteOtaConfirmTrialBoot());
+    assert(FirmwareUpdateConfirmTrialBoot());
     assert(test_bkp_registers.DR8 == 0U);
     assert(test_bkp_registers.DR9 == 0U);
-    assert(!SunliteOtaTrialBootRequiresRecovery());
-    assert(SunliteOtaPrepareAppLaunch());
+    assert(!FirmwareUpdateTrialBootRequiresRecovery());
+    assert(FirmwareUpdatePrepareAppLaunch());
 }
 
 static void TestTornMarkerFailsClosed(void)
@@ -71,62 +71,62 @@ static void TestTornMarkerFailsClosed(void)
     ResetFixture();
     test_bkp_registers.DR8 = TRIAL_ARMED;
     test_bkp_registers.DR9 = 0U;
-    assert(SunliteOtaTrialBootRequiresRecovery());
-    assert(!SunliteOtaPrepareAppLaunch());
-    assert(!SunliteOtaConfirmTrialBoot());
+    assert(FirmwareUpdateTrialBootRequiresRecovery());
+    assert(!FirmwareUpdatePrepareAppLaunch());
+    assert(!FirmwareUpdateConfirmTrialBoot());
 
     /* A subsequent authenticated update can replace a torn marker. */
-    assert(SunliteOtaArmTrialBoot());
-    assert(!SunliteOtaTrialBootRequiresRecovery());
+    assert(FirmwareUpdateArmTrialBoot());
+    assert(!FirmwareUpdateTrialBootRequiresRecovery());
 }
 
 static void TestTrialWriteReadbackFailureFailsClosed(void)
 {
     ResetFixture();
     fail_backup_write_call = 2U;
-    assert(!SunliteOtaArmTrialBoot());
-    assert(SunliteOtaTrialBootRequiresRecovery());
-    assert(!SunliteOtaPrepareAppLaunch());
+    assert(!FirmwareUpdateArmTrialBoot());
+    assert(FirmwareUpdateTrialBootRequiresRecovery());
+    assert(!FirmwareUpdatePrepareAppLaunch());
 
     ResetFixture();
-    assert(SunliteOtaArmTrialBoot());
-    assert(SunliteOtaPrepareAppLaunch());
+    assert(FirmwareUpdateArmTrialBoot());
+    assert(FirmwareUpdatePrepareAppLaunch());
     backup_write_calls = 0U;
     fail_backup_write_call = 2U;
-    assert(!SunliteOtaConfirmTrialBoot());
-    assert(SunliteOtaTrialBootRequiresRecovery());
+    assert(!FirmwareUpdateConfirmTrialBoot());
+    assert(FirmwareUpdateTrialBootRequiresRecovery());
 }
 
 static void TestBootRequestRequiresSoftwareReset(void)
 {
     ResetFixture();
     test_rcc_registers.CSR = RCC_CSR_IWDGRSTF;
-    assert(!SunliteOtaConsumeBootloaderRequest());
+    assert(!FirmwareUpdateConsumeBootloaderRequest());
     assert(test_rcc_registers.CSR == RCC_CSR_IWDGRSTF);
     assert(clear_reset_flags_calls == 0U);
 
     test_rcc_registers.CSR = RCC_CSR_PORRSTF;
-    SunliteOtaRequestBootloader();
+    FirmwareUpdateRequestBootloader();
     assert(clear_reset_flags_calls == 1U);
     assert((test_bkp_registers.DR10 & 0xFFFFU) == BOOT_REQUEST_MAGIC);
 
     test_rcc_registers.CSR = RCC_CSR_SFTRSTF | RCC_CSR_PINRSTF;
-    assert(SunliteOtaConsumeBootloaderRequest());
+    assert(FirmwareUpdateConsumeBootloaderRequest());
     assert(test_bkp_registers.DR10 == 0U);
     assert(test_rcc_registers.CSR ==
            (RCC_CSR_SFTRSTF | RCC_CSR_PINRSTF));
     assert(clear_reset_flags_calls == 1U);
 
-    SunliteOtaRequestBootloader();
+    FirmwareUpdateRequestBootloader();
     test_rcc_registers.CSR = RCC_CSR_SFTRSTF | RCC_CSR_IWDGRSTF;
-    assert(!SunliteOtaConsumeBootloaderRequest());
+    assert(!FirmwareUpdateConsumeBootloaderRequest());
     assert(test_bkp_registers.DR10 == 0U);
     assert(test_rcc_registers.CSR ==
            (RCC_CSR_SFTRSTF | RCC_CSR_IWDGRSTF));
 
-    SunliteOtaRequestBootloader();
+    FirmwareUpdateRequestBootloader();
     test_rcc_registers.CSR = RCC_CSR_PINRSTF;
-    assert(!SunliteOtaConsumeBootloaderRequest());
+    assert(!FirmwareUpdateConsumeBootloaderRequest());
     assert(test_bkp_registers.DR10 == 0U);
 }
 
@@ -136,6 +136,6 @@ int main(void)
     TestTornMarkerFailsClosed();
     TestTrialWriteReadbackFailureFailsClosed();
     TestBootRequestRequiresSoftwareReset();
-    puts("Sunlite OTA trial-boot marker tests passed");
+    puts("Firmware update trial-boot marker tests passed");
     return 0;
 }

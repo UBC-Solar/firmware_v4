@@ -53,7 +53,7 @@ bool BootloaderShouldEnterUpdateMode(void)
      * into a later, unrelated software reset. */
     bool board_requests_update = BootloaderBoardStayInBootloader();
 
-    if (SunliteOtaTrialBootRequiresRecovery()) {
+    if (FirmwareUpdateTrialBootRequiresRecovery()) {
         /* The trial image already ran without completing a targeted
          * BOARD_INFO response, or its redundant marker was torn/corrupted. */
         return true;
@@ -93,7 +93,7 @@ void BootloaderJumpToApp(void)
 {
     /* This check is deliberately centralized: protocol REBOOT, normal boot,
      * and transport idle fallback must all obey the one-launch limit. */
-    if (!BootloaderAppIsValid() || !SunliteOtaPrepareAppLaunch()) {
+    if (!BootloaderAppIsValid() || !FirmwareUpdatePrepareAppLaunch()) {
         return;
     }
 

@@ -2,25 +2,25 @@
 
 #include "bootloader_boot_request.h"
 #include "stm32f1xx_hal.h"
-#include "sunlite_ota_bootloader_engine.h"
-#include "sunlite_ota_can.h"
+#include "fw_update_bootloader_engine.h"
+#include "fw_update_can.h"
 
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
-#ifndef SUNLITE_OTA_CAN_NODE_ID
-#error "SUNLITE_OTA_CAN_NODE_ID must be defined by the board target"
+#ifndef FW_UPDATE_CAN_NODE_ID
+#error "FW_UPDATE_CAN_NODE_ID must be defined by the board target"
 #endif
-#ifndef SUNLITE_OTA_CAN_REMAP
-#error "SUNLITE_OTA_CAN_REMAP must be defined by the board target"
+#ifndef FW_UPDATE_CAN_REMAP
+#error "FW_UPDATE_CAN_REMAP must be defined by the board target"
 #endif
 
-#define SUNLITE_OTA_CAN_RESPONSE_TIMEOUT_MS 2000U
-#define SUNLITE_OTA_CAN_IDLE_BOOT_MS        30000U
+#define FW_UPDATE_CAN_RESPONSE_TIMEOUT_MS 2000U
+#define FW_UPDATE_CAN_IDLE_BOOT_MS        30000U
 
 static CAN_HandleTypeDef update_can;
-static SunliteOtaCanLink can_link;
+static FirmwareUpdateCanLink can_link;
 static bool can_initialized;
 static uint32_t last_request_activity;
 
@@ -30,7 +30,7 @@ static void InitializeCanPins(void)
     __HAL_RCC_AFIO_CLK_ENABLE();
     __HAL_RCC_CAN1_CLK_ENABLE();
 
-#if SUNLITE_OTA_CAN_REMAP
+#if FW_UPDATE_CAN_REMAP
     __HAL_RCC_GPIOB_CLK_ENABLE();
     gpio.Pin = GPIO_PIN_8;
     gpio.Mode = GPIO_MODE_INPUT;
@@ -79,10 +79,10 @@ static void InitializeCan(void)
 
     can_initialized =
         (HAL_CAN_Init(&update_can) == HAL_OK) &&
-        SunliteOtaCanLinkInit(&can_link,
+        FirmwareUpdateCanLinkInit(&can_link,
                               &update_can,
-                              SUNLITE_OTA_CAN_NODE_ID,
-                              SUNLITE_OTA_CAN_TESTER_ADDRESS);
+                              FW_UPDATE_CAN_NODE_ID,
+                              FW_UPDATE_CAN_TESTER_ADDRESS);
 }
 
 static bool SendCanResponse(const uint8_t *frame,
@@ -91,17 +91,17 @@ static bool SendCanResponse(const uint8_t *frame,
 {
     (void)context;
     last_request_activity = HAL_GetTick();
-    if (!SunliteOtaCanLinkSendFrame(&can_link, frame, frame_length)) {
+    if (!FirmwareUpdateCanLinkSendFrame(&can_link, frame, frame_length)) {
         return false;
     }
 
-    uint32_t deadline = HAL_GetTick() + SUNLITE_OTA_CAN_RESPONSE_TIMEOUT_MS;
-    while (SunliteOtaCanLinkTxBusy(&can_link) ||
+    uint32_t deadline = HAL_GetTick() + FW_UPDATE_CAN_RESPONSE_TIMEOUT_MS;
+    while (FirmwareUpdateCanLinkTxBusy(&can_link) ||
            (HAL_CAN_GetTxMailboxesFreeLevel(&update_can) != 3U)) {
         BootloaderServiceWatchdog();
-        SunliteOtaCanLinkPoll(&can_link);
+        FirmwareUpdateCanLinkPoll(&can_link);
         if ((int32_t)(deadline - HAL_GetTick()) <= 0) {
-            SunliteOtaCanLinkAbort(&can_link);
+            FirmwareUpdateCanLinkAbort(&can_link);
             return false;
         }
     }
@@ -110,24 +110,24 @@ static bool SendCanResponse(const uint8_t *frame,
 
 static bool PollOneRequest(void)
 {
-    SunliteOtaCanLinkPoll(&can_link);
+    FirmwareUpdateCanLinkPoll(&can_link);
     const uint8_t *frame = NULL;
     size_t frame_length = 0U;
-    if (!SunliteOtaCanLinkPeekFrame(&can_link, &frame, &frame_length)) {
+    if (!FirmwareUpdateCanLinkPeekFrame(&can_link, &frame, &frame_length)) {
         return false;
     }
-    bool hello_received = SunliteOtaBootloaderProcessFrame(
+    bool hello_received = FirmwareUpdateBootloaderProcessFrame(
         frame,
         frame_length,
         SendCanResponse,
         NULL);
-    SunliteOtaCanLinkConsumeFrame(&can_link);
+    FirmwareUpdateCanLinkConsumeFrame(&can_link);
     return hello_received;
 }
 
 bool BootloaderBoardStayInBootloader(void)
 {
-    return SunliteOtaConsumeBootloaderRequest();
+    return FirmwareUpdateConsumeBootloaderRequest();
 }
 
 void BootloaderEnterUpdateMode(void)
@@ -140,9 +140,9 @@ void BootloaderEnterUpdateMode(void)
             (void)PollOneRequest();
         }
         if (BootloaderAppIsValid() &&
-            !SunliteOtaTrialBootRequiresRecovery() &&
+            !FirmwareUpdateTrialBootRequiresRecovery() &&
             ((uint32_t)(HAL_GetTick() - last_request_activity) >=
-             SUNLITE_OTA_CAN_IDLE_BOOT_MS)) {
+             FW_UPDATE_CAN_IDLE_BOOT_MS)) {
             BootloaderJumpToApp();
         }
     }

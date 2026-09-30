@@ -1,6 +1,6 @@
 # Top level makefile used to make building from the command line simple.
 
-.PHONY: all mdi tel drd hvc mst str nucleo clean help debug release utest ota-contract-test can-flash-test
+.PHONY: all mdi tel drd hvc mst str nucleo clean help debug release utest fw-update-test can-flash-test
 
 PYTHON ?= python3
 
@@ -19,7 +19,7 @@ help:
 	@echo "  make mdi release    - Build MDI in Release"
 	@echo "  make nucleo debug   - Build Nucleo-F103RB bootloader/app test"
 	@echo "  make utest          - Run all unit tests"
-	@echo "  make ota-contract-test - Run OTA wire/crypto, CAN transport, and TEL safety tests"
+	@echo "  make fw-update-test - Run firmware protocol, CAN transport, and recovery tests"
 	@echo "  make can-flash-test - Test the direct CAN sender against the production C transport"
 	@echo "  make utest mdi      - Run unit tests for MDI only"
 	@echo "  make clean          - Remove all build directories"
@@ -93,10 +93,9 @@ utest:
 	@echo "=== Running all unit tests ==="
 # 	cd firmware/components/mdi/ && ./ceedling test:all
 
-ota-contract-test:
-	bash tools/test_ota_contract.sh
+fw-update-test:
+	bash tools/test_fw_update_contract.sh
 	bash firmware/common/bootloader/tests/run_can_transport_tests.sh
-	bash tools/test_tel_ota_safety.sh
 
 can-flash-test:
 	$(PYTHON) -m unittest discover -s tools/tests -p 'test_bootloader_send_can.py' -v

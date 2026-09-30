@@ -4,7 +4,7 @@
 #include "bootloader_crc32.h"
 #include "bootloader_flash.h"
 #include "stm32f1xx_hal.h"
-#include "sunlite_ota_protocol.h"
+#include "fw_update_protocol.h"
 
 #include <string.h>
 
@@ -28,10 +28,10 @@ static bool RecordIsValid(uint32_t address)
     const uint8_t *record = (const uint8_t *)address;
     if ((record[0] != 'S') || (record[1] != 'U') ||
         (record[2] != 'M') || (record[3] != 'D') ||
-        (SunliteOtaReadBe32(&record[4]) != METADATA_SCHEMA)) {
+        (FirmwareUpdateReadBe32(&record[4]) != METADATA_SCHEMA)) {
         return false;
     }
-    uint32_t expected_crc = SunliteOtaReadBe32(&record[METADATA_CRC_OFFSET]);
+    uint32_t expected_crc = FirmwareUpdateReadBe32(&record[METADATA_CRC_OFFSET]);
     uint32_t crc = BootloaderCrc32Finalize(
         BootloaderCrc32Update(BOOTLOADER_CRC32_INITIAL,
                               record,
@@ -42,7 +42,7 @@ static bool RecordIsValid(uint32_t address)
 static uint32_t RecordGeneration(uint32_t address)
 {
     const uint8_t *record = (const uint8_t *)address;
-    return SunliteOtaReadBe32(&record[METADATA_GENERATION_OFFSET]);
+    return FirmwareUpdateReadBe32(&record[METADATA_GENERATION_OFFSET]);
 }
 
 static bool GenerationIsNewer(uint32_t candidate, uint32_t reference)
@@ -76,8 +76,8 @@ bool BootloaderMetadataRead(uint32_t *firmware_version,
         return false;
     }
     const uint8_t *record = (const uint8_t *)address;
-    *firmware_version = SunliteOtaReadBe32(&record[METADATA_VERSION_OFFSET]);
-    *image_size = SunliteOtaReadBe32(&record[METADATA_IMAGE_SIZE_OFFSET]);
+    *firmware_version = FirmwareUpdateReadBe32(&record[METADATA_VERSION_OFFSET]);
+    *image_size = FirmwareUpdateReadBe32(&record[METADATA_IMAGE_SIZE_OFFSET]);
     memcpy(image_sha256, &record[METADATA_SHA256_OFFSET], 32U);
     return true;
 }
@@ -99,16 +99,16 @@ bool BootloaderMetadataWrite(uint32_t firmware_version,
     record[1] = 'U';
     record[2] = 'M';
     record[3] = 'D';
-    SunliteOtaWriteBe32(&record[4], METADATA_SCHEMA);
-    SunliteOtaWriteBe32(&record[METADATA_GENERATION_OFFSET], generation);
-    SunliteOtaWriteBe32(&record[METADATA_VERSION_OFFSET], firmware_version);
-    SunliteOtaWriteBe32(&record[METADATA_IMAGE_SIZE_OFFSET], image_size);
+    FirmwareUpdateWriteBe32(&record[4], METADATA_SCHEMA);
+    FirmwareUpdateWriteBe32(&record[METADATA_GENERATION_OFFSET], generation);
+    FirmwareUpdateWriteBe32(&record[METADATA_VERSION_OFFSET], firmware_version);
+    FirmwareUpdateWriteBe32(&record[METADATA_IMAGE_SIZE_OFFSET], image_size);
     memcpy(&record[METADATA_SHA256_OFFSET], image_sha256, 32U);
     uint32_t crc = BootloaderCrc32Finalize(
         BootloaderCrc32Update(BOOTLOADER_CRC32_INITIAL,
                               record,
                               METADATA_CRC_OFFSET));
-    SunliteOtaWriteBe32(&record[METADATA_CRC_OFFSET], crc);
+    FirmwareUpdateWriteBe32(&record[METADATA_CRC_OFFSET], crc);
 
     FLASH_EraseInitTypeDef erase = {0};
     uint32_t page_error = 0U;

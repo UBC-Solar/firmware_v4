@@ -25,7 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "sunlite_ota_app.h"
+#include "fw_update_app.h"
 #include "can_app.h"
 #include "tasks.h"
 #include "telemetry_driver.h"
@@ -219,7 +219,7 @@ void StartTasksOTA(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    SunliteOtaAppPoll();
+    FirmwareUpdateAppPoll();
     osDelay(1);
   }
   /* USER CODE END StartTasksOTA */

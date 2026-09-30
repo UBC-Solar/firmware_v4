@@ -43,7 +43,7 @@ void HAL_Delay(uint32_t delay_ms);
 #define __HAL_RCC_BKP_CLK_ENABLE() ((void)0)
 #define __HAL_RCC_CLEAR_RESET_FLAGS() TestHalClearResetFlags()
 #define __DSB() ((void)0)
-#define SUNLITE_OTA_BKP_WRITE(destination, value) \
+#define FW_UPDATE_BKP_WRITE(destination, value) \
     TestHalBackupWrite((destination), (uint16_t)(value))
 
 #endif /* STM32F1XX_HAL_H */

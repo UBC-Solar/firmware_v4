@@ -2,20 +2,20 @@
 
 #include "bootloader_boot_request.h"
 #include "stm32f1xx_hal.h"
-#include "sunlite_ota_bootloader_engine.h"
-#include "sunlite_ota_protocol.h"
+#include "fw_update_bootloader_engine.h"
+#include "fw_update_protocol.h"
 
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
-#define SUNLITE_OTA_UART_BAUD       230400U
-#define SUNLITE_OTA_UART_TIMEOUT_MS 1000U
-#define SUNLITE_OTA_UART_IDLE_BOOT_MS 30000U
+#define FW_UPDATE_UART_BAUD       230400U
+#define FW_UPDATE_UART_TIMEOUT_MS 1000U
+#define FW_UPDATE_UART_IDLE_BOOT_MS 30000U
 
 static UART_HandleTypeDef update_uart;
 static bool uart_initialized;
-static uint8_t encoded_frame[SUNLITE_OTA_MAX_ENCODED_FRAME];
+static uint8_t encoded_frame[FW_UPDATE_MAX_ENCODED_FRAME];
 static size_t encoded_length;
 static bool discard_until_delimiter;
 static uint32_t last_request_activity;
@@ -77,7 +77,7 @@ static void InitializeUart(void)
     HAL_GPIO_Init(GPIOD, &gpio);
 
     update_uart.Instance = UART5;
-    update_uart.Init.BaudRate = SUNLITE_OTA_UART_BAUD;
+    update_uart.Init.BaudRate = FW_UPDATE_UART_BAUD;
     update_uart.Init.WordLength = UART_WORDLENGTH_8B;
     update_uart.Init.StopBits = UART_STOPBITS_1;
     update_uart.Init.Parity = UART_PARITY_NONE;
@@ -97,7 +97,7 @@ static bool SendUartFrame(const uint8_t *frame,
            (HAL_UART_Transmit(&update_uart,
                               (uint8_t *)frame,
                               (uint16_t)frame_length,
-                              SUNLITE_OTA_UART_TIMEOUT_MS) == HAL_OK);
+                              FW_UPDATE_UART_TIMEOUT_MS) == HAL_OK);
 }
 
 static bool ConsumeByte(uint8_t byte)
@@ -123,7 +123,7 @@ static bool ConsumeByte(uint8_t byte)
         return false;
     }
 
-    bool hello_received = SunliteOtaBootloaderProcessFrame(
+    bool hello_received = FirmwareUpdateBootloaderProcessFrame(
         encoded_frame,
         encoded_length,
         SendUartFrame,
@@ -134,7 +134,7 @@ static bool ConsumeByte(uint8_t byte)
 
 bool BootloaderBoardStayInBootloader(void)
 {
-    return SunliteOtaConsumeBootloaderRequest();
+    return FirmwareUpdateConsumeBootloaderRequest();
 }
 
 void BootloaderEnterUpdateMode(void)
@@ -149,9 +149,9 @@ void BootloaderEnterUpdateMode(void)
             (void)ConsumeByte(byte);
         }
         if (BootloaderAppIsValid() &&
-            !SunliteOtaTrialBootRequiresRecovery() &&
+            !FirmwareUpdateTrialBootRequiresRecovery() &&
             ((uint32_t)(HAL_GetTick() - last_request_activity) >=
-             SUNLITE_OTA_UART_IDLE_BOOT_MS)) {
+             FW_UPDATE_UART_IDLE_BOOT_MS)) {
             BootloaderJumpToApp();
         }
     }

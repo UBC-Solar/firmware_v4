@@ -28,7 +28,7 @@
 /* USER CODE BEGIN Includes */
 #include "tasks.h"
 #include "can_app.h"
-#include "sunlite_ota_can_app.h"
+#include "fw_update_can_app.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -196,7 +196,7 @@ void StartDefaultTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    SunliteOtaCanAppPoll();
+    FirmwareUpdateCanAppPoll();
     osDelay(1);
   }
   /* USER CODE END StartDefaultTask */

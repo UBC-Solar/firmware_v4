@@ -1,6 +1,6 @@
 #include "bootloader_sha256.h"
 #include "monocypher-ed25519.h"
-#include "sunlite_ota_protocol.h"
+#include "fw_update_protocol.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -13,7 +13,7 @@ static void TestHelloGoldenFrame(void)
         0x01, 0x02, 0x01, 0x01, 0x05, 0xD9, 0xD5, 0x4E, 0x7D, 0x00,
     };
     uint8_t encoded[64];
-    size_t length = SunliteOtaFrameEncode(SUNLITE_OTA_MESSAGE_HELLO,
+    size_t length = FirmwareUpdateFrameEncode(FW_UPDATE_MESSAGE_HELLO,
                                            0x12345678U,
                                            1U,
                                            NULL,
@@ -33,25 +33,25 @@ static void TestBoardInfoGoldenFrame(void)
         0x02, 0x04, 0x01, 0x03, 0x03, 0x70, 0x01, 0x01, 0x01, 0x01,
         0x01, 0x01, 0x01, 0x06, 0x05, 0xB0, 0xB7, 0xCE, 0x5D, 0x00,
     };
-    uint8_t raw[SUNLITE_OTA_MAX_RAW_FRAME];
-    SunliteOtaMessage message;
-    assert(SunliteOtaFrameDecode(encoded,
+    uint8_t raw[FW_UPDATE_MAX_RAW_FRAME];
+    FirmwareUpdateMessage message;
+    assert(FirmwareUpdateFrameDecode(encoded,
                                  sizeof(encoded),
                                  raw,
                                  sizeof(raw),
                                  &message));
-    assert(message.type == SUNLITE_OTA_MESSAGE_BOARD_INFO);
+    assert(message.type == FW_UPDATE_MESSAGE_BOARD_INFO);
     assert(message.session_id == 0x12345678U);
     assert(message.sequence == 1U);
-    assert(message.payload_length == SUNLITE_OTA_BOARD_INFO_SIZE);
-    assert(SunliteOtaReadBe32(&message.payload[0]) == 0x54454C45U);
-    assert(SunliteOtaReadBe32(&message.payload[10]) == 17U);
-    assert(SunliteOtaReadBe32(&message.payload[18]) == 225280U);
+    assert(message.payload_length == FW_UPDATE_BOARD_INFO_SIZE);
+    assert(FirmwareUpdateReadBe32(&message.payload[0]) == 0x54454C45U);
+    assert(FirmwareUpdateReadBe32(&message.payload[10]) == 17U);
+    assert(FirmwareUpdateReadBe32(&message.payload[18]) == 225280U);
 
     uint8_t corrupted[sizeof(encoded)];
     memcpy(corrupted, encoded, sizeof(encoded));
     corrupted[20] ^= 0x40U;
-    assert(!SunliteOtaFrameDecode(corrupted,
+    assert(!FirmwareUpdateFrameDecode(corrupted,
                                   sizeof(corrupted),
                                   raw,
                                   sizeof(raw),
@@ -141,6 +141,6 @@ int main(void)
     TestBoardInfoGoldenFrame();
     TestSha256();
     TestManifestSignatureVector();
-    puts("Sunlite OTA C/Python contract vectors passed");
+    puts("Firmware update C/Python contract vectors passed");
     return 0;
 }

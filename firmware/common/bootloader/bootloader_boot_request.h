@@ -3,8 +3,8 @@
 
 #include <stdbool.h>
 
-void SunliteOtaRequestBootloader(void);
-bool SunliteOtaConsumeBootloaderRequest(void);
+void FirmwareUpdateRequestBootloader(void);
+bool FirmwareUpdateConsumeBootloaderRequest(void);
 
 /*
  * A newly committed image gets one trial launch.  The marker is kept in a
@@ -12,9 +12,9 @@ bool SunliteOtaConsumeBootloaderRequest(void);
  * detected and fails closed.  Applications must confirm only after their
  * targeted BOARD_INFO response has actually been transmitted.
  */
-bool SunliteOtaArmTrialBoot(void);
-bool SunliteOtaPrepareAppLaunch(void);
-bool SunliteOtaTrialBootRequiresRecovery(void);
-bool SunliteOtaConfirmTrialBoot(void);
+bool FirmwareUpdateArmTrialBoot(void);
+bool FirmwareUpdatePrepareAppLaunch(void);
+bool FirmwareUpdateTrialBootRequiresRecovery(void);
+bool FirmwareUpdateConfirmTrialBoot(void);
 
 #endif /* BOOTLOADER_BOOT_REQUEST_H */

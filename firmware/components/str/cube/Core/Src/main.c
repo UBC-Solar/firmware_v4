@@ -30,7 +30,7 @@
 #include "can_app.h"
 #include "tasks.h"
 #include "iwdg_app.h"
-#include "sunlite_ota_can_app.h"
+#include "fw_update_can_app.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -97,7 +97,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_CAN_Init();
-  SunliteOtaCanAppInit(&hcan);
+  FirmwareUpdateCanAppInit(&hcan);
   MX_I2C1_Init();
   MX_UART5_Init();
   MX_IWDG_Init();

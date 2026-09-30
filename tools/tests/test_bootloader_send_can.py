@@ -127,13 +127,13 @@ class NativeBus:
 class DirectCanTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.temp = tempfile.TemporaryDirectory(prefix="sunlite-can-test-")
+        cls.temp = tempfile.TemporaryDirectory(prefix="can-flash-test-")
         output = Path(cls.temp.name) / "peer.so"
         boot = ROOT / "firmware/common/bootloader"
         subprocess.run(shlex.split(os.environ.get("CC", "cc")) + [
             "-std=c11", "-Wall", "-Wextra", "-Werror", "-shared", "-fPIC", f"-I{boot}",
             str(Path(__file__).with_name("can_flash_peer.c")),
-            str(boot / "sunlite_ota_can_transport.c"), str(boot / "sunlite_ota_protocol.c"),
+            str(boot / "fw_update_can_transport.c"), str(boot / "fw_update_protocol.c"),
             "-o", str(output)], check=True)
         cls.lib = ctypes.CDLL(str(output))
         byte_ptr = ctypes.POINTER(ctypes.c_uint8)
@@ -161,6 +161,32 @@ class DirectCanTests(unittest.TestCase):
 
     def run_flash(self):
         return ota.flash(self.client, self.image, self.manifest, lambda _: None)
+
+    def test_unsigned_bench_requires_explicit_host_and_board_opt_in(self):
+        with self.assertRaisesRegex(ota.FlashError, "unsigned bench"):
+            ota.flash(self.client, self.image, self.manifest, unsigned_bench=True)
+        self.bus.capabilities = 17
+        with self.assertRaisesRegex(ota.FlashError, "signature"):
+            self.run_flash()
+        result = ota.flash(self.client, self.image, self.manifest,
+                           lambda _: None, unsigned_bench=True)
+        self.assertEqual(result["firmware_version"], 2)
+        self.assertEqual(self.bus.image, self.image)
+
+    def test_unsigned_image_needs_no_private_key(self):
+        with tempfile.TemporaryDirectory() as directory:
+            elf = Path(directory) / "mdi.elf"
+            Path(str(elf) + ".ota.json").write_text(json.dumps({
+                "schema": 1, "targetId": self.bus.target,
+                "hardwareRevisionMin": 1, "hardwareRevisionMax": 1,
+                "firmwareVersion": 2, "minimumBootloaderVersion": 1}))
+            def objcopy(command, check):
+                Path(command[-1]).write_bytes(self.image)
+            with patch.object(ota.subprocess, "run", side_effect=objcopy):
+                image, manifest = ota.prepare_image(elf, self.bus.target,
+                    "/nonexistent/key", "objcopy", unsigned_bench=True)
+            self.assertEqual(manifest, self.manifest)
+            self.assertEqual(image, self.image)
 
     def test_golden_hello(self):
         self.assertEqual(ota.encode_message(ota.HELLO, 0x12345678, 1).hex(),

@@ -25,16 +25,16 @@ def main() -> int:
         raise SystemExit("OTA public key must be an Ed25519 SubjectPublicKeyInfo PEM key")
     raw = der[len(ED25519_SUBJECT_PUBLIC_KEY_INFO_PREFIX):]
     values = ", ".join(f"0x{byte:02X}" for byte in raw)
-    content = f"""#ifndef SUNLITE_OTA_PUBLIC_KEY_H
-#define SUNLITE_OTA_PUBLIC_KEY_H
+    content = f"""#ifndef FW_UPDATE_PUBLIC_KEY_H
+#define FW_UPDATE_PUBLIC_KEY_H
 
 #include <stdint.h>
 
-static const uint8_t sunlite_ota_public_key[32] = {{
+static const uint8_t fw_update_public_key[32] = {{
     {values}
 }};
 
-#endif /* SUNLITE_OTA_PUBLIC_KEY_H */
+#endif /* FW_UPDATE_PUBLIC_KEY_H */
 """
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(content, encoding="utf-8")

@@ -85,7 +85,7 @@ float CanloadCalculateBusLoad()
 {
 	  float total_bits = (float) CanloadCalculateTotalBits();
 	  float window_duration_seconds = (float) WINDOW_SIZE * (float) (CANLOAD_MSG_RATE / 1000.0f);
-	  float max_bits_in_window = window_duration_seconds * (float) BAUD_RATE;
+	  float max_bits_in_window = window_duration_seconds * (float) BIT_RATE;
 	  float load_percentage = (total_bits / max_bits_in_window) * 100.0f;
 
 	  return load_percentage;

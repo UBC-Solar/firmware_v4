@@ -16,7 +16,7 @@
 #include "main.h"
 #define CANLOAD_MSG_RATE 100
 
-#define BAUD_RATE 500000
+#define BIT_RATE 500000
 #define SOF_BITS 1
 #define STANDARD_ID_BITS 11
 #define EXTENDED_ID_BITS 29

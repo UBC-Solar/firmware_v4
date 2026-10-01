@@ -22,6 +22,13 @@
 void StrState(void);
 
 /**
+ * @brief Stores the latest vehicle velocity.
+ * @param velocity_kmh Vehicle velocity in km/h.
+ * @return Stored vehicle velocity in km/h.
+ */
+uint32_t GPIOAppSetVehicleVelocity(uint32_t velocity_kmh);
+
+/**
  * @brief Stores the latest vehicle velocity for GPIO app state.
  * @param velocity_kmh Vehicle velocity in km/h.
  * @return Stored vehicle velocity in km/h.
@@ -32,19 +39,19 @@ uint32_t GpioAppSetVelocity(uint32_t velocity_kmh);
  * @brief Reads the latest stored vehicle velocity.
  * @return Current vehicle velocity in km/h.
  */
-uint32_t ReadCurrentVelocity(void);
+uint32_t GPIOAppGetVehicleVelocity(void);
 
 /**
  * @brief Stores the current cruise control set velocity.
  * @param velocity_kmh Cruise set velocity in km/h.
  * @return Stored cruise set velocity in km/h.
  */
-uint32_t GetCruiseSetVelocity(uint32_t velocity_kmh);
+uint32_t GPIOAppSetCruiseVelocity(uint32_t velocity_kmh);
 
 /**
  * @brief Reads the current cruise control set velocity.
  * @return Cruise set velocity in km/h.
  */
-uint32_t ReadCruiseSetVelocity(void);
+uint32_t GPIOAppGetCruiseVelocity(void);
 
 #endif // GPIO_APP_H

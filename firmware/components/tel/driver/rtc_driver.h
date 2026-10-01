@@ -11,6 +11,7 @@
 #define __RTC__DRIVER__H__
 
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct {
     uint8_t seconds;

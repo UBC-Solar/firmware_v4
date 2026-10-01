@@ -50,11 +50,15 @@ Presets `Debug` and `Release` are defined per board in `firmware/components/<boa
   suffix), so a `make`-only build leaves clangd/IDE indexing broken. Run the direct-CMake form
   above at least once per board you're editing.
 - **`make <board> Release` silently builds Debug.** The Makefile only matches lowercase
-  `debug`/`release` in `MAKECMDGOALS`. CI (`.github/workflows/firmware_all.yml`) passes the
-  capitalized `Release`, so CI's "Release" builds are actually Debug.
-- **`make utest` is a no-op** — the Ceedling invocations in the Makefile are commented out. CI's
-  unit-test job therefore passes vacuously. `tools/ceedling/` holds a vendored Ceedling 1.0.1
-  and a `project.yml`, and `drd/test/` + `tel/cube/test/` hold stub test files.
+  `debug`/`release` in `MAKECMDGOALS`. CI (`.github/workflows/firmware_all.yml`) uses
+  lowercase selectors and checks both configurations for all six boards.
+- **`make utest` runs DRD, MDI, TEL, and STR SIL tests** using `bundle exec ceedling` (1.1.8) and native `gcc`.
+  Install dependencies with `bundle install`; versions live in `Gemfile.lock`.
+  Cases live in `<board>/test/test_ceedling_*.c`, board helpers in `test/support/`,
+  and shared native HAL support in `firmware/test/support/`. Hardware scripts
+  live in `test/test_scripts/` and are excluded from Ceedling discovery.
+  It verifies a fresh report with a nonzero executed-test count. See `docs/SIL_TESTING.md`.
+  `tools/ceedling/` is legacy vendored 1.0.1 and is not used by the active SIL suites.
 - `dist` is absent from `make all` and from `make clean`.
 - `.vscode/settings.json` currently has JSON syntax errors (missing commas), so VS Code may
   ignore it.
@@ -194,5 +198,5 @@ Empty placeholder directory — no firmware yet.
 - `tools/Simulate_CAN_Bus/` — Python CAN bus simulator. `./setup.sh`, then
   `source environment/bin/activate`, then `python main.py`. Messages, burst sizes, intervals,
   and per-board startup delays are defined in `can_messages.yaml`.
-- `tools/ceedling/` — vendored Ceedling 1.0.1 for host-side unit tests (not currently wired
-  into `make utest`).
+- `tools/ceedling/` — legacy vendored Ceedling 1.0.1. SIL uses the pinned 1.1.8 gem
+  via Bundler (`Gemfile` / `Gemfile.lock`); `make utest` calls Ceedling directly.

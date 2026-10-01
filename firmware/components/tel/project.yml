@@ -20,10 +20,11 @@
     - driver
     - ../../test/support
     - cube/Core/Inc
-    - ../../common/CAN_comms
-    - ../../common/debug_io
-    - ../../common/cyclic_data
     - test/support
+    - ../../common/CAN_comms
+    - ../../common/car_configs
+    # Declarations only; the RTOS implementation is not linked.
+    - cube/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2
 
 :plugins:
   :enabled:
@@ -47,6 +48,14 @@
   :test:
     - TEST
 
+:unity:
+  :defines:
+    - UNITY_INCLUDE_DOUBLE
+
 :libraries:
   :system:
     - m
+
+# RTC epoch expectations use UTC on every host.
+:environment:
+  - :tz: UTC

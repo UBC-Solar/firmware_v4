@@ -15,6 +15,20 @@
 #include "telemetry_app.h"
 #include "diagnostics.h"
 #include "imu_app.h"
+#include "canload.h"
+
+/* CAN Load task */
+void TasksCanload(void *argument)
+{
+    (void)argument;
+
+    for(;;)
+    {
+        CanloadUpdateSlidingWindow();
+        CAN_tx_canload_msg();
+        osDelay(CANLOAD_TASK_DELAY);  
+    }
+}
 
 /* IMU TASK */
 void TasksIMU(void* argument)

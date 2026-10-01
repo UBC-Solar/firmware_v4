@@ -143,4 +143,14 @@ static CanFilter_t filter_whitelist[]  __attribute__((unused)) = {
  */
 void CanAppInit();
 
+
+
+/**
+ * @brief Transmit ht CANload.
+ * @param None
+ * @retval None
+ */
+void CAN_tx_canload_msg();
+
+
 #endif /* __CAN_APP__H__ */

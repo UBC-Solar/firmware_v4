@@ -25,6 +25,7 @@
 /* CAN Message Headers */
 extern const CAN_TxHeaderTypeDef time_since_bootup_can_header;
 extern const CAN_TxHeaderTypeDef tel_flags_can_header;
+extern const CAN_TxHeaderTypeDef CANLOAD_busload;
 
 extern const CAN_TxHeaderTypeDef imu_ag_x;
 extern const CAN_TxHeaderTypeDef imu_ag_y;

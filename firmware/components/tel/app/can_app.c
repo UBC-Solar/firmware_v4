@@ -51,3 +51,12 @@ static void CanAppRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg){
 	TelAppTransmitMsg(CAN_comms_Rx_msg);
 }
 
+void CAN_tx_canload_msg() {
+	CAN_comms_Tx_msg_t CAN_comms_Tx_msg = {
+		.data[0] = (uint8_t) CanloadGetBusLoad(),
+		.header = CANLOAD_busload
+	};  
+
+  CanloadCalculateMessageBits(CAN_comms_Tx_msg.header.DLC, CAN_comms_Tx_msg.header.IDE);
+  CAN_comms_Add_Tx_message(&CAN_comms_Tx_msg);
+}

@@ -48,6 +48,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/tasks.c
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/interrupts.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/imu_app.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/canload.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/can_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/rtc_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/diagnostics.c

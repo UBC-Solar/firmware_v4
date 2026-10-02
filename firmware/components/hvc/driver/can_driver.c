@@ -240,7 +240,8 @@ void CAN_SendFaultMsg()
                         (fault_flags.tel_heartbeat_timeout << 0);
 
     txMessage.data[1] = (fault_flags.mst_heartbeat_timeout << 7) |
-                        (fault_flags.dist_heartbeat_timeout << 6);  
+                        (fault_flags.dist_heartbeat_timeout << 6) |
+                        (fault_flags.watchdog_reset_error << 5);  
 
     CAN_QueueTxMessage(&txMessage);
 }

@@ -21,6 +21,7 @@
 #include "adc.h"
 #include "can.h"
 #include "dma.h"
+#include "hvc_fsm.h"
 #include "i2c.h"
 #include "tim.h"
 #include "usart.h"
@@ -190,8 +191,12 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
     /* User can add his own implementation to report the HAL error return state */
     __disable_irq();
+    open_all_contactors();
     while (1)
     {
+      HAL_GPIO_TogglePin(FAULT_LED_GPIO_Port, FAULT_LED_Pin);
+      HAL_GPIO_TogglePin(DEBUG_LED_GPIO_Port, DEBUG_LED_Pin);
+      for (volatile uint32_t i = 0; i < 2000000U; i++) { }   
     }
   /* USER CODE END Error_Handler_Debug */
 }

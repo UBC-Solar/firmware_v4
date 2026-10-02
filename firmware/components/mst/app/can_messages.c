@@ -15,27 +15,39 @@ void CAN_SendHeartbeatMessage(void) {
     msg.tx_header.RTR = CAN_RTR_DATA;
     msg.tx_header.DLC = 8;
 
-    uint32_t status = 0;
 
     if (HAL_GetTick() - last_heartbeat_time_ms < CAN_STATUS_PERIOD_MS) {
         return;
     }
     last_heartbeat_time_ms = HAL_GetTick();
 
+    uint16_t status = 0;
     status |= (pack_state.error_comm_fail                   ? 1 : 0) << 0;
     status |= (pack_state.error_self_test                   ? 1 : 0) << 1;
-    status |= (pack_faults.bits.fault_over_temperature      ? 1 : 0) << 2;
+    status |= (pack_faults.bits.fault_over_voltage          ? 1 : 0) << 2;
     status |= (pack_faults.bits.fault_under_voltage         ? 1 : 0) << 3;
-    status |= (pack_faults.bits.fault_over_voltage          ? 1 : 0) << 4;
+    status |= (pack_faults.bits.fault_over_temperature      ? 1 : 0) << 4;
     status |= (pack_faults.bits.fault_under_temperature     ? 1 : 0) << 5;
-    status |= (pack_warnings.bits.warn_low_voltage          ? 1 : 0) << 6;
-    status |= (pack_warnings.bits.warn_high_voltage         ? 1 : 0) << 7;
+    status |= (pack_warnings.bits.warn_high_voltage         ? 1 : 0) << 6;
+    status |= (pack_warnings.bits.warn_low_voltage          ? 1 : 0) << 7;
     status |= (pack_warnings.bits.warn_high_temperature     ? 1 : 0) << 8;
-    status |= (pack_state.balancing_active                  ? 1 : 0) << 9;
-    status |= (pack_state.llim_enable                       ? 1 : 0) << 10;
-    status |= (pack_state.hlim_enable                       ? 1 : 0) << 11;
-    status |= (pack_state.balancing_enable                  ? 1 : 0) << 12;
+    status |= (pack_state.llim_enable                       ? 1 : 0) << 9;
+    status |= (pack_state.hlim_enable                       ? 1 : 0) << 10;
+    status |= (pack_state.balancing_enable                  ? 1 : 0) << 11;
+    status |= (pack_state.balancing_active                  ? 1 : 0) << 12;
     status |= (pack_state.scrutineering_enable              ? 1 : 0) << 13;
+
+    // Note pack_state.num_total_comm_fails technically has 32 bits. We truncate it to 16 bits here
+    // to fit the data into the 8-byte heartbeat&status CAN message.
+    // If the number of IsoSPI communication failures exceed 65535 (0xFFFF), we MIGHT have bigger problems
+    // than seeing the exact number of fails over telemetry.
+    uint16_t num_total_comm_fails;
+    if (pack_state.num_total_comm_fails > 0xFFFF) {
+        num_total_comm_fails = 0xFFFF; // maximum value for a 16 bit unsigned integer
+    }
+    else {
+        num_total_comm_fails = pack_state.num_total_comm_fails;
+    } 
 
     msg.data[0] = current_heartbeat & 0xFF;
     msg.data[1] = (current_heartbeat >> 8) & 0xFF;
@@ -43,18 +55,19 @@ void CAN_SendHeartbeatMessage(void) {
     msg.data[3] = (current_heartbeat >> 24) & 0xFF;
     msg.data[4] = status & 0xFF;
     msg.data[5] = (status >> 8) & 0xFF;
-    msg.data[6] = (status >> 16) & 0xFF;
-    msg.data[7] = (status >> 24) & 0xFF;
+    msg.data[6] = num_total_comm_fails & 0xFF;
+    msg.data[7] = (num_total_comm_fails >> 8) & 0xFF;
     
     CAN_QueueTxMessage(&msg);
     current_heartbeat++;
 }
+
 void CAN_SendVoltageSummaryMessage(void) {
     CAN_TxMessage_t msg = {0};
     msg.tx_header.StdId = CAN_MODULE_VOLT_SUMMARY_ID;
     msg.tx_header.IDE = CAN_ID_STD;
     msg.tx_header.RTR = CAN_RTR_DATA;
-    msg.tx_header.DLC = 8;
+    msg.tx_header.DLC = 6;
 
     uint32_t total_voltage = pack_state.total_voltage_mV;
 
@@ -64,8 +77,6 @@ void CAN_SendVoltageSummaryMessage(void) {
     msg.data[3] = (total_voltage >> 24) & 0xFF;
     msg.data[4] = pack_state.min_voltage_idx+1;
     msg.data[5] = pack_state.max_voltage_idx+1;
-    msg.data[6] = 0;
-    msg.data[7] = 0;
 
     CAN_QueueTxMessage(&msg);
 }
@@ -101,7 +112,7 @@ void SendModuleVoltMessage_(uint8_t group_idx) {
                 continue;
             }
 
-            // Note: max value representable with 16 bits is 65536.
+            // Note: max value representable with 16 bits is 65535.
             // If the unit of this value is mV, then we can report a max of 65V.
             // This should be sufficient for cell voltages.
             uint16_t volt_mv_16;

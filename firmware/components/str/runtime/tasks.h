@@ -30,4 +30,6 @@ void TasksDiagnostic(void *argument);
 
 void TimeSinceBootUp(void *argument);
 
+void TasksWDG(void *argument);
+
 #endif /* __TASKS_H__ */

@@ -1,4 +1,4 @@
-/******************************************************************************
+/** 
 * @file    imu_driver.c
 * @brief   reset/boot handling, SH2 feature-enable commands, and sensor report parsing.
 *
@@ -6,7 +6,7 @@
 *
 * @author Shlok Lande
 * @date Aug 19 2026
-******************************************************************************/
+*/
 
 #include "imu_driver.h"
 #include "bitops.h"

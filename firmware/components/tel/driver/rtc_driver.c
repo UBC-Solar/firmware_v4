@@ -1,4 +1,4 @@
-/**<
+/**
  * @file    rtc_driver.c
  * @brief   RTC driver implementation for UBC Solar TEL board
  *

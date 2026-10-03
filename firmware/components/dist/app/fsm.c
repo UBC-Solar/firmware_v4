@@ -2,7 +2,6 @@
 #include "dist_main.h"
 #include "faulting_runtime.h"
 #include "gpio_driver.h"
-#include "led_runtime.h"
 #include "adc_driver.h"
 #include "can_driver.h"
 #include "stm32f1xx_hal.h"
@@ -22,7 +21,6 @@ typedef struct {
 
 static volatile FsmState_t FSM_state;
 static dist_ticks_t ticks;
-static uint8_t led_driver_ready;
 
 /*============================================================================*/
 /* PRIVATE FUNCTION PROTOTYPES */
@@ -54,9 +52,8 @@ static void (*FSM_state_table[])(void) = {
 /*============================================================================*/
 /* PUBLIC FUNCTION IMPLEMENTATIONS */
 
-void FSM_Init(uint8_t led_driver_available)
+void FSM_Init(void)
 {
-    led_driver_ready = led_driver_available;
     ticks.blink_tick = HAL_GetTick();
     ticks.state_tick = HAL_GetTick();
     FSM_state        = FSM_STATE_STARTUP;
@@ -198,11 +195,7 @@ static void state_fault(void)
         DEBUG_LED_Toggle();
         CAN_Send_Fault();
         DEBUG_IO_PRINT("MUX_STATUS: %d\r\n", MUX_STATUS_Read());
-
-        if (led_driver_ready)
-        {
-            IS31FL3236A_DIST_FAULT_Toggle();
-        }
+        // TODO: StatusLedsToggle(STATUS_LEDS_DIST_FAULT) once app/status_leds exists
     }
 }
 

@@ -24,7 +24,6 @@
 /* USER CODE BEGIN Includes */
 #include "can.h"
 #include "can_driver.h"
-#include "i2c.h"
 #include "faulting_runtime.h"
 /* USER CODE END Includes */
 
@@ -248,16 +247,6 @@ void CAN1_RX1_IRQHandler(void)
 void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan)
 {
     CAN_ErrorCallback();
-}
-
-void I2C1_EV_IRQHandler(void)
-{
-    HAL_I2C_EV_IRQHandler(&hi2c1);
-}
-
-void I2C1_ER_IRQHandler(void)
-{
-    HAL_I2C_ER_IRQHandler(&hi2c1);
 }
 
 // eFuse FAULT pins PB12-PB15 all share EXTI15_10.

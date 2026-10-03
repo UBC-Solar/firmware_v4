@@ -1,72 +1,73 @@
-#ifndef _IS31FL3236_DRIVER_H_
-#define _IS31FL3236_DRIVER_H_
+/******************************************************************************
+* @file    is31fl3236_driver.h
+* @brief   Header file for the IS31FL3236 LED driver IC.
+******************************************************************************/
 
-#ifdef __cplusplus
-extern "C"
+// 
+
+#ifndef IS31FL3236_DRIVER_H
+#define IS31FL3236_DRIVER_H
+
+// Includes
+#include "stm32f1xx_hal.h"
+#include <stdint.h>
+
+#define NUM_CHANNELS 36U
+
+#define IS31FL3236_I2C_ADDRESS 0x78U // 8-bit address 0x3C, left-shifted for STM32 HAL I2C functions
+
+
+// LED Current Scale Enum
+typedef enum
 {
-#endif
+    CurrentMax = 0U,     // SL = 00
+    CurrentHalf = 1U,    // SL = 01
+    CurrentThird = 2U,   // SL = 10
+    CurrentQuarter = 3U  // SL = 11
+} LEDCurrentScale_t;
 
-#include <stm32f1xx_hal.h>
-
-#define IS31FL3236_I2C_AD_TO_GND                0x00
-#define IS31FL3236_I2C_AD_TO_SCL                0x02
-#define IS31FL3236_I2C_AD_TO_SDA                0x04
-#define IS31FL3236_I2C_AD_TO_VCC                0x06
-#define IS31FL3236_GET_I2C_ADDR(AD_conn)        (0x78 | AD_conn)
-
-#define IS31FL3236_MAX_CHANNELS                 36
-#define IS31FL3236_MAX_RGB_CHANNELS             (IS31FL3236_MAX_CHANNELS / 3)
-
-#define IS31FL3236_REGISTER_SHUTDOWN            0x00
-#define IS31FL3236_REGISTER_PWM                 0x01
-#define IS31FL3236_REGISTER_LED_CTRL            0x26
-#define IS31FL3236_REGISTER_UPDATE              0x25
-#define IS31FL3236_REGISTER_GLOBAL_CTRL         0x4a
-#define IS31FL3236_REGISTER_RESET               0x4f
-
-#define IS31FL3236_LED_CURRENT_MAX              0x00
-#define IS31FL3236_LED_CURRENT_MAX_DIV_2        0x02
-#define IS31FL3236_LED_CURRENT_MAX_DIV_3        0x04
-#define IS31FL3236_LED_CURRENT_MAX_DIV_4        0x06
-
-#define IS31FL3236_LED_STATE_OFF                0x00
-#define IS31FL3236_LED_STATE_ON                 0x01
-
-#define IS31FL3236_SOFTWARE_SHUTDOWN_ENABLED    0x00
-#define IS31FL3236_SOFTWARE_SHUTDOWN_DISABLED   0x01
-
-#define IS31FL3236_CHIP_DISABLED                GPIO_PIN_RESET
-#define IS31FL3236_CHIP_ENABLED                 GPIO_PIN_SET
+// PWM Frequency Enum
+typedef enum
+{
+FREQ_3KHZ = 0U,      // OFS = 0
+FREQ_22KHZ = 1U     // OFS = 1
+}LED_PWMFrequency_t;
 
 typedef struct
 {
-    I2C_HandleTypeDef* I2C_Bus;
-    uint8_t I2C_Device_Address;
-    uint32_t I2C_Transmit_Timeout_Milliseconds;
-    GPIO_TypeDef* Chip_Enable_Signal_Port;
-    uint16_t Chip_Enable_Signal_Pin;
-    uint8_t RGB_Mode_Color_1;
-    uint8_t RGB_Mode_Color_2;
-    uint8_t RGB_Mode_Color_3;
-} IS31FL3236_InitTypeDef;
+    I2C_HandleTypeDef* hi2c;
+    uint8_t address;
+    GPIO_TypeDef* sdb_port;
+    uint16_t sdb_pin;
+    uint32_t timeout_ms;
+} LEDDriverHandle;
 
-typedef struct
-{
-    IS31FL3236_InitTypeDef Init;
-} IS31FL3236_HandleTypeDef;
+/**
+ * @brief Checks whether the chip acknowledges its I2C address.
+ * Changes no chip state. Works before Init, including while SDB is low.
+ * @param handle Information about is31fl3236 chip, including I2C handle, address, SDB GPIO, and timeout. 
+ * @return HAL_OK if the chip ACKed; HAL_ERROR if not; HAL_BUSY or HAL_TIMEOUT on bus faults
+ */
+HAL_StatusTypeDef LEDDriverIsPresent(const LEDDriverHandle* handle);
 
-void IS31FL3236_Init(IS31FL3236_HandleTypeDef* handle);
-void IS31FL3236_SetChipEnable(IS31FL3236_HandleTypeDef* handle, uint8_t enable_state);
-HAL_StatusTypeDef IS31FL3236_WriteRegister(IS31FL3236_HandleTypeDef* handle, uint8_t register_address, uint8_t value);
-void IS31FL3236_Reset(IS31FL3236_HandleTypeDef* handle);
-void IS31FL3236_Update(IS31FL3236_HandleTypeDef* handle);
-void IS31FL3236_WriteLEDControl(IS31FL3236_HandleTypeDef* handle, uint8_t channel, uint8_t led_current_setting, uint8_t led_state);
-void IS31FL3236_WriteGlobalLEDControl(IS31FL3236_HandleTypeDef* handle, uint8_t led_current_setting, uint8_t led_state);
-void IS31FL3236_WritePWM(IS31FL3236_HandleTypeDef* handle, uint8_t channel, uint8_t pwm_value);
-void IS31FL3236_SetSoftwareShutdown(IS31FL3236_HandleTypeDef* handle, uint8_t software_shutdown_mode);
 
-#ifdef __cplusplus
-}
-#endif
+/** 
+* @brief Initializes the chip for normal operation. Configures PWM frequency, current scale, and enables all channels.
+* @param handle Information about is31fl3236 chip, including I2C handle, address, SDB GPIO, and timeout. 
+* @param current LED current scale (CurrentMax, CurrentHalf, CurrentThird, CurrentQuarter)
+* @param pwm_freq PWM frequency (FREQ_3KHZ, FREQ_22KHZ)
+* @return HAL_OK if successful; HAL_ERROR if invalid parameters; HAL_BUSY or HAL_TIMEOUT on bus faults
+*/
+HAL_StatusTypeDef LEDDriverInit(const LEDDriverHandle* handle,
+                                LEDCurrentScale_t current,
+                                LED_PWMFrequency_t pwm_freq);
+/** 
+* @brief Writes a full frame of PWM values to the chip. Each channel's PWM value is 0-255.
+* @param handle Information about is31fl3236 chip, including I2C handle, address, SDB GPIO, and timeout. 
+* @param pwm Array of 36 PWM values, one per channel
+* @return HAL_OK if successful; HAL_BUSY or HAL_TIMEOUT on bus faults
+ */
+HAL_StatusTypeDef LEDDriverWriteFrame(const LEDDriverHandle* handle,
+                                      const uint8_t pwm[NUM_CHANNELS]);
 
-#endif
+#endif // IS31FL3236_DRIVER_H

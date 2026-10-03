@@ -130,6 +130,20 @@ const osThreadAttr_t TasksDiagnostic_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
 };
 
+/* Definitions for WatchDog */
+osThreadId_t TasksIWDGHandle;
+uint32_t TasksIWDGBuffer[128];
+osStaticThreadDef_t TasksIWDGControlBlock;
+
+const osThreadAttr_t TasksIWDG_attributes = {
+  .name = "TasksIWDG",
+  .cb_mem = &TasksIWDGControlBlock,
+  .cb_size = sizeof(TasksDiagnosticControlBlock),
+  .stack_mem = &TasksDiagnosticBuffer[0],
+  .stack_size = sizeof(TasksDiagnosticBuffer),
+  .priority = (osPriority_t) osPriorityNormal,
+};
+
 /* Definitions for TasksFaultLightFlash */
 osThreadId_t TasksFaultLightFlashHandle;
 uint32_t TasksFaultLightFlashBuffer[128];

@@ -111,8 +111,10 @@ void CAN_comms_init(CAN_comms_config_t* config)
     /* Activate notifications */
     HAL_CAN_ActivateNotification(CAN_comms_config.hcan, CAN_IT_RX_FIFO0_MSG_PENDING);
 
-    /* Start CAN */
-    HAL_CAN_Start(CAN_comms_config.hcan);
+    /* OTA may have started CAN early to install its dedicated FIFO1 filter. */
+    if (HAL_CAN_GetState(CAN_comms_config.hcan) == HAL_CAN_STATE_READY) {
+        HAL_CAN_Start(CAN_comms_config.hcan);
+    }
  }
 
 

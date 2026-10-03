@@ -9,6 +9,24 @@ When adding a firmware project for another device on the car to this repository,
 In addition to the firmware for hardware on the car in `firmware/components/`, any common library code can be found in `firmware/common`, and any tools that have been developed for working with hardware/firmware can be found in the `/tools/` folder. 
 
 
+## Direct CAN flashing
+
+Use `tools/bootloader_send_can.py` to update MDI, DRD, or STR directly:
+
+```text
+Laptop → PCAN USB adapter → CAN bus → selected board
+```
+
+Provision the board-specific bootloader once using J-Link or ST-Link over SWD.
+Build the application with an increasing firmware version, then send it over
+500 kbit/s classic CAN. No Raspberry Pi, SSH, or VS Code OTA extension is needed.
+Debug builds can explicitly enable unsigned bench updates; normal builds verify
+signed firmware. See the [direct CAN guide](tools/README-can-flash.md).
+
+The shared `fw_update_*` firmware names identify the wire protocol and update
+engine used by the CAN sender. Keep those modules. TEL, HVC, MST, and the legacy
+Nucleo UART prototype are not supported by this sender.
+
 ## Contributing
 
 The firmware projects in this repository are written in C and developed using our VS Code STM32-Cube-extension based development environment. But the firmware can be built from anywhere using CMake + Ninja as long as the right dependencies are installed.

@@ -42,6 +42,10 @@ target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
 # Add STM32CubeMX generated sources
 add_subdirectory(cube/cmake/stm32cubemx)
 
+target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
+    -T "${CMAKE_CURRENT_SOURCE_DIR}/cube/STM32F103XX_FLASH.ld"
+)
+
 # Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
@@ -51,6 +55,7 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 file(GLOB_RECURSE COMMON_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../../common/*/*.c")
 
 file(GLOB_RECURSE COMMON_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../../common/*/*.c")
+list(FILTER COMMON_SOURCES EXCLUDE REGEX ".*/common/bootloader/.*")
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
@@ -106,4 +111,17 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
 
     # Add user defined libraries
+)
+
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../common/bootloader/bootloader_target.cmake)
+add_stm32f103_bootloader_target(${CMAKE_PROJECT_NAME}_bootloader ${CMAKE_CURRENT_SOURCE_DIR})
+
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../common/cmake/fw_update_remote_target.cmake)
+configure_fw_update_remote_target(
+    ${CMAKE_PROJECT_NAME}
+    ${CMAKE_PROJECT_NAME}_bootloader
+    DRD
+    0x44524420
+    0x11
+    1
 )

@@ -77,13 +77,7 @@ static void HandleCruiseInterrupt(uint16_t GPIO_Pin)
         case CRUISE_INC_Pin:
         {
 
-            bool cruise_inc_pressed = (HAL_GPIO_ReadPin(CRUISE_INC_GPIO_Port, CRUISE_INC_Pin) == GPIO_PIN_SET);
-
-            gpio_pin_state.cruise_state.cruise_inc = cruise_inc_pressed;
-
-            if (!cruise_inc_pressed) {
-                break;
-            }
+            gpio_pin_state.cruise_state.cruise_inc = true;
 
             if (!gpio_pin_state.cruise_state.cruise_en || (GPIOAppGetVehicleVelocity() == 0U))
             {
@@ -98,13 +92,7 @@ static void HandleCruiseInterrupt(uint16_t GPIO_Pin)
 
         case CRUISE_DEC_Pin:
         {
-            bool cruise_dec_pressed = (HAL_GPIO_ReadPin(CRUISE_DEC_GPIO_Port, CRUISE_DEC_Pin) == GPIO_PIN_SET);
-
-            gpio_pin_state.cruise_state.cruise_dec = cruise_dec_pressed;
-
-            if (!cruise_dec_pressed) {
-                break;
-            }
+            gpio_pin_state.cruise_state.cruise_dec = true;
 
             if (!gpio_pin_state.cruise_state.cruise_en || (GPIOAppGetVehicleVelocity() == 0U))
             {
@@ -125,13 +113,9 @@ static void HandleCruiseInterrupt(uint16_t GPIO_Pin)
         case CRUISE_CONTROL_Pin:
             gpio_pin_state.cruise_state.cruise_en = !gpio_pin_state.cruise_state.cruise_en;
 
-            gpio_pin_state.cruise_state.cruise_inc = false;
-            gpio_pin_state.cruise_state.cruise_dec = false;
-
             if (gpio_pin_state.cruise_state.cruise_en)
             {
                 uint32_t current_velocity_kmh = GPIOAppGetVehicleVelocity();
-
                 GPIOAppSetCruiseVelocity(current_velocity_kmh);
             }
             break;

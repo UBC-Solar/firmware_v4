@@ -128,6 +128,9 @@ void TransmitDriveControlState(void)
     bool cruise_inc_flag = gpio_pin_state.cruise_state.cruise_inc;
     bool cruise_dec_flag = gpio_pin_state.cruise_state.cruise_dec;
 
+    gpio_pin_state.cruise_state.cruise_inc = false;
+    gpio_pin_state.cruise_state.cruise_dec = false;
+
     if (gpio_pin_state.cruise_state.cruise_en)
     {
         cruise_set_velocity_kmh = (uint16_t)GPIOAppGetCruiseVelocity();

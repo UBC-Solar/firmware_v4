@@ -50,11 +50,9 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/app/diagnostic_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/gpio_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/hex_app.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/app/iwdg_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/can_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/gpio_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/hex_driver.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/driver/iwdg_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/tasks.c
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/interrupts.c
 )
@@ -65,6 +63,8 @@ file(GLOB_RECURSE COMMON_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../../common/*/*.c
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${COMMON_SOURCES}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/CAN_comms/CAN_comms.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/iwdg/iwdg_common.c
+
 )
 
 # Add include paths
@@ -75,6 +75,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/CAN_comms
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/cyclic_data
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/car_configs
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/iwdg
+
 )
 
 # Add project symbols (macros)

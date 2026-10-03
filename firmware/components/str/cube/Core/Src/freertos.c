@@ -73,7 +73,7 @@ const osThreadAttr_t TasksSteeringOutputs_attributes = {
   .cb_size = sizeof(TasksSteeringOutputsControlBlock),
   .stack_mem = &TasksSteeringOutputsBuffer[0],
   .stack_size = sizeof(TasksSteeringOutputsBuffer),
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityLow1,
 };
 
 /* Definitions for TasksDiagnostic */
@@ -87,6 +87,20 @@ const osThreadAttr_t TasksDiagnostic_attributes = {
   .cb_size = sizeof(TasksDiagnosticControlBlock),
   .stack_mem = &TasksDiagnosticBuffer[0],
   .stack_size = sizeof(TasksDiagnosticBuffer),
+  .priority = (osPriority_t) osPriorityLow1,
+};
+
+/* Definitions for TasksWatchDog */
+osThreadId_t TasksWDGHandle;
+uint32_t TasksWDGBuffer[128];
+osStaticThreadDef_t TasksWDGControlBlock;
+
+const osThreadAttr_t TasksWDG_attributes = {
+  .name = "TasksWDG",
+  .cb_mem = &TasksWDGControlBlock,
+  .cb_size = sizeof(TasksWDGControlBlock),
+  .stack_mem = &TasksWDGBuffer[0],
+  .stack_size = sizeof(TasksWDGBuffer),
   .priority = (osPriority_t) osPriorityLow,
 };
 
@@ -101,7 +115,7 @@ const osThreadAttr_t TasksTimeSinceBootUp_attributes = {
   .cb_size = sizeof(TasksTimeSinceBootUpControlBlock),
   .stack_mem = &TasksTimeSinceBootUpBuffer[0],
   .stack_size = sizeof(TasksTimeSinceBootUpBuffer),
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityLow1,
 };
 
 /* USER CODE END Variables */
@@ -166,11 +180,14 @@ void MX_FREERTOS_Init(void) {
   /* Initialization for TasksSteeringOutputs */
   TasksSteeringOutputsHandle = osThreadNew(StartSteeringOutputsTask, NULL, &TasksSteeringOutputs_attributes);
   
-/* Initialization for TasksDiagnostic */
+  /* Initialization for TasksDiagnostic */
   TasksDiagnosticHandle = osThreadNew(TasksDiagnostic, NULL, &TasksDiagnostic_attributes);
 
   /* Initialization for TasksTimeSinceBootUp */
   TasksTimeSinceBootUpHandle = osThreadNew(TimeSinceBootUp, NULL, &TasksTimeSinceBootUp_attributes);
+
+  /* Initialization for TasksTimeSinceBootUp */
+  TasksWDGHandle = osThreadNew(TasksWDG, NULL, &TasksWDG_attributes);
 
   /* USER CODE END RTOS_THREADS */
 

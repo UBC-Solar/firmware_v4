@@ -13,10 +13,4 @@
  */
 void DiagnosticTimeSinceBootup();
 
-/**
- * @brief Records whether the last reset was caused by the watchdog.
- * @param reset Watchdog reset state.
- */
-void DiagnosticSetWatchdogReset(bool reset);
-
 #endif /* DIAGNOSTIC_APP_H_ */

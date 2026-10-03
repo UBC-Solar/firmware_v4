@@ -5,7 +5,7 @@
 
 /* INCLUDES */
 #include "tasks.h"
-#include "iwdg_app.h"
+#include "iwdg_common.h"
 #include "cmsis_os.h"
 #include "can_app.h"
 #include "cyclic_data_handler.h"
@@ -13,7 +13,6 @@
 #include "gpio_driver.h"
 #include "hex_driver.h"
 #include "hex_app.h"
-#include "iwdg_app.h"
 #include "diagnostic_app.h"
 #include "main.h"
 #include "stm32f1xx_hal.h"
@@ -46,14 +45,24 @@ void StartHexDisplayTask(void *argument)
 
 void TasksDiagnostic(void *argument)
 {
-    IwdgAppResetHandle();
+
+    for (;;)
+    {
+        
+        osDelay(DIAGNOSTIC_TASK_DELAY);
+    }
+}
+
+void TasksWDG(void *argument)
+{
+    IwdgResetHandle();
 
     for (;;)
     {
         // Refresh the watchdog PPtimer to prevent reset and transmit diagnostics over CAN
-        IwdgAppRefresh(&hiwdg);
+        IwdgRefresh(&hiwdg);
         
-        osDelay(DIAGNOSTIC_TASK_DELAY);
+        osDelay(IWDG_TASK_DELAY);
     }
 }
 

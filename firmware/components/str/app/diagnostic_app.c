@@ -20,7 +20,3 @@ void DiagnosticTimeSinceBootup()
     CAN_comms_Add_Tx_message(&time_since_bootup_can_tx);
 }
 
-void DiagnosticSetWatchdogReset(bool reset)
-{
-    (void)reset;
-}

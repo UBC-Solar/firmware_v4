@@ -29,7 +29,7 @@ typedef enum {
     GPS_DRIVER_READ_FAIL,
 } GpsDriverStatus;
 
-/* Position, velocity and time solution, units as in UBX-NAV-PVT */
+/* Position, velocity and time solution, units as in UBX-NAV-PVT, plus the satellite count from UBX-NAV-SAT */
 typedef struct {
     uint16_t year;
     uint8_t  month;
@@ -48,6 +48,7 @@ typedef struct {
     int32_t  ground_speed_mm_s; // 2D ground speed, mm/s
     int32_t  heading_e5;        // heading of motion, degrees * 1e5
     uint16_t pdop_e2;           // position DOP * 100
+    uint8_t  num_sv_heard;      // satellites with any signal (C/N0 > 0), from UBX-NAV-SAT
 } GpsDriverPvtData;
 
 /**
@@ -64,8 +65,15 @@ GpsDriverStatus GpsDriverInit(void);
 GpsDriverStatus GpsDriverRequestPvt(void);
 
 /**
+ * @brief Requests a UBX-NAV-SAT satellite list from the receiver.
+ * @return GPS_DRIVER_OK on success, GPS_DRIVER_WRITE_FAIL if the I2C write failed
+ */
+GpsDriverStatus GpsDriverRequestSat(void);
+
+/**
  * @brief Reads everything the receiver has queued and parses the UBX frames in it.
- * @param pvt Filled with the newest NAV-PVT solution if one was received
+ * @param pvt Filled with the newest NAV-PVT solution if one was received. num_sv_heard is
+ *            updated separately whenever a NAV-SAT is received.
  * @param new_pvt Set to true if pvt was updated
  * @return GPS_DRIVER_OK on success, GPS_DRIVER_READ_FAIL if an I2C read failed
  */

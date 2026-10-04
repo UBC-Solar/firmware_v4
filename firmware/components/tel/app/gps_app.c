@@ -17,7 +17,7 @@
 #include <string.h>
 
 /* DEFINES */
-#define GPS_APP_RESPONSE_DELAY          100     // ms for the receiver to queue its NAV-PVT reply
+#define GPS_APP_RESPONSE_DELAY          100     // ms for the receiver to queue its NAV-PVT and NAV-SAT replies
 #define GPS_APP_CAN_TX_DELAY            3       // ms between CAN queue and radio, as in diagnostics
 #define GPS_APP_YEAR_OFFSET             2000U
 
@@ -100,8 +100,9 @@ void GpsAppTask(void)
         }
     }
 
-    GpsDriverStatus write_status = GpsDriverRequestPvt();
-    DiagnosticsSetGpsWriteFailFlag(write_status != GPS_DRIVER_OK);
+    bool write_ok = (GpsDriverRequestPvt() == GPS_DRIVER_OK);
+    write_ok = (GpsDriverRequestSat() == GPS_DRIVER_OK) && write_ok;
+    DiagnosticsSetGpsWriteFailFlag(!write_ok);
 
     osDelay(GPS_APP_RESPONSE_DELAY);
 
@@ -171,6 +172,7 @@ static void GpsAppSendStatus(const GpsDriverPvtData* pvt)
         .data[0] = pvt->fix_type,
         .data[1] = flags,
         .data[2] = pvt->num_sv,
+        .data[3] = pvt->num_sv_heard,
         .header = gps_status_can_header,
     };
 

@@ -12,23 +12,18 @@
 #ifndef __CAN_APP__H__
 #define __CAN_APP__H__
 
+#include "can_driver.h"     // IDs of the messages TEL sends (0x750 - 0x759)
+
 // Definitions for CAN IDs (add or adjust as needed)
 #define RTC_TIMESTAMP_MSG_ID            0x300
 
 #define DRD_DIAGNOSTICS_ID                  0x403
 #define MDI_DIAGNOSTICS_ID                  0x501
 #define STR_DIAGNOSTICS_ID                  0x581
-#define TEL_DIAGNOSTICS_ID                  0x751
 
 #define DRD_TIME_SINCE_BOOTUP_ID            0x404
 #define MDI_TIME_SINCE_BOOTUP_ID            0x500
 #define STR_TIME_SINCE_BOOTUP_ID            0x582
-#define TEL_TIME_SINCE_BOOTUP_ID            0x750
-
-#define GPS_LONG_LAT_ID                     0x756
-#define GPS_ALT_SPEED_HEADING_ID            0x757
-#define GPS_STATUS_ID                       0x758
-#define GPS_UTC_TIME_ID                     0x759
 
 #define IMU_AG_X_CAN_MESSAGE_ID 0x800
 #define IMU_AG_Y_CAN_MESSAGE_ID 0x801
@@ -123,16 +118,16 @@ static CanFilter_t filter_whitelist[]  __attribute__((unused)) = {
     { MPPT_B_LIMITS_ID,                     10,    0               },
     { MPPT_C_LIMITS_ID,                     10,    0               },
 
-    { TEL_TIME_SINCE_BOOTUP_ID,             1,     0               },
-    { TEL_DIAGNOSTICS_ID,                   1,     0               },
+    { TIME_SINCE_BOOTUP_CAN_ID,             1,     0               },
+    { TEL_FLAGS_BOOTUP_CAN_ID,              1,     0               },
     { MDU_FRAME_0_ID,                       1,     0               },
     { MDU_FRAME_1_ID,                       5,     0               },
     { MDU_FRAME_2_ID,                       5,     0               },
     { OBC_STATUS_ID,                        1,     0               },
-    { GPS_LONG_LAT_ID,                      1,     0               },
-    { GPS_ALT_SPEED_HEADING_ID,             1,     0               },
-    { GPS_STATUS_ID,                        1,     0               },
-    { GPS_UTC_TIME_ID,                      1,     0               },
+    { GPS_LONG_LAT_CAN_ID,                  1,     0               },
+    { GPS_ALT_SPEED_HEADING_CAN_ID,         1,     0               },
+    { GPS_STATUS_CAN_ID,                    1,     0               },
+    { GPS_UTC_TIME_CAN_ID,                  1,     0               },
 
     { IMU_AG_X_CAN_MESSAGE_ID,              1,     0               },
     { IMU_AG_Y_CAN_MESSAGE_ID,              1,     0               },

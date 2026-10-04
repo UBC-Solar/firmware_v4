@@ -18,20 +18,28 @@
 #define GPS_REG_BYTES_AVAIL         0xFDU
 #define GPS_REG_DATA_STREAM         0xFFU
 #define GPS_READ_CHUNK              128U            // bytes per stream read
-#define GPS_READ_MAX                1024U           // max bytes read per call
+#define GPS_READ_MAX                2048U           // max bytes read per call, fits NAV-PVT + a full NAV-SAT
 
 #define UBX_SYNC_1                  0xB5U
 #define UBX_SYNC_2                  0x62U
 #define UBX_FRAME_OVERHEAD          8U              // sync(2) + class + id + length(2) + checksum(2)
 #define UBX_MAX_TX_PAYLOAD          16U
-#define UBX_MAX_RX_PAYLOAD          100U            // largest message parsed is NAV-PVT (92 bytes)
+#define UBX_MAX_RX_PAYLOAD          100U            // largest message buffered is NAV-PVT (92 bytes)
 
 #define UBX_CLASS_NAV               0x01U
 #define UBX_CLASS_ACK               0x05U
 #define UBX_CLASS_CFG               0x06U
 #define UBX_ID_NAV_PVT              0x07U
+#define UBX_ID_NAV_SAT              0x35U
 #define UBX_ID_CFG_VALSET           0x8AU
 #define UBX_NAV_PVT_LEN             92U
+
+/* UBX-NAV-SAT: 8 byte header, then one 12 byte block per satellite with C/N0 (dBHz) at offset 2.
+ * It is counted as it streams in rather than buffered, as it can be up to 3 KB. */
+#define UBX_NAV_SAT_HEADER_LEN      8U
+#define UBX_NAV_SAT_BLOCK_LEN       12U
+#define UBX_NAV_SAT_CNO_OFFSET      2U
+#define UBX_NAV_SAT_MAX_LEN         (UBX_NAV_SAT_HEADER_LEN + (UBX_NAV_SAT_BLOCK_LEN * 255U))
 
 typedef enum {
     UBX_STATE_SYNC_1 = 0,
@@ -53,6 +61,7 @@ typedef struct {
     uint16_t idx;
     uint8_t  ck_a;
     uint8_t  ck_b;
+    uint8_t  sv_heard;          // NAV-SAT satellites with signal so far, kept if the checksum passes
     uint8_t  payload[UBX_MAX_RX_PAYLOAD];
 } UbxParser;
 
@@ -120,6 +129,15 @@ GpsDriverStatus GpsDriverInit(void)
 GpsDriverStatus GpsDriverRequestPvt(void)
 {
     if (UbxSend(UBX_CLASS_NAV, UBX_ID_NAV_PVT, NULL, 0U) != HAL_OK)
+    {
+        return GPS_DRIVER_WRITE_FAIL;
+    }
+    return GPS_DRIVER_OK;
+}
+
+GpsDriverStatus GpsDriverRequestSat(void)
+{
+    if (UbxSend(UBX_CLASS_NAV, UBX_ID_NAV_SAT, NULL, 0U) != HAL_OK)
     {
         return GPS_DRIVER_WRITE_FAIL;
     }
@@ -250,9 +268,13 @@ static bool UbxParseByte(uint8_t c, GpsDriverPvtData *pvt)
         ps->state = UBX_STATE_LEN_HIGH;
         break;
     case UBX_STATE_LEN_HIGH:
+    {
+        bool is_nav_sat = (ps->cls == UBX_CLASS_NAV) && (ps->id == UBX_ID_NAV_SAT);
+
         ps->len |= (uint16_t)c << 8;
         ps->idx = 0U;
-        if (ps->len > UBX_MAX_RX_PAYLOAD)
+        ps->sv_heard = 0U;
+        if (ps->len > (is_nav_sat ? UBX_NAV_SAT_MAX_LEN : UBX_MAX_RX_PAYLOAD))
         {
             ps->state = UBX_STATE_SYNC_1;   // Not a message we parse, resync on the next frame
         }
@@ -261,8 +283,18 @@ static bool UbxParseByte(uint8_t c, GpsDriverPvtData *pvt)
             ps->state = (ps->len == 0U) ? UBX_STATE_CK_A : UBX_STATE_PAYLOAD;
         }
         break;
+    }
     case UBX_STATE_PAYLOAD:
-        ps->payload[ps->idx++] = c;
+        if (ps->idx < UBX_MAX_RX_PAYLOAD)
+        {
+            ps->payload[ps->idx] = c;
+        }
+        if ((ps->cls == UBX_CLASS_NAV) && (ps->id == UBX_ID_NAV_SAT) && (ps->idx >= UBX_NAV_SAT_HEADER_LEN) &&
+            (((ps->idx - UBX_NAV_SAT_HEADER_LEN) % UBX_NAV_SAT_BLOCK_LEN) == UBX_NAV_SAT_CNO_OFFSET) && (c > 0U))
+        {
+            ps->sv_heard++;
+        }
+        ps->idx++;
         if (ps->idx >= ps->len)
         {
             ps->state = UBX_STATE_CK_A;
@@ -272,11 +304,17 @@ static bool UbxParseByte(uint8_t c, GpsDriverPvtData *pvt)
         ps->state = (c == ps->ck_a) ? UBX_STATE_CK_B : UBX_STATE_SYNC_1;
         break;
     case UBX_STATE_CK_B:
-        if ((c == ps->ck_b) && (ps->cls == UBX_CLASS_NAV) && (ps->id == UBX_ID_NAV_PVT) &&
-            (ps->len >= UBX_NAV_PVT_LEN))
+        if ((c == ps->ck_b) && (ps->cls == UBX_CLASS_NAV))
         {
-            UbxDecodePvt(ps->payload, pvt);
-            new_pvt = true;
+            if ((ps->id == UBX_ID_NAV_PVT) && (ps->len >= UBX_NAV_PVT_LEN))
+            {
+                UbxDecodePvt(ps->payload, pvt);
+                new_pvt = true;
+            }
+            else if (ps->id == UBX_ID_NAV_SAT)
+            {
+                pvt->num_sv_heard = ps->sv_heard;
+            }
         }
         ps->state = UBX_STATE_SYNC_1;
         break;

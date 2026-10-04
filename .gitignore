@@ -60,3 +60,7 @@ build/
 # Test environments
 firmware/components/drd/test/test_scripts/environment/
 firmware/components/tel/tests/environment/
+
+# Local CAN tools
+tools/candump.sh
+tools/setup_can_autoconfig.sh

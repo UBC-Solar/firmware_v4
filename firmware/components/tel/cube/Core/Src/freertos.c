@@ -80,7 +80,7 @@ const osThreadAttr_t TasksCanload_attributes = {
 
 /* Definitions for TasksGPS */
 osThreadId_t TasksGPSHandle;
-uint32_t TasksGPSBuffer[128];
+uint32_t TasksGPSBuffer[256];
 osStaticThreadDef_t TasksGPSControlBlock;
 
 const osThreadAttr_t TasksGPS_attributes = {
@@ -94,7 +94,7 @@ const osThreadAttr_t TasksGPS_attributes = {
 
 /* Definitions for TasksDiagnostics */
 osThreadId_t TasksDiagnosticsHandle;
-uint32_t TasksDiagnosticsBuffer[128];
+uint32_t TasksDiagnosticsBuffer[256];
 osStaticThreadDef_t TasksDiagnosticsControlBlock;
 
 const osThreadAttr_t TasksDiagnostics_attributes = {
@@ -108,7 +108,7 @@ const osThreadAttr_t TasksDiagnostics_attributes = {
 
 /* Definitions for TasksTimeSinceStartup */
 osThreadId_t TasksTimeSinceStartupHandle;
-uint32_t TasksTimeSinceStartupBuffer[128];
+uint32_t TasksTimeSinceStartupBuffer[256];
 osStaticThreadDef_t TasksTimeSinceStartupControlBlock;
 
 const osThreadAttr_t TasksTimeSinceStartup_attributes = {

@@ -26,6 +26,9 @@
 #define TEL_TIME_SINCE_BOOTUP_ID            0x750
 
 #define GPS_LONG_LAT_ID                     0x756
+#define GPS_ALT_SPEED_HEADING_ID            0x757
+#define GPS_STATUS_ID                       0x758
+#define GPS_UTC_TIME_ID                     0x759
 
 #define IMU_AG_X_CAN_MESSAGE_ID 0x800
 #define IMU_AG_Y_CAN_MESSAGE_ID 0x801
@@ -127,6 +130,9 @@ static CanFilter_t filter_whitelist[]  __attribute__((unused)) = {
     { MDU_FRAME_2_ID,                       5,     0               },
     { OBC_STATUS_ID,                        1,     0               },
     { GPS_LONG_LAT_ID,                      1,     0               },
+    { GPS_ALT_SPEED_HEADING_ID,             1,     0               },
+    { GPS_STATUS_ID,                        1,     0               },
+    { GPS_UTC_TIME_ID,                      1,     0               },
 
     { IMU_AG_X_CAN_MESSAGE_ID,              1,     0               },
     { IMU_AG_Y_CAN_MESSAGE_ID,              1,     0               },

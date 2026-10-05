@@ -24,6 +24,9 @@ static void HandleCruiseInterrupt(uint16_t GPIO_Pin);
 void GPIOInitState(void)
 {
     gpio_pin_state.regen_en = (HAL_GPIO_ReadPin(REGEN_GPIO_Port, REGEN_Pin) == GPIO_PIN_SET);
+
+    gpio_pin_state.lights_state.rts_en = (HAL_GPIO_ReadPin(RTS_IN_GPIO_Port, RTS_IN_Pin) == GPIO_PIN_RESET);
+    gpio_pin_state.lights_state.lts_en = (HAL_GPIO_ReadPin(LTS_IN_GPIO_Port, LTS_IN_Pin) == GPIO_PIN_RESET);
 }
 
 /* PRIVATE FUNCTIONS */

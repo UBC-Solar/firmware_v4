@@ -22,6 +22,18 @@
 #define IMU_CAN_MESSAGE_AG_LENGTH 8
 #define IMU_CAN_MESSAGE_M_LENGTH 4
 
+#define GPS_LONG_LAT_CAN_DATA_LENGTH               8
+#define GPS_LONG_LAT_CAN_ID                        0x756
+
+#define GPS_ALT_SPEED_HEADING_CAN_DATA_LENGTH      8
+#define GPS_ALT_SPEED_HEADING_CAN_ID               0x757
+
+#define GPS_STATUS_CAN_DATA_LENGTH                 8
+#define GPS_STATUS_CAN_ID                          0x758
+
+#define GPS_UTC_TIME_CAN_DATA_LENGTH               6
+#define GPS_UTC_TIME_CAN_ID                        0x759
+
 /* CAN Message Headers */
 extern const CAN_TxHeaderTypeDef time_since_bootup_can_header;
 extern const CAN_TxHeaderTypeDef tel_flags_can_header;
@@ -33,6 +45,11 @@ extern const CAN_TxHeaderTypeDef imu_ag_z;
 extern const CAN_TxHeaderTypeDef imu_m_x;
 extern const CAN_TxHeaderTypeDef imu_m_y;
 extern const CAN_TxHeaderTypeDef imu_m_z;
+
+extern const CAN_TxHeaderTypeDef gps_long_lat_can_header;
+extern const CAN_TxHeaderTypeDef gps_alt_speed_heading_can_header;
+extern const CAN_TxHeaderTypeDef gps_status_can_header;
+extern const CAN_TxHeaderTypeDef gps_utc_time_can_header;
 
 /**
  * @brief Initializes CAN Comms hardware requirements and configures CAN filters for the TEL subsystem.

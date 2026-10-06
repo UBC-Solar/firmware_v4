@@ -15,6 +15,7 @@
 #define IMU_TASK_DELAY 100
 #define DIAGNOSTICS_TASK_DELAY 100
 #define CANLOAD_TASK_DELAY 100
+#define GPS_TASK_DELAY 900           // + GPS_APP_RESPONSE_DELAY = 1 Hz, the receiver's solution rate
 
 /**
  * @brief   Canload task function
@@ -29,6 +30,13 @@ void TasksCanload(void *argument);
  * @retval  None
  */
 void TasksIMU(void* argument);
+
+/**
+ * @brief   GPS task function
+ * @param   argument: Not used
+ * @retval  None
+ */
+void TasksGPS(void* argument);
 
 /**
  * @brief   Diagnostics task function

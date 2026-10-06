@@ -78,9 +78,23 @@ const osThreadAttr_t TasksCanload_attributes = {
   .priority = (osPriority_t) osPriorityLow,
 };
 
+/* Definitions for TasksGPS */
+osThreadId_t TasksGPSHandle;
+uint32_t TasksGPSBuffer[256];
+osStaticThreadDef_t TasksGPSControlBlock;
+
+const osThreadAttr_t TasksGPS_attributes = {
+  .name = "TasksGPS",
+  .cb_mem = &TasksGPSControlBlock,
+  .cb_size = sizeof(TasksGPSControlBlock),
+  .stack_mem = &TasksGPSBuffer[0],
+  .stack_size = sizeof(TasksGPSBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
+
 /* Definitions for TasksDiagnostics */
 osThreadId_t TasksDiagnosticsHandle;
-uint32_t TasksDiagnosticsBuffer[128];
+uint32_t TasksDiagnosticsBuffer[256];
 osStaticThreadDef_t TasksDiagnosticsControlBlock;
 
 const osThreadAttr_t TasksDiagnostics_attributes = {
@@ -94,7 +108,7 @@ const osThreadAttr_t TasksDiagnostics_attributes = {
 
 /* Definitions for TasksTimeSinceStartup */
 osThreadId_t TasksTimeSinceStartupHandle;
-uint32_t TasksTimeSinceStartupBuffer[128];
+uint32_t TasksTimeSinceStartupBuffer[256];
 osStaticThreadDef_t TasksTimeSinceStartupControlBlock;
 
 const osThreadAttr_t TasksTimeSinceStartup_attributes = {
@@ -162,6 +176,8 @@ void MX_FREERTOS_Init(void) {
   TasksIMUHandle = osThreadNew(TasksIMU, NULL, &TasksIMU_attributes);
   /* creation of TasksCanload */
   TasksCanloadHandle = osThreadNew(TasksCanload, NULL, &TasksCanload_attributes);
+  /* creation of TasksGPS */
+  TasksGPSHandle = osThreadNew(TasksGPS, NULL, &TasksGPS_attributes);
   /* creation of TasksDiagnostics */
   TasksDiagnosticsHandle = osThreadNew(TasksDiagnostics, NULL, &TasksDiagnostics_attributes);
   /* creation of TasksTimeSinceStartup*/

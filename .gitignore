@@ -62,5 +62,6 @@ firmware/components/drd/test/test_scripts/environment/
 firmware/components/tel/tests/environment/
 
 # Local CAN tools
-tools/candump.sh
-tools/setup_can_autoconfig.sh
+# tools/candump.sh
+# tools/setup_can_autoconfig.sh
+# greg wants these 2 ^^

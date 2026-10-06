@@ -18,7 +18,7 @@
 #define GPS_REG_BYTES_AVAIL         0xFDU
 #define GPS_REG_DATA_STREAM         0xFFU
 #define GPS_READ_CHUNK              128U            // bytes per stream read
-#define GPS_READ_MAX                2048U           // max bytes read per call, fits NAV-PVT + a full NAV-SAT
+#define GPS_READ_MAX                4096U           // fits a full framed NAV-PVT and maximum NAV-SAT response
 
 #define UBX_SYNC_1                  0xB5U
 #define UBX_SYNC_2                  0x62U

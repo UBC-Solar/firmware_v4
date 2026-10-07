@@ -51,6 +51,7 @@ void IwdgResetHandle(){
         // Refresh the watchdog and flash the LED a few times to indicate that a reset occurred
 		for (int i = 0; i < 10; i++)
 		{
+			GpioDriverToggleDebugLed();
 			IwdgReset();
 		}
 	}

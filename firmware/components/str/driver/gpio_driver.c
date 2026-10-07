@@ -10,6 +10,7 @@
 
 #include "gpio_app.h"
 #include "main.h"
+#include "stm32f1xx_hal.h"
 
 /* GLOBAL VARIABLES */
 volatile StrGpioCtx gpio_pin_state = {0};

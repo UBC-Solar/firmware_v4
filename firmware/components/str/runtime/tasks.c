@@ -16,6 +16,7 @@
 #include "diagnostic_app.h"
 #include "main.h"
 #include "stm32f1xx_hal.h"
+#include "stm32f1xx_hal_gpio.h"
 #include <stdint.h>
 
 /* DEFINES */
@@ -39,6 +40,7 @@ void StartHexDisplayTask(void *argument)
     for(;;)
     {
         HexAppUpdate();
+        HAL_Delay(10000);
         osDelay(HEX_TASK_DELAY);
     }
 }
@@ -61,7 +63,6 @@ void TasksWDG(void *argument)
     {
         // Refresh the watchdog PPtimer to prevent reset and transmit diagnostics over CAN
         IwdgRefresh(&hiwdg);
-        
         osDelay(IWDG_TASK_DELAY);
     }
 }

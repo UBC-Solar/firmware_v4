@@ -11,6 +11,8 @@
 #include <stdbool.h>
 #include "main.h"
 #include "iwdg_common.h"
+#include "gpio_driver.h"
+#include "stm32f1xx_hal.h"
 
 void IwdgRefresh(IWDG_HandleTypeDef* hiwdg1)
 {
@@ -43,7 +45,7 @@ void IwdgReset(){
 }
 
 void IwdgResetHandle(){
-    if (IwdgIsReset())
+	if (IwdgIsReset())
 	{
 		// Set diagnostic flag to indicate that a watchdog reset occurred
 		SetWatchdogReset(true);
@@ -51,7 +53,6 @@ void IwdgResetHandle(){
         // Refresh the watchdog and flash the LED a few times to indicate that a reset occurred
 		for (int i = 0; i < 10; i++)
 		{
-			GpioDriverToggleDebugLed();
 			IwdgReset();
 		}
 	}

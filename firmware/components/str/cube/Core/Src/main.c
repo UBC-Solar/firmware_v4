@@ -83,7 +83,6 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  CanAppInit();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -100,7 +99,7 @@ int main(void)
   MX_UART5_Init();
   MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
-  IwdgResetHandle();
+  
   /* USER CODE END 2 */
 
   /* Init scheduler */

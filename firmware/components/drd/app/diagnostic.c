@@ -18,6 +18,7 @@
 #include "drive_state.h"
 #include "gpio_driver.h"
 #include "soc.h"
+#include "drd_health_driver.h"
 
 /* Static Variables */
 static uint32_t g_time_since_bootup = 0;
@@ -92,6 +93,7 @@ void DiagnosticTimeSinceBootup()
     };
     GpioDriverToggleDebugLed();
     CAN_comms_Add_Tx_message(&time_since_bootup_can_tx);
+    DRD_Health_Init();
 }
 
 void DiagnosticTransmit(bool from_ISR)

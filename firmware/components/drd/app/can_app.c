@@ -9,6 +9,7 @@
 #include "drive_state.h"
 #include "tasks.h"
 #include "lcd_app.h"
+#include "lcd_handler.h"
 #include "soc.h"
 #include "can_driver.h"
 #include "can_app.h"

@@ -22,6 +22,8 @@
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
+#include "tasks.h"
+#include "can_app.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -148,7 +150,7 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
   */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
-
+  CanAppInit();
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */

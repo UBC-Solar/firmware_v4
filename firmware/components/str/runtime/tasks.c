@@ -40,7 +40,6 @@ void StartHexDisplayTask(void *argument)
     for(;;)
     {
         HexAppUpdate();
-        HAL_Delay(10000);
         osDelay(HEX_TASK_DELAY);
     }
 }
@@ -57,7 +56,7 @@ void TasksDiagnostic(void *argument)
 
 void TasksWDG(void *argument)
 {
-    IwdgResetHandle();
+    IwdgResetHandle(DEBUG_LED_GPIO_Port, DEBUG_LED_Pin);
 
     for (;;)
     {

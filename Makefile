@@ -1,6 +1,6 @@
 # Top level makefile used to make building from the command line simple.
 
-.PHONY: all mdi tel drd hvc mst str clean help debug release utest
+.PHONY: all mdi tel drd hvc mst str clean help debug release utest hooks
 
 debug release Debug Release:
 	@:
@@ -18,6 +18,7 @@ help:
 	@echo "  make utest          - Run all unit tests"
 	@echo "  make utest mdi      - Run unit tests for MDI only"
 	@echo "  make clean          - Remove all build directories"
+	@echo "  make hooks          - Install git hooks (branch naming checks)"
 
 ifeq (,$(filter debug release,$(MAKECMDGOALS)))
     MODE := Debug
@@ -92,3 +93,6 @@ clean:
 	rm -rf firmware/components/str/$(BUILD_DIR)
 # 	cd firmware/components/mdi/ && ./ceedling clean
 	@echo "Clean complete."
+hooks:
+	git config core.hooksPath .githooks
+	@echo "Git hooks installed from .githooks/"

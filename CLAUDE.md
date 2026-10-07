@@ -186,8 +186,12 @@ Empty placeholder directory — no firmware yet.
 - **Regenerating from CubeMX** rewrites `cube/`; keep hand-written code inside
   `/* USER CODE BEGIN */ ... /* USER CODE END */` blocks, or better, in `app/`, `driver/`,
   `runtime/`.
-- **Branches:** `<name>-<project>-<feature>`, no spaces (e.g. `EvanO12-drd-drive-state-logic`).
-  PRs use `.github/pull_request_template.md` and need one reviewer.
+- **Branches:** `user/<name>/[<project>/]<feature>` (e.g. `user/gregorybian/tel/feature_name`) or
+  `EMB-<ticket#>/<board>-<feature>` (e.g. `EMB-24/tel-gps-implementation`), no spaces.
+  Enforced by `.githooks/` pre-commit + pre-push once installed with `make hooks`.
+  PRs use `.github/pull_request_template.md` and need one reviewer. PR titles:
+  `EMB-<ticket#> <BOARD>: <description>` (e.g. `EMB-24 TEL: Add GPS`) or `<TYPE>: <description>`
+  with TYPE in FEAT/FIX/REFACTOR/DOCS/TEST/BUILD/CI/CHORE.
 
 ## Tools
 

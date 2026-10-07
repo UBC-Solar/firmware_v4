@@ -12,6 +12,8 @@ Hardware:
 - Connection: 3-wire RTD
 - Communication: SPI1
 
+Diagnostics (`diagnostic.c`) call this driver once per second. Temperature is only trusted on `RtdStatusOk`. Failed reads still produce a motor-temp CAN frame (`0x502`) with `success=0` and temperature `0`; they never reuse a last-good temperature.
+
 ## Functions
 
 ### 1. RtdDriverInit()
@@ -27,6 +29,8 @@ Returns: Nothing
 What it does:
 - Configures the chip for auto-conversion mode
 - Sets up 3-wire RTD connection
+- Sets RTD fault thresholds to -40°C / 200°C (`RTD_LOW_FAULT_THRESHOLD` / `RTD_HIGH_FAULT_THRESHOLD`) so a shorted or open RTD sets `RTD_FAULT_RTD_LOW` / `RTD_FAULT_RTD_HIGH`
+- Clears debounce state and any power-up latched fault
 
 When to call: Once during system startup, after SPI is initialized.
 
@@ -42,14 +46,40 @@ Parameters:
 - temperature - Pointer where temperature (in °C) will be stored
 
 Returns:
-- RtdStatusOk - Temperature read successfully
-- RtdStatusFault - Temperature read with fault bit set (indicates sensor issue)
-- RtdStatusHalError - SPI communication error (HAL failure)
-
+- RtdStatusOk - Temperature read successfully; value is trustworthy
+- RtdStatusFault - Sensor/wiring fault bit set, or a NULL temperature pointer
+- RtdStatusHalError - SPI communication error (HAL failure), or the config register read-back does not match
 
 When to call: Whenever you want a temperature reading (e.g., in main loop).
 
-Note: The fault detection is based on the simple fault bit (bit 0) in the RTD data register. If the fault bit is set, the temperature reading should not be trusted.
+If the MAX31865 data-register fault bit (D0) is set, this function reads the Fault Status register, updates debounce state, clears the latched chip fault, and returns `RtdStatusFault` without converting a temperature.
+
+Before reading the temperature, the config register is read back. A missing MAX31865 does not cause an SPI HAL error (MISO just reads 0x00 or 0xFF), and a chip that reset loses its config and stops converting. Either one would look like a valid ~-259°C reading. On a mismatch the driver re-runs `RtdDriverInit()` and returns `RtdStatusHalError`, so the next read can recover.
+
+---
+
+### 3. RtdDriverReadFaults()
+
+RtdStatus RtdDriverReadFaults(RtdFaultFlags* faults);
+
+Description: SPI-reads MAX31865 Fault Status register 0x07 and masks unused bits D1/D0.
+
+Returns:
+- RtdStatusOk - `*faults` holds D7 through D2
+- RtdStatusFault - NULL pointer
+- RtdStatusHalError - SPI failure
+
+Named masks: `RTD_FAULT_RTD_HIGH`, `RTD_FAULT_RTD_LOW`, `RTD_FAULT_REFIN_HIGH`, `RTD_FAULT_REFIN_LOW`, `RTD_FAULT_RTDIN_LOW`, `RTD_FAULT_OVUV`.
+
+---
+
+### 4. RtdDriverGetFaults()
+
+RtdFaultFlags RtdDriverGetFaults(void);
+
+Description: Returns the **debounced** fault flags. Hardware faults must appear on 5 consecutive `RtdDriverGetTemp()` samples (~5 s at the 1 Hz diagnostic cadence) before this is non-zero. A successful temperature read clears the count and the flags.
+
+Use this for latched diagnostic bits (`mdi_rtd_fault` on CAN `0x501`). Transient 1–4 sample glitches show up as `0x502 success=0` without latching that flag.
 
 ## Typical Usage
 
@@ -59,7 +89,7 @@ Step 2: Call RtdDriverInit() once
 
 Step 3: In your main loop, call RtdDriverGetTemp() to read temperature
 
-Step 4: Check if return status is RtdStatusOk, then use the temperature value
+Step 4: Check if return status is RtdStatusOk, then use the temperature value. On failure, use `RtdDriverGetFaults()` rather than the temperature pointer.
 
 ### Example
 
@@ -80,7 +110,8 @@ int main(void){
         if (RtdDriverGetTemp(&temperature) == RtdStatusOk) {
             printf("Temperature: %ld°C\n", (long)temperature);
         } else {
-            printf("Error reading temperature\n");
+            printf("Error reading temperature, faults=0x%02X\n",
+                   (unsigned)RtdDriverGetFaults());
         }
         
         HAL_Delay(1000);
@@ -94,16 +125,17 @@ int main(void){
 - Designed for PT1000 sensors (1000Ω at 0°C)
 - Temperature coefficient: 0.00385 Ω/Ω/°C
 - Typical operating range: -80°C to +250°C (for our specific sensor)
+- Readings outside -40°C to 200°C are reported as RTD low/high faults
 
 ### Conversion Formula
 The library converts the 15-bit resistance ratio from the MAX31865 into temperature:
-1. Resistance = (ratio / 32768) × 4300Ω
-2. Temperature = (Resistance - 1000Ω) / 3.85
+1. Resistance = (ratio / 32768) × 3987Ω
+2. Temperature = (Resistance - 1000Ω) / (0.00385 × 1000)
 
 Example: If resistance = 1038.5Ω, then temperature = 10°C
 
 ### SPI Communication
-- Chip select (CS) is controlled automatically
+- Chip select (CS) is controlled automatically and idles high (set in `mdi.ioc`)
 - Write operations: Address byte (bit 7 = 1) followed by data byte
 - Read operations: Address byte (bit 7 = 0) followed by dummy byte, data received during 2nd byte
 
@@ -111,4 +143,7 @@ Example: If resistance = 1038.5Ω, then temperature = 10°C
 
 - Temperature readings are continuous in the background (using auto-conversion mode)
 - Temperature is returned as an integer (no decimal places) and may be negative
-- Fault detection uses the simple fault bit from the RTD data register (bit 0), which indicates basic sensor faults
+- Do not use a previous good temperature across a faulted sample
+- Motor-temp CAN `0x502` (DLC 6): byte 0 success, bytes 1–4 little-endian int32 °C, byte 5 debounced fault flags
+- Diagnostic flags CAN `0x501` bit 3 is RTD fault, bit 4 is RTD SPI/comm error (including a missing or reset MAX31865)
+- Only `RTD_FAULT_RTD_HIGH`, `RTD_FAULT_RTD_LOW` and `RTD_FAULT_OVUV` can appear in practice; the REFIN/RTDIN bits are only set by a fault-detection cycle, which this driver does not run

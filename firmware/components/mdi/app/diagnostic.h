@@ -16,6 +16,8 @@ typedef union {
         volatile bool mdi_crash_iwdg : 1;
         volatile bool mdi_voltage_over_threshold : 1;
         volatile bool mdi_motor_over_temp : 1;
+        volatile bool mdi_rtd_fault : 1;
+        volatile bool mdi_rtd_comm_error : 1;
     } bits;
     volatile uint8_t raw;
 } MdiDiagnosticFlags;
@@ -43,7 +45,7 @@ void DiagnosticSetVoltageOverThreshold(bool is_over_threshold);
 void DiagnosticSendTimeSinceBootup(void);
 
 /**
- * @brief Reads RTD temperature, updates thermal fault state, and transmits RTD telemetry.
+ * @brief Reads RTD temperature, updates RTD/thermal flags, and transmits motor-temp CAN.
  */
 void DiagnosticSendRtdTemp(void);
 

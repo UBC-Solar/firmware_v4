@@ -15,8 +15,19 @@ extern ADC_HandleTypeDef hadc1;
 
 static uint16_t ReadAdc( uint32_t channel );
 
+int32_t sense_mv = 0;
+uint16_t g_vdd_mv = 0;
+int16_t g_temp_c = 0;
+
 void DRD_Health_Init() {
     HAL_ADCEx_Calibration_Start(&hadc1); // 
+}
+
+void DRD_Diagnostics_Full( void ) {
+
+    g_vdd_mv = DRD_Read_Vdd();
+    g_temp_c = DRD_Read_Temp();
+
 }
 
 static uint16_t ReadAdc( uint32_t channel ) {
@@ -37,13 +48,16 @@ static uint16_t ReadAdc( uint32_t channel ) {
 
 uint16_t DRD_Read_Vdd( void ) {
 
-    return (uint16_t)(VREFINT_MV * 4095 / ReadAdc(ADC_CHANNEL_VREFINT)); //reads as a fraction of VDD
-
+    uint16_t Vdd = VREFINT_MV * 4095 / ReadAdc(ADC_CHANNEL_VREFINT); //reads as a fraction of VDD
+    
+    return Vdd;
 }
 
 int16_t DRD_Read_Temp( void ) {
 
-    int32_t sense_mv = ReadAdc(ADC_CHANNEL_TEMPSENSOR) * DRD_Read_Vdd() / 4095;
-    return (int16_t)((V25_MV - sense_mv) * 10 / 43 + 25);
+    sense_mv = ReadAdc(ADC_CHANNEL_TEMPSENSOR) * DRD_Read_Vdd() / 4095;
+    
+    int16_t temp = (V25_MV - sense_mv) * 10 / 43 + 25;
 
+    return temp;
 }

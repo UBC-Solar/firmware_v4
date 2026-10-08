@@ -12,7 +12,7 @@
 #ifndef __CAN_APP__H__
 #define __CAN_APP__H__
 
-#include "can_driver.h"     // IDs of the messages TEL sends (0x750 - 0x759)
+#include "can_driver.h"     // IDs of the messages TEL sends (0x750 - 0x75B)
 
 // Definitions for CAN IDs (add or adjust as needed)
 #define RTC_TIMESTAMP_MSG_ID            0x300
@@ -24,13 +24,6 @@
 #define DRD_TIME_SINCE_BOOTUP_ID            0x404
 #define MDI_TIME_SINCE_BOOTUP_ID            0x500
 #define STR_TIME_SINCE_BOOTUP_ID            0x582
-
-#define IMU_AG_X_CAN_MESSAGE_ID 0x800
-#define IMU_AG_Y_CAN_MESSAGE_ID 0x801
-#define IMU_AG_Z_CAN_MESSAGE_ID 0x802
-#define IMU_M_X_CAN_MESSAGE_ID 0x803
-#define IMU_M_Y_CAN_MESSAGE_ID 0x804
-#define IMU_M_Z_CAN_MESSAGE_ID 0x805
 
 #define DRD_MOTOR_COMMAND_ID                0x401
 

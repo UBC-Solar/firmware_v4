@@ -33,25 +33,25 @@ static GpsDriverPvtData gps_pvt;                // static: keeps it off the GPS 
  */
 static void GpsAppSend(CAN_comms_Tx_msg_t* msg);
 /**
- * @brief  Sends 0x756 longitude and latitude
+ * @brief  Sends 0x758 longitude and latitude
  * @param  pvt: Solution to send
  * @retval None
  */
 static void GpsAppSendLongLat(const GpsDriverPvtData* pvt);
 /**
- * @brief  Sends 0x757 altitude, ground speed and heading
+ * @brief  Sends 0x759 altitude, ground speed and heading
  * @param  pvt: Solution to send
  * @retval None
  */
 static void GpsAppSendAltSpeedHeading(const GpsDriverPvtData* pvt);
 /**
- * @brief  Sends 0x758 fix status
+ * @brief  Sends 0x75A fix status
  * @param  pvt: Solution to send
  * @retval None
  */
 static void GpsAppSendStatus(const GpsDriverPvtData* pvt);
 /**
- * @brief  Sends 0x759 UTC date and time
+ * @brief  Sends 0x75B UTC date and time
  * @param  pvt: Solution to send
  * @retval None
  */

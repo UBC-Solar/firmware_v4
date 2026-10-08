@@ -15,8 +15,6 @@
 #include "stm32f1xx_hal.h"
 #include <stdbool.h>
 
-#define IWDG_TASK_DELAY 100
-
 /*
  * @brief Refresh the IWDG.
  * @param hiwdg1 pointer to a IWDG_HandleTypeDef

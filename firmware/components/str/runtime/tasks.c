@@ -54,9 +54,9 @@ void TasksDiagnostic(void *argument)
     }
 }
 
-void TasksWDG(void *argument)
+void TasksIWDG(void *argument)
 {
-    IwdgResetHandle(DEBUG_LED_GPIO_Port, DEBUG_LED_Pin);
+    IwdgResetHandle();
 
     for (;;)
     {

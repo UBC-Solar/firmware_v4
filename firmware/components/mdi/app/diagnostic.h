@@ -48,6 +48,11 @@ void DiagnosticSendTimeSinceBootup(void);
 void DiagnosticSendRtdTemp(void);
 
 /**
+ * @brief Sends MCU supply voltage (uint16 mV) and die temperature (int16 degC) over CAN.
+ */
+void DiagnosticSendMcuHealth(void);
+
+/**
  * @brief Sends packed diagnostic flag bits over CAN.
  */
 void DiagnosticSendFlags(void);

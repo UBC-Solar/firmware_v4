@@ -69,6 +69,7 @@ void TasksDiagnostics(void* argument)
     for (;;)
     {
         DiagnosticsSendTelFlags();
+        DiagnosticsSendTelHealth();
         osDelay(DIAGNOSTICS_TASK_DELAY);
     }
 }

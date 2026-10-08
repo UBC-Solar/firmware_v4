@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include "diagnostic_app.h"
+#include "hex_app.h"
 #include "iwdg_app.h"
 
 void IwdgAppRefresh(IWDG_HandleTypeDef* hiwdg2)

@@ -9,7 +9,6 @@
 #include "cmsis_os.h"
 #include "can_app.h"
 #include "cyclic_data_handler.h"
-#include "gpio_app.h"
 #include "gpio_driver.h"
 #include "hex_driver.h"
 #include "hex_app.h"
@@ -26,9 +25,10 @@
 /* RTOS TASKS */
 void StartSteeringOutputsTask(void *argument)
 {
+    GPIOInitState();
+
     for(;;)
     {
-        StrState();
         TransmitDriveControlState();
         osDelay(STEERING_TASK_DELAY);
     }

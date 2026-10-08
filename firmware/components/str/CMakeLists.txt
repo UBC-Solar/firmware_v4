@@ -55,6 +55,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/gpio_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/hex_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/iwdg_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/mcu_health_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/tasks.c
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/interrupts.c
 )

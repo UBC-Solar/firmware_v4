@@ -3,6 +3,7 @@
 #include "CAN_comms.h"
 #include "can_driver.h"
 #include "gpio_driver.h"
+#include "mcu_health_driver.h"
 
 static uint32_t g_time_since_bootup = 0U;
 
@@ -18,6 +19,8 @@ void DiagnosticTimeSinceBootup()
     };
     GpioDriverToggleDebugLed();
     CAN_comms_Add_Tx_message(&time_since_bootup_can_tx);
+
+    McuHealthDriverInit();
 }
 
 void DiagnosticSetWatchdogReset(bool reset)

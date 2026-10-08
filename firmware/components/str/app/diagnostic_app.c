@@ -16,11 +16,7 @@ void DiagnosticTimeSinceBootup()
         .data[3] = (g_time_since_bootup & 0xFF000000U) >> 24,
         .header = time_since_bootup_can_header,
     };
-    GpioDriverToggleDebugLed();
+    //GpioDriverToggleDebugLed();
     CAN_comms_Add_Tx_message(&time_since_bootup_can_tx);
 }
 
-void DiagnosticSetWatchdogReset(bool reset)
-{
-    (void)reset;
-}

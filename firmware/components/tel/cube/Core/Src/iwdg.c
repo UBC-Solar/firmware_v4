@@ -31,10 +31,6 @@ void MX_IWDG_Init(void)
 {
 
   /* USER CODE BEGIN IWDG_Init 0 */
-  
-  // #ifdef DEBUG
-  //   return;
-  // #endif
 
   /* USER CODE END IWDG_Init 0 */
 
@@ -57,4 +53,3 @@ void MX_IWDG_Init(void)
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */
-

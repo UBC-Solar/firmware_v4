@@ -1,4 +1,4 @@
-/******************************************************************************
+/** 
 * @file    imu_app.c
 * @brief   Application-layer orchestration for reading IMU data.
 *
@@ -6,7 +6,7 @@
 *
 * @author Shlok Lande
 * @date Aug 19 2026
-******************************************************************************/
+*/
 
 #include "imu_app.h"
 #include "imu_driver.h"

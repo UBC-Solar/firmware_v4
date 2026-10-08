@@ -9,7 +9,9 @@
 
 #include "tasks.h"
 #include "CAN_comms.h"
+#include "iwdg_common.h"
 #include "cmsis_os2.h"
+#include "stm32f1xx_hal.h"
 #include "usart.h"
 #include "rtc.h"
 #include "telemetry_app.h"
@@ -68,6 +70,18 @@ void TasksDiagnostics(void* argument)
     {
         DiagnosticsSendTelFlags();
         osDelay(DIAGNOSTICS_TASK_DELAY);
+    }
+}
+
+void TasksIWDG(void *argument)
+{
+    IwdgResetHandle();
+
+    for (;;)
+    {
+        // Refresh the watchdog PPtimer to prevent reset and transmit diagnostics over CAN
+        IwdgRefresh(&hiwdg);
+        osDelay(IWDG_TASK_DELAY);
     }
 }
 

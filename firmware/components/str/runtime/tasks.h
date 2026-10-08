@@ -7,7 +7,7 @@
 #define __TASKS_H__
 
 #define DIAGNOSTIC_TASK_DELAY 100
-
+#define IWDG_TASK_DELAY 100
 #define TIME_SINCE_BOOTUP_DELAY 1000
 
 /**
@@ -29,5 +29,7 @@ void StartSteeringOutputsTask(void *argument);
 void TasksDiagnostic(void *argument);
 
 void TimeSinceBootUp(void *argument);
+
+void TasksIWDG(void *argument);
 
 #endif /* __TASKS_H__ */

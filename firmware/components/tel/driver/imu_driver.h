@@ -1,4 +1,4 @@
-/******************************************************************************
+/** 
 * @file    imu_driver.h
 * @brief   Public interface for the BNO086 IMU SHTP/I2C driver.
 *
@@ -6,7 +6,7 @@
 *
 * @author Shlok Lande
 * @date Aug 19 2026
-******************************************************************************/
+*/
 
 #ifndef __IMU__DRIVER__H__
 #define __IMU__DRIVER__H__

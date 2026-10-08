@@ -22,6 +22,8 @@
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
+#include "tasks.h"
+#include "can_app.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -73,7 +75,7 @@ const osThreadAttr_t TasksSteeringOutputs_attributes = {
   .cb_size = sizeof(TasksSteeringOutputsControlBlock),
   .stack_mem = &TasksSteeringOutputsBuffer[0],
   .stack_size = sizeof(TasksSteeringOutputsBuffer),
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityLow1,
 };
 
 /* Definitions for TasksDiagnostic */
@@ -87,6 +89,20 @@ const osThreadAttr_t TasksDiagnostic_attributes = {
   .cb_size = sizeof(TasksDiagnosticControlBlock),
   .stack_mem = &TasksDiagnosticBuffer[0],
   .stack_size = sizeof(TasksDiagnosticBuffer),
+  .priority = (osPriority_t) osPriorityLow1,
+};
+
+/* Definitions for TasksWatchDog */
+osThreadId_t TasksIWDGHandle;
+uint32_t TasksIWDGBuffer[128];
+osStaticThreadDef_t TasksIWDGControlBlock;
+
+const osThreadAttr_t TasksIWDG_attributes = {
+  .name = "TasksIWDG",
+  .cb_mem = &TasksIWDGControlBlock,
+  .cb_size = sizeof(TasksIWDGControlBlock),
+  .stack_mem = &TasksIWDGBuffer[0],
+  .stack_size = sizeof(TasksIWDGBuffer),
   .priority = (osPriority_t) osPriorityLow,
 };
 
@@ -101,7 +117,7 @@ const osThreadAttr_t TasksTimeSinceBootUp_attributes = {
   .cb_size = sizeof(TasksTimeSinceBootUpControlBlock),
   .stack_mem = &TasksTimeSinceBootUpBuffer[0],
   .stack_size = sizeof(TasksTimeSinceBootUpBuffer),
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityLow1,
 };
 
 /* USER CODE END Variables */
@@ -166,11 +182,14 @@ void MX_FREERTOS_Init(void) {
   /* Initialization for TasksSteeringOutputs */
   TasksSteeringOutputsHandle = osThreadNew(StartSteeringOutputsTask, NULL, &TasksSteeringOutputs_attributes);
   
-/* Initialization for TasksDiagnostic */
+  /* Initialization for TasksDiagnostic */
   TasksDiagnosticHandle = osThreadNew(TasksDiagnostic, NULL, &TasksDiagnostic_attributes);
 
   /* Initialization for TasksTimeSinceBootUp */
   TasksTimeSinceBootUpHandle = osThreadNew(TimeSinceBootUp, NULL, &TasksTimeSinceBootUp_attributes);
+
+  /* Initialization for TasksIWDG */
+  TasksIWDGHandle = osThreadNew(TasksIWDG, NULL, &TasksIWDG_attributes);
 
   /* USER CODE END RTOS_THREADS */
 

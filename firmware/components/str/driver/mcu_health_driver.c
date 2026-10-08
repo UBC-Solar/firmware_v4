@@ -1,10 +1,10 @@
 #include <main.h>
 #include <mcu_health_driver.h>
 
-#define V25_MV          1430.0f    // Voltage at 25 C
-#define VREF_MV         1200.0f    // Internal reference voltage
-#define AVG_SLOPE_MV    0.0043f    // degrees C / mV
-#define ADC_COUNT       4095.0f    // Max ADC bit width
+#define V25_MV          1430.0f     // Voltage at 25 C
+#define VREF_MV         1200.0f     // Internal reference voltage
+#define AVG_SLOPE_MV    4.3f        // mv / degrees C
+#define ADC_COUNT       4095.0f     // Max ADC bit width
 
 extern ADC_HandleTypeDef hadc1;
 
@@ -36,7 +36,7 @@ int16_t McuSenseStrReadTempC(void)
 {
     int32_t temp_raw = ReadADC(ADC_CHANNEL_TEMPSENSOR);
     int32_t temp_mv = temp_raw * McuSenseStrReadVddMv() / ADC_COUNT;
-    int16_t temp_c = (temp_mv - V25_MV) * AVG_SLOPE_MV + 25;
+    int16_t temp_c = (temp_mv - V25_MV) / AVG_SLOPE_MV + 25;
 
     return temp_c;
 }

@@ -23,10 +23,12 @@
 #include "can.h"
 #include "dma.h"
 #include "i2c.h"
+#include "iwdg.h"
 #include "rtc.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include "iwdg_common.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -109,6 +111,7 @@ int main(void)
   MX_RTC_Init();
   MX_TIM2_Init();
   MX_UART5_Init();
+  MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
   CanAppInit();
   /* USER CODE END 2 */

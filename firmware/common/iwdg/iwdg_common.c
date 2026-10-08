@@ -13,6 +13,7 @@
 #include "iwdg_common.h"
 #include "gpio_driver.h"
 #include "stm32f1xx_hal.h"
+#include "stm32f1xx_hal_gpio.h"
 
 void IwdgRefresh(IWDG_HandleTypeDef* hiwdg1)
 {
@@ -53,6 +54,8 @@ void IwdgResetHandle(){
         // Refresh the watchdog and flash the LED a few times to indicate that a reset occurred
 		for (int i = 0; i < 10; i++)
 		{
+			HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_14);
+			HAL_Delay(100);
 			IwdgReset();
 		}
 	}

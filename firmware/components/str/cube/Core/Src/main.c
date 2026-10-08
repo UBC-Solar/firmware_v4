@@ -99,7 +99,7 @@ int main(void)
   MX_UART5_Init();
   MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
-  
+  CanAppInit();
   /* USER CODE END 2 */
 
   /* Init scheduler */

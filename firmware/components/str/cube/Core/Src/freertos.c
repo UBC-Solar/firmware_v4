@@ -93,16 +93,16 @@ const osThreadAttr_t TasksDiagnostic_attributes = {
 };
 
 /* Definitions for TasksWatchDog */
-osThreadId_t TasksWDGHandle;
-uint32_t TasksWDGBuffer[128];
-osStaticThreadDef_t TasksWDGControlBlock;
+osThreadId_t TasksIWDGHandle;
+uint32_t TasksIWDGBuffer[128];
+osStaticThreadDef_t TasksIWDGControlBlock;
 
-const osThreadAttr_t TasksWDG_attributes = {
-  .name = "TasksWDG",
-  .cb_mem = &TasksWDGControlBlock,
-  .cb_size = sizeof(TasksWDGControlBlock),
-  .stack_mem = &TasksWDGBuffer[0],
-  .stack_size = sizeof(TasksWDGBuffer),
+const osThreadAttr_t TasksIWDG_attributes = {
+  .name = "TasksIWDG",
+  .cb_mem = &TasksIWDGControlBlock,
+  .cb_size = sizeof(TasksIWDGControlBlock),
+  .stack_mem = &TasksIWDGBuffer[0],
+  .stack_size = sizeof(TasksIWDGBuffer),
   .priority = (osPriority_t) osPriorityLow,
 };
 
@@ -150,7 +150,7 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
   */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
-  CanAppInit();
+
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -188,8 +188,8 @@ void MX_FREERTOS_Init(void) {
   /* Initialization for TasksTimeSinceBootUp */
   TasksTimeSinceBootUpHandle = osThreadNew(TimeSinceBootUp, NULL, &TasksTimeSinceBootUp_attributes);
 
-  /* Initialization for TasksTimeSinceBootUp */
-  TasksWDGHandle = osThreadNew(TasksWDG, NULL, &TasksWDG_attributes);
+  /* Initialization for TasksIWDG */
+  TasksIWDGHandle = osThreadNew(TasksIWDG, NULL, &TasksIWDG_attributes);
 
   /* USER CODE END RTOS_THREADS */
 

@@ -61,7 +61,7 @@ const osThreadAttr_t TasksIMU_attributes = {
   .cb_size = sizeof(TasksIMUControlBlock),
   .stack_mem = &TasksIMUBuffer[0],
   .stack_size = sizeof(TasksIMUBuffer),
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityLow1,
 };
 
 /* Definitions for TasksCanload */
@@ -75,7 +75,7 @@ const osThreadAttr_t TasksCanload_attributes = {
   .cb_size = sizeof(TasksCanloadControlBlock),
   .stack_mem = &TasksCanloadBuffer[0],
   .stack_size = sizeof(TasksCanloadBuffer),
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityLow1,
 };
 
 /* Definitions for TasksGPS */
@@ -89,7 +89,7 @@ const osThreadAttr_t TasksGPS_attributes = {
   .cb_size = sizeof(TasksGPSControlBlock),
   .stack_mem = &TasksGPSBuffer[0],
   .stack_size = sizeof(TasksGPSBuffer),
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityLow1,
 };
 
 /* Definitions for TasksDiagnostics */
@@ -103,7 +103,21 @@ const osThreadAttr_t TasksDiagnostics_attributes = {
   .cb_size = sizeof(TasksDiagnosticsControlBlock),
   .stack_mem = &TasksDiagnosticsBuffer[0],
   .stack_size = sizeof(TasksDiagnosticsBuffer),
-  .priority = (osPriority_t) osPriorityHigh,
+  .priority = (osPriority_t) osPriorityHigh1,
+};
+
+/* Definitions for TasksWatchDog */
+osThreadId_t TasksIWDGHandle;
+uint32_t TasksIWDGBuffer[128];
+osStaticThreadDef_t TasksIWDGControlBlock;
+
+const osThreadAttr_t TasksIWDG_attributes = {
+  .name = "TasksIWDG",
+  .cb_mem = &TasksIWDGControlBlock,
+  .cb_size = sizeof(TasksIWDGControlBlock),
+  .stack_mem = &TasksIWDGBuffer[0],
+  .stack_size = sizeof(TasksIWDGBuffer),
+  .priority = (osPriority_t) osPriorityLow,
 };
 
 /* Definitions for TasksTimeSinceStartup */
@@ -117,7 +131,7 @@ const osThreadAttr_t TasksTimeSinceStartup_attributes = {
   .cb_size = sizeof(TasksTimeSinceStartupControlBlock),
   .stack_mem = &TasksTimeSinceStartupBuffer[0],
   .stack_size = sizeof(TasksTimeSinceStartupBuffer),
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityLow1,
 };
 
 /* USER CODE END Variables */
@@ -182,6 +196,8 @@ void MX_FREERTOS_Init(void) {
   TasksDiagnosticsHandle = osThreadNew(TasksDiagnostics, NULL, &TasksDiagnostics_attributes);
   /* creation of TasksTimeSinceStartup*/
   TasksTimeSinceStartupHandle = osThreadNew(TimeSinceStartup, NULL, &TasksTimeSinceStartup_attributes);
+  /* Initialization for TasksWDG */
+  TasksIWDGHandle = osThreadNew(TasksIWDG, NULL, &TasksIWDG_attributes);
 
   /* USER CODE END RTOS_THREADS */
 

@@ -6,15 +6,15 @@
  * receiver's position solution and sends it over CAN and telemetry.
  *
  * CAN messages (all little-endian):
- *   0x756 GPS_LONG_LAT           [0:3] int32 longitude deg * 1e7, [4:7] int32 latitude deg * 1e7
- *   0x757 GPS_ALT_SPEED_HEADING  [0:3] int32 height above MSL mm, [4:5] uint16 ground speed cm/s,
+ *   0x758 GPS_LONG_LAT           [0:3] int32 longitude deg * 1e7, [4:7] int32 latitude deg * 1e7
+ *   0x759 GPS_ALT_SPEED_HEADING  [0:3] int32 height above MSL mm, [4:5] uint16 ground speed cm/s,
  *                                [6:7] uint16 heading of motion deg * 100
- *   0x758 GPS_STATUS             [0] fix type, [1] flags (GPS_APP_STATUS_*), [2] satellites used,
+ *   0x75A GPS_STATUS             [0] fix type, [1] flags (GPS_APP_STATUS_*), [2] satellites used,
  *                                [3] satellites heard (any signal), [4:5] uint16 PDOP * 100,
  *                                [6:7] uint16 horizontal accuracy cm
- *   0x759 GPS_UTC_TIME           [0] sec, [1] min, [2] hour, [3] day, [4] month, [5] year - 2000
+ *   0x75B GPS_UTC_TIME           [0] sec, [1] min, [2] hour, [3] day, [4] month, [5] year - 2000
  *
- * 0x756 and 0x757 are only sent with a valid fix, 0x759 only with a valid UTC date and time.
+ * 0x758 and 0x759 are only sent with a valid fix, 0x75B only with a valid UTC date and time.
  *
  * @author  Raymond Shen
  * @date    Oct 3 2026

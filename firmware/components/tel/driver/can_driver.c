@@ -7,11 +7,9 @@
  * @author  Gregory Bian
  * @date    Jun 30 2026
  */
- #include "can_driver.h"
- #include "can.h"
- #include "CAN_comms.h"
- #include "can_app.h"
- #include "canload.h"
+#include "can_driver.h"
+#include "can.h"
+#include "CAN_comms.h"
 
 const CAN_TxHeaderTypeDef time_since_bootup_can_header = {
     .StdId = TIME_SINCE_BOOTUP_CAN_ID,

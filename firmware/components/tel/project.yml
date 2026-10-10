@@ -1,0 +1,61 @@
+---
+:project:
+  :use_mocks: false
+  :use_backtrace: :none
+  :build_root: build_sil
+  :test_file_prefix: test_ceedling_
+
+# Only directly included modules are linked into each test executable.
+# Cube/HAL/FreeRTOS sources and on-device test_scripts are deliberately excluded.
+:paths:
+  :test:
+    - test
+  :source:
+    - app
+    - driver
+    - ../../test/support
+    - test/support
+  :include:
+    - app
+    - driver
+    - ../../test/support
+    - cube/Core/Inc
+    - test/support
+    - ../../common/CAN_comms
+    - ../../common/car_configs
+    # Declarations only; the RTOS implementation is not linked.
+    - cube/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2
+
+:plugins:
+  :enabled:
+    - report_tests_pretty_stdout
+    - report_tests_log_factory
+
+:report_tests_log_factory:
+  :reports:
+    - json
+
+:flags:
+  :test:
+    :compile:
+      '*':
+        - -std=c11
+        - -Wall
+        - -Wextra
+
+# Release semantics: no DEBUG timing calls or STM32 target defines.
+:defines:
+  :test:
+    - TEST
+
+:unity:
+  :defines:
+    - UNITY_INCLUDE_DOUBLE
+
+:libraries:
+  :system:
+    - m
+
+# RTC epoch expectations use UTC on every host.
+:environment:
+  - :tz: UTC

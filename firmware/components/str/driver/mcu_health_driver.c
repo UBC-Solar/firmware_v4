@@ -24,7 +24,7 @@ static uint16_t ReadADC(uint32_t channel)
 }
 
 
-uint16_t McuSenseStrReadVddMv(void) 
+uint16_t McuSenseReadVddMv(void) 
 {
     uint16_t V_raw = ReadADC(ADC_CHANNEL_VREFINT);
     uint16_t V_mv = VREF_MV / V_raw * ADC_COUNT;
@@ -32,7 +32,7 @@ uint16_t McuSenseStrReadVddMv(void)
     return V_mv;
 }
 
-int16_t McuSenseStrReadTempC(void) 
+int16_t McuSenseReadTempC(void) 
 {
     int32_t temp_raw = ReadADC(ADC_CHANNEL_TEMPSENSOR);
     int32_t temp_mv = temp_raw * McuSenseStrReadVddMv() / ADC_COUNT;
@@ -41,11 +41,9 @@ int16_t McuSenseStrReadTempC(void)
     return temp_c;
 }
 
-
 void McuHealthDriverInit(void)
 {
     // Initialize the MCU health driver
     HAL_ADCEx_Calibration_Start(&hadc1);
-    McuSenseStrReadTempC();
-    McuSenseStrReadVddMv();
 }
+

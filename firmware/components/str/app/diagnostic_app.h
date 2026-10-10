@@ -19,4 +19,9 @@ void DiagnosticTimeSinceBootup();
  */
 void DiagnosticSetWatchdogReset(bool reset);
 
+/**
+ * @brief Sends MCU input voltage in mv and temperature in Celcius
+ */
+void McuDiagnosticSendHealth();
+
 #endif /* DIAGNOSTIC_APP_H_ */

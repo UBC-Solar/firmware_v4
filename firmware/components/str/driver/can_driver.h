@@ -14,11 +14,14 @@
 #define DRD_MOTOR_COMMAND_CAN_ID 0x401U
 #define TIME_SINCE_BOOTUP_CAN_ID 0x581U
 #define TIME_SINCE_BOOTUP_CAN_DATA_LENGTH 4U
+#define STR_DIAGNOSTICS_CAN_ID 0x591
+#define STR_DIAGNOSTICS_CAN_DATA_LENGTH 4U
 
 /* EXTERNAL VARIABLES */
 extern CAN_HandleTypeDef hcan;
 extern const CAN_TxHeaderTypeDef steering_header;
 extern const CAN_TxHeaderTypeDef time_since_bootup_can_header;
+extern const CAN_TxHeaderTypeDef str_mcu_health_can_header;
 
 /* FUNCTION PROTOTYPES */
 /**

@@ -52,6 +52,7 @@ void TasksDiagnostic(void *argument)
     {
         // Refresh the watchdog PPtimer to prevent reset and transmit diagnostics over CAN
         IwdgAppRefresh(&hiwdg);
+        McuDiagnosticSendHealth();
         
         osDelay(DIAGNOSTIC_TASK_DELAY);
     }

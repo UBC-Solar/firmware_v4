@@ -34,7 +34,7 @@
 #define CONFIG_FAULTCYC 0x00 // No fault cycle
 #define CONFIG_FILT50HZ 0x00 // 60Hz filter
 #define RTD_FAULT_MASK 0xFCU // only D7 through D2 are fault bits
-#define RTD_FAULT_DEBOUNCE_COUNT 5U // Report after 5 consecutive faulted reads
+#define RTD_FAULT_DEBOUNCE_COUNT 5U // Latch at 5 net faulted reads (leaky counter)
 #define CONFIG_SELF_CLEARING_BITS (CONFIG_1SHOT | CONFIG_FAULTCLR) // Read back as 0
 
 /* Readings outside -40C..200C set the RTD_LOW / RTD_HIGH fault bits. A shorted
@@ -58,7 +58,7 @@ extern SPI_HandleTypeDef hspi1;
  * be cleared without disturbing the running conversion settings. */
 static uint8_t s_rtd_config = CONFIG_VBIAS | CONFIG_AUTO | CONFIG_3WIRE | CONFIG_FILT50HZ;
 
-static uint8_t s_consecutive_faults = 0U;
+static uint8_t s_fault_count = 0U;
 static RtdFaultFlags s_debounced_faults = 0U;
 // PUBLIC FUNCTIONS
 RtdStatus RtdDriverGetTemp(int32_t* temperature)
@@ -113,8 +113,8 @@ void RtdDriverInit(void)
 {
     /* Compose config: VBIAS | AUTO | 3WIRE | filter 60Hz (CONFIG_FILT50HZ=0) */
     s_rtd_config = CONFIG_VBIAS | CONFIG_AUTO | CONFIG_3WIRE | CONFIG_FILT50HZ;
-    s_consecutive_faults = 0U;
-    s_debounced_faults = 0U;
+    /* Debounce state is not reset here: RtdCheckConfig() re-runs init on a
+     * config mismatch, and that must not clear a latched fault. */
 
     /* Thresholds first so the first auto conversion is checked against them. */
     RtdWriteRegister(HIGH_FAULT_THRESH_MSB_REG_W, (uint8_t)(RTD_HIGH_FAULT_THRESHOLD >> 8));
@@ -283,20 +283,26 @@ static void RtdResistanceToTemp(uint16_t buffer, int32_t* temp)
 
 static void RtdUpdateFaultState(RtdFaultFlags faults)
 {
-    if (faults == 0U)
+    /* Leaky counter: +1 on fault, -1 on clean. Latch at the threshold and clear at 0. */
+    if (faults != 0U)
     {
-        s_consecutive_faults = 0U;
-        s_debounced_faults = 0U;
-        return;
-    }
+        if (s_fault_count < RTD_FAULT_DEBOUNCE_COUNT)
+        {
+            s_fault_count++;
+        }
 
-    if (s_consecutive_faults < RTD_FAULT_DEBOUNCE_COUNT)
-    {
-        s_consecutive_faults++;
+        if (s_fault_count >= RTD_FAULT_DEBOUNCE_COUNT)
+        {
+            s_debounced_faults = faults;
+        }
     }
-
-    if (s_consecutive_faults >= RTD_FAULT_DEBOUNCE_COUNT)
+    else if (s_fault_count > 0U)
     {
-        s_debounced_faults = faults;
+        s_fault_count--;
+
+        if (s_fault_count == 0U)
+        {
+            s_debounced_faults = 0U;
+        }
     }
 }

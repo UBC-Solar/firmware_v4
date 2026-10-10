@@ -30,7 +30,7 @@ What it does:
 - Configures the chip for auto-conversion mode
 - Sets up 3-wire RTD connection
 - Sets RTD fault thresholds to -40°C / 200°C (`RTD_LOW_FAULT_THRESHOLD` / `RTD_HIGH_FAULT_THRESHOLD`) so a shorted or open RTD sets `RTD_FAULT_RTD_LOW` / `RTD_FAULT_RTD_HIGH`
-- Clears debounce state and any power-up latched fault
+- Clears any power-up latched fault (debounce state is left alone, so a re-init after a config mismatch does not drop a latched fault)
 
 When to call: Once during system startup, after SPI is initialized.
 
@@ -77,7 +77,7 @@ Named masks: `RTD_FAULT_RTD_HIGH`, `RTD_FAULT_RTD_LOW`, `RTD_FAULT_REFIN_HIGH`, 
 
 RtdFaultFlags RtdDriverGetFaults(void);
 
-Description: Returns the **debounced** fault flags. Hardware faults must appear on 5 consecutive `RtdDriverGetTemp()` samples (~5 s at the 1 Hz diagnostic cadence) before this is non-zero. A successful temperature read clears the count and the flags.
+Description: Returns the **debounced** fault flags. Uses a leaky counter: each faulted `RtdDriverGetTemp()` sample adds 1 (max 5), each clean sample subtracts 1. The flags latch when the count reaches 5 (~5 s of continuous fault at the 1 Hz diagnostic cadence) and clear only when it drains back to 0. Intermittent faults (e.g. 4 of every 5 reads) still latch, and one clean read does not drop a latched fault.
 
 Use this for latched diagnostic bits (`mdi_rtd_fault` on CAN `0x501`). Transient 1–4 sample glitches show up as `0x502 success=0` without latching that flag.
 
@@ -146,4 +146,5 @@ Example: If resistance = 1038.5Ω, then temperature = 10°C
 - Do not use a previous good temperature across a faulted sample
 - Motor-temp CAN `0x502` (DLC 6): byte 0 success, bytes 1–4 little-endian int32 °C, byte 5 debounced fault flags
 - Diagnostic flags CAN `0x501` bit 3 is RTD fault, bit 4 is RTD SPI/comm error (including a missing or reset MAX31865)
+- `0x501` bit 2 (motor over-temp) only updates on a good read. While bit 3 or bit 4 is set it holds its last value and the motor temperature is unknown, so consumers must treat RTD fault / comm error as "temperature unknown", not as "not over-temp"
 - Only `RTD_FAULT_RTD_HIGH`, `RTD_FAULT_RTD_LOW` and `RTD_FAULT_OVUV` can appear in practice; the REFIN/RTDIN bits are only set by a fault-detection cycle, which this driver does not run

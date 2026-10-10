@@ -46,8 +46,8 @@ RtdStatus RtdDriverReadFaults(RtdFaultFlags* faults);
 /**
  * @brief Gets the debounced MAX31865 fault flags.
  *
- * @return Fault bits after the configured number of consecutive faulted
- *         readings, or zero when no debounced fault is active.
+ * @return Latest fault bits while the leaky fault counter is latched (+1 per
+ *         faulted read, -1 per clean read, latch at 5, clear at 0), or zero.
  */
 RtdFaultFlags RtdDriverGetFaults(void);
 

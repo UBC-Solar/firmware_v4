@@ -14,6 +14,7 @@
 
 /* DEFINES */
 #define ADC_2_ACTIVE 0 // activate if adc2 is used
+#define ADC_READ_TIMEOUT 10 // ms
 
 /* GLOBAL VARIABLES */
 static AdcError g_last_error = ADC_FAULT_NONE;
@@ -44,7 +45,11 @@ static uint16_t NormalizeToDac(uint16_t adc1, uint16_t adc2);
 static uint16_t ReadAdc(ADC_HandleTypeDef* hadc)
 {
     HAL_ADC_Start(hadc);
-    HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
+    if (HAL_ADC_PollForConversion(hadc, ADC_READ_TIMEOUT) != HAL_OK)
+    {
+        //set a diagnostic flag for adc read error
+        return 0; // Error occurred
+    }
     return HAL_ADC_GetValue(hadc);
 }
 

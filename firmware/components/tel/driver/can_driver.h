@@ -54,6 +54,7 @@
 
 #define DRD_TIME_SINCE_BOOTUP_ID            0x404
 #define MDI_TIME_SINCE_BOOTUP_ID            0x500
+#define MDI_MOTOR_TEMP_ID                   0x502
 #define STR_TIME_SINCE_BOOTUP_ID            0x582
 
 #define DRD_MOTOR_COMMAND_ID                0x401

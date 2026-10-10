@@ -19,7 +19,7 @@
 #include "external_lights.h"
 #include "diagnostic.h"
 #include "car_configs.h"
-#include "drd_health_driver.h"
+#include "mcu_health_driver.h"
 
 /* DRIVE STATE TASK */
 void TasksDriveState(void* argument)
@@ -128,7 +128,7 @@ void TasksDiagnostic(void *argument)
         DiagnosticTransmit(false);
         osDelay(DIAGNOSTIC_TASK_DELAY);
 
-        DRD_Diagnostics_Full();
+        McuHealthDriverInit();
     }
 }
 

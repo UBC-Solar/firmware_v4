@@ -1,9 +1,9 @@
 /**
- * @file    drd_sense_driver.c
+ * @file    mcu_health_driver.c
  * @brief   MCU supply voltage and chip temperature from DRD's built-in sensors.
  */
 
-#include "drd_health_driver.h"
+#include "mcu_health_driver.h"
 #include "stm32f1xx_hal.h"
 #include "stm32f1xx_hal_adc.h"
 
@@ -19,19 +19,18 @@ int32_t sense_mv = 0;
 uint16_t g_vdd_mv = 0;
 int16_t g_temp_c = 0;
 
-void DRD_Health_Init() {
+void McuHealthDriverInit() {
     HAL_ADCEx_Calibration_Start(&hadc1); // 
 }
 
-void DRD_Diagnostics_Full( void ) {
 
+void DRD_Diagnostics_Full( void ) {
     g_vdd_mv = DRD_Read_Vdd();
     g_temp_c = DRD_Read_Temp();
-
 }
 
-static uint16_t ReadAdc( uint32_t channel ) {
 
+static uint16_t ReadAdc( uint32_t channel ) {
     ADC_ChannelConfTypeDef config = {
         .Channel = channel,
         .Rank = ADC_REGULAR_RANK_1,
@@ -43,18 +42,17 @@ static uint16_t ReadAdc( uint32_t channel ) {
     HAL_ADC_PollForConversion(&hadc1, 10);
     uint16_t raw = (uint16_t)HAL_ADC_GetValue(&hadc1);
     return raw;
-
 }
 
-uint16_t DRD_Read_Vdd( void ) {
 
+uint16_t DRD_Read_Vdd( void ) {
     uint16_t Vdd = VREFINT_MV * 4095 / ReadAdc(ADC_CHANNEL_VREFINT); //reads as a fraction of VDD
-    
+
     return Vdd;
 }
 
-int16_t DRD_Read_Temp( void ) {
 
+int16_t DRD_Read_Temp( void ) {
     sense_mv = ReadAdc(ADC_CHANNEL_TEMPSENSOR) * DRD_Read_Vdd() / 4095;
     
     int16_t temp = (V25_MV - sense_mv) * 10 / 43 + 25;

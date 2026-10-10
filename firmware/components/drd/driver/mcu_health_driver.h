@@ -9,7 +9,7 @@
 
 extern CAN_HandleTypeDef hcan;
 
-void DRD_Health_Init( void );
+void McuHealthDriverInit( void );
 void DRD_Diagnostics_Full(void);
 uint16_t DRD_Health_ReadVddMv( void );
 uint16_t DRD_Read_Vdd( void );

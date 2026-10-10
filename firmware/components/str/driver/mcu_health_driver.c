@@ -32,11 +32,11 @@ uint16_t McuSenseReadVddMv(void)
     return V_mv;
 }
 
-int16_t McuSenseReadTempC(void) 
+int8_t McuSenseReadTempC(void) 
 {
     int32_t temp_raw = ReadADC(ADC_CHANNEL_TEMPSENSOR);
-    int32_t temp_mv = temp_raw * McuSenseStrReadVddMv() / ADC_COUNT;
-    int16_t temp_c = (temp_mv - V25_MV) / AVG_SLOPE_MV + 25;
+    int32_t temp_mv = temp_raw * McuSenseReadVddMv() / ADC_COUNT;
+    int8_t temp_c = (temp_mv - V25_MV) / AVG_SLOPE_MV + 25;
 
     return temp_c;
 }

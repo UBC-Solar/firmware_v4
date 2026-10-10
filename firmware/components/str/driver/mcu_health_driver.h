@@ -24,6 +24,6 @@ uint16_t McuSenseReadVddMv(void);
 /**
  * @brief returns signed MCU temperature in Celcius
  */
-int16_t McuSenseReadTempC(void);
+int8_t McuSenseReadTempC(void);
 
 #endif

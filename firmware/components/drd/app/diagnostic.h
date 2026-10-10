@@ -37,6 +37,7 @@ typedef union {
 		volatile bool soc_timeout 			: 1; //done
 		volatile bool voltage_timeout 		: 1; //done
 		volatile bool current_timeout 		: 1; //done
+		volatile bool accel_timeout 		: 1; //done
 	};
 	uint8_t cyclic_data_all_flags;
 } DiagnosticCyclicDataFlags;
@@ -131,5 +132,10 @@ void DiagnosticSetVoltageTimeout(bool timeout);
  * @param timeout The current timeout status
  */
 void DiagnosticSetCurrentTimeout(bool timeout);
+/**
+ * @brief Sets the accelerator timeout status
+ * @param timeout The accelerator timeout status
+ */
+void DiagnosticSetAccelTimeout(bool timeout);
 
 #endif /* INC_DIAGNOSTIC_H_ */

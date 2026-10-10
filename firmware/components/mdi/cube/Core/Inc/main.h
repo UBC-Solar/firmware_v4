@@ -77,6 +77,7 @@ void Error_Handler(void);
 #define REG_SCL_GPIO_Port GPIOB
 #define REG_SDA_Pin GPIO_PIN_7
 #define REG_SDA_GPIO_Port GPIOB
+#define DEBUG_LED_PIN GPIO
 
 /* USER CODE BEGIN Private defines */
 

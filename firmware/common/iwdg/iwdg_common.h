@@ -11,9 +11,10 @@
 #ifndef __IWDG_COMMON_H__
 #define __IWDG_COMMON_H__
 
-#include "iwdg.h"
 #include "stm32f1xx_hal.h"
 #include <stdbool.h>
+
+extern IWDG_HandleTypeDef hiwdg;
 
 /*
  * @brief Refresh the IWDG.

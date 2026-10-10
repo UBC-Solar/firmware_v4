@@ -390,24 +390,23 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(MC_LED_GPIO_Port, MC_LED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, DEBUG_LED_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, ECO_MCU_Pin|DIR_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : DEBUG_LED_Pin SPI1_CS_Pin MC_LED_Pin */
+  GPIO_InitStruct.Pin = DEBUG_LED_Pin|SPI1_CS_Pin|MC_LED_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : SPI1_RDY_Pin */
   GPIO_InitStruct.Pin = SPI1_RDY_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(SPI1_RDY_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : SPI1_CS_Pin MC_LED_Pin */
-  GPIO_InitStruct.Pin = SPI1_CS_Pin|MC_LED_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : ECO_MCU_Pin DIR_Pin */
   GPIO_InitStruct.Pin = ECO_MCU_Pin|DIR_Pin;

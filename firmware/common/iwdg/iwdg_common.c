@@ -54,8 +54,6 @@ void IwdgResetHandle(){
         // Refresh the watchdog and flash the LED a few times to indicate that a reset occurred
 		for (int i = 0; i < 10; i++)
 		{
-			HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_11);
-			HAL_Delay(100);
 			IwdgReset();
 		}
 	}

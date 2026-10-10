@@ -79,6 +79,9 @@ void DiagnosticSetCurrentTimeout(bool timeout){
     g_diagnostics.cyclic_flags.current_timeout = timeout;
 }
 
+void DiagnosticSetAccelTimeout(bool timeout){
+    g_diagnostics.cyclic_flags.accel_timeout = timeout;
+}
 
 void DiagnosticTimeSinceBootup()
 {

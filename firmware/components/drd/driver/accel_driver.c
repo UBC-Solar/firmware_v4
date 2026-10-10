@@ -47,7 +47,8 @@ static uint16_t ReadAdc(ADC_HandleTypeDef* hadc)
     HAL_ADC_Start(hadc);
     if (HAL_ADC_PollForConversion(hadc, ADC_READ_TIMEOUT) != HAL_OK)
     {
-        //set a diagnostic flag for adc read error
+        // Set the appropriate diagnostic flag for ADC timeout
+        DiagnosticSetAccelTimeout(true);
         return 0; // Error occurred
     }
     return HAL_ADC_GetValue(hadc);

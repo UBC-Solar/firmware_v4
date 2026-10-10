@@ -1,146 +1,110 @@
-#include "bootloader_sha256.h"
-#include "monocypher-ed25519.h"
 #include "fw_update_protocol.h"
 
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
+/**
+ * @brief Checks the protocol-3 HELLO bytes against an independent Python/zlib vector.
+ */
 static void TestHelloGoldenFrame(void)
 {
     static const uint8_t expected[] = {
-        0x09, 0x53, 0x55, 0x01, 0x01, 0x12, 0x34, 0x56, 0x78, 0x01,
-        0x01, 0x02, 0x01, 0x01, 0x05, 0xD9, 0xD5, 0x4E, 0x7D, 0x00,
+        0x53,
+        0x55,
+        0x03,
+        0x01,
+        0x12,
+        0x34,
+        0x56,
+        0x78,
+        0x00,
+        0x00,
+        0x00,
+        0x01,
+        0x00,
+        0x00,
+        0x35,
+        0xEE,
+        0xD0,
+        0xE2,
     };
-    uint8_t encoded[64];
-    size_t length = FirmwareUpdateFrameEncode(FW_UPDATE_MESSAGE_HELLO,
-                                           0x12345678U,
-                                           1U,
-                                           NULL,
-                                           0U,
-                                           encoded,
-                                           sizeof(encoded));
+    uint8_t frame[64];
+    size_t length = FirmwareUpdateFrameEncode(
+        FW_UPDATE_MESSAGE_HELLO, 0x12345678U, 1U, NULL, 0U, frame, sizeof(frame));
     assert(length == sizeof(expected));
-    assert(memcmp(encoded, expected, sizeof(expected)) == 0);
+    assert(memcmp(frame, expected, length) == 0);
+    FirmwareUpdateMessage message;
+    assert(FirmwareUpdateFrameDecode(frame, length, &message));
+    assert(message.type == FW_UPDATE_MESSAGE_HELLO && message.payload_length == 0U);
+    /* Reject old versions even when their raw header and CRC are consistent. */
+    for (uint8_t version = 1U; version < FW_UPDATE_PROTOCOL_VERSION; version++)
+    {
+        frame[2] = version;
+        FirmwareUpdateWriteBe32(&frame[length - 4U], FirmwareUpdateCrc32(frame, length - 4U));
+        assert(!FirmwareUpdateFrameDecode(frame, length, &message));
+    }
 }
 
+/**
+ * @brief Checks BOARD_INFO layout, payload ownership, CRC rejection, and exact length.
+ */
 static void TestBoardInfoGoldenFrame(void)
 {
-    static const uint8_t encoded[] = {
-        0x09, 0x53, 0x55, 0x01, 0x02, 0x12, 0x34, 0x56, 0x78, 0x01,
-        0x01, 0x02, 0x01, 0x06, 0x1E, 0x54, 0x45, 0x4C, 0x45, 0x02,
-        0x01, 0x01, 0x01, 0x02, 0x01, 0x01, 0x01, 0x02, 0x11, 0x01,
-        0x02, 0x04, 0x01, 0x03, 0x03, 0x70, 0x01, 0x01, 0x01, 0x01,
-        0x01, 0x01, 0x01, 0x06, 0x05, 0xB0, 0xB7, 0xCE, 0x5D, 0x00,
+    static const uint8_t frame[] = {
+        0x53, 0x55, 0x03, 0x02, 0x12, 0x34, 0x56, 0x78, 0x00, 0x00, 0x00, 0x01, 0x00, 0x17,
+        0x54, 0x45, 0x4C, 0x45, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x11, 0x01, 0x04,
+        0x00, 0x00, 0x03, 0x70, 0x00, 0x00, 0x00, 0x00, 0x00, 0x5C, 0x08, 0x13, 0x0E,
     };
-    uint8_t raw[FW_UPDATE_MAX_RAW_FRAME];
     FirmwareUpdateMessage message;
-    assert(FirmwareUpdateFrameDecode(encoded,
-                                 sizeof(encoded),
-                                 raw,
-                                 sizeof(raw),
-                                 &message));
+    assert(FirmwareUpdateFrameDecode(frame, sizeof(frame), &message));
     assert(message.type == FW_UPDATE_MESSAGE_BOARD_INFO);
-    assert(message.session_id == 0x12345678U);
-    assert(message.sequence == 1U);
+    assert(message.session_id == 0x12345678U && message.sequence == 1U);
     assert(message.payload_length == FW_UPDATE_BOARD_INFO_SIZE);
+    assert(message.payload == &frame[FW_UPDATE_HEADER_SIZE]);
     assert(FirmwareUpdateReadBe32(&message.payload[0]) == 0x54454C45U);
-    assert(FirmwareUpdateReadBe32(&message.payload[10]) == 17U);
-    assert(FirmwareUpdateReadBe32(&message.payload[18]) == 225280U);
-
-    uint8_t corrupted[sizeof(encoded)];
-    memcpy(corrupted, encoded, sizeof(encoded));
+    assert(FirmwareUpdateReadBe32(&message.payload[8]) == 17U);
+    assert(FirmwareUpdateReadBe32(&message.payload[15]) == 225280U);
+    assert(!FirmwareUpdateFrameDecode(frame, sizeof(frame) - 1U, &message));
+    uint8_t corrupted[sizeof(frame)];
+    memcpy(corrupted, frame, sizeof(frame));
     corrupted[20] ^= 0x40U;
-    assert(!FirmwareUpdateFrameDecode(corrupted,
-                                  sizeof(corrupted),
-                                  raw,
-                                  sizeof(raw),
-                                  &message));
+    assert(!FirmwareUpdateFrameDecode(corrupted, sizeof(corrupted), &message));
 }
 
-static void AssertSha256(const uint8_t *data,
-                         size_t length,
-                         const uint8_t expected[32])
+/**
+ * @brief Checks the standard CRC32 vector and incremental processing across block boundaries.
+ */
+static void TestCrc32(void)
 {
-    BootloaderSha256Context context;
-    uint8_t digest[32];
-    BootloaderSha256Init(&context);
-    for (size_t offset = 0U; offset < length;) {
-        size_t chunk = (length - offset > 7U) ? 7U : length - offset;
-        BootloaderSha256Update(&context, &data[offset], chunk);
-        offset += chunk;
-    }
-    BootloaderSha256Final(&context, digest);
-    assert(memcmp(digest, expected, sizeof(digest)) == 0);
+    const uint8_t* bytes = (const uint8_t*)"123456789";
+    assert(FirmwareUpdateCrc32(bytes, 9U) == 0xCBF43926U);
+    assert(FirmwareUpdateCrc32(NULL, 0U) == 0U);
+    uint32_t crc = FirmwareUpdateCrc32Update(0xFFFFFFFFU, bytes, 4U);
+    crc = FirmwareUpdateCrc32Update(crc, bytes + 4U, 5U);
+    assert((crc ^ 0xFFFFFFFFU) == 0xCBF43926U);
 }
 
-static void TestSha256(void)
+/**
+ * @brief Rejects invalid codec arguments without accessing undersized buffers.
+ */
+static void TestFrameBounds(void)
 {
-    static const uint8_t empty_digest[32] = {
-        0xE3, 0xB0, 0xC4, 0x42, 0x98, 0xFC, 0x1C, 0x14,
-        0x9A, 0xFB, 0xF4, 0xC8, 0x99, 0x6F, 0xB9, 0x24,
-        0x27, 0xAE, 0x41, 0xE4, 0x64, 0x9B, 0x93, 0x4C,
-        0xA4, 0x95, 0x99, 0x1B, 0x78, 0x52, 0xB8, 0x55,
-    };
-    static const uint8_t abc_digest[32] = {
-        0xBA, 0x78, 0x16, 0xBF, 0x8F, 0x01, 0xCF, 0xEA,
-        0x41, 0x41, 0x40, 0xDE, 0x5D, 0xAE, 0x22, 0x23,
-        0xB0, 0x03, 0x61, 0xA3, 0x96, 0x17, 0x7A, 0x9C,
-        0xB4, 0x10, 0xFF, 0x61, 0xF2, 0x00, 0x15, 0xAD,
-    };
-    AssertSha256((const uint8_t *)"", 0U, empty_digest);
-    AssertSha256((const uint8_t *)"abc", 3U, abc_digest);
-}
-
-static void TestManifestSignatureVector(void)
-{
-    static const uint8_t public_key[32] = {
-        0x03, 0xA1, 0x07, 0xBF, 0xF3, 0xCE, 0x10, 0xBE,
-        0x1D, 0x70, 0xDD, 0x18, 0xE7, 0x4B, 0xC0, 0x99,
-        0x67, 0xE4, 0xD6, 0x30, 0x9B, 0xA5, 0x0D, 0x5F,
-        0x1D, 0xDC, 0x86, 0x64, 0x12, 0x55, 0x31, 0xB8,
-    };
-    static const uint8_t message[76] = {
-        0x53, 0x55, 0x4E, 0x4C, 0x49, 0x54, 0x45, 0x2D,
-        0x4F, 0x54, 0x41, 0x2D, 0x4D, 0x41, 0x4E, 0x49,
-        0x46, 0x45, 0x53, 0x54, 0x2D, 0x56, 0x31, 0x00,
-        0x54, 0x45, 0x4C, 0x45, 0x00, 0x01, 0x00, 0x02,
-        0x00, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00, 0x08,
-        0x00, 0x00, 0x00, 0x01, 0xC3, 0xBF, 0x47, 0xEA,
-        0x1F, 0x4A, 0x4A, 0x60, 0x54, 0x70, 0x31, 0x3C,
-        0xAC, 0xB3, 0xA4, 0x4F, 0x4A, 0x46, 0x1F, 0x68,
-        0xC6, 0xFA, 0xEA, 0xB0, 0x7E, 0x73, 0x76, 0x10,
-        0xCB, 0x5A, 0xC8, 0x35,
-    };
-    static const uint8_t signature[64] = {
-        0x70, 0xF3, 0x2F, 0x85, 0xB8, 0x61, 0x18, 0x56,
-        0x69, 0x05, 0x71, 0xC2, 0xBE, 0x2C, 0x99, 0xD8,
-        0x98, 0xEA, 0x24, 0xA2, 0x7C, 0xD7, 0x88, 0xEA,
-        0x68, 0x93, 0x92, 0xA9, 0x13, 0x61, 0xAA, 0x31,
-        0x0A, 0xE3, 0x07, 0x11, 0x74, 0xE9, 0x19, 0x22,
-        0x2A, 0xE6, 0x4B, 0x7C, 0xA7, 0xAB, 0x8A, 0x71,
-        0xB8, 0xF1, 0x1F, 0x19, 0xEC, 0xE6, 0xE0, 0x64,
-        0xDD, 0x7C, 0x58, 0xA4, 0xCD, 0xDC, 0x44, 0x03,
-    };
-    assert(crypto_ed25519_check(signature,
-                                public_key,
-                                message,
-                                sizeof(message)) == 0);
-    uint8_t forged[sizeof(signature)];
-    memcpy(forged, signature, sizeof(forged));
-    forged[0] ^= 1U;
-    assert(crypto_ed25519_check(forged,
-                                public_key,
-                                message,
-                                sizeof(message)) != 0);
+    uint8_t frame[18];
+    FirmwareUpdateMessage message;
+    assert(FirmwareUpdateFrameEncode(FW_UPDATE_MESSAGE_HELLO, 1U, 1U, NULL, 0U, frame, 17U) == 0U);
+    assert(FirmwareUpdateFrameEncode(
+               FW_UPDATE_MESSAGE_DATA, 1U, 1U, NULL, 1U, frame, sizeof(frame)) == 0U);
+    assert(!FirmwareUpdateFrameDecode(NULL, sizeof(frame), &message));
+    assert(!FirmwareUpdateFrameDecode(frame, 17U, &message));
 }
 
 int main(void)
 {
     TestHelloGoldenFrame();
     TestBoardInfoGoldenFrame();
-    TestSha256();
-    TestManifestSignatureVector();
+    TestCrc32();
+    TestFrameBounds();
     puts("Firmware update C/Python contract vectors passed");
     return 0;
 }

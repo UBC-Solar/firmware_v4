@@ -1,5 +1,5 @@
 /* Host-test bridge to the production CAN transport and wire codec. */
-#include "fw_update_can_transport.h"
+#include "fw_update_protocol.h"
 #include <string.h>
 
 static FirmwareUpdateCanTransport peer;
@@ -24,13 +24,12 @@ int PeerTake(uint8_t *output)
 {
     const uint8_t *encoded;
     size_t length;
-    uint8_t raw[FW_UPDATE_MAX_RAW_FRAME];
     FirmwareUpdateMessage message;
     if (!FirmwareUpdateCanPeekFrame(&peer, &encoded, &length)) {
         return 0;
     }
     /* Production C decoding must accept every Python-generated request. */
-    int result = FirmwareUpdateFrameDecode(encoded, length, raw, sizeof(raw), &message)
+    int result = FirmwareUpdateFrameDecode(encoded, length, &message)
         ? (int)length : -1;
     memcpy(output, encoded, length);
     FirmwareUpdateCanConsumeFrame(&peer);
@@ -44,4 +43,12 @@ int PeerReply(uint8_t type, uint32_t session, uint32_t sequence,
     size_t size = FirmwareUpdateFrameEncode(type, session, sequence, payload,
                                       length, encoded, sizeof(encoded));
     return size && FirmwareUpdateCanSendFrame(&peer, encoded, size, now);
+}
+
+/**
+ * @brief Exercises the production board's transmit capacity with raw encoded data.
+ */
+int PeerSendFrame(const uint8_t *encoded, uint16_t length, uint32_t now)
+{
+    return FirmwareUpdateCanSendFrame(&peer, encoded, length, now);
 }

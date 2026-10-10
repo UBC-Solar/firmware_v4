@@ -30,7 +30,7 @@
 #include "can_app.h"
 #include "tasks.h"
 #include "iwdg_app.h"
-#include "fw_update_can_app.h"
+#include "fw_update_can.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

@@ -56,7 +56,7 @@ ENTRY(Reset_Handler)
 MEMORY
 {
 RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 48K
-/* Final two 2 KiB pages are reserved for redundant signed OTA metadata. */
+/* Final two 2 KiB pages remain unused for application layout compatibility. */
 FLASH (rx)      : ORIGIN = 0x8008000, LENGTH = 220K
 }
 

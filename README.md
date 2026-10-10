@@ -18,10 +18,10 @@ Laptop → PCAN USB adapter → CAN bus → selected board
 ```
 
 Provision the board-specific bootloader once using J-Link or ST-Link over SWD.
-Build the application with an increasing firmware version, then send it over
+Build the application with a firmware version identifying the build, then send it over
 500 kbit/s classic CAN. No Raspberry Pi, SSH, or VS Code OTA extension is needed.
-Debug builds can explicitly enable unsigned bench updates; normal builds verify
-signed firmware. See the [direct CAN guide](tools/README-can-flash.md).
+Updates use CRC32, board checks, and interrupted-write recovery. Reflashing the
+same version and downgrading are allowed; signing keys are not required. See the [direct CAN guide](tools/README-can-flash.md).
 
 The shared `fw_update_*` firmware names identify the wire protocol and update
 engine used by the CAN sender. Keep those modules. TEL, HVC, MST, and the legacy

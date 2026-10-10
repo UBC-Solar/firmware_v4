@@ -35,15 +35,13 @@ extern RCC_TypeDef test_rcc_registers;
 #define RCC_CSR_LPWRRSTF  (1UL << 31U)
 
 void TestHalClearResetFlags(void);
-void TestHalBackupWrite(volatile uint32_t *destination, uint16_t value);
 void HAL_PWR_EnableBkUpAccess(void);
 void HAL_Delay(uint32_t delay_ms);
+const uint8_t *TestEngineFlashPointer(uint32_t address);
 
 #define __HAL_RCC_PWR_CLK_ENABLE() ((void)0)
 #define __HAL_RCC_BKP_CLK_ENABLE() ((void)0)
 #define __HAL_RCC_CLEAR_RESET_FLAGS() TestHalClearResetFlags()
 #define __DSB() ((void)0)
-#define FW_UPDATE_BKP_WRITE(destination, value) \
-    TestHalBackupWrite((destination), (uint16_t)(value))
 
 #endif /* STM32F1XX_HAL_H */

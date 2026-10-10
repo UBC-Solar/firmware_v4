@@ -6,7 +6,7 @@
 #include "mdi_driver.h"
 #include "rtd_driver.h"
 #include "main.h"
-#include "fw_update_can_app.h"
+#include "fw_update_can.h"
 
 void AppMain(void)
 {

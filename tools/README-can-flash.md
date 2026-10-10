@@ -8,39 +8,25 @@ STR on the existing 500 kbit/s classic CAN bus. All boards can remain connected;
 The tool uses the selected ELF's CMake-generated `.elf.ota.json` sidecar,
 asks the running application to enter its bootloader, transfers the image with
 offset-checked acknowledgements, and confirms the firmware version after reboot.
-It preserves integrity checks, version checks, application interlocks, and trial
-confirmation. It does not build firmware or allocate a firmware version.
+It preserves CRC32 integrity checks, board identification, and application
+interlocks. It does not build firmware or allocate a firmware version.
 
-## Unsigned Debug bench mode
+## Basic update format
 
-MDI, DRD, and STR can explicitly opt into key-free bench flashing. This mode
-accepts firmware from anyone with access to CAN. It defaults OFF and CMake
-rejects it outside Debug builds. Normal signed builds remain unchanged.
+Protocol version 3 sends raw messages inside ISO-TP, without COBS or delimiters.
+The 16-byte BEGIN payload contains the board ID, firmware version, image size,
+and image CRC32. Packet CRC32, whole-image readback CRC32, offset checks, and
+vector-last programming detect accidental corruption and interrupted writes.
 
-```sh
-cmake --preset Debug -S firmware/components/mdi \
-  -DFW_UPDATE_ALLOW_UNSIGNED_BENCH=ON \
-  -DFW_UPDATE_FIRMWARE_VERSION=3
-cmake --build firmware/components/mdi/build/Debug --target mdi_bootloader mdi
-```
+Identical versions and downgrades are allowed. Hardware revision ranges, minimum
+bootloader requirements, SHA-256, signatures, and trial-boot confirmation are
+not part of this basic updater. The sender still checks the application version
+after reboot to report whether the requested image is running.
 
-Provision this bootloader once through SWD at `0x08000000`. For migration from
-old application-only firmware, erase the old application region as well, then
-leave it blank for the first CAN transfer. The generated bootloader is
-`firmware/components/mdi/build/Debug/mdi_bootloader.bin`.
-
-```sh
-.venv/bin/python tools/bootloader_send_can.py flash --board mdi \
-  --interface socketcan --channel can0 --unsigned-bench \
-  --elf firmware/components/mdi/build/Debug/mdi.elf
-```
-
-No key files are required. Both the application and bootloader advertise
-capability `0x10`; the sender checks this before entry and again after reset.
-Unsigned manifests use the same wire format with 64 zero signature bytes.
-CRC32, SHA-256, target/hardware checks, version checks, vector-last programming,
-and trial confirmation remain enabled. Increase the firmware version for each
-subsequent update. This option does not bypass the application's safety hook.
+Protocol 1/2 bootloaders and applications are incompatible with this sender.
+Install the protocol-3 bootloader and rebuilt application through SWD once.
+Both must use the new update service; replacing only one leaves CAN flashing
+incompatible. Rebuild to generate the schema-2 `.elf.ota.json` sidecar.
 
 ## Host setup
 
@@ -84,8 +70,6 @@ bus, with termination at the two bus ends. Run only one flashing client at a tim
 ## Provision once, then query
 
 Each board must have its CAN bootloader installed by SWD at `0x08000000`.
-For signed updates, provision a matching public key. For unsigned bench updates,
-provision the explicitly enabled Debug bootloader described above.
 Its application must be linked at `0x08008000` and include the CAN update service.
 A board with blank/invalid application vectors stays in bootloader recovery and
 can also be flashed directly. Stock application-only firmware cannot enter this
@@ -101,32 +85,30 @@ Query each destination before flashing:
 .venv/bin/python tools/bootloader_send_can.py info --board str
 ```
 
-The response includes state, firmware version, hardware revision, slot size,
-and capabilities. Capability bit `0x4` means signature verification is enabled;
-bit `0x1` means the running application allows entry into its bootloader.
-`info` uses a targeted HELLO, which also confirms a pending application trial.
+The response includes state, firmware and bootloader versions, slot size,
+and capabilities. Bit `0x1` means the running application allows entry into its
+bootloader.
+`info` queries the selected board with a targeted HELLO.
 
 ## Build and flash one board
 
-Choose a numeric firmware version greater than the version returned by `info`.
-For example, if MDI reports version 1, build version 2:
+Choose a numeric firmware version to identify the build. It may be the same
+as or older than the installed version. For example, build version 2:
 
 ```sh
 cmake --preset Debug -S firmware/components/mdi -B firmware/components/mdi/build \
-  -DFW_UPDATE_PUBLIC_KEY_FILE="$HOME/.config/firmware-flash/firmware-ed25519.pub" \
-  -DFW_UPDATE_FIRMWARE_VERSION=2 \
-  -DFW_UPDATE_DISPLAY_VERSION=dev-2
+  -DFW_UPDATE_FIRMWARE_VERSION=2
 cmake --build firmware/components/mdi/build --target mdi
 
 .venv/bin/python tools/bootloader_send_can.py flash --board mdi \
-  --elf firmware/components/mdi/build/mdi.elf \
-  --private-key ~/.config/firmware-flash/firmware-ed25519-private.pem
+  --elf firmware/components/mdi/build/mdi.elf
 ```
 
 `arm-none-eabi-objcopy` must be on PATH, or provide its location using
 `--objcopy`. The tool reads exactly `<ELF path>.ota.json`; it rejects another
 board's sidecar and invalid application vectors before opening CAN. The
-bootloader independently verifies the signature before erasing. Replace `mdi`
+bootloader checks image metadata before erasing and verifies the image CRC32
+before committing its vectors. Replace `mdi`
 with `drd` or `str` to build and flash that board. On Windows, provide native
 paths and shell syntax for the CMake commands.
 
@@ -138,8 +120,9 @@ does not override it.
 Success ends with `Confirmed application firmware version <number>`. A timeout,
 NACK, wrong offset, or wrong post-reboot version returns a nonzero exit code.
 Interrupted image writes remain in bootloader recovery. Query the state and retry
-the signed image; a valid image with a failed trial requires a newer version under
-the existing anti-rollback rule. Do not interpret a partial progress log as success.
+the image, including the same version. Trial recovery is removed: if a fully
+programmed application crashes before it can service CAN, SWD may be needed
+to recover it. Do not interpret a partial progress log as success.
 
 ## Software verification
 
@@ -150,9 +133,8 @@ make can-flash-test PYTHON=.venv/bin/python
 
 The direct sender suite compiles the actual firmware C transport and wire codec
 into a host test peer. It covers segmentation, sequence wrap, exact request replay
-after a lost ACK, recovery, interlocks, signing vectors, and version confirmation.
-Signing tests require the dependencies above; without `cryptography`, unittest
-reports those tests as skipped. A host C compiler is required for this suite.
+after a lost ACK, recovery, interlocks, corruption detection, protocol-version
+rejection, reflashes/downgrades, preservation of zero bytes, and version confirmation. A host C compiler is required for this suite.
 
 These are software tests. A powered PCAN-to-board flash, reboot, and interruption
 test are still required to establish operation on the hardware.

@@ -2,7 +2,6 @@
 """Direct application flashing over classic CAN (PCAN by default)."""
 
 import argparse
-import hashlib
 import json
 from pathlib import Path
 import secrets
@@ -17,13 +16,10 @@ TARGETS = {"mdi": (0x4D444920, 0x10), "drd": (0x44524420, 0x11),
            "str": (0x53545220, 0x12)}
 HELLO, BOARD_INFO, ENTER, BEGIN, DATA, END, ACK, NACK, STATUS, REBOOT, ABORT = range(1, 12)
 STATES = ("application", "bootloader", "update_in_progress", "pending_image")
-STATUSES = ("OK", "BAD_STATE", "BAD_TARGET", "BAD_HARDWARE_REVISION",
-            "BAD_VERSION", "BAD_SIGNATURE", "BAD_HASH", "BAD_OFFSET",
-            "FLASH_ERROR", "IMAGE_TOO_LARGE", "UNSUPPORTED",
-            "UPDATE_NOT_ALLOWED", "INTERNAL_ERROR")
-# Legacy signature domain is retained for installed-bootloader compatibility.
-SIGNING_DOMAIN = b"SUNLITE-OTA-MANIFEST-V1\0"
-MAX_FRAME = 1051
+STATUSES = ("OK", "BAD_STATE", "BAD_TARGET", "BAD_CRC", "BAD_OFFSET",
+            "FLASH_ERROR", "IMAGE_TOO_LARGE", "UPDATE_NOT_ALLOWED")
+PROTOCOL_VERSION = 3
+MAX_FRAME = 1046
 
 class FlashError(Exception):
     pass
@@ -31,55 +27,22 @@ class FlashError(Exception):
 class TransportError(FlashError):
     pass
 
-def cobs_encode(raw):
-    encoded = bytearray([0])
-    code_index, code = 0, 1
-    for value in raw:
-        if value == 0:
-            encoded[code_index] = code
-            code_index, code = len(encoded), 1
-            encoded.append(0)
-        else:
-            encoded.append(value)
-            code += 1
-            if code == 255:
-                encoded[code_index] = code
-                code_index, code = len(encoded), 1
-                encoded.append(0)
-    encoded[code_index] = code
-    return bytes(encoded)
-
-def cobs_decode(encoded):
-    raw = bytearray()
-    index = 0
-    while index < len(encoded):
-        code = encoded[index]
-        index += 1
-        if code == 0 or index + code - 1 > len(encoded):
-            raise TransportError("Malformed COBS response")
-        raw.extend(encoded[index:index + code - 1])
-        index += code - 1
-        if code < 255 and index < len(encoded):
-            raw.append(0)
-    return bytes(raw)
-
 def encode_message(kind, session, sequence, payload=b""):
-    raw = struct.pack(">2sBBIIH", b"SU", 1, kind, session, sequence, len(payload)) + payload
-    return cobs_encode(raw + struct.pack(">I", zlib.crc32(raw)))
+    raw = struct.pack(">2sBBIIH", b"SU", PROTOCOL_VERSION, kind, session, sequence, len(payload)) + payload
+    return raw + struct.pack(">I", zlib.crc32(raw))
 
-def decode_message(encoded):
-    if not encoded or len(encoded) > MAX_FRAME or 0 in encoded:
-        raise TransportError("Invalid encoded response")
-    raw = cobs_decode(encoded)
-    if len(raw) < 18 or zlib.crc32(raw[:-4]) != struct.unpack(">I", raw[-4:])[0]:
+def decode_message(raw):
+    if not 18 <= len(raw) <= MAX_FRAME:
+        raise TransportError("Invalid response length")
+    if zlib.crc32(raw[:-4]) != struct.unpack(">I", raw[-4:])[0]:
         raise TransportError("Response CRC mismatch")
     magic, version, kind, session, sequence, length = struct.unpack(">2sBBIIH", raw[:14])
-    if magic != b"SU" or version != 1 or not 1 <= kind <= 11 or length != len(raw) - 18:
+    if magic != b"SU" or version != PROTOCOL_VERSION or not 1 <= kind <= 11 or length != len(raw) - 18:
         raise TransportError("Invalid firmware-update response header")
     return kind, session, sequence, raw[14:-4]
 
 class CanTransport:
-    """Synchronous ISO-TP subset matching fw_update_can_transport.c.
+    """Synchronous ISO-TP subset matching fw_update_protocol.c.
 
     Only one request is outstanding. The bus must not have another receiver
     consuming these identifiers (including a concurrent TEL OTA session).
@@ -129,8 +92,8 @@ class CanTransport:
         raise TransportError("CAN flow-control WAIT limit exceeded")
 
     def send(self, encoded):
-        if not 1 <= len(encoded) <= MAX_FRAME or 0 in encoded:
-            raise FlashError("Invalid outgoing COBS frame")
+        if not 1 <= len(encoded) <= MAX_FRAME:
+            raise FlashError("Invalid outgoing frame length")
         if len(encoded) <= 7:
             self.emit(bytes([len(encoded)]) + encoded)
             return
@@ -216,12 +179,11 @@ class Client:
 
     def hello(self):
         payload = self.request(HELLO, struct.pack(">I", self.target))
-        if len(payload) != 30:
+        if len(payload) != 23:
             raise FlashError("Invalid BOARD_INFO length")
-        values = struct.unpack(">IH I I BB H I I I", payload)
-        board = dict(zip(("target_id", "hardware_revision", "bootloader_version",
-                         "firmware_version", "active_slot", "state", "max_chunk",
-                         "slot_size", "resume_offset", "capabilities"), values))
+        values = struct.unpack(">IIIBHII", payload)
+        board = dict(zip(("target_id", "bootloader_version", "firmware_version",
+                         "state", "max_chunk", "slot_size", "capabilities"), values))
         if board["target_id"] != self.target or board["state"] >= len(STATES):
             raise FlashError("BOARD_INFO target/state mismatch")
         return board
@@ -233,7 +195,7 @@ class Client:
                 board = self.hello()
                 if board["state"] == state:
                     if firmware_version is not None and board["firmware_version"] != firmware_version:
-                        raise FlashError("Running application version differs from signed image")
+                        raise FlashError("Running application version differs from image")
                     return board
             except TransportError:
                 pass
@@ -248,21 +210,16 @@ def integer(metadata, name, maximum=0xFFFFFFFF):
         raise FlashError(f"Invalid metadata field {name}")
     return value
 
-def prepare_image(elf, target, private_key, objcopy, unsigned_bench=False):
+def prepare_image(elf, target, objcopy):
     """Use the ELF's generated sidecar; never invent a compiled version."""
 
     metadata = json.loads(Path(str(elf) + ".ota.json").read_text())
-    if not isinstance(metadata, dict) or integer(metadata, "schema") != 1:
-        raise FlashError("Expected schema-1 ELF OTA metadata")
+    if not isinstance(metadata, dict) or integer(metadata, "schema") != 2:
+        raise FlashError("Expected schema-2 ELF OTA metadata; rebuild the application")
     target_id = integer(metadata, "targetId")
     if target_id != target:
         raise FlashError("ELF metadata does not match selected board")
-    hw_min = integer(metadata, "hardwareRevisionMin", 65535)
-    hw_max = integer(metadata, "hardwareRevisionMax", 65535)
     version = integer(metadata, "firmwareVersion")
-    minimum_bootloader = integer(metadata, "minimumBootloaderVersion")
-    if hw_min > hw_max:
-        raise FlashError("Metadata hardware revision range is reversed")
     with tempfile.TemporaryDirectory(prefix="can-flash-") as directory:
         binary = Path(directory) / "firmware.bin"
         subprocess.run([objcopy, "-O", "binary", str(elf), str(binary)], check=True)
@@ -273,40 +230,21 @@ def prepare_image(elf, target, private_key, objcopy, unsigned_bench=False):
     if (not 0x20000000 <= stack <= 0x2000C000 or stack & 7 or not reset & 1
             or not 0x08008000 <= (reset & ~1) < 0x08008000 + len(image)):
         raise FlashError("ELF must be an application linked at 0x08008000 with valid vectors")
-    fields = struct.pack(">IHHIII", target, hw_min, hw_max, version, len(image), minimum_bootloader)
-    fields += hashlib.sha256(image).digest()
-    if unsigned_bench:
-        return image, fields + bytes(64)
-    from cryptography.hazmat.primitives import serialization
-    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-    key = serialization.load_pem_private_key(Path(private_key).expanduser().read_bytes(), password=None)
-    if not isinstance(key, Ed25519PrivateKey):
-        raise FlashError("Signing key must be Ed25519")
-    return image, fields + key.sign(SIGNING_DOMAIN + fields)
+    fields = struct.pack(">IIII", target, version, len(image), zlib.crc32(image))
+    return image, fields
 
-def validate_board(board, manifest, image_size, unsigned_bench=False):
-    target, hw_min, hw_max, version, size, minimum = struct.unpack(">IHHIII", manifest[:20])
-    if board["target_id"] != target or not hw_min <= board["hardware_revision"] <= hw_max:
-        raise FlashError("Board target/hardware revision does not match image")
-    if unsigned_bench and not board["capabilities"] & 16:
-        raise FlashError("Board does not allow unsigned bench updates")
-    if not unsigned_bench and not board["capabilities"] & 4:
-        raise FlashError("Board lacks a provisioned signature-verification key")
-    if board["bootloader_version"] < minimum:
-        raise FlashError("Image requires a newer bootloader")
+def validate_board(board, manifest, image_size):
+    target, _, size, _ = struct.unpack(">IIII", manifest)
+    if board["target_id"] != target:
+        raise FlashError("Board target does not match image")
     if size != image_size or size > board["slot_size"]:
         raise FlashError("Image exceeds board application slot")
     if board["max_chunk"] < 2:
         raise FlashError("Board advertised an invalid chunk size")
-    installed = board["firmware_version"]
-    # Recovery advertises zero when vectors are invalid; the bootloader still
-    # enforces the retained metadata version before erase.
-    if installed and version <= installed:
-        raise FlashError(f"Build a firmware version greater than installed version {installed}")
 
-def flash(client, image, manifest, progress=print, unsigned_bench=False):
+def flash(client, image, manifest, progress=print):
     board = client.hello()
-    validate_board(board, manifest, len(image), unsigned_bench)
+    validate_board(board, manifest, len(image))
     if board["state"] == 0:
         if not board["capabilities"] & 1:
             raise FlashError("Board update interlock is closed (UPDATE_NOT_ALLOWED)")
@@ -314,11 +252,10 @@ def flash(client, image, manifest, progress=print, unsigned_bench=False):
         client.request(ENTER)
         time.sleep(0.3)
         board = client.wait_state(1)
-        validate_board(board, manifest, len(image), unsigned_bench)
+        validate_board(board, manifest, len(image))
     elif board["state"] != 1:
         raise FlashError("Board already has an update in progress; recover/reset it before a new flash")
-    progress("Checking bench manifest and erasing application..." if unsigned_bench
-             else "Verifying signature and erasing application...")
+    progress("Checking image metadata and erasing application...")
     client.request(BEGIN, manifest, expected_offset=0)
     chunk_size = min(1024, board["max_chunk"]) & ~1
     for offset in range(0, len(image), chunk_size):
@@ -327,12 +264,12 @@ def flash(client, image, manifest, progress=print, unsigned_bench=False):
         progress(f"Written {offset + len(chunk)}/{len(image)} bytes")
     client.request(END, expected_offset=len(image))
     # The final ACK can be lost while the application starts. Success still
-    # requires a targeted application HELLO with the exact signed version.
+    # requires a targeted application HELLO with the exact image version.
     try:
         client.request(REBOOT)
     except TransportError:
         pass
-    version = struct.unpack(">I", manifest[8:12])[0]
+    version = struct.unpack(">I", manifest[4:8])[0]
     confirmed = client.wait_state(0, version)
     progress(f"Confirmed application firmware version {version}")
     return confirmed
@@ -344,9 +281,6 @@ def main(argv=None):
     parser.add_argument("--interface", default="pcan", help="python-can backend (default: pcan)")
     parser.add_argument("--channel", default="PCAN_USBBUS1")
     parser.add_argument("--elf", type=Path, help="Application ELF with adjacent .ota.json")
-    parser.add_argument("--private-key", default="~/.config/firmware-flash/firmware-ed25519-private.pem")
-    parser.add_argument("--unsigned-bench", action="store_true",
-                        help="Explicitly use unsigned firmware with a Debug bench bootloader")
     parser.add_argument("--objcopy", default="arm-none-eabi-objcopy")
     args = parser.parse_args(argv)
     if args.command == "flash" and args.elf is None:
@@ -358,7 +292,7 @@ def main(argv=None):
     try:
         target, node = TARGETS[args.board]
         if args.command == "flash":
-            image, manifest = prepare_image(args.elf, target, args.private_key, args.objcopy, args.unsigned_bench)
+            image, manifest = prepare_image(args.elf, target, args.objcopy)
         with can.Bus(interface=args.interface, channel=args.channel, bitrate=500000,
                      ignore_config=True, receive_own_messages=False,
                      can_filters=[{"can_id": 0x18DAF100 | node, "can_mask": 0x1FFFFFFF,
@@ -369,7 +303,7 @@ def main(argv=None):
                 board["state"] = STATES[board["state"]]
                 print(json.dumps(board, indent=2))
             else:
-                flash(client, image, manifest, unsigned_bench=args.unsigned_bench)
+                flash(client, image, manifest)
     except (FlashError, can.CanError, OSError, ValueError, subprocess.CalledProcessError, ImportError) as error:
         print(f"CAN flash failed: {error}", file=sys.stderr)
         return 1

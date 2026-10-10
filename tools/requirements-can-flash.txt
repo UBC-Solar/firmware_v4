@@ -1,2 +1,1 @@
-python-can>=4.6,<5
-cryptography>=44
+python-can>=4.3

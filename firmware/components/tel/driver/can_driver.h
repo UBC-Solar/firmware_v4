@@ -34,6 +34,9 @@
 #define GPS_UTC_TIME_CAN_DATA_LENGTH               6
 #define GPS_UTC_TIME_CAN_ID                        0x759
 
+#define MCU_HEATLH_CAN_DATA_LENGTH                 4
+#define MCU_HEALTH_CAN_ID                          
+
 /* CAN Message Headers */
 extern const CAN_TxHeaderTypeDef time_since_bootup_can_header;
 extern const CAN_TxHeaderTypeDef tel_flags_can_header;

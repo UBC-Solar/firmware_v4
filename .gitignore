@@ -59,7 +59,9 @@ build/
 
 # Test environments
 firmware/components/drd/test/test_scripts/environment/
-firmware/components/tel/test/test_scripts/environment/
+firmware/components/tel/tests/environment/
 
-# Native Ceedling output (separate from STM32 CMake builds)
-firmware/components/*/build_sil/
+# Local CAN tools
+# tools/candump.sh
+# tools/setup_can_autoconfig.sh
+# greg wants these 2 ^^

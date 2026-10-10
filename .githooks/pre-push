@@ -1,0 +1,22 @@
+#!/bin/sh
+# Block pushes to remote branches that don't follow the naming convention.
+
+. "$(dirname "$0")/check-branch-name.sh"
+
+status=0
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+    # Branch deletions (all-zero sha, any hash length) and tags are not checked.
+    case "$local_sha" in
+        *[!0]*) ;;
+        *) continue ;;
+    esac
+    case "$remote_ref" in
+        refs/heads/*) ;;
+        *) continue ;;
+    esac
+
+    check_branch_name "${remote_ref#refs/heads/}" || status=1
+done
+
+exit $status

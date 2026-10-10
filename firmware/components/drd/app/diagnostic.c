@@ -93,7 +93,6 @@ void DiagnosticTimeSinceBootup()
     };
     GpioDriverToggleDebugLed();
     CAN_comms_Add_Tx_message(&time_since_bootup_can_tx);
-    DRD_Health_Init();
 }
 
 void DiagnosticTransmit(bool from_ISR)

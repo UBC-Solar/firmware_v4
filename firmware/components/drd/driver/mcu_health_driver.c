@@ -24,12 +24,6 @@ void McuHealthDriverInit() {
 }
 
 
-void DRD_Diagnostics_Full( void ) {
-    g_vdd_mv = DRD_Read_Vdd();
-    g_temp_c = DRD_Read_Temp();
-}
-
-
 static uint16_t ReadAdc( uint32_t channel ) {
     ADC_ChannelConfTypeDef config = {
         .Channel = channel,

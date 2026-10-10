@@ -132,4 +132,9 @@ void DiagnosticSetVoltageTimeout(bool timeout);
  */
 void DiagnosticSetCurrentTimeout(bool timeout);
 
+/**
+ * @brief Sends MCU health information (temperature in C and voltage in mv) over CAN
+ */
+void DiagnosticMcuHealth();
+
 #endif /* INC_DIAGNOSTIC_H_ */

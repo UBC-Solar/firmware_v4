@@ -59,11 +59,11 @@ void DiagnosticsSendTelHealth()
     int16_t temp_c = ReadTempC();
 
     CAN_comms_Tx_msg_t tel_health_can_tx = {
-        .data[0] = (vdd_mv & 0x00FF),
-        .data[1] = (vdd_mv & 0xFF00) >> 8,
-        .data[2] = (temp_c & 0x00FF),
-        .data[3] = (temp_c & 0xFF00) >> 8,
-        .header
+        .data[0] = (vdd_mv & 0x00FFU),
+        .data[1] = (vdd_mv & 0xFF00U) >> 8,
+        .data[2] = (temp_c & 0x00FFU),
+        .data[3] = (temp_c & 0xFF00U) >> 8,
+        .header = tel_health_can_header,
     };
 }
 

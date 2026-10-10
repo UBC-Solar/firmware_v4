@@ -7,10 +7,9 @@
  * @author  Gregory Bian
  * @date    Jun 30 2026
  */
- #include "can_driver.h"
- #include "can.h"
- #include "CAN_comms.h"
- #include "can_app.h"
+#include "can_driver.h"
+#include "can.h"
+#include "CAN_comms.h"
 
 const CAN_TxHeaderTypeDef time_since_bootup_can_header = {
     .StdId = TIME_SINCE_BOOTUP_CAN_ID,
@@ -74,6 +73,42 @@ const CAN_TxHeaderTypeDef imu_m_z = {
     .DLC   = IMU_CAN_MESSAGE_M_LENGTH
 };
 
+/** CANload HEADER DEFINITION */
+const CAN_TxHeaderTypeDef CANLOAD_busload = {
+    .StdId = CANLOAD_MSG_ID,
+    .ExtId = 0x0000,
+    .IDE = CAN_ID_STD,
+    .RTR = CAN_RTR_DATA,
+    .DLC = CANLOAD_DATA_LENGTH,
+};
+
+const CAN_TxHeaderTypeDef gps_long_lat_can_header = {
+    .StdId = GPS_LONG_LAT_CAN_ID,
+    .ExtId = 0x0000,
+    .IDE = CAN_ID_STD,
+    .RTR = CAN_RTR_DATA,
+    .DLC = GPS_LONG_LAT_CAN_DATA_LENGTH};
+
+const CAN_TxHeaderTypeDef gps_alt_speed_heading_can_header = {
+    .StdId = GPS_ALT_SPEED_HEADING_CAN_ID,
+    .ExtId = 0x0000,
+    .IDE = CAN_ID_STD,
+    .RTR = CAN_RTR_DATA,
+    .DLC = GPS_ALT_SPEED_HEADING_CAN_DATA_LENGTH};
+
+const CAN_TxHeaderTypeDef gps_status_can_header = {
+    .StdId = GPS_STATUS_CAN_ID,
+    .ExtId = 0x0000,
+    .IDE = CAN_ID_STD,
+    .RTR = CAN_RTR_DATA,
+    .DLC = GPS_STATUS_CAN_DATA_LENGTH};
+
+const CAN_TxHeaderTypeDef gps_utc_time_can_header = {
+    .StdId = GPS_UTC_TIME_CAN_ID,
+    .ExtId = 0x0000,
+    .IDE = CAN_ID_STD,
+    .RTR = CAN_RTR_DATA,
+    .DLC = GPS_UTC_TIME_CAN_DATA_LENGTH};
 
 /**
  * @brief Initialize CAN filter configuration

@@ -58,26 +58,15 @@ extern volatile StrGpioCtx gpio_pin_state;
 
 /* FUNCTION PROTOTYPES */
 /**
- * @brief Polls turn-signal inputs and updates the STR GPIO context.
+ * @brief Initializes STR GPIO state from the current physical pin levels.
  */
-void LightState(void);
-
-/**
- * @brief Updates cruise control state from GPIO inputs.
- * @param velocity Current vehicle velocity in km/h.
- */
-void CruiseState(uint32_t velocity);
-
-/**
- * @brief Polls steering wheel GPIO inputs and updates the STR GPIO context.
- */
-void GpioPollState(void);
+void GPIOInitState(void);
 
 /**
  * @brief Handles STR GPIO interrupt events.
- * @param toggle GPIO pin that triggered the interrupt.
+ * @param GPIO_Pin GPIO pin that triggered the interrupt.
  */
-void StrInterruptHandler(uint16_t toggle);
+void StrInterruptHandler(uint16_t GPIO_Pin);
 
 /**
  * @brief Toggles the state of the debug LED.

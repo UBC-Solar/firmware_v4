@@ -15,6 +15,21 @@
 #include "telemetry_app.h"
 #include "diagnostics.h"
 #include "imu_app.h"
+#include "canload.h"
+#include "gps_app.h"
+
+/* CAN Load task */
+void TasksCanload(void *argument)
+{
+    (void)argument;
+
+    for(;;)
+    {
+        CanloadUpdateSlidingWindow();
+        CAN_tx_canload_msg();
+        osDelay(CANLOAD_TASK_DELAY);  
+    }
+}
 
 /* IMU TASK */
 void TasksIMU(void* argument)
@@ -27,6 +42,20 @@ void TasksIMU(void* argument)
     {
         ImuAppTask();
         osDelay(IMU_TASK_DELAY);
+    }
+}
+
+/* GPS TASK */
+void TasksGPS(void* argument)
+{
+    (void)argument; // Unused parameter
+
+    GpsAppInit();
+
+    for (;;)
+    {
+        GpsAppTask();
+        osDelay(GPS_TASK_DELAY);
     }
 }
 

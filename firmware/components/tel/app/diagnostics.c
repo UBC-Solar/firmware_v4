@@ -55,8 +55,10 @@ void DiagnosticsSendTelFlags()
 
 void DiagnosticsSendTelHealth()
 {
-    int16_t vdd_mv = ReadVdd_mV();
-    int16_t temp_c = ReadTempC();
+    void SenseDriverInit(void);
+    uint16_t vdd_mv = ReadVdd_mV();
+    uint16_t temp_c = ReadTempC();
+
 
     CAN_comms_Tx_msg_t tel_health_can_tx = {
         .data[0] = (vdd_mv & 0x00FFU),
@@ -65,6 +67,10 @@ void DiagnosticsSendTelHealth()
         .data[3] = (temp_c & 0xFF00U) >> 8,
         .header = tel_health_can_header,
     };
+
+    CAN_comms_Add_Tx_message(&tel_health_can_tx);
+    osDelay(3);
+    TelAppTransmitInternalMsg(&tel_health_can_tx);
 }
 
 /* DIAGNOSTIC FLAG SETTERS */

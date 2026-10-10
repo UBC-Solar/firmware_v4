@@ -13,6 +13,11 @@
 
 static uint16_t ReadAdc(uint32_t channel);
 
+void SenseDriverInit(void)
+{
+    HAL_ADCEx_Calibration_Start(&hadc1); // ADC measures and corrects its own offset error
+}
+
 static uint16_t ReadAdc(uint32_t channel)
 {
     ADC_ChannelConfTypeDef config = {
@@ -23,10 +28,11 @@ static uint16_t ReadAdc(uint32_t channel)
 
     HAL_ADC_ConfigChannel(&hadc1, &config);
     HAL_ADC_Start(&hadc1);
-    HAL_ADC_PollForConversion(&hadc1, TIMEOUT_MS;
-    return HAL_ADC_GetValue(&hadc1);
+    HAL_ADC_PollForConversion(&hadc1, TIMEOUT_MS);
+    uint16_t adc_val = HAL_ADC_GetValue(&hadc1);
+    HAL_ADC_Stop(&hadc1);
+    return adc_val;
 }
-
 
 int16_t ReadVdd_mV(void)
 {   
@@ -36,7 +42,7 @@ int16_t ReadVdd_mV(void)
 
 int16_t ReadTempC(void)
 {
-    // Temp sensor voltage drops 4.3 mV per degree C
+    // Temp sensor voltage   drops 4.3 mV per degree C
     int32_t sensor_voltage_mv = ReadAdc(ADC_CHANNEL_TEMPSENSOR) * ReadVdd_mV() /  ADC_MAX_VALUE;
     int16_t temp_c = (int16_t) ((sensor_voltage_mv - V25_MV) / TEMP_MV_SLOPE + STANDARD_TEMP);
     return temp_c;

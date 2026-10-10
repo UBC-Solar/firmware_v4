@@ -80,5 +80,7 @@ void DiagnosticsSetGpsReadFailFlag(bool value);
  */
 void DiagnosticsSetGpsWriteFailFlag(bool value);
 
+void DiagnosticsSendTelHealth();
+
 
 #endif /* DIAGNOSTIC_H_ */

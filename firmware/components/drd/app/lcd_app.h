@@ -22,6 +22,12 @@
 #include "drive_state.h"
 #include "stdint.h"
 
+#ifdef LCD_SIM
+#include "lcd_driver_sim.h"
+#else
+#include "lcd_driver.h"
+#endif
+
 /** Drive Page */
 #define LCD_APP_SPEED_FONT (Verdana48_digits)
 #define LCD_APP_SPEED_NULL_FONT (Verdana32)

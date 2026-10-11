@@ -4,6 +4,11 @@
  *
  * This file contains the prototypes and variables for the RTC driver functions for the TEL board.
  *
+ * Time is kept as UTC epoch milliseconds counted on HAL_GetTick(), which runs off the HSE
+ * crystal. The STM32 RTC peripheral isn't used for timestamps: on this board it is clocked by
+ * the LSI, which the F103 datasheet only specifies to 30-60 kHz, and its seconds and HAL_GetTick()
+ * milliseconds rolled over at different moments, so timestamps went backwards once a second.
+ *
  * @author  Gregory Bian
  * @date    Jun 30 2026
  */
@@ -11,6 +16,10 @@
 #define __RTC__DRIVER__H__
 
 #include <stdbool.h>
+#include <stdint.h>
+
+/** @brief 2000-01-01T00:00:00Z. The clock counts up from this at boot until a source sets it. */
+#define RTC_DRIVER_DEFAULT_EPOCH_MS     946684800000ULL
 
 typedef struct {
     uint8_t seconds;
@@ -22,7 +31,7 @@ typedef struct {
 typedef struct {
     uint8_t day;
     uint8_t month;
-    uint8_t year;
+    uint8_t year;       // years since 2000
 } RtcDriverDateData;
 
 typedef enum {
@@ -35,20 +44,42 @@ typedef enum {
 } RtcDriverTimeIndexes;
 
 /**
- * @brief Initializes the RTC driver and hardware if not already initialized.
- * @param data Data from the memorator to set the RTC Date
+ * @brief Converts a UTC date and time to epoch milliseconds.
+ * @param date Date, year counted from 2000
+ * @param time Time of day
+ * @param epoch_ms Set to the epoch milliseconds if the date and time are in range
+ * @return true if the date and time were in range, false otherwise
  */
-void RtcDriverSetDate(RtcDriverDateData *data);
+bool RtcDriverDateTimeToEpochMs(const RtcDriverDateData* date,
+                                const RtcDriverTimeData* time,
+                                uint64_t* epoch_ms);
+
 /**
- * @brief Initializes the RTC driver and hardware if not already initialized.
- * @param data Data from the memorator to set the RTC Time
+ * @brief Sets the clock. Timestamps jump to the new time, backwards if it is earlier.
+ *        Safe to call from any task.
+ * @param epoch_ms UTC milliseconds since 1970-01-01
  */
-void RtcDriverSetTime(RtcDriverTimeData *data);
+void RtcDriverSetEpochMs(uint64_t epoch_ms);
+
+/**
+ * @brief Moves the clock by a small amount. Timestamps never go backwards: after a negative
+ *        adjustment the clock holds its last value until the new time catches up.
+ *        Safe to call from any task.
+ * @param delta_ms Milliseconds to add, negative to pull the clock back
+ */
+void RtcDriverAdjustEpochMs(int32_t delta_ms);
+
+/**
+ * @brief Gets the current time. Never less than the previous call's result unless
+ *        RtcDriverSetEpochMs() moved the clock back. Safe to call from any task.
+ * @return UTC milliseconds since 1970-01-01
+ */
+uint64_t RtcDriverGetEpochMs(void);
 
 /**
  * @brief Get the current timestamp in seconds with milliseconds precision
  * @return double The current timestamp in seconds.
  */
-double RtcDriverGetTimeStamp();
+double RtcDriverGetTimeStamp(void);
 
 #endif /* __RTC__DRIVER__H__ */

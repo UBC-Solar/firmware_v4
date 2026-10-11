@@ -7,64 +7,97 @@
  * @author  Gregory Bian
  * @date    Jun 30 2026
  */
-#include <sys/types.h>
 #include "rtc_driver.h"
-#include "rtc.h"
 #include "stm32f1xx_hal.h"
-#include <time.h>
 
-#define MILLIS_TO_SECONDS(milliseconds) ( (double)(milliseconds * 0.001) )
-#define MILLISECONDS_IN_SECONDS         1000
+#define MILLISECONDS_PER_SECOND         1000ULL
+#define SECONDS_PER_MINUTE              60U
+#define SECONDS_PER_HOUR                3600U
+#define SECONDS_PER_DAY                 86400ULL
+#define RTC_DRIVER_YEAR_OFFSET          2000
+#define MAX_MONTH                       12U
+#define MAX_DAY                         31U
+#define MAX_HOUR                        23U
+#define MAX_MINUTE                      59U
+#define MAX_SECOND                      60U     // 60 during a leap second
 
-static uint32_t start_of_second;
+/* Epoch milliseconds at HAL tick base_tick. Starts at 2000-01-01 at boot (tick 0). */
+static uint64_t base_epoch_ms = RTC_DRIVER_DEFAULT_EPOCH_MS;
+static uint32_t base_tick = 0;
+/* Last time returned. Reads never go below it, so RtcDriverAdjustEpochMs() can't go backwards. */
+static uint64_t last_epoch_ms = 0;
 
-void RtcDriverSetDate(RtcDriverDateData *data) {
-    /* Initialize Date Object */
-    RTC_DateTypeDef sDate = {0};
-
-    /* Manually parsing the date, month, and year */
-    sDate.Date  = data->day;
-    sDate.Month = data->month;
-    sDate.Year  = data->year;
-
-    /* Set the RTC Date with these settings */
-    HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+/**
+ * @brief  Counts days from 1970-01-01 to a date in the proleptic Gregorian calendar.
+ *         Howard Hinnant's days_from_civil, so no mktime() and no time zone handling.
+ * @param  year: Full year, e.g. 2026
+ * @param  month: 1-12
+ * @param  day: 1-31
+ * @retval Days since 1970-01-01
+ */
+static int32_t RtcDriverDaysFromCivil(int32_t year, uint32_t month, uint32_t day)
+{
+    year -= (month <= 2U) ? 1 : 0;
+    const int32_t era = ((year >= 0) ? year : (year - 399)) / 400;
+    const uint32_t year_of_era = (uint32_t)(year - era * 400);
+    const uint32_t day_of_year = (153U * ((month > 2U) ? (month - 3U) : (month + 9U)) + 2U) / 5U + day - 1U;
+    const uint32_t day_of_era = year_of_era * 365U + year_of_era / 4U - year_of_era / 100U + day_of_year;
+    return era * 146097 + (int32_t)day_of_era - 719468;
 }
 
-void RtcDriverSetTime(RtcDriverTimeData *data) {
-    // Store the start of the second for timestamp calculations
-    start_of_second = HAL_GetTick();
+bool RtcDriverDateTimeToEpochMs(const RtcDriverDateData* date,
+                                const RtcDriverTimeData* time,
+                                uint64_t* epoch_ms)
+{
+    if (date->month < 1U || date->month > MAX_MONTH || date->day < 1U || date->day > MAX_DAY ||
+        time->hours > MAX_HOUR || time->minutes > MAX_MINUTE || time->seconds > MAX_SECOND)
+    {
+        return false;
+    }
 
-    /* Initialize Time Object */
-    RTC_TimeTypeDef sTime = {0};
-
-    /* Manually parsing the seconds minutes hours */
-    sTime.Seconds = data->seconds;
-    sTime.Minutes = data->minutes;
-    sTime.Hours   = data->hours;
-
-    /* Set the RTC time with these settings */
-    HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
+    int32_t days = RtcDriverDaysFromCivil(RTC_DRIVER_YEAR_OFFSET + date->year, date->month, date->day);
+    uint64_t seconds = (uint64_t)days * SECONDS_PER_DAY + time->hours * SECONDS_PER_HOUR +
+                       time->minutes * SECONDS_PER_MINUTE + time->seconds;
+    *epoch_ms = seconds * MILLISECONDS_PER_SECOND;
+    return true;
 }
 
-double RtcDriverGetTimeStamp() {
-    RTC_TimeTypeDef time;
-    RTC_DateTypeDef date;
-    struct tm t;
+void RtcDriverSetEpochMs(uint64_t epoch_ms)
+{
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();        // the 64-bit base and the tick have to change together
+    base_epoch_ms = epoch_ms;
+    base_tick = HAL_GetTick();
+    last_epoch_ms = 0;
+    __set_PRIMASK(primask);
+}
 
-    HAL_RTC_GetTime(&hrtc, &time, RTC_FORMAT_BIN);              /* RTC hours, mins, seconds */
-    HAL_RTC_GetDate(&hrtc, &date, RTC_FORMAT_BIN);              /* RTC years, months, days */
+void RtcDriverAdjustEpochMs(int32_t delta_ms)
+{
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    base_epoch_ms = (uint64_t)((int64_t)base_epoch_ms + delta_ms);
+    __set_PRIMASK(primask);
+}
 
-    t.tm_year = date.Year + 100;  // Year since 1900, so add 100 to the year from the RTC (which starts at 2000).
-    t.tm_mon = date.Month - 1;    // tm_mon is 0-11, so subtract 1 from the RTC month (which starts at 1).
-    t.tm_mday = date.Date;
-    t.tm_hour = time.Hours;
-    t.tm_min = time.Minutes;
-    t.tm_sec = time.Seconds;
-    t.tm_isdst = 0;                // Disable daylight saving time adjustments.
-    long int epoch_secs = (long int) mktime(&t);
+uint64_t RtcDriverGetEpochMs(void)
+{
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    uint32_t now = HAL_GetTick();
+    base_epoch_ms += (uint32_t)(now - base_tick);   // unsigned difference survives the tick wrap
+    base_tick = now;                                // re-base so it never gets near 49.7 days
+    uint64_t epoch_ms = base_epoch_ms;
+    if (epoch_ms < last_epoch_ms)
+    {
+        epoch_ms = last_epoch_ms;                   // being slewed back: hold instead
+    }
+    last_epoch_ms = epoch_ms;
+    __set_PRIMASK(primask);
+    return epoch_ms;
+}
 
-    double milliseconds = MILLIS_TO_SECONDS(((HAL_GetTick() - start_of_second) % MILLISECONDS_IN_SECONDS));  // Get Milliseconds
-
-    return (double)epoch_secs + milliseconds;  
+double RtcDriverGetTimeStamp(void)
+{
+    return (double)RtcDriverGetEpochMs() / (double)MILLISECONDS_PER_SECOND;
 }

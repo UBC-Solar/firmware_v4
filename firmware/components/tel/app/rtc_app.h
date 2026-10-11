@@ -13,12 +13,21 @@
 #define __RTC__APP__H__
 
 #include <stdint.h>
+#include "rtc_driver.h"
 
 /**
  * @brief Synchronizes the RTC memory with the telemetry data.
  * @param data Pointer to the data to synchronize.
  */
 void RtcAppSyncMemoratorToTel(uint8_t *data);
+
+/**
+ * @brief Sets the clock from a GPS solution's UTC time. Call only when the receiver reports the
+ *        date and time valid and fully resolved. Overrides the memorator's time.
+ * @param date UTC date, year counted from 2000
+ * @param time UTC time of day
+ */
+void RtcAppSyncGpsToTel(const RtcDriverDateData* date, const RtcDriverTimeData* time);
 
 /**
  * @brief Handles received RTC-related CAN messages.

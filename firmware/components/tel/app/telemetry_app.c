@@ -31,7 +31,6 @@
 #define CELL_STD_ID_HEX_DIGITS                      3
 #define CELL_EXT_ID_HEX_DIGITS                      8
 #define BITS_PER_HEX_DIGIT                          4
-#define MILLISECONDS_PER_SECOND                     1000.0
 
 /* STATIC VARIABLES */
 static TEL_Msg_TypeDef tel_msg = {0};
@@ -217,7 +216,7 @@ static uint16_t TelAppSetCellLine(uint32_t can_id, uint32_t ide, uint32_t dlc, c
     }
 
     *p++ = '@';
-    p = TelAppWriteDecimal(p, (uint64_t)(RtcDriverGetTimeStamp() * MILLISECONDS_PER_SECOND + 0.5));
+    p = TelAppWriteDecimal(p, RtcDriverGetEpochMs());
     *p++ = ',';
     p = TelAppWriteHex(p, can_id, (ide == CAN_ID_STD) ? CELL_STD_ID_HEX_DIGITS : CELL_EXT_ID_HEX_DIGITS);
     *p++ = ID_DELIMITER_CHAR;

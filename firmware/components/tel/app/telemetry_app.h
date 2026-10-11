@@ -17,8 +17,9 @@
  *
  *   @<epoch ms>,<ID>#<DATA>*<CK>\n          e.g.  @1791648000123,622#0102030405060708*05\n
  *
- *   epoch ms   RTC time in decimal milliseconds since 1970. Before the RTC is set from CAN it
- *              counts up from 2000-01-01 (946684800000).
+ *   epoch ms   UTC milliseconds since 1970, in decimal. Set from GPS once it has valid, fully
+ *              resolved time, else from the memorator (0x300). Until then it counts up from
+ *              2000-01-01 (946684800000) at boot.
  *   ID         Uppercase hex. 3 digits for a standard ID, 8 for an extended ID.
  *   DATA       2 uppercase hex digits per data byte, DLC bytes (0-8). DLC = len(DATA) / 2.
  *   CK         XOR of every character after '@' and before '*', as 2 uppercase hex digits

@@ -96,7 +96,7 @@ typedef enum
 /*============================================================================*/
 /* THRESHOLD CONSTANTS */
 #define HVC_SUPP_LOW_THRESHOLD_MV   10500
-#define DCDC_TEMP_MAX_MV 5000U
+#define DCDC_TEMP_MAX_MV 5000U //Dummy Value --> Replace with Actual Value once known
 #define DISCHARGE_COMPLETE_THRESHOLD_MV 100000U
 
 /*============================================================================*/
@@ -161,7 +161,7 @@ typedef struct {
 
 extern volatile HVC_State_t hvc_state;
 extern HVC_Ticks_t ticks;
-extern HVC_FaultFlags_t fault_flags;
+extern volatile HVC_FaultFlags_t fault_flags;
 extern bool startup_complete;
 extern bool tel_heartbeat_received;
 extern bool mst_status_healthy;

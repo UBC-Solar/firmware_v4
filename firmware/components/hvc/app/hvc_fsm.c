@@ -17,7 +17,7 @@
 
 volatile HVC_State_t hvc_state;
 HVC_Ticks_t ticks;
-HVC_FaultFlags_t fault_flags; 
+volatile HVC_FaultFlags_t fault_flags; 
 bool startup_complete = false;
 bool tel_heartbeat_received = false;
 bool mst_status_healthy = false;
@@ -94,7 +94,9 @@ void HVC_FSM_Run(void)
         fault_flags.LvPowerup_timeout || fault_flags.dcdc_thermistor)
     {
         hvc_state = FAULT; // override with fault.
-        log_fault_cause();
+        if(prev_hvc_state != FAULT) {
+            log_fault_cause();
+        }
     }
     CAN_SendAllMessages();
     check_supp_voltage();
@@ -282,6 +284,10 @@ void log_fault_cause(void)
     {
         DEBUG_IO_PRINT("FAULT: dcdc_fault\r\n");
     }
+    if (fault_flags.dcdc_thermistor)
+    {
+        DEBUG_IO_PRINT("FAULT: dcdc_thermistor\r\n");
+    }
     if (fault_flags.overcurrent)
     {
         DEBUG_IO_PRINT("FAULT: overcurrent\r\n");
@@ -289,6 +295,10 @@ void log_fault_cause(void)
     if (fault_flags.undercurrent)
     {
         DEBUG_IO_PRINT("FAULT: undercurrent\r\n");
+    }
+    if (fault_flags.watchdog_fired)
+    {
+        DEBUG_IO_PRINT("FAULT: watchdog_fired\r\n");
     }
     if (fault_flags.tel_heartbeat_timeout)
     {
@@ -301,5 +311,33 @@ void log_fault_cause(void)
     if (fault_flags.dist_heartbeat_timeout)
     {
         DEBUG_IO_PRINT("FAULT: dist_heartbeat_timeout\r\n");
+    }
+    if (fault_flags.MvpLvPowerup_timeout)
+    {
+        DEBUG_IO_PRINT("FAULT: MvpLvPowerup_timeout\r\n");
+    }
+    if (fault_flags.MST_Ready_timeout)
+    {
+        DEBUG_IO_PRINT("FAULT: MST_Ready_timeout\r\n");
+    }
+    if (fault_flags.MST_Check_timeout)
+    {
+        DEBUG_IO_PRINT("FAULT: MST_Check_timeout\r\n");
+    }
+    if (fault_flags.MotorDischarge_timeout)
+    {
+        DEBUG_IO_PRINT("FAULT: MotorDischarge_timeout\r\n");
+    }
+    if (fault_flags.MotorPrecharge_timeout)
+    {
+        DEBUG_IO_PRINT("FAULT: MotorPrecharge_timeout\r\n");
+    }
+    if (fault_flags.MpptPrecharge_timeout)
+    {
+        DEBUG_IO_PRINT("FAULT: MpptPrecharge_timeout\r\n");
+    }
+    if (fault_flags.LvPowerup_timeout)
+    {
+        DEBUG_IO_PRINT("FAULT: LvPowerup_timeout\r\n");
     }
 }

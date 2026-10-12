@@ -5,7 +5,7 @@
 
 
 /**
- * Pack state \
+ * Pack state
  */
 extern module_t pack_modules[NUM_MODULES];
 extern faults_t pack_faults;
@@ -15,7 +15,7 @@ extern pack_state_t pack_state;
 extern slave_t slaves[SLAVE_NUM_DEVICES];
 
 /**
- * Function definitions\
+ * Function definitions
  */
 
 /**

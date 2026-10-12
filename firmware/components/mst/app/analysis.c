@@ -101,12 +101,12 @@ void CheckForEmergency(module_t *pack_modules, faults_t *pack_faults, warnings_t
         module->warnings.bits.warn_high_voltage = module->voltage_mv >= WARN_HIGH_VOLTAGE_mV;
         module->warnings.bits.warn_high_temperature = module->temperature_mC >= (WARN_HIGH_TEMP_degC*1000);
 
-        #if IGNORE_TEMPEREATURE_VALUES
+        #if IGNORE_TEMPERATURE_VALUES
         // Then ignore temperature-related warnings & faults
             module->faults.bits.fault_over_temperature = false;
             module->faults.bits.fault_under_temperature = false;
             module->warnings.bits.warn_high_temperature = false;
-        #endif // IGNORE_TEMPEREATURE_VALUES
+        #endif // IGNORE_TEMPERATURE_VALUES
 
         // Sum up all faults and warnings across each module
         pack_faults->raw |= module->faults.raw;

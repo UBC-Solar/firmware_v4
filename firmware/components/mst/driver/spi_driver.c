@@ -274,19 +274,6 @@ Slave_Status_t Slave_SendCmdAndPoll(Slave_Command_t command)
 }
 
 
-Slave_Status_t Slave_Poll(Slave_Command_t command)
-{
-    Slave_Status_t status_slave = {Slave_OK, 0};
-
-	WriteCS_(CS_LOW);
-	SendCommand_(CMD_PLADC);
-	status_slave = Poll_();
-	WriteCS_(CS_HIGH);
-
-    return status_slave;
-}
-
-
 /**
  * @brief Writes the 6 bytes of a configuration register group in the ADBMS1818.
  *
@@ -330,8 +317,7 @@ void Slave_WriteRegisterGroup(Slave_Command_t command, uint8_t tx_data[SLAVE_NUM
  * @param rx_data Pointer to a 2-dimensional array of size
  *                SLAVE_NUM_DEVICES x SLAVE_REG_SIZE_BYTES to copy received data to.
  * @return Returns Slave_OK if the received PEC is valid, or Slave_ERROR_PEC if
- *         a full set of valid data could not be obtained after
- *         SLAVE_MAX_READ_ATTEMPTS tries.
+ *         a PEC mismatch occurs. The function returns on the first mismatch.
  */
 Slave_Status_t Slave_ReadRegisterGroup(Slave_Command_t command, uint8_t rx_data[SLAVE_NUM_DEVICES][SLAVE_REG_SIZE_BYTES])
 {

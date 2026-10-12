@@ -92,6 +92,9 @@ void Debug_SetBalancingForModules(slave_t slaves[SLAVE_NUM_DEVICES], bool module
 
                 uint8_t module_balance_enables = 0;
                 int module_start_idx = slaves[slave_num].bal_mappings[reg_num][val_offset];
+                if (module_start_idx < 0 || module_start_idx >= NUM_MODULES) {
+                    continue;
+                }
 
                 for (int module_offset = 0; module_offset < SLAVE_NUM_MODULES_PER_BAL_VAL; module_offset++)
                 {

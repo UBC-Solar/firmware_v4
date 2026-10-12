@@ -29,10 +29,10 @@ typedef enum {
 typedef struct {
     Slave_Error_t error;
     unsigned int device_num; // Device at which error occurred, if applicable.
-    // 0 = N/A, 1 = first device in chain, 2 = second device...
+    // 0-based index into the daisy chain: 0 = first device, 1 = second device...
     // If there is no error (error == Slave_OK), device_num should be 0.
-    // The reason for the N/A option is not all operations have a means of
-    // differentiating responses of different ADBMS1818 devices in the chain.
+    // The reason for using 0 in the no-error case is not all operations have a
+    // means of differentiating responses of different ADBMS1818 devices in the chain.
 } Slave_Status_t;
 
 #define Slave_HAL_ERROR_OFFSET (Slave_ERROR_HAL - HAL_ERROR)

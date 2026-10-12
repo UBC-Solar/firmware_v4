@@ -38,7 +38,7 @@
 // Slaveboard temperature circuitry was damaged during testing and can
 // report incorrect temperatures. If true, ignore all temperature warnings
 // and faults.
-#define IGNORE_TEMPEREATURE_VALUES false
+#define IGNORE_TEMPERATURE_VALUES false
 
 
 /*==============================================================================
@@ -56,7 +56,7 @@
 #define SLAVE_NUM_DEVICES 2U
 
 // Slaveboard hardware revision, starting from 1.
-// e.g. a value of 1 corresponds to slavebord rev 2.0. 
+// e.g. a value of 1 corresponds to slaveboard rev 2.0. 
 // a value of 2 corresponds to slaveboard rev 2.1
 // a value of 3 for rev 2.2, and so on...
 #define SLAVEBOARD_REV 1
@@ -89,7 +89,7 @@
 
 
 /*==============================================================================
- * === CAN INTERFACAE ===========================================================
+ * === CAN INTERFACE ============================================================
  *============================================================================*/
 
 // --- Message IDs and periods ---
@@ -110,7 +110,7 @@
 
 
 /*==============================================================================
- * === ISOSPI INTERFACAE =======================================================
+ * === ISOSPI INTERFACE ========================================================
  *============================================================================*/
 
 #define NUM_CONSECUTIVE_COMM_ERR 3

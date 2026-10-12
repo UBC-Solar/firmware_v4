@@ -80,7 +80,7 @@ void Module_Init(
         // So each register group holds data for 12 modules.
         // Multiplexer documentation: https://www.ti.com/lit/ds/symlink/sn74lv4052a.pdf
         .temp_mappings = {
-            // Auxiliary Register Group A (GPIO1, GPIO2, GPIO3)
+            // Auxiliary Register Group A (none, none, GPIO3)
             { {-1, -1, -1, -1}, {-1, -1, -1, -1}, { 0,  1,  2,  3} },
             // Auxiliary Register Group B (GPIO4, GPIO5, none )
             { { 4,  5,  6,  7}, { 8,  9, 10, 11}, {-1, -1, -1, -1} },
@@ -262,7 +262,7 @@ void RequestTemperatureMeasurement(void) {
 
 /**
  * @brief Converts a voltage measurement to Temperature in milli-Celsius using pure integer math
- * @param thermistor_uV The raw ADC reading in microvolts
+ * @param thermistor_uV The thermistor voltage in microvolts (already converted from the raw ADC reading)
  * @return Temperature in milli-Celsius (e.g., 25500 = 25.5 C)
  */
 int32_t ThermistorVoltToTemp_(uint32_t thermistor_uV) {
@@ -276,26 +276,26 @@ int32_t ThermistorVoltToTemp_(uint32_t thermistor_uV) {
 
     // 2. Iterate temperature look up table to find a match for the measured thermistor voltage
     for (uint16_t i = 0; i < THERMISTOR_LUT_TABLE_SIZE - 1; i++) {
-        // Find the bounding ADC values (remember: voltage_uV is descending)
+        // Find the bounding voltages (remember: voltage_uV is descending)
         if (thermistor_uV <= thermistor_temp_lut[i].voltage_uV && thermistor_uV >= thermistor_temp_lut[i + 1].voltage_uV) {
             
-            int32_t adc1 = thermistor_temp_lut[i].voltage_uV;     // Higher ADC (Colder)
+            int32_t volt1 = thermistor_temp_lut[i].voltage_uV;     // Higher voltage (Colder)
             int32_t t1   = thermistor_temp_lut[i].temperature_mC;       // Lower Temp
             
-            int32_t adc2 = thermistor_temp_lut[i + 1].voltage_uV; // Lower ADC (Hotter)
+            int32_t volt2 = thermistor_temp_lut[i + 1].voltage_uV; // Lower voltage (Hotter)
             int32_t t2   = thermistor_temp_lut[i + 1].temperature_mC;   // Higher Temp
 
             // 3. Linear interpolation between the two values
-            // Formula: T = T1 + ( (T2 - T1) * (ADC1 - thermistor_uV) ) / (ADC1 - ADC2)
+            // Formula: T = T1 + ( (T2 - T1) * (V1 - thermistor_uV) ) / (V1 - V2)
             // Note: We arrange the subtraction to keep values positive before division
             int32_t temp_diff = t2 - t1;
-            int32_t adc_diff = adc1 - adc2;
-            int32_t meas_diff = adc1 - thermistor_uV;
+            int32_t volt_diff = volt1 - volt2;
+            int32_t meas_diff = volt1 - thermistor_uV;
 
             // Multiply before dividing to preserve precision. 
-            // Max temp_diff (e.g., 10000 mC) * Max meas_diff (e.g., 10000 ADC) = 100,000,000.
+            // Max temp_diff (e.g., 10000 mC) * Max meas_diff (e.g., 10000 uV) = 100,000,000.
             // This easily fits inside a signed 32-bit integer without overflowing.
-            int64_t temperature_mC = (int64_t) t1 + (((int64_t)temp_diff * meas_diff) / adc_diff);
+            int64_t temperature_mC = (int64_t) t1 + (((int64_t)temp_diff * meas_diff) / volt_diff);
             
             return temperature_mC;
         }
@@ -399,7 +399,9 @@ void SetTempMuxState(slave_t slaves[SLAVE_NUM_DEVICES], unsigned new_state) {
 }
 
 void SetScrutineeringMode(slave_t slaves[SLAVE_NUM_DEVICES], bool enable) {
-    // config_val_b[i][0] ^ (scrutineering_enabled << 1)
+    // Scrutineering circuitry is controlled by bit 1 in byte 0 of configuration
+    // register group B. Clear that bit, then set it (active-HIGH) or clear it
+    // (active-LOW) depending on the slaveboard revision.
     
     for (int ic_num = 0; ic_num < SLAVE_NUM_DEVICES; ic_num++) {
         // Clear and set bit 1 in byte 0 of configuration register group B

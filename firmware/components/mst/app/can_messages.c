@@ -91,7 +91,7 @@ void CAN_SendTempSummaryMessage(void) {
     int16_t avg_temp_c = (int16_t) (pack_state.avg_temp_mC / 1000);
 
     msg.data[0] = (uint8_t)avg_temp_c & 0xFF;
-    msg.data[1] = (uint8_t)avg_temp_c >> 8;
+    msg.data[1] = (uint8_t)(avg_temp_c >> 8);
     msg.data[2] = pack_state.min_temp_idx+1;
     msg.data[3] = pack_state.max_temp_idx+1;
 
@@ -160,7 +160,7 @@ void SendModuleTempMessage_(uint8_t group_idx) {
             int16_t temp_c_16 = (int16_t) (pack_modules[module_idx].temperature_mC / 1000);
             
             msg.data[i*2]   = (uint8_t)temp_c_16 & 0xFF;
-            msg.data[i*2+1] = (uint8_t)temp_c_16 >> 8;
+            msg.data[i*2+1] = (uint8_t)(temp_c_16 >> 8);
         }
         CAN_QueueTxMessage(&msg);
 }
@@ -222,7 +222,7 @@ void CAN_SendBalanceStatusMessage(void) {
     
     for (int i = 0; i < NUM_MODULES; i++) {
         if (pack_modules[i].is_balancing) {
-            payload |= (1 << i);
+            payload |= (1U << i);
         }
     }
 

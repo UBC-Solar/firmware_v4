@@ -41,7 +41,7 @@ typedef struct
  * @param y The y coordinate (1-based).
  * @param color 1 to set the pixel, 0 to clear it.
  */
-void LcdDriverSetPixel(uint8_t x, uint8_t y, uint8_t colour);
+void LcdDriverSetPixel(uint8_t x, uint8_t y, uint8_t color);
 
 /**
  * @brief Clears a rectangular area in the internal display buffer.

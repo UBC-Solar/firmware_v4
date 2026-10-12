@@ -18,6 +18,7 @@
 #include "drive_state.h"
 #include "gpio_driver.h"
 #include "soc.h"
+#include "mcu_health_driver.h"
 
 /* Static Variables */
 static uint32_t g_time_since_bootup = 0;
@@ -119,4 +120,18 @@ void DiagnosticTransmit(bool from_ISR)
     {
         CAN_comms_Add_Tx_message(&msg);
     }
+}
+
+void DiagnosticMcuHealth() {
+    uint16_t vdd_mv = DRD_Read_Vdd();
+    int16_t  temp_c = DRD_Read_Temp();
+
+    CAN_comms_Tx_msg_t msg = {
+        .header  = drd_mcu_health_header,
+        .data[0] = (uint8_t)(vdd_mv & 0xFFU),
+        .data[1] = (uint8_t)((vdd_mv >> 8) & 0xFFU),
+        .data[2] = (uint8_t)((uint16_t)temp_c & 0xFFU),
+        .data[3] = (uint8_t)(((uint16_t)temp_c >> 8) & 0xFFU),
+    };
+    CAN_comms_Add_Tx_message(&msg);
 }

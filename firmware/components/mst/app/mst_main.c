@@ -40,6 +40,7 @@ slave_t slaves[SLAVE_NUM_DEVICES] = {0};
  * 
  */
 void IsoSpiErrorHandler_() {
+    LOG_ERROR("Too many IsoSPI failures in a short time. Entering IsoSPI error handler.");
     HAL_GPIO_WritePin(FAULT_OUT_GPIO_Port, FAULT_OUT_Pin, GPIO_PIN_SET);
     
     GPIO_Write(HLIM_DIS_OUT_GPIO_Port, HLIM_DIS_OUT_Pin, GPIO_PIN_SET);

@@ -11,8 +11,8 @@
  * Thermistor voltage-to-temperature look-up table.
  * See https://www.vishay.com/docs/29050/ntclg100.pdf.
  * First value is temperature in milli-Celsius,
- * second value is resistance (computed at initialization time),
- * third value is thermistor resistance.
+ * second value is voltage drop across thermistor in micro-volts (computed at initialization time),
+ * third value is thermistor resistance in Ohms.
  */
 thermistor_mapping_t thermistor_temp_lut[THERMISTOR_LUT_TABLE_SIZE] = {
     { -30000, 0, 175200 },
@@ -82,9 +82,9 @@ void Module_Init(
         .temp_mappings = {
             // Auxiliary Register Group A (GPIO1, GPIO2, GPIO3)
             { {-1, -1, -1, -1}, {-1, -1, -1, -1}, { 0,  1,  2,  3} },
-            // Auxiliary Register Group B (GPIO4, GPIO5, GPIO6)
+            // Auxiliary Register Group B (GPIO4, GPIO5, none )
             { { 4,  5,  6,  7}, { 8,  9, 10, 11}, {-1, -1, -1, -1} },
-            // Auxiliary Register Group C (...)
+            // Auxiliary Register Group C (GPIO6, none,  none )
             { {12, 13, 14, 15}, {-1, -1, -1, -1}, {-1, -1, -1, -1} }
         },
         // 4 bits per value, each value holds data for 4 continuous modules at once (e.g. value == 0 --> data for modules 0 to 3)
@@ -159,8 +159,8 @@ void Module_Init(
     for (int i = 0; i < THERMISTOR_LUT_TABLE_SIZE; i++) {
         //V_T: thermistor voltage. R_T: thermistor resistance.
         // V_T = V_ref2 * (R_T)/(10,000 + R_T)
-        uint64_t resistance_Ohm = (uint64_t) 3000000 * thermistor_temp_lut[i].resistance_Ohm / (10000 + thermistor_temp_lut[i].resistance_Ohm);
-        thermistor_temp_lut[i].voltage_uV = resistance_Ohm;
+        uint64_t voltage_uV = (uint64_t) 3000000 * thermistor_temp_lut[i].voltage_uV / (10000 + thermistor_temp_lut[i].voltage_uV);
+        thermistor_temp_lut[i].voltage_uV = voltage_uV;
     }
 
     Slave_Init(SPI_handle);

@@ -1,4 +1,5 @@
 #include "lcd_driver_sim.h"
+#include <stdio.h>
 
 static uint8_t lcd_buffer[(LCD_DRIVER_SCREEN_WIDTH * LCD_DRIVER_SCREEN_HEIGHT) / 8] = {0};
 
@@ -145,4 +146,39 @@ LcdDriverBoundingBox LcdDriverDrawText(char* string, unsigned char x, unsigned c
     ret.y2 = tmp.y2;
 
     return ret;
+}
+
+void LcdDriverForceClearBoundingBox(unsigned char x1, unsigned char y1, unsigned char x2, unsigned char y2)
+{
+    LcdDriverClearBoundingBox(x1, y1, x2, y2);
+    LcdDriverRefresh();
+}
+
+void LcdDriverChangeScreen()
+{
+    LcdDriverClearBoundingBox(0, 0, LCD_DRIVER_BOTTOM_RIGHT_X, LCD_DRIVER_BOTTOM_RIGHT_Y);
+    LcdDriverRefresh();
+}
+
+void LcdDriverRefresh()
+{
+    for (uint8_t y = 0; y < LCD_DRIVER_SCREEN_HEIGHT; y++)
+    {
+        for (uint8_t x = 0; x < LCD_DRIVER_SCREEN_WIDTH; x++)
+        {
+            uint16_t array_pos = x + ((y / 8) * LCD_DRIVER_SCREEN_WIDTH);
+            uint8_t bit_pos = y % 8;
+
+            if (lcd_buffer[array_pos] & (1 << bit_pos))
+            {
+                putchar('#');
+            }
+            else
+            {
+                putchar('.');
+            }
+        }
+        
+        printf("\n");
+    }
 }

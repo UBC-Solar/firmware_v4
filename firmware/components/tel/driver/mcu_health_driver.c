@@ -13,7 +13,7 @@
 
 static uint16_t ReadAdc(uint32_t channel);
 
-void SenseDriverInit(void)
+void McuHealthDriverInit(void)
 {
     HAL_ADCEx_Calibration_Start(&hadc1); // ADC measures and corrects its own offset error
 }
@@ -42,8 +42,8 @@ int16_t ReadVdd_mV(void)
 
 int16_t ReadTempC(void)
 {
-    // Temp sensor voltage   drops 4.3 mV per degree C
+    // Temp sensor voltage drops 4.3 mV per degree C
     int32_t sensor_voltage_mv = ReadAdc(ADC_CHANNEL_TEMPSENSOR) * ReadVdd_mV() /  ADC_MAX_VALUE;
     int16_t temp_c = (int16_t) ((sensor_voltage_mv - V25_MV) / TEMP_MV_SLOPE + STANDARD_TEMP);
     return temp_c;
-}   
+}

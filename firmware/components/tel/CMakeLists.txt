@@ -60,6 +60,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/rtc_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/telemetry_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/gps_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/mcu_health_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/CAN_comms/CAN_comms.c
 )
 

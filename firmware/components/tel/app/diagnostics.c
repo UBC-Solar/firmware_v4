@@ -15,6 +15,7 @@
 #include "can_driver.h"
 #include "can_app.h"
 #include "gpio_driver.h"
+#include "mcu_health_driver.h"
 
 /* STATIC VARIABLES */
 static DiagnosticTEL g_tel_diagnostic_flags = {0};
@@ -39,6 +40,7 @@ void DiagnosticsTimeSinceBootup()
     TelAppTransmitInternalMsg(&time_since_bootup_can_tx);
 }
 
+
 void DiagnosticsSendTelFlags()
 {
     CAN_comms_Tx_msg_t tel_flags_can_tx = {
@@ -49,6 +51,28 @@ void DiagnosticsSendTelFlags()
     CAN_comms_Add_Tx_message(&tel_flags_can_tx);
     osDelay(3);
     TelAppTransmitInternalMsg(&tel_flags_can_tx);
+}
+
+void DiagnosticsSendTelHealth()
+{
+    void McuHealthDriverInit(void);
+    uint16_t vdd_mV = ReadVdd_mV();
+    uint16_t temp_c = ReadTempC();
+
+    DiagnosticsSetMcuOvertemp(temp_c > MAX_TEMP_C);
+    DiagnosticsSetMcuUndervoltage(vdd_mV < MIN_VOLT_MV);
+
+    CAN_comms_Tx_msg_t tel_health_can_tx = {
+        .data[0] = (vdd_mV & 0x00FFU),
+        .data[1] = (vdd_mV & 0xFF00U) >> 8,
+        .data[2] = (temp_c & 0x00FFU),
+        .data[3] = (temp_c & 0xFF00U) >> 8,
+        .header = tel_health_can_header,
+    };
+
+    CAN_comms_Add_Tx_message(&tel_health_can_tx);
+    osDelay(3);
+    TelAppTransmitInternalMsg(&tel_health_can_tx);
 }
 
 /* DIAGNOSTIC FLAG SETTERS */
@@ -75,4 +99,14 @@ void DiagnosticsSetGpsReadFailFlag(bool value)
 void DiagnosticsSetGpsWriteFailFlag(bool value)
 {
     g_tel_diagnostic_flags.bits.gps_write_fail = value;
+}
+
+void DiagnosticsSetMcuOvertemp(bool value)
+{
+    g_tel_diagnostic_flags.bits.mcu_overtemp = value;
+}
+
+void DiagnosticsSetMcuUndervoltage(bool value)
+{
+    g_tel_diagnostic_flags.bits.mcu_undervoltage = value;
 }

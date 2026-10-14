@@ -7,6 +7,26 @@
  *
  * @author  Tony Chen and Gregory Bian
  * @date    May 22 2026
+ *
+ * The format sent depends on CAR_CONFIG_CELLULAR:
+ *
+ * Radio (UART4): 24-byte binary TEL_Msg_TypeDef per message.
+ *
+ * Cellular (USART2): one ASCII line per message, read by the MicroPython script on the Digi
+ * XBee Cellular module:
+ *
+ *   @<epoch ms>,<ID>#<DATA>*<CK>\n          e.g.  @1791648000123,622#0102030405060708*05\n
+ *
+ *   epoch ms   UTC milliseconds since 1970, in decimal. Set from GPS once it has valid, fully
+ *              resolved time, else from the memorator (0x300). Until then it counts up from
+ *              2000-01-01 (946684800000) at boot.
+ *   ID         Uppercase hex. 3 digits for a standard ID, 8 for an extended ID.
+ *   DATA       2 uppercase hex digits per data byte, DLC bytes (0-8). DLC = len(DATA) / 2.
+ *   CK         XOR of every character after '@' and before '*', as 2 uppercase hex digits
+ *              (NMEA style). Drop lines that fail it, or that don't start with '@'.
+ *
+ * A line is at most 44 characters with a 13-digit timestamp (51 worst case). The ID and data
+ * never contain '@', '*' or '\n', so a reader that loses bytes recovers at the next newline.
  */
 
 #ifndef __TELEMETRY__APP__H__

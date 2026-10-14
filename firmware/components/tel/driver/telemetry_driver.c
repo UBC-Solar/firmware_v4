@@ -11,7 +11,7 @@
 
 telemetry_diagnostics_t telemetry_diagnostic;
 
-void UART_telemetry_transmit(TEL_Msg_TypeDef* can_tel_msg)
+void UART_telemetry_transmit(const uint8_t* buf, uint16_t len)
 {
     // J-Link does not supply enough current for the Radio Module. Only use ST-Link for this.
     if (!car_config_cellular) {
@@ -20,7 +20,7 @@ void UART_telemetry_transmit(TEL_Msg_TypeDef* can_tel_msg)
 
     UART_HandleTypeDef *huart = car_config_cellular ? &huart2 : &huart4;
 
-    if (HAL_UART_Transmit_DMA(huart, (uint8_t *)can_tel_msg, sizeof(TEL_Msg_TypeDef)) != HAL_OK)
+    if (HAL_UART_Transmit_DMA(huart, buf, len) != HAL_OK)
     {
         telemetry_diagnostic.telemetry_hal_transmit_failures++;
         osSemaphoreRelease(usart1_tx_semaphore);

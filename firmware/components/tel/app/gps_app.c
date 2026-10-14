@@ -13,6 +13,7 @@
 #include "can_driver.h"
 #include "telemetry_app.h"
 #include "diagnostics.h"
+#include "rtc_app.h"
 #include "cmsis_os2.h"
 #include <string.h>
 
@@ -20,6 +21,7 @@
 #define GPS_APP_RESPONSE_DELAY          100     // ms for the receiver to queue its NAV-PVT and NAV-SAT replies
 #define GPS_APP_CAN_TX_DELAY            3       // ms between CAN queue and radio, as in diagnostics
 #define GPS_APP_YEAR_OFFSET             2000U
+#define GPS_APP_TIME_VALID_BITS         (GPS_DRIVER_VALID_DATE | GPS_DRIVER_VALID_TIME | GPS_DRIVER_FULLY_RESOLVED)
 
 /* STATIC VARIABLES */
 static bool gps_initialized = false;
@@ -112,6 +114,22 @@ void GpsAppTask(void)
     if (!new_pvt)
     {
         return;
+    }
+
+    // Set the clock first so this solution's messages are stamped with GPS time
+    if ((gps_pvt.valid & GPS_APP_TIME_VALID_BITS) == GPS_APP_TIME_VALID_BITS)
+    {
+        RtcDriverDateData date = {
+            .day = gps_pvt.day,
+            .month = gps_pvt.month,
+            .year = (uint8_t)(gps_pvt.year - GPS_APP_YEAR_OFFSET),
+        };
+        RtcDriverTimeData time = {
+            .seconds = gps_pvt.second,
+            .minutes = gps_pvt.minute,
+            .hours = gps_pvt.hour,
+        };
+        RtcAppSyncGpsToTel(&date, &time);
     }
 
     GpsAppSendStatus(&gps_pvt);

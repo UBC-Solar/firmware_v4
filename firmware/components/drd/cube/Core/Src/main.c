@@ -98,7 +98,10 @@ int main(void)
   MX_CAN_Init();
   MX_SPI1_Init();
   MX_UART4_Init();
+  #ifndef DEBUG
   MX_IWDG_Init();
+  #endif // DEBUG
+
   /* USER CODE BEGIN 2 */
 
   CanTasksInit();

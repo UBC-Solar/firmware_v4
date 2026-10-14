@@ -17,9 +17,9 @@
 
 void IwdgRefresh(IWDG_HandleTypeDef* hiwdg1)
 {
-	//#ifndef DEBUG
+	#ifndef DEBUG
 		HAL_IWDG_Refresh(hiwdg1);
-	//#endif // DEBUG
+	#endif // DEBUG
 }
 
 

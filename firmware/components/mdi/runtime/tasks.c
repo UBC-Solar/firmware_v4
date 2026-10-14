@@ -21,13 +21,17 @@ void AppMain(void)
     DiagnosticSendFlags();
 
     uint32_t last_diagnostic_tick = HAL_GetTick();
+    uint32_t last_iwdg_tick = HAL_GetTick();
 
     for (;;)
     {
           
         uint32_t now = HAL_GetTick();
 
+        if ((uint32_t)(now - last_iwdg_tick) >= IWDG_REFRESH_DELAY){
         IwdgRefresh(&hiwdg);
+        last_iwdg_tick = now;
+        }
 
         if ((uint32_t)(now - last_diagnostic_tick) >= MDI_DIAGNOSTICS_DELAY)
         {

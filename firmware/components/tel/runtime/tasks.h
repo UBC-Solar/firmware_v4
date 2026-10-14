@@ -16,6 +16,7 @@
 #define DIAGNOSTICS_TASK_DELAY 100
 #define CANLOAD_TASK_DELAY 100
 #define GPS_TASK_DELAY 900           // + GPS_APP_RESPONSE_DELAY = 1 Hz, the receiver's solution rate
+#define IWDG_TASK_DELAY 100
 
 /**
  * @brief   Canload task function
@@ -51,6 +52,13 @@ void TasksDiagnostics(void* argument);
  * @retval  None
  */
 void TimeSinceStartup(void* argument);
+
+/**
+ * @brief   Watchdog refresh task function
+ * @param   argument: Not used
+ * @retval  None
+ */
+void TasksIWDG(void *argument);
 
 
 

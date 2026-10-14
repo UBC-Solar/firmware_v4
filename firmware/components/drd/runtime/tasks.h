@@ -11,6 +11,7 @@
 #define __TASKS_H__
 
 #define DIAGNOSTIC_TASK_DELAY 100
+#define IWDG_TASK_DELAY 100
 #define TIME_SINCE_STARTUP_TASK_DELAY 1000
 
 /* INCLUDES */
@@ -113,5 +114,7 @@ void TasksExternalLights(void* argument);
  * tasks begin normal operation.
  */
 void TasksCanInit(void);
+
+void TasksIWDG(void *argument);
 
 #endif //__TASKS_H__

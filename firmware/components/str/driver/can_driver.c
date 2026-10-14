@@ -23,6 +23,13 @@ const CAN_TxHeaderTypeDef time_since_bootup_can_header = {
 	.DLC = TIME_SINCE_BOOTUP_CAN_DATA_LENGTH,
 };
 
+const CAN_TxHeaderTypeDef str_flags_can_header = {
+    .StdId = STR_FLAGS_CAN_ID,
+    .ExtId = 0x0000,
+    .IDE = CAN_ID_STD,
+    .RTR = CAN_RTR_DATA,
+    .DLC = STR_FLAGS_CAN_DATA_LENGTH};
+
 const CAN_TxHeaderTypeDef str_mcu_health_can_header = {
 	.StdId = STR_DIAGNOSTICS_CAN_ID,
 	.ExtId = 0x0000,

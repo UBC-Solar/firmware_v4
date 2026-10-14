@@ -17,13 +17,15 @@
 void McuHealthDriverInit(void);
 
 /**
- * @brief returns unsigned MCU input voltage in milivolts
+ * @brief returns error status
+ * @param pointer to usigned MCU input voltage in milivolts
  */
-uint16_t McuSenseReadVddMv(void);
+HAL_StatusTypeDef McuHealthReadVddMv(uint16_t* p_V_mv);
 
 /**
- * @brief returns signed MCU temperature in Celcius
+ * @brief returns error status
+ * @param pointer to returns signed MCU temperature in Celcius
  */
-int8_t McuSenseReadTempC(void);
+HAL_StatusTypeDef McuHealthReadTempC(int8_t* p_temp_c);
 
 #endif

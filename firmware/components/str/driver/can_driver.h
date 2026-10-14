@@ -16,13 +16,15 @@
 #define TIME_SINCE_BOOTUP_CAN_DATA_LENGTH 4U
 #define STR_DIAGNOSTICS_CAN_ID 0x591
 #define STR_DIAGNOSTICS_CAN_DATA_LENGTH 4U
+#define STR_FLAGS_CAN_ID 0x592
+#define STR_FLAGS_CAN_DATA_LENGTH 1U
 
 /* EXTERNAL VARIABLES */
 extern CAN_HandleTypeDef hcan;
 extern const CAN_TxHeaderTypeDef steering_header;
 extern const CAN_TxHeaderTypeDef time_since_bootup_can_header;
 extern const CAN_TxHeaderTypeDef str_mcu_health_can_header;
-
+extern const CAN_TxHeaderTypeDef str_flags_can_header;
 /* FUNCTION PROTOTYPES */
 /**
  * @brief Configures the STR CAN receive filter.

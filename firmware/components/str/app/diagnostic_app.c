@@ -6,10 +6,10 @@
 #include "mcu_health_driver.h"
 
 /* STATIC VARIABLES */
-static DiagnosticTEL g_tel_diagnostic_flags = {0};
+static DiagnosticSTR g_tel_diagnostic_flags = {0};
 static uint32_t g_time_since_bootup = 0U;
-static const uint16_t MCU_VOLTAGE_THRESHOLD = 3000; // temporarily defined here with random values 
-static const int8_t MCU_TEMP_THRESHOLD = 33; // compare this with #define MCU_VOLTAGE_THRESHOLD 3000; when do you use which?
+static const uint16_t MCU_VOLTAGE_THRESHOLD = 3000; // TODO: temporarily defined here with random values 
+static const int8_t MCU_TEMP_THRESHOLD = 33;
 
 /* FUNCTION DEFINITIONS */
 void DiagnosticTimeSinceBootup()
@@ -37,11 +37,11 @@ void DiagnosticsSendStrFlags()
 
     CAN_comms_Add_Tx_message(&str_flags_can_tx);
     osDelay(3);
-    // TelAppTransmitInternalMsg(&str_flags_can_tx); i don't know what this is for tbh
+    // TelAppTransmitInternalMsg(&str_flags_can_tx); TODO: i don't know what this is for tbh
 }
 
 void McuDiagnosticSendHealth() {
-    McuHealthDriverInit(); // this is being re-initialized every time, only needs to run once... figure out where to put it
+    McuHealthDriverInit(); // TODO: this is being re-initialized every time, only needs to run once... figure out where to put it
 
     HAL_StatusTypeDef error_status;
 
@@ -50,10 +50,12 @@ void McuDiagnosticSendHealth() {
 
     /* Attempt to read Voltage and Temperature */
     error_status = McuHealthReadVddMv(&mcu_voltage_mv);
-    if (error_status != HAL_OK) DiagnosticsSetStrReadFailFlag(1); // raise failed read flag?
+    if (error_status != HAL_OK) 
+        DiagnosticsSetStrReadFailFlag(1);
 
     error_status = McuHealthReadTempC(&mcu_temp_c);
-    if (error_status != HAL_OK) DiagnosticsSetStrReadFailFlag(1); // raise failed read flag?
+    if (error_status != HAL_OK) 
+        DiagnosticsSetStrReadFailFlag(1);
 
     /* Return flag if threshold is crossed */
     DiagnosticsSetStrUnderVoltageFlag(mcu_voltage_mv < MCU_VOLTAGE_THRESHOLD);

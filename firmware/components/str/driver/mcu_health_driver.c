@@ -41,7 +41,7 @@ static HAL_StatusTypeDef ReadADC(uint32_t channel, uint16_t *p_raw_value) {
     HAL_ADC_Stop(&hadc1);
 
     // Check boundaries that shouldn't be hit
-    if (*p_raw_value == 0 || *p_raw_value == 4095) { // max internal voltage reference value and prevents divide by zero errors down the line
+    if (*p_raw_value == 0 || *p_raw_value == 4095) { // also prevents divide by zero errors down the line
         status = HAL_ERROR;
     }
     else {
@@ -59,7 +59,8 @@ HAL_StatusTypeDef McuHealthReadVddMv(uint16_t* p_V_mv)
 
     HAL_StatusTypeDef error_status = ReadADC(ADC_CHANNEL_VREFINT, p_raw_value);
 
-    if (error_status != HAL_OK) return error_status; // idk what to return. catches divide by zero error & NULL pointer error
+    if (error_status != HAL_OK) 
+        return error_status; 
 
     *p_V_mv = VREF_MV / V_raw * ADC_COUNT;
 
@@ -72,12 +73,14 @@ HAL_StatusTypeDef McuHealthReadTempC(int8_t* p_temp_c)
 
     uint16_t temp_raw = 0;
     error_status = ReadADC(ADC_CHANNEL_TEMPSENSOR, &temp_raw);
-    if (error_status != HAL_OK) return error_status;
+    if (error_status != HAL_OK) 
+        return error_status;
 
 
     uint16_t vdd_raw = 0;
     error_status = McuHealthReadVddMv(&vdd_raw);
-    if (error_status != HAL_OK) return error_status;
+    if (error_status != HAL_OK) 
+        return error_status;
 
     int32_t temp_mv = temp_raw * vdd_raw / ADC_COUNT;
     *p_temp_c = (V25_MV - temp_mv) / AVG_SLOPE_MV + 25;

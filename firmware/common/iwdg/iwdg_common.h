@@ -33,18 +33,13 @@ bool IwdgIsReset();
  * @brief Checks if the last reset was caused by the independent watchdog and handles it.
  * If a watchdog reset is detected, it sets a diagnostic flag and performs a series of refreshes to prevent an infinite reset loop.
  */ 
- void IwdgResetHandle();
-    /**
+bool IwdgResetHandle();
+
+/**
  * @brief refreshes the IWDG to indicate that a reset occurred
  * 
  */ 
  void IwdgReset();
-
-/**
- * @brief Records whether the last reset was caused by the watchdog.
- * @param reset Watchdog reset state.
- */
- void SetWatchdogReset(bool reset);
 
 
 #endif //__IWDG_COMMON_H__

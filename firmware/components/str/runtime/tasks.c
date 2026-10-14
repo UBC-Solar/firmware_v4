@@ -54,9 +54,11 @@ void TasksDiagnostic(void *argument)
     }
 }
 
+// #TODO: Set diagnostic flags for iwdg
 void TasksIWDG(void *argument)
 {
-    IwdgResetHandle();
+    //IwdgResetHandle();
+
 
     for (;;)
     {

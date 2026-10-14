@@ -109,7 +109,9 @@ int main(void)
   MX_I2C2_Init();
   MX_SPI1_Init();
   MX_UART4_Init();
+  #ifndef DEBUG
   MX_IWDG_Init();
+  #endif // DEBUG
   /* USER CODE BEGIN 2 */
   AppMain();
   /* USER CODE END 2 */

@@ -145,7 +145,7 @@ void TasksFaultLightFlash(void *argument)
 
 void TasksIWDG(void *argument)
 {
-    IwdgResetHandle();
+    DiagnosticSetWatchdogReset(IwdgResetHandle());
 
     for (;;)
     {

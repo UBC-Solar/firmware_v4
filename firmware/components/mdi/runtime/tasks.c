@@ -11,7 +11,7 @@
 
 void AppMain(void)
 {
-    IwdgResetHandle();
+    DiagnosticSetIwdgCrash(IwdgResetHandle());
     CanAppInit();
     RtdDriverInit();
     DiagnosticInit();

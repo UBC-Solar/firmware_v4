@@ -97,7 +97,9 @@ int main(void)
   MX_CAN_Init();
   MX_I2C1_Init();
   MX_UART5_Init();
+  #ifndef DEBUG
   MX_IWDG_Init();
+  #endif // DEBUG
   /* USER CODE BEGIN 2 */
   CanAppInit();
   /* USER CODE END 2 */

@@ -36,25 +36,21 @@ bool IwdgIsReset()
 	}
 }
 
-void SetWatchdogReset(bool reset)
-{
-    (void)reset;
-}
-
 void IwdgReset(){
     IwdgRefresh(&hiwdg);
 }
 
-void IwdgResetHandle(){
+bool IwdgResetHandle(){
 	if (IwdgIsReset())
 	{
-		// Set diagnostic flag to indicate that a watchdog reset occurred
-		SetWatchdogReset(true);
-
         // Refresh the watchdog and flash the LED a few times to indicate that a reset occurred
 		for (int i = 0; i < 10; i++)
 		{
 			IwdgReset();
 		}
+
+		// Set diagnostic flag to indicate that a watchdog reset occurred
+		return true;
 	}
+	return false;
 }	

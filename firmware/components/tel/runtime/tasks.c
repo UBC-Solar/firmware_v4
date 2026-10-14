@@ -75,7 +75,7 @@ void TasksDiagnostics(void* argument)
 
 void TasksIWDG(void *argument)
 {
-    IwdgResetHandle();
+    DiagnosticsSetTelCrashIwdgFlag(IwdgResetHandle());
 
     for (;;)
     {

@@ -111,7 +111,9 @@ int main(void)
   MX_RTC_Init();
   MX_TIM2_Init();
   MX_UART5_Init();
+  #ifndef DEBUG
   MX_IWDG_Init();
+  #endif // DEBUG
   /* USER CODE BEGIN 2 */
   CanAppInit();
   /* USER CODE END 2 */

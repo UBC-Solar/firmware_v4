@@ -11,7 +11,6 @@
 
 void AppMain(void)
 {
-    DiagnosticSetIwdgCrash(IwdgResetHandle());
     CanAppInit();
     RtdDriverInit();
     DiagnosticInit();
@@ -22,6 +21,8 @@ void AppMain(void)
 
     uint32_t last_diagnostic_tick = HAL_GetTick();
     uint32_t last_iwdg_tick = HAL_GetTick();
+
+    DiagnosticSetIwdgCrash(IwdgResetHandle());
 
     for (;;)
     {

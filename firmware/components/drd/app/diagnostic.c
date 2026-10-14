@@ -60,6 +60,14 @@ void DiagnosticSetMotorCommFault(bool fault){
     g_diagnostics.flags.motor_comm_fault = fault;
 }   
 
+void DiagnosticSetMcuOvertemp(bool fault){
+    g_diagnostics.flags.mcu_overtemp_fault = fault;
+}   
+
+void DiagnosticSetMcuUnderVolt(bool fault){
+    g_diagnostics.flags.mcu_undervolt_fault = fault;
+}   
+
 void DiagnosticSetSpeedTimeout(bool timeout){
     g_diagnostics.cyclic_flags.speed_timeout = timeout;
 }
@@ -122,6 +130,9 @@ void DiagnosticTransmit(bool from_ISR)
 void DiagnosticMcuHealth() {
     uint16_t vdd_mv = DRD_Read_Vdd();
     int16_t  temp_c = DRD_Read_Temp();
+
+    DiagnosticSetMcuOvertemp(temp_c > MAX_TEMP_C);
+    DiagnosticSetMcuUnderVolt(vdd_mv < MIN_VOLT_MV);
 
     CAN_comms_Tx_msg_t msg = {
         .header  = drd_mcu_health_header,

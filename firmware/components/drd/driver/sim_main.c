@@ -1,12 +1,11 @@
-#include "lcd_driver_sim.h"
-#include "font_verdana.h"
+#include "lcd_app.h"
 
 int main(void)
 {
-    char text[] = "HELLO";
-    LcdDriverDrawText(text, 10, 10, Verdana8, 1);
+    volatile uint32_t speed = 42;
+    volatile uint8_t units = LCD_APP_KPH;
 
-    LcdDriverRefresh();
+    LcdAppDisplaySpeedDrivePage(&speed, units);
 
     return 0;
 }

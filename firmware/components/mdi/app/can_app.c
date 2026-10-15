@@ -9,17 +9,6 @@
 #include "stm32f1xx_hal_gpio.h"
 #include <stdint.h>
 
-// #define REGEN_LED_GPIO_PORT GPIOA
-// #define REGEN_LED_GPIO_PIN GPIO_PIN_1
-// #define FWD_LED_GPIO_PORT GPIOC
-// #define FWD_LED_GPIO_PIN GPIO_PIN_1
-// #define REV_LED_GPIO_PORT GPIOC
-// #define REV_LED_GPIO_PIN GPIO_PIN_2
-// #define ECO_LED_GPIO_PORT GPIOA
-// #define ECO_LED_GPIO_PIN GPIO_PIN_2
-// #define PWR_LED_GPIO_PORT GPIOB
-// #define PWR_LED_GPIO_PIN GPIO_PIN_12
-
 static MdiMotorCommand s_motor_command = {0};
 static bool s_motor_command_received = false;
 static uint32_t s_last_command_tick = 0;
@@ -72,7 +61,7 @@ static void CanAppRxCallback(const CAN_RxHeaderTypeDef *header, const uint8_t *d
     {
         return;
     }
-    
+
     MdiParseMotorCommand(data, &s_motor_command);
     s_motor_command_received = true;
     s_last_command_tick = HAL_GetTick();

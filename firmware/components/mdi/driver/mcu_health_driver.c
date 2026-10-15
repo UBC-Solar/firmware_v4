@@ -1,9 +1,9 @@
 /**
- * @file    mcu_sense_driver.c
+ * @file    mcu_health_driver.c
  * @brief   MCU supply voltage and chip temperature from ADC1's built-in sensors.
  */
 
-#include "mcu_sense_driver.h"
+#include "mcu_health_driver.h"
 
 #include "stm32f1xx_hal.h"
 
@@ -30,20 +30,20 @@ static uint16_t ReadAdc(uint32_t channel)
     return HAL_ADC_GetValue(&hadc1);
 }
 
-void McuSenseDriverInit(void)
+void McuHealthDriverInit(void)
 {
     HAL_ADCEx_Calibration_Start(&hadc1); // ADC measures and corrects its own offset error
 }
 
-uint16_t McuSenseDriverReadVddMv(void)
+uint16_t McuHealthDriverReadVddMv(void)
 {
     // VREFINT is a fixed 1.2 V. The higher VDD is, the smaller 1.2 V reads.
     return (uint16_t)(VREFINT_MV * 4095 / ReadAdc(ADC_CHANNEL_VREFINT)); //reads as a fraction of VDD
 }
 
-int16_t McuSenseDriverReadTempC(void)
+int16_t McuHealthDriverReadTempC(void)
 {
     // Temp sensor voltage drops 4.3 mV per degC
-    int32_t sense_mv = ReadAdc(ADC_CHANNEL_TEMPSENSOR) * McuSenseDriverReadVddMv() / 4095;
+    int32_t sense_mv = ReadAdc(ADC_CHANNEL_TEMPSENSOR) * McuHealthDriverReadVddMv() / 4095;
     return (int16_t)((V25_MV - sense_mv) * 10 / 43 + 25);
 }

@@ -29,7 +29,7 @@
 /* USER CODE BEGIN Includes */
 #include "can_app.h"
 #include "tasks.h"
-#include "iwdg_app.h"
+#include "iwdg_common.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -83,7 +83,6 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  CanAppInit();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -98,9 +97,11 @@ int main(void)
   MX_CAN_Init();
   MX_I2C1_Init();
   MX_UART5_Init();
+  #ifndef DEBUG
   MX_IWDG_Init();
+  #endif // DEBUG
   /* USER CODE BEGIN 2 */
-  IwdgAppResetHandle();
+  CanAppInit();
   /* USER CODE END 2 */
 
   /* Init scheduler */

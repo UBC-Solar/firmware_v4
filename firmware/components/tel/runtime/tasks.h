@@ -14,6 +14,16 @@
 #define TIME_SINCE_STARTUP_TASK_DELAY 1000
 #define IMU_TASK_DELAY 100
 #define DIAGNOSTICS_TASK_DELAY 100
+#define CANLOAD_TASK_DELAY 100
+#define GPS_TASK_DELAY 900           // + GPS_APP_RESPONSE_DELAY = 1 Hz, the receiver's solution rate
+#define IWDG_TASK_DELAY 100
+
+/**
+ * @brief   Canload task function
+ * @param   argument: Not used
+ * @retval  None
+ */
+void TasksCanload(void *argument);
 
 /**
  * @brief   IMU task function
@@ -21,6 +31,13 @@
  * @retval  None
  */
 void TasksIMU(void* argument);
+
+/**
+ * @brief   GPS task function
+ * @param   argument: Not used
+ * @retval  None
+ */
+void TasksGPS(void* argument);
 
 /**
  * @brief   Diagnostics task function
@@ -35,6 +52,13 @@ void TasksDiagnostics(void* argument);
  * @retval  None
  */
 void TimeSinceStartup(void* argument);
+
+/**
+ * @brief   Watchdog refresh task function
+ * @param   argument: Not used
+ * @retval  None
+ */
+void TasksIWDG(void *argument);
 
 
 

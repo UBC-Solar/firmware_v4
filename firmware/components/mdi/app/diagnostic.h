@@ -10,6 +10,8 @@
 #include <stdint.h>
 
 #define MOTOR_OVER_TEMP_SET_C 100
+#define MCU_UNDER_VOLTAGE_MV 3000 //10% under
+#define MCU_OVER_TEMP_SET_C 85    
 
 typedef union {
     struct {
@@ -18,6 +20,8 @@ typedef union {
         volatile bool mdi_motor_over_temp : 1;
         volatile bool mdi_rtd_fault : 1;
         volatile bool mdi_rtd_comm_error : 1;
+        volatile bool mdi_mcu_under_voltage : 1;
+        volatile bool mdi_mcu_over_temp : 1;
     } bits;
     volatile uint8_t raw;
 } MdiDiagnosticFlags;
@@ -50,7 +54,8 @@ void DiagnosticSendTimeSinceBootup(void);
 void DiagnosticSendRtdTemp(void);
 
 /**
- * @brief Sends MCU supply voltage (uint16 mV) and die temperature (int16 degC) over CAN.
+ * @brief Reads MCU supply voltage and die temperature, updates MCU under-voltage/over-temp
+ *        flags, and transmits MCU-health CAN (uint16 mV, int16 degC).
  */
 void DiagnosticSendMcuHealth(void);
 

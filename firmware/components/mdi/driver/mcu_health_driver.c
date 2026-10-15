@@ -15,7 +15,10 @@ extern ADC_HandleTypeDef hadc1; // configured by CubeMX in main.c
 
 /**
  * @brief Switches ADC1 to a channel, converts once, and returns the raw result (0-4095).
- */
+ * @param channel ADC channel to convert.
+ */ 
+static uint16_t ReadAdc(uint32_t channel);
+
 static uint16_t ReadAdc(uint32_t channel)
 {
     ADC_ChannelConfTypeDef config = {

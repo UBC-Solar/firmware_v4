@@ -127,6 +127,17 @@ void DiagnosticSendMcuHealth(void)
 	uint16_t vdd_mv = McuHealthDriverReadVddMv();
 	int16_t temp_c = McuHealthDriverReadTempC();
 
+	s_diagnostic_flags.bits.mdi_mcu_under_voltage = (vdd_mv < MCU_UNDER_VOLTAGE_MV);
+
+	if (!s_diagnostic_flags.bits.mdi_mcu_over_temp && temp_c >= MCU_OVER_TEMP_SET_C)
+	{
+		s_diagnostic_flags.bits.mdi_mcu_over_temp = true;
+	}
+	else if (s_diagnostic_flags.bits.mdi_mcu_over_temp && temp_c <= (MCU_OVER_TEMP_SET_C - 5)) // cancels out noise
+	{
+		s_diagnostic_flags.bits.mdi_mcu_over_temp = false;
+	}
+
 	uint8_t data[4];
 	data[0] = (uint8_t)(vdd_mv & 0xFFU);
 	data[1] = (uint8_t)((vdd_mv >> 8) & 0xFFU);

@@ -57,24 +57,40 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define DEBUG_LED_Pin GPIO_PIN_2
-#define DEBUG_LED_GPIO_Port GPIOA
+#define FWD_LED_Pin GPIO_PIN_1
+#define FWD_LED_GPIO_Port GPIOC
+#define REV_LED_Pin GPIO_PIN_2
+#define REV_LED_GPIO_Port GPIOC
+#define ACCEL_LED_Pin GPIO_PIN_0
+#define ACCEL_LED_GPIO_Port GPIOA
+#define REGEN_LED_Pin GPIO_PIN_1
+#define REGEN_LED_GPIO_Port GPIOA
+#define ECO_LED_Pin GPIO_PIN_2
+#define ECO_LED_GPIO_Port GPIOA
 #define SPI1_RDY_Pin GPIO_PIN_3
 #define SPI1_RDY_GPIO_Port GPIOA
 #define SPI1_CS_Pin GPIO_PIN_4
 #define SPI1_CS_GPIO_Port GPIOA
+#define PWR_Pin GPIO_PIN_2
+#define PWR_GPIO_Port GPIOB
 #define ACC_SCL_Pin GPIO_PIN_10
 #define ACC_SCL_GPIO_Port GPIOB
 #define ACC_SDA_Pin GPIO_PIN_11
 #define ACC_SDA_GPIO_Port GPIOB
-#define ECO_MCU_Pin GPIO_PIN_12
-#define ECO_MCU_GPIO_Port GPIOB
-#define DIR_Pin GPIO_PIN_13
+#define PWRB12_Pin GPIO_PIN_12
+#define PWRB12_GPIO_Port GPIOB
+#define PIN_6_Pin GPIO_PIN_13
+#define PIN_6_GPIO_Port GPIOB
+#define DIR_Pin GPIO_PIN_14
 #define DIR_GPIO_Port GPIOB
-#define ROT_IP_Pin GPIO_PIN_14
-#define ROT_IP_GPIO_Port GPIOB
+#define ROT_IP_Pin GPIO_PIN_6
+#define ROT_IP_GPIO_Port GPIOC
 #define MC_LED_Pin GPIO_PIN_11
 #define MC_LED_GPIO_Port GPIOA
+#define DEBUG_LED_Pin GPIO_PIN_12
+#define DEBUG_LED_GPIO_Port GPIOC
+#define RTD_LED_Pin GPIO_PIN_2
+#define RTD_LED_GPIO_Port GPIOD
 #define REG_SCL_Pin GPIO_PIN_6
 #define REG_SCL_GPIO_Port GPIOB
 #define REG_SDA_Pin GPIO_PIN_7

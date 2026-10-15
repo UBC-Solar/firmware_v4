@@ -7,8 +7,8 @@
 /* STATIC VARIABLES */
 static DiagnosticSTR g_tel_diagnostic_flags = {0};
 static uint32_t g_time_since_bootup = 0U;
-static const uint16_t MCU_VOLTAGE_THRESHOLD = 2000; // TODO: temporarily defined here with random values 
-static const int8_t MCU_TEMP_THRESHOLD = 120;
+static const uint16_t MCU_VOLTAGE_THRESHOLD = 2400;
+static const int8_t MCU_TEMP_THRESHOLD = 105;
 
 /* FUNCTION DEFINITIONS */
 void DiagnosticTimeSinceBootup()

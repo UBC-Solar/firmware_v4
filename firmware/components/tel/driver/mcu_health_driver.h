@@ -4,8 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define MAX_TEMP_C      85
-#define MIN_VOLT_MV     2000
+#define MAX_TEMP_C      125     // max junction temp according to datasheet
+#define MIN_VOLT_MV     2000    // min operating voltage according to datasheet
 
 /**
  * @brief Inititates the ADC by calibrating it.

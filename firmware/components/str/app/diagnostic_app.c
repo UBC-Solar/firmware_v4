@@ -37,25 +37,19 @@ void DiagnosticsSendStrFlags()
 
     CAN_comms_Add_Tx_message(&str_flags_can_tx);
     osDelay(3);
-    // TelAppTransmitInternalMsg(&str_flags_can_tx); TODO: i don't know what this is for tbh
+}
+
+void McuDiagnsoticInit() {
+    McuHealthDriverInit();
 }
 
 void McuDiagnosticSendHealth() {
-    McuHealthDriverInit(); // TODO: this is being re-initialized every time, only needs to run once... figure out where to put it
-
-    HAL_StatusTypeDef error_status;
-
     uint16_t mcu_voltage_mv = 0;
     int8_t mcu_temp_c = 0;
 
-    /* Attempt to read Voltage and Temperature */
-    error_status = McuHealthReadVddMv(&mcu_voltage_mv);
-    if (error_status != HAL_OK) 
-        DiagnosticsSetStrReadFailFlag(1);
-
-    error_status = McuHealthReadTempC(&mcu_temp_c);
-    if (error_status != HAL_OK) 
-        DiagnosticsSetStrReadFailFlag(1);
+    /* Read Voltage and Temperature */
+    mcu_voltage_mv = McuHealthReadVddMv();
+    mcu_temp_c = McuHealthReadTempC();
 
     /* Return flag if threshold is crossed */
     DiagnosticsSetStrUnderVoltageFlag(mcu_voltage_mv < MCU_VOLTAGE_THRESHOLD);
@@ -85,8 +79,4 @@ void DiagnosticsSetMcuUnderVoltageFailFlag(bool value) {
 
 void DiagnosticsSetMcuOverTempFailFlag(bool value) {
     g_tel_diagnostic_flags.bits.mcu_over_temp = value;
-}
-
-void DiagnosticsSetStrReadAdcFailFlag(bool value) {
-    g_tel_diagnostic_flags.bits.adc_read_fail = value;
 }

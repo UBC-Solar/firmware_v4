@@ -15,6 +15,7 @@
 #include "iwdg_app.h"
 #include "diagnostic_app.h"
 #include "main.h"
+#include "mcu_health_driver.h"
 #include "stm32f1xx_hal.h"
 #include <stdint.h>
 
@@ -46,6 +47,7 @@ void StartHexDisplayTask(void *argument)
 
 void TasksDiagnostic(void *argument)
 {
+    McuDiagnsoticInit();
     IwdgAppResetHandle();
 
     for (;;)

@@ -24,10 +24,10 @@ typedef union {
 void DiagnosticTimeSinceBootup();
 
 /**
- * @brief  Sends the STR diagnostic flags via CAN
+ * @brief Calibrates ADC
  * @retval None
  */
-void DiagnosticsSendStrFlags();
+void McuDiagnsoticInit();
 
 /**
  * @brief Records whether the last reset was caused by the watchdog.
@@ -37,28 +37,28 @@ void DiagnosticSetWatchdogReset(bool reset);
 
 /**
  * @brief Sends MCU input voltage in mv and temperature in Celcius
+ * @retval None
  */
 void McuDiagnosticSendHealth();
+
+/**
+ * @brief  Sends the STR flags over CAN
+ * @retval None
+ */
+void DiagnosticsSendStrFlags();
 
 /**
  * @brief  Sets the MCU Under Voltage fail flag
  * @param  value: The value to set the flag to
  * @retval None
  */
-void DiagnosticsSetMcuUnderVoltageFailFlag(bool value);
+void DiagnosticsSetMcuUnderVoltageFlag(bool value);
 
 /**
  * @brief  Sets the MCU Over Temperature fail flag
  * @param  value: The value to set the flag to
  * @retval None
  */
-void DiagnosticsSetMcuOverTempFailFlag(bool value);
-
-/**
- * @brief  Sets the STR read fail flag
- * @param  value: The value to set the flag to
- * @retval None
- */
-void DiagnosticsSetStrReadFailFlag(bool value);
+void DiagnosticsSetMcuOverTempFlag(bool value);
 
 #endif /* DIAGNOSTIC_APP_H_ */

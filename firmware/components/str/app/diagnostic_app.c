@@ -1,5 +1,4 @@
 #include "diagnostic_app.h"
-
 #include "CAN_comms.h"
 #include "can_driver.h"
 #include "gpio_driver.h"
@@ -8,8 +7,8 @@
 /* STATIC VARIABLES */
 static DiagnosticSTR g_tel_diagnostic_flags = {0};
 static uint32_t g_time_since_bootup = 0U;
-static const uint16_t MCU_VOLTAGE_THRESHOLD = 3000; // TODO: temporarily defined here with random values 
-static const int8_t MCU_TEMP_THRESHOLD = 33;
+static const uint16_t MCU_VOLTAGE_THRESHOLD = 2000; // TODO: temporarily defined here with random values 
+static const int8_t MCU_TEMP_THRESHOLD = 120;
 
 /* FUNCTION DEFINITIONS */
 void DiagnosticTimeSinceBootup()
@@ -28,38 +27,36 @@ void DiagnosticTimeSinceBootup()
     CAN_comms_Add_Tx_message(&time_since_bootup_can_tx);
 }
 
+void McuDiagnsoticInit() {
+    McuHealthDriverInit();
+}
+
 void DiagnosticsSendStrFlags()
 {
     CAN_comms_Tx_msg_t str_flags_can_tx = {
         .data[0] = g_tel_diagnostic_flags.raw,
-        .header = tel_flags_can_tx,
+        .header = str_flags_can_header,
     };
 
     CAN_comms_Add_Tx_message(&str_flags_can_tx);
     osDelay(3);
 }
 
-void McuDiagnsoticInit() {
-    McuHealthDriverInit();
-}
-
 void McuDiagnosticSendHealth() {
-    uint16_t mcu_voltage_mv = 0;
-    int8_t mcu_temp_c = 0;
-
     /* Read Voltage and Temperature */
-    mcu_voltage_mv = McuHealthReadVddMv();
-    mcu_temp_c = McuHealthReadTempC();
+    uint16_t mcu_voltage_mv = McuHealthReadVddMv();
+    int16_t mcu_temp_c = McuHealthReadTempC();
 
     /* Return flag if threshold is crossed */
-    DiagnosticsSetStrUnderVoltageFlag(mcu_voltage_mv < MCU_VOLTAGE_THRESHOLD);
-    DiagnosticsSetStrOverTempFlag(mcu_temp_c > MCU_TEMP_THRESHOLD);
+    DiagnosticsSetMcuUnderVoltageFlag(mcu_voltage_mv < MCU_VOLTAGE_THRESHOLD);
+    DiagnosticsSetMcuOverTempFlag(mcu_temp_c > MCU_TEMP_THRESHOLD);
 
 
     CAN_comms_Tx_msg_t mcu_diagnostics_can_tx = {
     .data[0] = (mcu_voltage_mv & 0x00FFU),  // LE order so data[0] corresponds to least significant
     .data[1] = (mcu_voltage_mv & 0xFF00U) >> 8,
-    .data[2] = (mcu_temp_c),
+    .data[2] = (mcu_temp_c & 0x00FFU),
+    .data[3] = (mcu_temp_c & 0xFF00U) >> 8,
 
     .header = str_mcu_health_can_header,
     };
@@ -73,10 +70,10 @@ void DiagnosticSetWatchdogReset(bool reset)
 }
 
 /* DIAGNOSTIC FLAG SETTERS */
-void DiagnosticsSetMcuUnderVoltageFailFlag(bool value) {
+void DiagnosticsSetMcuUnderVoltageFlag(bool value) {
     g_tel_diagnostic_flags.bits.mcu_under_voltage = value;
 }
 
-void DiagnosticsSetMcuOverTempFailFlag(bool value) {
+void DiagnosticsSetMcuOverTempFlag(bool value) {
     g_tel_diagnostic_flags.bits.mcu_over_temp = value;
 }

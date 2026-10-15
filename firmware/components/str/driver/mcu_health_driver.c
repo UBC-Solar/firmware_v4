@@ -4,11 +4,11 @@
 
 #define V25_MV          1430.0f     // Voltage at 25 C
 #define VREF_MV         1200.0f     // Internal reference voltage
-#define AVG_SLOPE_MV    -4.3f        // mv / degrees C
+#define AVG_SLOPE_MV    -4.3f       // mv / degrees C
 #define ADC_COUNT       4095.0f     // Max ADC bit width
+#define TIMEOUT_MS      10          // Safe delay between ADC reads 
 
-
-static HAL_StatusTypeDef ReadADC(uint32_t channel) {
+static uint16_t ReadADC(uint32_t channel) {
     ADC_ChannelConfTypeDef config = {
         .Channel = channel,
         .Rank = ADC_REGULAR_RANK_1,
@@ -24,21 +24,21 @@ static HAL_StatusTypeDef ReadADC(uint32_t channel) {
     return adc_val;
 }
 
-HAL_StatusTypeDef McuHealthReadVddMv(uint16_t* p_V_mv) 
+uint16_t McuHealthReadVddMv() 
 {
     uint16_t vdd_raw = ReadADC(ADC_CHANNEL_VREFINT);
-    vdd_mv = VREF_MV / vdd_raw * ADC_COUNT;
+    uint16_t vdd_mv = VREF_MV / vdd_raw * ADC_COUNT;
 
     return vdd_mv;
 }
 
-int8_t McuHealthReadTempC() 
+int16_t McuHealthReadTempC() 
 {
-    uint16_t temp_raw = ReadADC(ADC_CHANNEL_TEMPSENSOR);
-    uint16_t vdd_raw = McuHealthReadVddMv(&vdd_raw);
+    int16_t temp_raw = ReadADC(ADC_CHANNEL_TEMPSENSOR);
+    uint16_t vdd_mv = McuHealthReadVddMv();
 
-    int32_t temp_mv = temp_raw * vdd_raw / ADC_COUNT;
-    int8_t temp_c = (temp_mv - V25_MV) / AVG_SLOPE_MV + 25;
+    int32_t temp_mv = temp_raw * vdd_mv / ADC_COUNT;
+    int16_t temp_c = (temp_mv - V25_MV) / AVG_SLOPE_MV + 25;
 
     return temp_c;
 }

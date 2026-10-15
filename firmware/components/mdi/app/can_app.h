@@ -30,4 +30,7 @@ bool CanAppTryGetMotorCommand(MdiMotorCommand *command);
  */
 uint32_t CanAppGetLastCommandTick(void);
 
+void CanMdiLedHandler(uint32_t msg_id, uint8_t *data);
+void MotorCommandCanHandler(uint8_t *data);
+
 #endif /* __CAN_APP_H__ */

@@ -22,6 +22,11 @@ static DiagnosticTEL g_tel_diagnostic_flags = {0};
 static volatile uint32_t g_time_since_bootup = 0;
 
 /** FUNCTION DEFINITIONS */
+void DiagnosticsInit()
+{
+    void McuHealthDriverInit(void);
+}
+
 void DiagnosticsTimeSinceBootup()
 {
     g_time_since_bootup++;
@@ -55,7 +60,6 @@ void DiagnosticsSendTelFlags()
 
 void DiagnosticsSendTelHealth()
 {
-    void McuHealthDriverInit(void);
     uint16_t vdd_mV = ReadVdd_mV();
     uint16_t temp_c = ReadTempC();
 

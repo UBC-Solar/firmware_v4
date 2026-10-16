@@ -111,6 +111,7 @@ void TasksTimeSinceStartup(void *argument)
     {
         // Transmit DRD heartbeat over CAN
         DiagnosticTimeSinceBootup();
+        DiagnosticSendCommitHash();
         osDelay(TIME_SINCE_STARTUP_TASK_DELAY);
     }
 }

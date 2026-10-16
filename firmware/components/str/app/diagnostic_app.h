@@ -13,4 +13,10 @@
  */
 void DiagnosticTimeSinceBootup();
 
+/**
+ * @brief  Sends the git commit hash the firmware was built from via CAN
+ * @retval None
+ */
+void DiagnosticSendCommitHash();
+
 #endif /* DIAGNOSTIC_APP_H_ */

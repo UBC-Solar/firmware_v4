@@ -6,6 +6,7 @@
 #include "stm32f1xx_hal_def.h"
 #include "debug_io.h"
 #include "hvc_fsm.h"
+#include "git_version.h"
 #include <stdint.h>
 
 CAN_Driver_t CAN_driver;
@@ -264,6 +265,19 @@ void CAN_SendHeartbeat(void)
     CAN_QueueTxMessage(&txMessage);
     HeartBeatCounter++;
     DEBUG_IO_PRINT("Sent Heartbeat CAN message\r\n");
+}
+
+void CAN_SendCommitHash(void)
+{
+    CAN_TxMessage_t txMessage = {0};
+
+    txMessage.tx_header.StdId = HVC_COMMIT_HASH_ID;
+    txMessage.tx_header.IDE   = CAN_ID_STD;
+    txMessage.tx_header.RTR   = CAN_RTR_DATA;
+    txMessage.tx_header.DLC   = GIT_VERSION_CAN_DLC;
+    GitVersionPackCan(txMessage.data);
+
+    CAN_QueueTxMessage(&txMessage);
 }
 
 void CAN_LV_PowerupMessage()

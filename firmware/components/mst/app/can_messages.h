@@ -13,6 +13,11 @@
 void CAN_SendHeartbeatMessage(void);
 
 /**
+ * @brief Sends the git commit hash the firmware was built from (see git_version.h)
+ */
+void CAN_SendCommitHashMessage(void);
+
+/**
  * @brief Publish total pack voltage and outlier modules
  */
 void CAN_SendVoltageSummaryMessage(void);

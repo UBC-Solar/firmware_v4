@@ -84,6 +84,9 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined symbols
 )
 
+# Commit hash sent over CAN (generates git_version_generated.h each build)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../common/git_version/git_version.cmake)
+
 # Remove wrong libob.a library dependency when using cpp files
 list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
 

@@ -197,9 +197,6 @@ void Error_Handler(void)
     open_all_contactors();
     while (1)
     {
-      HAL_GPIO_TogglePin(FAULT_LED_GPIO_Port, FAULT_LED_Pin);
-      HAL_GPIO_TogglePin(DEBUG_LED_GPIO_Port, DEBUG_LED_Pin);
-      for (volatile uint32_t i = 0; i < 2000000U; i++) { }   
     }
   /* USER CODE END Error_Handler_Debug */
 }

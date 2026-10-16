@@ -2,6 +2,21 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+
+// ---------------------------------------------------------------------------
+// Shunt monitor chip selection
+// The INA237 and INA228 share a register map; only the VSHUNT register
+// (0x04) differs: INA228 is 24-bit (20-bit data), INA237 is 16-bit.
+// ---------------------------------------------------------------------------
+#define SHUNT_MONITOR_INA228 1
+#define SHUNT_MONITOR_INA237 2
+#define SHUNT_MONITOR SHUNT_MONITOR_INA237
+
+#if !defined(SHUNT_MONITOR) || \
+    (SHUNT_MONITOR != SHUNT_MONITOR_INA228 && SHUNT_MONITOR != SHUNT_MONITOR_INA237)
+#error "SHUNT_MONITOR must be SHUNT_MONITOR_INA228 or SHUNT_MONITOR_INA237"
+#endif
+
 // ---------------------------------------------------------------------------
 // I2C address
 // INA228 7-bit address with A1=GND, A0=GND is 0b1000000 = 0x40.
@@ -15,7 +30,7 @@
 #define INA228_REG_CONFIG           0x00  // Configuration (16-bit)
 #define INA228_REG_ADC_CONFIG       0x01  // ADC Configuration (16-bit)
 #define INA228_REG_SHUNT_CAL        0x02  // Shunt Calibration (16-bit)
-#define INA228_REG_SHUNT_VOLTAGE    0x04  // Shunt Voltage Measurement (24-bit)
+#define INA228_REG_SHUNT_VOLTAGE    0x04  // Shunt Voltage Measurement (INA228: 24-bit, INA237: 16-bit)
 #define INA228_REG_VBUS             0x05  // Bus Voltage Measurement (24-bit)
 #define INA228_REG_DIETEMP          0x06  // Temperature Measurement (16-bit)
 #define INA228_REG_DIAG_ALRT        0x0B  // Diagnostic Flags and Alert (16-bit)
@@ -25,10 +40,13 @@
 #define INA228_REG_BUVL             0x0F  // Bus Undervoltage Threshold
 
 // ADC range selection
-// 0 = ±163.84 mV full scale, shunt LSB = 312.5 nV
-// 1 = ±40.96 mV full scale, shunt LSB = 78.125 nV  (higher resolution, lower range)
+// 0 = ±163.84 mV full scale, shunt LSB = 312.5 nV (INA228) / 5 µV (INA237)
+// 1 = ±40.96 mV full scale, shunt LSB = 78.125 nV (INA228) / 1.25 µV (INA237)  (higher resolution, lower range)
 #define INA228_ADCRANGE 1
 
+#if SHUNT_MONITOR == SHUNT_MONITOR_INA228
+// VSHUNT is 24-bit; bits 23:4 hold the 20-bit measurement
+#define INA228_VSHUNT_READ_BYTES  3
 #if INA228_ADCRANGE == 1
 // Shunt voltage LSB expressed as a fraction: 625/8 nV = 78.125 nV
 #define INA228_VSHUNT_LSB_NV_NUM  625 // Numerator
@@ -38,10 +56,23 @@
 #define INA228_VSHUNT_LSB_NV_NUM  3125 // Numerator
 #define INA228_VSHUNT_LSB_NV_DEN  10 // Denominator
 #endif
+#else // SHUNT_MONITOR_INA237
+// VSHUNT is 16-bit; all bits hold the measurement
+#define INA228_VSHUNT_READ_BYTES  2
+#if INA228_ADCRANGE == 1
+// Shunt voltage LSB: 1250 nV = 1.25 µV
+#define INA228_VSHUNT_LSB_NV_NUM  1250 // Numerator
+#define INA228_VSHUNT_LSB_NV_DEN  1 // Denominator
+#else
+// Shunt voltage LSB: 5000 nV = 5 µV
+#define INA228_VSHUNT_LSB_NV_NUM  5000 // Numerator
+#define INA228_VSHUNT_LSB_NV_DEN  1 // Denominator
+#endif
+#endif
 
-// Fault threshold register LSB = 16 × ADC shunt LSB
-// ADCRANGE=1: 16 × 78.125 nV = 1250 nV/LSB
-// ADCRANGE=0: 16 × 312.5  nV = 5000 nV/LSB
+// SOVL/SUVL threshold register LSB, 16-bit two's complement. Same on INA228 and INA237.
+// ADCRANGE=1: 1250 nV/LSB
+// ADCRANGE=0: 5000 nV/LSB
 #if INA228_ADCRANGE == 1
 #define INA228_FAULT_LSB_NV         1250
 #else

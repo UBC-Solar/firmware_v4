@@ -6,8 +6,9 @@
 #include "stm32f1xx_hal_i2c.h"
 #include <stdint.h>
 
-// Raw bytes received from INA228 in big-endian format
-// buf[0] = bits 23:16 (MSB), buf[1] = bits 15:8, buf[2] = bits 7:0 (LSB).
+// Raw bytes received from the shunt monitor in big-endian format, sized for the larger INA228 read.
+// INA228: buf[0] = bits 23:16 (MSB), buf[1] = bits 15:8, buf[2] = bits 7:0 (LSB).
+// INA237: buf[0] = bits 15:8 (MSB), buf[1] = bits 7:0 (LSB); buf[2] unused.
 static uint8_t raw_shunt_voltage_buf[3];
 
 // Volatile because written in ISR context (the I2C RxCplt callback) and read in main-loop context.
@@ -160,7 +161,7 @@ void INA228_Read_Shunt_Voltage(void) {
     //HAL_StatusTypeDef status = I2C_MemRead_IT(INA228_I2C_ADDRESS, INA228_REG_SHUNT_VOLTAGE, raw_shunt_voltage_buf, 3, I2C_INA228_SHUNT_VOLTAGE);
     // Test interrupt later
 
-    I2C_MemRead(INA228_I2C_ADDRESS, INA228_REG_SHUNT_VOLTAGE, raw_shunt_voltage_buf, 3, I2C_INA228_SHUNT_VOLTAGE);
+    I2C_MemRead(INA228_I2C_ADDRESS, INA228_REG_SHUNT_VOLTAGE, raw_shunt_voltage_buf, INA228_VSHUNT_READ_BYTES, I2C_INA228_SHUNT_VOLTAGE);
 }
 
 /**
@@ -170,6 +171,7 @@ void INA228_Read_Shunt_Voltage(void) {
 void INA228_Process_Shunt_Voltage(void) {
     // Processing the buffer is documented here: https://docs.google.com/document/d/1IN_0Pcg9eEbxtUkUSTO_Nc7S2LKmDKqyU20G1GsCJE0/edit?tab=t.i0huserxy3py
 
+#if SHUNT_MONITOR == SHUNT_MONITOR_INA228
     // INA228 sends bytes big-endian: buf[0]=MSB, buf[1]=MID, buf[2]=LSB. Assemble the buf into an int32_t.
     int32_t raw_value = ((int32_t)raw_shunt_voltage_buf[0] << 16)
                       | ((int32_t)raw_shunt_voltage_buf[1] << 8)
@@ -183,6 +185,12 @@ void INA228_Process_Shunt_Voltage(void) {
     if (raw_value & 0x80000) {
         raw_value |= 0xFFF00000;
     }
+#else // SHUNT_MONITOR_INA237
+    // INA237 sends bytes big-endian: buf[0]=MSB, buf[1]=LSB. VSHUNT bits 15:0 are the 16-bit measurement.
+    // Casting to int16_t sign-extends the 16-bit two's complement value.
+    int32_t raw_value = (int16_t)(((uint16_t)raw_shunt_voltage_buf[0] << 8)
+                                 | (uint16_t)raw_shunt_voltage_buf[1]);
+#endif
 
     // Convert counts into nanovolts, multiply first to avoid truncation to zero
     shunt_voltage_nV = (int32_t)(((int64_t)raw_value * INA228_VSHUNT_LSB_NV_NUM) / INA228_VSHUNT_LSB_NV_DEN);

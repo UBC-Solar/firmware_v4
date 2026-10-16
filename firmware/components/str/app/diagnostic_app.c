@@ -2,6 +2,7 @@
 
 #include "CAN_comms.h"
 #include "can_driver.h"
+#include "git_version.h"
 #include "gpio_driver.h"
 
 static uint32_t g_time_since_bootup = 0U;
@@ -20,3 +21,11 @@ void DiagnosticTimeSinceBootup()
     CAN_comms_Add_Tx_message(&time_since_bootup_can_tx);
 }
 
+void DiagnosticSendCommitHash()
+{
+    CAN_comms_Tx_msg_t commit_hash_can_tx = {
+        .header = commit_hash_can_header,
+    };
+    GitVersionPackCan(commit_hash_can_tx.data);
+    CAN_comms_Add_Tx_message(&commit_hash_can_tx);
+}

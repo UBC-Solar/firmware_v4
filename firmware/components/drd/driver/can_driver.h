@@ -20,6 +20,7 @@
 #define DRD_DIAGNOSTIC_SIZE					8
 #define TIME_SINCE_BOOTUP_CAN_ID			0x404
 #define TIME_SINCE_BOOTUP_CAN_DATA_LENGTH	4
+#define COMMIT_HASH_CAN_ID					0x405
 
 #define CAN_ID_ECU		    		        0x450
 #define CAN_ID_BATT_FAULTS		 			0x622
@@ -46,6 +47,7 @@ extern const CAN_TxHeaderTypeDef steering_header;
 extern const CAN_TxHeaderTypeDef mdu_request_header;
 extern const CAN_TxHeaderTypeDef drd_diagnostic_header;
 extern const CAN_TxHeaderTypeDef time_since_bootup_can_header;
+extern const CAN_TxHeaderTypeDef commit_hash_can_header;
 
 /* FUNCTION PROTOTYPES */
 /**

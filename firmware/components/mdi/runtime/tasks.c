@@ -21,6 +21,8 @@ void AppMain(void)
 
     uint32_t last_diagnostic_tick = HAL_GetTick();
     uint32_t last_iwdg_tick = HAL_GetTick();
+    // Half a period out of phase with the diagnostics burst, which already fills all 3 Tx mailboxes
+    uint32_t last_commit_hash_tick = last_diagnostic_tick - (MDI_DIAGNOSTICS_DELAY / 2U);
 
     DiagnosticSetIwdgCrash(IwdgResetHandle());
 
@@ -41,7 +43,13 @@ void AppMain(void)
             DiagnosticSendFlags();
             last_diagnostic_tick = now;
         }
-        
+
+        if ((uint32_t)(now - last_commit_hash_tick) >= MDI_DIAGNOSTICS_DELAY)
+        {
+            DiagnosticSendCommitHash();
+            last_commit_hash_tick = now;
+        }
+
         if ((uint32_t)(now - CanAppGetLastCommandTick()) >= MDI_MAX_TIMEOUT_VALUE)
         {
             MdiStopMotor();

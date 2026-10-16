@@ -46,6 +46,12 @@ void DiagnosticsSendTelFlags();
 void DiagnosticsTimeSinceBootup();
 
 /**
+ * @brief  Sends the git commit hash the firmware was built from via CAN and the telemetry link
+ * @retval None
+ */
+void DiagnosticsSendCommitHash();
+
+/**
  * @brief  Sets the TEL crash IWDG flag
  * @param  value: The value to set the flag to
  * @retval None

@@ -93,6 +93,7 @@ void TimeSinceStartup(void* argument)
     for (;;)
     {
         DiagnosticsTimeSinceBootup();
+        DiagnosticsSendCommitHash();
         osDelay(TIME_SINCE_STARTUP_TASK_DELAY); // Delay for specified time
     }
 }

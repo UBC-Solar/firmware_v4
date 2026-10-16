@@ -45,6 +45,8 @@
 #define CANLOAD_DATA_LENGTH                        1
 #define CANLOAD_MSG_ID                             0x763
 
+#define COMMIT_HASH_CAN_ID                         0x75C
+
 /* CAN IDs from other boards that TEL receives or forwards */
 #define RTC_TIMESTAMP_MSG_ID            0x300
 
@@ -58,6 +60,14 @@
 #define STR_TIME_SINCE_BOOTUP_ID            0x582
 
 #define DRD_MOTOR_COMMAND_ID                0x401
+
+/* Commit hash each board's firmware was built from (payload in common/git_version/git_version.h) */
+#define MST_COMMIT_HASH_ID                  0x204
+#define HVC_COMMIT_HASH_ID                  0x32A
+#define DIST_COMMIT_HASH_ID                 0x3A5
+#define DRD_COMMIT_HASH_ID                  0x405
+#define MDI_COMMIT_HASH_ID                  0x503
+#define STR_COMMIT_HASH_ID                  0x583
 
 #define ECU_STATUS_ID                       0x450
 #define BMS_FAULTS_ID                       0x622
@@ -100,6 +110,7 @@
 /* CAN Message Headers */
 extern const CAN_TxHeaderTypeDef time_since_bootup_can_header;
 extern const CAN_TxHeaderTypeDef tel_flags_can_header;
+extern const CAN_TxHeaderTypeDef commit_hash_can_header;
 extern const CAN_TxHeaderTypeDef CANLOAD_busload;
 
 extern const CAN_TxHeaderTypeDef imu_ag_x;

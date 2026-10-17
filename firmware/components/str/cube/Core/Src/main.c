@@ -96,10 +96,10 @@ int main(void)
   MX_GPIO_Init();
   MX_CAN_Init();
   MX_I2C1_Init();
-  MX_UART5_Init();
   #ifndef DEBUG
   MX_IWDG_Init();
-  #endif // DEBUG
+  #endif
+  MX_UART4_Init();
   /* USER CODE BEGIN 2 */
   CanAppInit();
   /* USER CODE END 2 */

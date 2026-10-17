@@ -20,19 +20,18 @@ help:
 	@echo "  make clean          - Remove all build directories"
 	@echo "  make hooks          - Install git hooks (branch naming checks)"
 
-ifeq (,$(filter debug release,$(MAKECMDGOALS)))
+# Mode words are accepted in either case (debug/Debug, release/Release); the last one wins
+MODE_GOALS := $(filter debug release Debug Release,$(MAKECMDGOALS))
+ifeq (,$(MODE_GOALS))
     MODE := Debug
+else ifneq (,$(filter release Release,$(lastword $(MODE_GOALS))))
+    MODE := Release
 else
-    LAST_MODE := $(lastword $(filter debug release,$(MAKECMDGOALS)))
-    ifeq ($(LAST_MODE),debug)
-        MODE := Debug
-    else ifeq ($(LAST_MODE),release)
-        MODE := Release
-    endif
+    MODE := Debug
 endif
 
 
-FILTERED_GOALS := $(filter-out debug release,$(MAKECMDGOALS))
+FILTERED_GOALS := $(filter-out debug release Debug Release,$(MAKECMDGOALS))
 
 all: mdi tel drd hvc mst str
 

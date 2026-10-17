@@ -6,6 +6,8 @@
 #include "can_app.h"
 #include "can_driver.h"
 #include "main.h"
+#include "stm32f1xx_hal_gpio.h"
+#include <stdint.h>
 
 static MdiMotorCommand s_motor_command = {0};
 static bool s_motor_command_received = false;
@@ -55,12 +57,58 @@ static void CanAppRxCallback(const CAN_RxHeaderTypeDef *header, const uint8_t *d
         return;
     }
 
-    if (header->IDE != CAN_ID_STD || header->StdId != DRD_MOTOR_COMMAND_CAN_ID)
+    if (header->IDE != CAN_ID_STD)
     {
         return;
     }
 
-    MdiParseMotorCommand(data, &s_motor_command);
-    s_motor_command_received = true;
-    s_last_command_tick = HAL_GetTick();
+    if(header->StdId != DRD_MOTOR_COMMAND_CAN_ID && header->StdId != STR_DRD_CONTROL_CAN_ID){
+        return;
+    }
+
+    uint32_t CanId = header -> StdId;
+
+    if (header -> StdId == DRD_MOTOR_COMMAND_CAN_ID){
+        MdiParseMotorCommand(CanId, data, &s_motor_command);
+        s_motor_command_received = true;
+        s_last_command_tick = HAL_GetTick();
+
+    }
+
+    CanMdiLedHandler(CanId, data);
+
+
 }
+
+void CanMdiLedHandler(uint32_t msg_id, const uint8_t* data)
+{
+    switch (msg_id)
+    {
+    case DRD_MOTOR_COMMAND_CAN_ID:{
+        uint8_t direction = data[4] & 0x01;
+
+        if(direction == 1){
+            HAL_GPIO_WritePin(REV_LED_GPIO_Port, REV_LED_Pin, GPIO_PIN_SET);
+            HAL_GPIO_WritePin(FWD_LED_GPIO_Port, FWD_LED_Pin, GPIO_PIN_RESET);
+        }
+        else {
+            HAL_GPIO_WritePin(REV_LED_GPIO_Port, REV_LED_Pin, GPIO_PIN_RESET);
+            HAL_GPIO_WritePin(FWD_LED_GPIO_Port, FWD_LED_Pin, GPIO_PIN_SET);
+        }
+        break;
+    }
+    case STR_DRD_CONTROL_CAN_ID:{
+        if((data[0] & 0x01) == 1){
+            HAL_GPIO_WritePin(REGEN_LED_GPIO_Port, REGEN_LED_Pin, GPIO_PIN_SET);
+        }
+        else {
+            HAL_GPIO_WritePin(REGEN_LED_GPIO_Port, REGEN_LED_Pin, GPIO_PIN_RESET);
+        }
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+

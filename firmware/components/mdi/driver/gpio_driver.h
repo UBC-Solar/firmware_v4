@@ -14,4 +14,9 @@
  */
 void GpioDriverToggleDebugLed(void);
 
+/**
+ * @brief Toggles the state of the RTD fault LED.
+ */
+ void GpioDriverToggleRtdFaultLed(bool fault);
+
 #endif /* INC_GPIO_DRIVER_H_ */

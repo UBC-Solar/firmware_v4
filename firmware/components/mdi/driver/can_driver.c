@@ -50,7 +50,7 @@ static void CanFilterInit(CAN_FilterTypeDef *filter)
     filter->FilterMode = CAN_FILTERMODE_IDMASK;
     filter->FilterScale = CAN_FILTERSCALE_32BIT;
     filter->FilterIdHigh = (uint16_t)((DRD_MOTOR_COMMAND_CAN_ID << 5) >> 16);
-    filter->FilterIdLow = (uint16_t)((DRD_MOTOR_COMMAND_CAN_ID << 5) & 0xFFFFU);
+    filter->FilterIdLow = (uint16_t)((STR_DRD_CONTROL_CAN_ID << 5) & 0xFFFFU);
     filter->FilterMaskIdHigh = (uint16_t)((0x7FFU << 5) >> 16);
     filter->FilterMaskIdLow = (uint16_t)((0x7FFU << 5) & 0xFFFFU);
     filter->FilterFIFOAssignment = CAN_FILTER_FIFO0;

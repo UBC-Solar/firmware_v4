@@ -218,8 +218,7 @@ int32_t Shunt_Get_Shunt_Current_mA(void) {
     return shunt_current_mA;
 }
 
-bool Shunt_IsOvercurrent(void)
-{
+bool Shunt_IsOvercurrent(void) {
     uint8_t buffer[2] = {0};
 
     // read DIAG_ALRT register — 2 bytes, big-endian
@@ -230,10 +229,10 @@ bool Shunt_IsOvercurrent(void)
 
     DEBUG_IO_print("Shunt DIAG_ALRT: 0x%04X\n\r", diag_alrt);
 
-    // check bit 11 — SOVL flag — overcurrent
+    // check bit 6 — SOVL flag — overcurrent
     if (diag_alrt & (1U << 6)) {
         return true;
     }
-    return false;  // bit 10 — SUVL flag — undercurrent
+    return false;  // bit 5 — SUVL flag — undercurrent
 }
 

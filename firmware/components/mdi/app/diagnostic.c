@@ -124,18 +124,30 @@ void DiagnosticSendRtdTemp(void)
 
 void DiagnosticSendMcuHealth(void)
 {
-	uint16_t vdd_mv = McuHealthDriverReadVddMv();
-	int16_t temp_c = McuHealthDriverReadTempC();
+	uint16_t vdd_mv = 0;
+	int16_t temp_c = 0;
+	bool mcu_read_success = (McuHealthDriverReadVddMv(&vdd_mv) == HAL_OK) &&
+	                        (McuHealthDriverReadTempC(vdd_mv, &temp_c) == HAL_OK);
 
-	s_diagnostic_flags.bits.mdi_mcu_under_voltage = (vdd_mv < MCU_UNDER_VOLTAGE_MV);
+	s_diagnostic_flags.bits.mdi_mcu_adc_read_fail = !mcu_read_success;
 
-	if (!s_diagnostic_flags.bits.mdi_mcu_over_temp && temp_c >= MCU_OVER_TEMP_SET_C)
+	if (mcu_read_success)
 	{
-		s_diagnostic_flags.bits.mdi_mcu_over_temp = true;
+		s_diagnostic_flags.bits.mdi_mcu_under_voltage = (vdd_mv < MCU_UNDER_VOLTAGE_MV);
+
+		if (!s_diagnostic_flags.bits.mdi_mcu_over_temp && temp_c >= MCU_OVER_TEMP_SET_C)
+		{
+			s_diagnostic_flags.bits.mdi_mcu_over_temp = true;
+		}
+		else if (s_diagnostic_flags.bits.mdi_mcu_over_temp && temp_c <= (MCU_OVER_TEMP_SET_C - 5)) // cancels out noise
+		{
+			s_diagnostic_flags.bits.mdi_mcu_over_temp = false;
+		}
 	}
-	else if (s_diagnostic_flags.bits.mdi_mcu_over_temp && temp_c <= (MCU_OVER_TEMP_SET_C - 5)) // cancels out noise
+	else
 	{
-		s_diagnostic_flags.bits.mdi_mcu_over_temp = false;
+		vdd_mv = 0;
+		temp_c = 0;
 	}
 
 	uint8_t data[4];

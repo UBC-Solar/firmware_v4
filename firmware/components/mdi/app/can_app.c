@@ -62,12 +62,17 @@ static void CanAppRxCallback(const CAN_RxHeaderTypeDef *header, const uint8_t *d
         return;
     }
 
-    MdiParseMotorCommand(data, &s_motor_command);
+    uint32_t CanId = 0;
+    if(header -> IDE == CAN_ID_STD) CanId = header -> StdId;
+    else CanId = header -> ExtId;
+
+    MdiParseMotorCommand(CanId, data, &s_motor_command);
+    CanMdiLedHandler(CanId, data);
     s_motor_command_received = true;
     s_last_command_tick = HAL_GetTick();
 }
 
-void CanMdiLedHandler(uint32_t msg_id, uint8_t* data)
+void CanMdiLedHandler(uint32_t msg_id, const uint8_t* data)
 {
     switch (msg_id)
     {
@@ -102,4 +107,5 @@ void MotorCommandCanHandler(uint8_t* data){
         HAL_GPIO_TogglePin(PWR_GPIO_Port, PWR_Pin);
     }
 }
+
 

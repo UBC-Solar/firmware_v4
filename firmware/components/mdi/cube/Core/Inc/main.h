@@ -95,6 +95,8 @@ void Error_Handler(void);
 #define REG_SCL_GPIO_Port GPIOB
 #define REG_SDA_Pin GPIO_PIN_7
 #define REG_SDA_GPIO_Port GPIOB
+#define RTD_FAULT_LED_GPIO_PORT GPIOD
+#define RTD_FAULT_LED_GPIO_PIN GPIO_PIN_2
 
 /* USER CODE BEGIN Private defines */
 

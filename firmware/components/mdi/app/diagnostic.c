@@ -11,8 +11,6 @@
 #include "rtd_driver.h"
 #include "stm32f1xx_hal_gpio.h"
 
-#define RTD_FAULT_LED_GPIO_PORT GPIOD
-#define RTD_FAULT_LED_GPIO_PIN GPIO_PIN_2
 
 static MdiDiagnosticFlags s_diagnostic_flags = {0};
 
@@ -104,12 +102,7 @@ void DiagnosticSendRtdTemp(void)
 	RtdFaultFlags faults = RtdDriverGetFaults();
 	bool rtd_read_success = (rtd_status == RtdStatusOk);
 
-	if(faults){
-		HAL_GPIO_WritePin(RTD_FAULT_LED_GPIO_PORT, RTD_FAULT_LED_GPIO_PIN, GPIO_PIN_SET);
-	}
-	else{
-		HAL_GPIO_WritePin(RTD_FAULT_LED_GPIO_PORT, RTD_FAULT_LED_GPIO_PIN, GPIO_PIN_RESET);
-	}
+	GpioDriverToggleRtdFaultLed(faults);
 
 	s_diagnostic_flags.bits.mdi_rtd_fault = (faults != 0U);
 	s_diagnostic_flags.bits.mdi_rtd_comm_error = (rtd_status == RtdStatusHalError);

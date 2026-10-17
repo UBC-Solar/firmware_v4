@@ -53,7 +53,7 @@ void MdiSetMotorCommand(const MdiMotorCommand *command)
                       command->eco_mode_value ? GPIO_PIN_RESET : GPIO_PIN_SET);
 }
 
-void MdiParseMotorCommand(const uint8_t *buffer, MdiMotorCommand *command)
+void MdiParseMotorCommand(uint32_t msg_id, const uint8_t *buffer, MdiMotorCommand *command)
 {
     if (buffer == NULL || command == NULL)
     {

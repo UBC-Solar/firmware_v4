@@ -4,11 +4,14 @@
 #include "gpio_driver.h"
 #include "mcu_health_driver.h"
 
+#define MCU_VOLTAGE_THRESHOLD 2400
+#define MCU_TEMP_THRESHOLD 105
+
+
 /* STATIC VARIABLES */
 static DiagnosticSTR g_tel_diagnostic_flags = {0};
 static uint32_t g_time_since_bootup = 0U;
-static const uint16_t MCU_VOLTAGE_THRESHOLD = 2400;
-static const int8_t MCU_TEMP_THRESHOLD = 105;
+
 
 /* FUNCTION DEFINITIONS */
 void DiagnosticTimeSinceBootup()

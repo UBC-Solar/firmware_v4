@@ -49,8 +49,8 @@ void MdiSetMotorCommand(const MdiMotorCommand *command)
 
     HAL_GPIO_WritePin(DIR_GPIO_Port, DIR_Pin,
                       command->direction_value ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(ECO_LED_GPIO_Port, ECO_LED_Pin,
-                      command->eco_mode_value ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(PWR_GPIO_Port, PWR_Pin,
+                      command->eco_mode_value ? GPIO_PIN_RESET : GPIO_PIN_SET);
 }
 
 void MdiParseMotorCommand(const uint8_t *buffer, MdiMotorCommand *command)

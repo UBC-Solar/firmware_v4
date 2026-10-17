@@ -13,6 +13,7 @@
 #include "adc_driver.h"
 #include "i2c_driver.h"
 #include "can_driver.h"
+#include "iwdg.h"
 
 #include "ina228_runtime.h"
 
@@ -68,6 +69,7 @@ void HVC_Init(
 void HVC_Main(void) {
     while (true) {
         HVC_FSM_Run();
+        HAL_IWDG_Refresh(&hiwdg);
     }
 }
 

@@ -8,6 +8,7 @@
  */
 #ifndef INC_GPIO_DRIVER_H_
 #define INC_GPIO_DRIVER_H_
+#include <stdbool.h>
 
 /**
  * @brief Toggles the state of the debug LED.

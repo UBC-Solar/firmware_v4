@@ -9,6 +9,7 @@
 #include "mdi_driver.h"
 
 #include "main.h"
+#include "gpio_driver.h"
 
 extern I2C_HandleTypeDef hi2c1;
 extern I2C_HandleTypeDef hi2c2;

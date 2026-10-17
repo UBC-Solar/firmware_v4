@@ -35,12 +35,13 @@ static void HandleLightsInterrupt(uint16_t GPIO_Pin)
 {
     switch (GPIO_Pin)
     {
+        // switched in hardware, corrected in code
         case RTS_IN_Pin:
-            gpio_pin_state.lights_state.rts_en = !gpio_pin_state.lights_state.rts_en;
+            gpio_pin_state.lights_state.lts_en = !gpio_pin_state.lights_state.lts_en;
             break;
 
         case LTS_IN_Pin:
-            gpio_pin_state.lights_state.lts_en = !gpio_pin_state.lights_state.lts_en;
+            gpio_pin_state.lights_state.rts_en = !gpio_pin_state.lights_state.rts_en;
             break;
 
         default:
@@ -78,7 +79,8 @@ static void HandleCruiseInterrupt(uint16_t GPIO_Pin)
 {
     switch (GPIO_Pin)
     {
-        case CRUISE_INC_Pin:
+        // switched in hardware, corrected in code
+        case CRUISE_DEC_Pin:
         {
 
             gpio_pin_state.cruise_state.cruise_inc = true;
@@ -94,7 +96,7 @@ static void HandleCruiseInterrupt(uint16_t GPIO_Pin)
             break;
         }
 
-        case CRUISE_DEC_Pin:
+        case CRUISE_INC_Pin:
         {
             gpio_pin_state.cruise_state.cruise_dec = true;
 

@@ -10,7 +10,6 @@ typedef union {
     struct {
         volatile bool mcu_under_voltage : 1;
         volatile bool mcu_over_temp : 1;
-        volatile bool adc_read_fail : 1;
     } bits;
     volatile uint8_t raw;
 } DiagnosticSTR;

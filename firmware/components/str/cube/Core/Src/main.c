@@ -23,7 +23,6 @@
 #include "can.h"
 #include "i2c.h"
 #include "iwdg.h"
-#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -98,7 +97,6 @@ int main(void)
   MX_GPIO_Init();
   MX_CAN_Init();
   MX_I2C1_Init();
-  MX_UART5_Init();
   MX_IWDG_Init();
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */

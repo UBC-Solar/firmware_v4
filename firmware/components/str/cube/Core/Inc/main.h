@@ -68,6 +68,12 @@ void Error_Handler(void);
 #define NEXT_PAGE_Pin GPIO_PIN_2
 #define NEXT_PAGE_GPIO_Port GPIOA
 #define NEXT_PAGE_EXTI_IRQn EXTI2_IRQn
+#define HEARTBEAT_Pin GPIO_PIN_3
+#define HEARTBEAT_GPIO_Port GPIOA
+#define ADC_TP1_Pin GPIO_PIN_4
+#define ADC_TP1_GPIO_Port GPIOA
+#define ADC_TP2_Pin GPIO_PIN_5
+#define ADC_TP2_GPIO_Port GPIOA
 #define HORN_MCU_Pin GPIO_PIN_7
 #define HORN_MCU_GPIO_Port GPIOA
 #define HORN_MCU_EXTI_IRQn EXTI9_5_IRQn

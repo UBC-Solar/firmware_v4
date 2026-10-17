@@ -250,7 +250,8 @@ void CAN_SendFaultMsg()
                         
     
     txMessage.data[2] = (fault_flags.mst_heartbeat_timeout << 7) |
-                        (fault_flags.dist_heartbeat_timeout << 6);
+                        (fault_flags.dist_heartbeat_timeout << 6) |
+                        (fault_flags.dcdc_thermistor << 5);
 
     CAN_QueueTxMessage(&txMessage);
 }

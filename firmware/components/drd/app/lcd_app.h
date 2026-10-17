@@ -17,13 +17,16 @@
  * References the library: https://github.com/mberntsen/STM32-Libraries
  */
 
-// #include "drive_state.h"
 #include "font_verdana.h"
-#include "lcd_handler.h"
+#include "lcd_types.h"
 #include "drive_state.h"
-#include "stdbool.h"
 #include "stdint.h"
-#include <main.h>
+
+#ifdef LCD_SIM
+#include "lcd_driver_sim.h"
+#else
+#include "lcd_driver.h"
+#endif
 
 /** Drive Page */
 #define LCD_APP_SPEED_FONT (Verdana48_digits)

@@ -97,6 +97,5 @@ void CanloadUpdateSlidingWindow();
  * @param IDE The identifier extension bit of the CAN message.
  */
 void CanloadCalculateMessageBits(uint32_t DLC, uint32_t IDE);
-void CAN_tx_canload_msg();
 
 #endif /* INC_CANBUSLOAD_H_ */

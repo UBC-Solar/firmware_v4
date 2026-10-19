@@ -22,6 +22,8 @@ typedef union {
         volatile bool imu_write_fail : 1;
         volatile bool gps_read_fail : 1;
         volatile bool gps_write_fail : 1;
+        volatile bool mcu_overtemp : 1;
+        volatile bool mcu_undervoltage : 1;
     } bits;
     volatile uint8_t raw;
 } DiagnosticTEL;
@@ -80,5 +82,24 @@ void DiagnosticsSetGpsReadFailFlag(bool value);
  */
 void DiagnosticsSetGpsWriteFailFlag(bool value);
 
+/**
+ * @brief  Send temperature and voltage data.
+ * @retval None
+ */
+void DiagnosticsSendTelHealth();
+
+/**
+ * @brief  Sets the MCU Overtemp flag
+ * @param  value: The value to set the flag to
+ * @retval None
+ */
+void DiagnosticsSetMcuOvertemp(bool value);
+
+/**
+ * @brief  Sets the MCU Undervoltage flag
+ * @param  value: The value to set the flag to
+ * @retval None
+ */
+void DiagnosticsSetMcuUndervoltage(bool value);
 
 #endif /* DIAGNOSTIC_H_ */

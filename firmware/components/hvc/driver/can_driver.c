@@ -293,10 +293,9 @@ void CAN_LV_PowerupMessage()
 
     void CAN_Send_ShuntCurrent(void)
 {    
-    INA228_Read_Shunt_Voltage();
+    Shunt_Read_Shunt_Voltage();
 
-    int32_t current_mA = INA228_Get_Shunt_Current_mA();
-    //DEBUG_IO_print("Shunt Current:%d mA \r\n", current_mA);
+    int32_t current_mA = Shunt_Get_Shunt_Current_mA();
 
     CAN_TxMessage_t txMessage = {0};
 

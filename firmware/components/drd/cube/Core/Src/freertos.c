@@ -130,6 +130,20 @@ const osThreadAttr_t TasksDiagnostic_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
 };
 
+/* Definitions for TasksWatchDog */
+osThreadId_t TasksIWDGHandle;
+uint32_t TasksIWDGBuffer[128];
+osStaticThreadDef_t TasksIWDGControlBlock;
+
+const osThreadAttr_t TasksIWDG_attributes = {
+  .name = "TasksIWDG",
+  .cb_mem = &TasksIWDGControlBlock,
+  .cb_size = sizeof(TasksIWDGControlBlock),
+  .stack_mem = &TasksIWDGBuffer[0],
+  .stack_size = sizeof(TasksIWDGBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
+
 /* Definitions for TasksFaultLightFlash */
 osThreadId_t TasksFaultLightFlashHandle;
 uint32_t TasksFaultLightFlashBuffer[128];
@@ -227,6 +241,8 @@ void MX_FREERTOS_Init(void) {
   TasksFaultLightFlashHandle = osThreadNew(TasksFaultLightFlash, NULL, &TasksFaultLightFlash_attributes);
   /* creation of TasksTimeSinceStartup */
   TasksTimeSinceStartupHandle = osThreadNew(TasksTimeSinceStartup, NULL, &TasksTimeSinceStartup_attributes);
+  /* Initialization for TasksIWDG */
+  TasksIWDGHandle = osThreadNew(TasksIWDG, NULL, &TasksIWDG_attributes);
 
   /* USER CODE END RTOS_THREADS */
 

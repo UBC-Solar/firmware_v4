@@ -7,7 +7,7 @@
 #include "debug_io.h"
 #include "main.h"
 #include "stm32f1xx.h"
-#include "ina228_runtime.h"
+#include "shunt_runtime.h"
 
 
 
@@ -183,7 +183,7 @@ void MasterboardFaultCallback(bool if_fault)
 
 void HVCurrentAlertCallback(void)
 {
-    if (INA228_IsOvercurrent()) {
+    if (Shunt_IsOvercurrent()) {
         fault_flags.overcurrent = true;
         DEBUG_IO_PRINT("Overcurrent Fault\r\n");
     } else {

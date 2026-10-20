@@ -35,16 +35,21 @@ static uint16_t ReadAdc( uint32_t channel ) {
 
 
 uint16_t DRD_Read_Vdd( void ) {
-    uint16_t Vdd = VREFINT_MV * 4095 / ReadAdc(ADC_CHANNEL_VREFINT); //reads as a fraction of VDD
+    uint16_t raw = ReadAdc(ADC_CHANNEL_VREFINT);
+    if (raw == 0) {
+        return 0;
+    }
+    
+    uint16_t Vdd = VREFINT_MV * ADC_FULL_SCALE / raw; 
 
     return Vdd;
 }
 
 
 int16_t DRD_Read_Temp( void ) {
-    sense_mv = ReadAdc(ADC_CHANNEL_TEMPSENSOR) * DRD_Read_Vdd() / 4095;
+    sense_mv = ReadAdc(ADC_CHANNEL_TEMPSENSOR) * DRD_Read_Vdd() / ADC_FULL_SCALE;
     
-    int16_t temp = (V25_MV - sense_mv) * 10 / 43 + 25;
+    int16_t temp = (V25_MV - sense_mv) * 1000 / AVG_SLOPE_UV_PER_C + TS_REF_TEMP_C;
 
     return temp;
 }

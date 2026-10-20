@@ -49,7 +49,7 @@ void TasksDiagnostic(void *argument)
 
     for (;;)
     {
-        
+        HAL_GPIO_TogglePin(HEARTBEAT_LED_GPIO_Port, HEARTBEAT_LED_Pin);
         osDelay(DIAGNOSTIC_TASK_DELAY);
     }
 }

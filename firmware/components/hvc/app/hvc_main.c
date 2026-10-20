@@ -67,14 +67,6 @@ void HVC_Init(
 
 void HVC_Main(void) {
     while (true) {
-        static uint32_t previous_time_ms = 0;
-        if (HAL_GetTick() - previous_time_ms >= 100) {
-            DEBUG_IO_print("100 ms elapsed, reading shunt voltage.\n");
-            previous_time_ms = HAL_GetTick();
-            Shunt_Read_Shunt_Voltage();
-        }
-    }
-    while (true) {
         HVC_FSM_Run();
     }
 }

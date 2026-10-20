@@ -60,11 +60,11 @@ void HVC_FSM_Init(void)
  */
 void HVC_FSM_Run(void)
 {
-#ifdef DEBUG
     static HVC_State_t prev_hvc_state = UNKNOWN;
+#ifdef DEBUG
     log_state_change(hvc_state, prev_hvc_state);
-    prev_hvc_state = hvc_state;
 #endif // DEBUG
+    prev_hvc_state = hvc_state;
 
     if (tel_dist_heartbeat_check_enabled) {
         if (HAL_GetTick() - last_tel_heartbeat_ms > HEARTBEAT_TIMEOUT_MS) {

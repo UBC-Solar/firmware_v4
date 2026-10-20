@@ -41,9 +41,10 @@ extern telemetry_diagnostics_t telemetry_diagnostic;
 extern osSemaphoreId_t usart1_tx_semaphore;
 
 /**
-  * @brief Transmits a telemetry message via UART
-  * @param can_tel_msg Pointer to the telemetry message to be transmitted
+  * @brief Transmits a telemetry message via UART on the link selected by CAR_CONFIG_CELLULAR
+  * @param buf Bytes to transmit. Sent by DMA, so it must stay valid until usart1_tx_semaphore is released
+  * @param len Number of bytes to transmit
   */
-void UART_telemetry_transmit(TEL_Msg_TypeDef* can_tel_msg);
+void UART_telemetry_transmit(const uint8_t* buf, uint16_t len);
 
 #endif /* __TELEMETRY_DRIVER__H__ */

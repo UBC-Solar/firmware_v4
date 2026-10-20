@@ -88,12 +88,12 @@ void CanMdiLedHandler(uint32_t msg_id, const uint8_t* data)
         uint8_t direction = data[4] & 0x01;
 
         if(direction == 1){
-            HAL_GPIO_WritePin(REV_LED_GPIO_Port, REV_LED_Pin, GPIO_PIN_SET);
-            HAL_GPIO_WritePin(FWD_LED_GPIO_Port, FWD_LED_Pin, GPIO_PIN_RESET);
-        }
-        else {
             HAL_GPIO_WritePin(REV_LED_GPIO_Port, REV_LED_Pin, GPIO_PIN_RESET);
             HAL_GPIO_WritePin(FWD_LED_GPIO_Port, FWD_LED_Pin, GPIO_PIN_SET);
+        }
+        else {
+            HAL_GPIO_WritePin(REV_LED_GPIO_Port, REV_LED_Pin, GPIO_PIN_SET);
+            HAL_GPIO_WritePin(FWD_LED_GPIO_Port, FWD_LED_Pin, GPIO_PIN_RESET);
         }
         break;
     }

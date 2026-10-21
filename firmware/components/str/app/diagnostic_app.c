@@ -26,7 +26,7 @@ void DiagnosticTimeSinceBootup()
         .header = time_since_bootup_can_header,
     };
 
-    // GpioDriverToggleDebugLed();
+    GpioDriverToggleDebugLed();
     CAN_comms_Add_Tx_message(&time_since_bootup_can_tx);
 }
 

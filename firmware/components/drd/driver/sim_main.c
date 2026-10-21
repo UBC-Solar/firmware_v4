@@ -1,6 +1,34 @@
 #include "lcd_app.h"
+#include "lcd_bitmap.h"
 #include "lcd_sim_display.h"
+
 #include <SDL.h>
+#include <stdint.h>
+#include <stdio.h>
+
+unsigned char TestBitmap[] =
+{
+    // Font Header
+    0x01,   // FONT_TYPE_PROPORTIONAL
+    0x02,   // FONT_ORIENTATION_VERTICAL_CEILING
+    0x58,   // Start char = 88 ('X')
+    0x01,   // One character
+    0x0B,   // Height = 11
+
+    // Bitmap Index
+    0x00, 0x07,
+
+    // Bitmap
+    0x08,
+    0, 0,
+    0, 0,
+    0, 0,
+    0, 0,
+    0, 0,
+    0, 0,
+    0, 0,
+    0, 0
+};
 
 int main(void)
 {
@@ -9,21 +37,50 @@ int main(void)
         return 1;
     }
 
-    volatile uint32_t speed = 9;
-    volatile uint8_t units = LCD_APP_KPH;
-    volatile uint32_t soc = 73;
-    volatile uint8_t drive_mode = LCD_APP_DRIVE_MODE_ECO;
-    volatile DriveStateStates state = FORWARD;
+    const uint8_t width = 8;
+    const uint8_t height = 11;
 
-    LcdAppDisplaySpeedDrivePage(&speed, units);
-    LcdAppDisplaySocDrivePage(&soc);
-    LcdAppDisplayDriveModeDrivePage(drive_mode);
-    LcdAppDisplayDriveStateDrivePage(&state);
+    uint8_t pixels[11][8] =
+    {
+        {1,1,1,1,1,1,1,1},
+        {1,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,1},
+        {1,1,1,1,1,1,1,1}
+    };
+
+    uint8_t bitmap[16];
+
+    LcdBitmapEncode(&pixels[0][0], width, height, bitmap);
+
+    for (uint8_t i = 0; i < 16; i++)
+    {
+        TestBitmap[8 + i] = bitmap[i];
+    }
+
+    printf("Generated bitmap: ");
+
+    for (uint8_t i = 0; i < 16; i++)
+    {
+        printf("0x%02X ", bitmap[i]);
+    }
+
+    printf("\n");
+
+    LcdDriverChangeScreen();
+
+    LcdDriverDrawChar('X', 10, 10, TestBitmap);
+
+    LcdDriverRefresh();
 
     SDL_Event event;
     int running = 1;
-
-    Uint32 last_update = SDL_GetTicks();
 
     while (running)
     {
@@ -33,24 +90,6 @@ int main(void)
             {
                 running = 0;
             }
-        }
-
-        Uint32 current_time = SDL_GetTicks();
-
-        if (current_time - last_update >= 500)
-        {
-            if (speed == 9)
-            {
-                speed = 10;
-            }
-            else
-            {
-                speed = 9;
-            }
-
-            LcdAppDisplaySpeedDrivePage(&speed, units);
-
-            last_update = current_time;
         }
 
         SDL_Delay(10);

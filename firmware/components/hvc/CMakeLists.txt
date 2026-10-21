@@ -49,7 +49,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/app/hvc_fsm.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/hvc_fsm_states.c
     
-    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/ina228_runtime.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/shunt_runtime.c
 
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/uart_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/adc_driver.c

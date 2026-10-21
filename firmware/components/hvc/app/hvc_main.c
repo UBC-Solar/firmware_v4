@@ -14,7 +14,7 @@
 #include "i2c_driver.h"
 #include "can_driver.h"
 
-#include "ina228_runtime.h"
+#include "shunt_runtime.h"
 
 
 void HVC_Init(
@@ -43,8 +43,8 @@ void HVC_Init(
     CAN_Init(_hcan);
 
     DEBUG_IO_print("UART and ADC and I2C initialized.\n");
-    INA228_Init();
-    DEBUG_IO_print("INA228 initialized.\n");
+    Shunt_Init();
+    DEBUG_IO_print("Shunt monitor initialized.\n");
 
     HVC_FSM_Init(); // sets hvc_state
 
@@ -77,7 +77,7 @@ void HVC_TestShuntCycle() {
     if (HAL_GetTick() - previous_time_ms >= 100) {
         DEBUG_IO_print("100 ms elapsed, reading shunt voltage.\n");
         previous_time_ms = HAL_GetTick();
-        INA228_Read_Shunt_Voltage();
+        Shunt_Read_Shunt_Voltage();
     }
 }
 #endif // (UNIT_TEST_SHUNT == RUN)

@@ -32,8 +32,6 @@
 #define ACK_DELIMITER_BITS 1
 #define EOF_BITS 7
 #define IFS_BITS 3
-#define CANLOAD_MSG_ID 0x763
-#define CANLOAD_DATA_LENGTH 1
 
 /**
  * @brief Calculates the total number of CAN bus bits in the sliding window.
@@ -99,6 +97,5 @@ void CanloadUpdateSlidingWindow();
  * @param IDE The identifier extension bit of the CAN message.
  */
 void CanloadCalculateMessageBits(uint32_t DLC, uint32_t IDE);
-void CAN_tx_canload_msg();
 
 #endif /* INC_CANBUSLOAD_H_ */

@@ -13,7 +13,6 @@
 #include "CAN_comms.h"
 #include "can_driver.h"
 #include "diagnostic.h"
-#include "iwdg_driver.h"
 #include "lcd_handler.h"
 #include "drive_state.h"
 #include "gpio_driver.h"
@@ -88,6 +87,9 @@ void DiagnosticSetCurrentTimeout(bool timeout){
     g_diagnostics.cyclic_flags.current_timeout = timeout;
 }
 
+void DiagnosticSetAccelTimeout(bool timeout){
+    g_diagnostics.cyclic_flags.accel_timeout = timeout;
+}
 
 void DiagnosticTimeSinceBootup()
 {

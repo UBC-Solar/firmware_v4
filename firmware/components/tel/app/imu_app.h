@@ -1,4 +1,4 @@
-/******************************************************************************
+/** 
 * @file    imu_app.h
 * @brief   Shared types, macros, and public interface for the IMU application layer.
 *
@@ -6,7 +6,7 @@
 *
 * @author Shlok Lande
 * @date Aug 19 2026
-******************************************************************************/
+*/
 
 #ifndef __IMU_H__
 #define __IMU_H__

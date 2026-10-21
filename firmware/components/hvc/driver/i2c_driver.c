@@ -7,7 +7,7 @@
 #include "stm32f1xx_hal_def.h"
 #include "stm32f1xx_hal_i2c.h"
 #include "uart_driver.h"
-#include "ina228_runtime.h"
+#include "shunt_runtime.h"
 
 static I2C_HandleTypeDef *hi2c;
 
@@ -204,8 +204,8 @@ I2C_Read_State I2C_GetReadState(void) {
 void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *_hi2c) {
     if (_hi2c == hi2c) {
         switch (current_i2c_read_state) {
-            case I2C_INA228_SHUNT_VOLTAGE:
-                INA228_Process_Shunt_Voltage();
+            case I2C_SHUNT_VOLTAGE:
+                Shunt_Process_Shunt_Voltage();
                 break;
             default:
                 break;

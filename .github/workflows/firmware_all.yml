@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         module: [mdi, tel, drd, hvc, mst, str]
-        mode: [Release]
+        mode: [debug, release]
     
     steps:
       - uses: actions/checkout@v4

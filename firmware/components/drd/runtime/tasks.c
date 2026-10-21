@@ -18,6 +18,7 @@
 #include "external_lights.h"
 #include "diagnostic.h"
 #include "car_configs.h"
+#include "mcu_health_driver.h"
 #include "iwdg_common.h"
 
 
@@ -106,11 +107,13 @@ void TasksLcdUpdate(void *argument)
 
 /* DRD HEARTBEAT TASK */
 void TasksTimeSinceStartup(void *argument)
-{
+{   
+    McuHealthDriverInit();
     for (;;)
     {
         // Transmit DRD heartbeat over CAN
         DiagnosticTimeSinceBootup();
+        DiagnosticMcuHealth();
         osDelay(TIME_SINCE_STARTUP_TASK_DELAY);
     }
 }

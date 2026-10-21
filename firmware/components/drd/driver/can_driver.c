@@ -30,8 +30,7 @@ const CAN_TxHeaderTypeDef drd_diagnostic_header = { .StdId = DRD_DIAGNOSTIC_MESS
                                                     .ExtId = 0x0000,
                                                     .IDE = CAN_ID_STD,
                                                     .RTR = CAN_RTR_DATA,
-                                                    .DLC = DRD_DIAGNOSTIC_SIZE
-};
+                                                    .DLC = DRD_DIAGNOSTIC_SIZE};
 
 const CAN_TxHeaderTypeDef time_since_bootup_can_header = {  .StdId = TIME_SINCE_BOOTUP_CAN_ID,
                                                             .ExtId = 0x0000,
@@ -39,6 +38,11 @@ const CAN_TxHeaderTypeDef time_since_bootup_can_header = {  .StdId = TIME_SINCE_
                                                             .RTR = CAN_RTR_DATA,
                                                             .DLC = TIME_SINCE_BOOTUP_CAN_DATA_LENGTH};
                                         
+const CAN_TxHeaderTypeDef drd_mcu_health_header = { .StdId = DRD_MCU_HEALTH_CAN_ID,
+                                                    .ExtId = 0x0000,
+                                                    .IDE = CAN_ID_STD,
+                                                    .RTR = CAN_RTR_DATA,
+                                                    .DLC = DRD_MCU_HEALTH_CAN_DATA_LENGTH};
 
 void CanFilterInit(CAN_FilterTypeDef* can_filter) {
     CAN_FilterTypeDef can_filter1;

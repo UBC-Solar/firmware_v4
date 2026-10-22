@@ -16,6 +16,7 @@ extern CAN_HandleTypeDef hcan;
 #define MDI_TIME_SINCE_BOOTUP_CAN_ID 0x500U
 #define MDI_DIAGNOSTIC_FLAGS_CAN_ID 0x501U
 #define MDI_MOTOR_TEMP_CAN_ID 0x502U
+#define MDI_MCU_HEALTH_CAN_ID 0x503U
 
 typedef void (*CanDriverRxCallback)(const CAN_RxHeaderTypeDef *header, const uint8_t *data);
 
@@ -25,11 +26,12 @@ typedef void (*CanDriverRxCallback)(const CAN_RxHeaderTypeDef *header, const uin
 void CanDriverInit(void);
 
 /**
- * @brief Sends a CAN frame using the provided header and payload bytes.
+ * @brief Sends a CAN frame using the provided header and payload bytes. If all 3 Tx mailboxes
+ *        are full, waits up to ~1-2 ms for one to free up.
  * @param header Pointer to a configured CAN transmit header.
  * @param data Pointer to payload bytes for the frame.
  * @retval true Frame queued successfully.
- * @retval false Invalid input or HAL transmit failure.
+ * @retval false Invalid input, no free mailbox within the timeout, or HAL transmit failure.
  */
 bool CanDriverSend(const CAN_TxHeaderTypeDef *header, const uint8_t *data);
 

@@ -15,7 +15,6 @@
 #include <stdint.h>
 #include <string.h>
 #include "cyclic_data_handler.h"
-#include "lcd_driver.h"
 #include <stdio.h>
 // #include "soc.h"
 

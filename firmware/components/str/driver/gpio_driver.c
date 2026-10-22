@@ -7,10 +7,11 @@
 
 /* INCLUDES */
 #include "gpio_driver.h"
-
 #include "gpio_app.h"
 #include "main.h"
 #include "stm32f1xx_hal.h"
+
+#define GPIO_ACTIVE_STATE GPIO_PIN_RESET // active low
 
 /* GLOBAL VARIABLES */
 volatile StrGpioCtx gpio_pin_state = {0};
@@ -24,7 +25,7 @@ static void HandleCruiseInterrupt(uint16_t GPIO_Pin);
 /* GPIO STATE */
 void GPIOInitState(void)
 {
-    gpio_pin_state.regen_en = (HAL_GPIO_ReadPin(REGEN_GPIO_Port, REGEN_Pin) == GPIO_PIN_SET);
+    gpio_pin_state.regen_en = (HAL_GPIO_ReadPin(REGEN_GPIO_Port, REGEN_Pin) == GPIO_ACTIVE_STATE);
 
     gpio_pin_state.lights_state.rts_en = (HAL_GPIO_ReadPin(RTS_IN_GPIO_Port, RTS_IN_Pin) == GPIO_PIN_RESET);
     gpio_pin_state.lights_state.lts_en = (HAL_GPIO_ReadPin(LTS_IN_GPIO_Port, LTS_IN_Pin) == GPIO_PIN_RESET);
@@ -72,7 +73,7 @@ static void HandleButtonInterrupt(uint16_t GPIO_Pin)
 
 static void HandleRegenInterrupt(void)
 {
-    gpio_pin_state.regen_en = (HAL_GPIO_ReadPin(REGEN_GPIO_Port, REGEN_Pin) == GPIO_PIN_SET);
+    gpio_pin_state.regen_en = (HAL_GPIO_ReadPin(REGEN_GPIO_Port, REGEN_Pin) == GPIO_ACTIVE_STATE);
 }
 
 static void HandleCruiseInterrupt(uint16_t GPIO_Pin)

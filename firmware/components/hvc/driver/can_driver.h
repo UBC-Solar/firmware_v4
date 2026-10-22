@@ -49,6 +49,7 @@ typedef struct {
     volatile uint32_t tx_queue_push_index;
     volatile uint32_t tx_queue_pop_index;
     volatile CAN_RxMessage_t rx_message_0x450;
+    volatile bool charger_status_received;
 } CAN_Driver_t;
 
 
@@ -56,7 +57,8 @@ typedef struct {
 /** 
  * Functions
  */
-void CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size_t count);
+uint32_t CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size_t count);
+void CAN_InitExtFilter(CAN_HandleTypeDef *handle, uint32_t ext_id, uint32_t filter_bank);
 void CAN_Init(CAN_HandleTypeDef *handle);
 
 void CAN_QueueTxMessage(CAN_TxMessage_t *message);
@@ -74,6 +76,8 @@ void CAN_Send_MPPT_PC();
 void CAN_Send_PC_Monitoring();
 void CAN_SendStatusMsg();
 void CAN_SendFaultMsg();
+void CAN_SendMessage1806E5F4();
+bool CAN_CheckRxChargerMessage();
 
 
 #if (INT_TEST_CAN == RUN)

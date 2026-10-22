@@ -48,6 +48,7 @@ typedef enum
 #define SUPP_VOLTAGE_ID             0x327U
 #define HVC_MC_PC_ID                0x328U
 #define HVC_MPPT_PC_ID              0x329U
+#define CHARGER_CONTROL_ID          0x1806E5F4U // Extended ID. TODO: move to can_messages.h
 
 /*============================================================================*/
 /* EXTERNAL CAN ID's*/
@@ -57,6 +58,12 @@ typedef enum
 #define LV_POWERUP_RECIEVED_ID      0x3A2U
 #define MST_HEARTBEAT_ID            0x200U
 #define MST_VOLT_SUMMARY_ID         0x201U
+#define CHARGER_STATUS_ID           0x18FF50E5U // Extended ID, HK-MF-103-32 status broadcast
+
+/*============================================================================*/
+/* CHARGER CONSTANTS (HK-MF-103-32, big-endian, 0.1 unit/bit) */
+#define MAX_CHARGING_VOLTAGE_DV     1344U // 134.4 V = 32s x 4.2 V
+#define MAX_CHARGING_CURRENT_DA     137U  // 13.7 A, outlet limit is 15 A (power bar breaker trips ~15 A)
 
 /*============================================================================*/
 /* TIMEOUT CONSTANTS */

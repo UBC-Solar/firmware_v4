@@ -19,6 +19,12 @@
 #define INT_TEST_JUNE_11TH SKIP
 #define INT_TEST_PRECHARGE SKIP
 
+// Build variant: RUN to talk to the HK-MF-103-32 charger in MONITORING (reply to its status
+// message with the charger control message). SKIP for driving. Can also be set with -DCHARGE_BATTERY=1.
+#ifndef CHARGE_BATTERY
+#define CHARGE_BATTERY SKIP
+#endif
+
 
 
 void HVC_Init(

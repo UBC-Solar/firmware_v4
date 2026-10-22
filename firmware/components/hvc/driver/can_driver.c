@@ -91,8 +91,9 @@ void CAN_QueueTxMessage(CAN_TxMessage_t *message)
  * @param handle CAN handle for the peripheral being configured.
  * @param std_ids Array of standard 11-bit CAN IDs to accept.
  * @param count Number of IDs in std_ids.
+ * @return Number of filter banks used; the first free bank index for further filters.
  */
-void CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size_t count)
+uint32_t CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size_t count)
 {
     const uint32_t max_ids = CAN_FILTER_NUM_BANKS * CAN_FILTER_NUM_ID_PER_BANK;
 
@@ -141,6 +142,46 @@ void CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size
 
         id_index += CAN_FILTER_NUM_ID_PER_BANK;
         bank_index += 1U;
+    }
+
+    return bank_index;
+}
+
+
+/**
+ * @brief Configure one bxCAN filter bank to accept a single extended 29-bit ID.
+ *
+ * 32-bit list mode register layout: [31:21] STID[10:0] / EXID[28:18], [20:3] EXID[17:0],
+ * [2] IDE, [1] RTR, [0] 0. The ID is placed in both list slots of the bank.
+ *
+ * @param handle CAN handle for the peripheral being configured.
+ * @param ext_id Extended 29-bit CAN ID to accept (data frames only).
+ * @param filter_bank Filter bank to use; must not overlap banks used by CAN_InitFilterList().
+ */
+void CAN_InitExtFilter(CAN_HandleTypeDef *handle, uint32_t ext_id, uint32_t filter_bank)
+{
+    if ((handle == NULL) || (filter_bank >= CAN_FILTER_NUM_BANKS) || (ext_id > 0x1FFFFFFFU))
+    {
+        Error_Handler();
+    }
+
+    CAN_FilterTypeDef filter_config;
+    uint32_t filter_reg = (ext_id << 3) | CAN_ID_EXT | CAN_RTR_DATA;
+
+    filter_config.FilterActivation = CAN_FILTER_ENABLE;
+    filter_config.SlaveStartFilterBank = CAN_FILTER_NUM_BANKS;
+    filter_config.FilterBank = filter_bank;
+    filter_config.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+    filter_config.FilterMode = CAN_FILTERMODE_IDLIST;
+    filter_config.FilterScale = CAN_FILTERSCALE_32BIT;
+    filter_config.FilterIdHigh = (filter_reg >> 16) & 0xFFFFU;
+    filter_config.FilterIdLow = filter_reg & 0xFFFFU;
+    filter_config.FilterMaskIdHigh = (filter_reg >> 16) & 0xFFFFU;
+    filter_config.FilterMaskIdLow = filter_reg & 0xFFFFU;
+
+    if (HAL_CAN_ConfigFilter(handle, &filter_config) != HAL_OK)
+    {
+        Error_Handler();
     }
 }
 
@@ -396,6 +437,59 @@ void CAN_Send_MPPT_PC (void) {
     CAN_QueueTxMessage(&txMessage);
 }
 
+/**
+ * @brief Send the charger control message (ID 0x1806E5F4, extended) to the HK-MF-103-32 charger.
+ *
+ * Byte layout (big-endian, 0.1 unit/bit):
+ *  - [0:1] max charging voltage
+ *  - [2:3] max charging current
+ *  - [4]   charger switch: 0 = close output (charge), 1 = open output (output ramps down to 0)
+ *  - [5]   charger enable: 0 = standby, ignore byte 4; 1 = act on byte 4
+ *  - [6:7] reserved, not sent (DLC = 6, same as v3 ECU)
+ *
+ * @note Ported from firmware_v3 ECU. The first message is sent with enable = 0 and every message
+ *       after that with enable = 1, matching the v3 start-up sequence.
+ */
+void CAN_SendMessage1806E5F4()
+{
+    static uint8_t charger_enable = 0U;
+    const uint8_t charger_switch = 0U; // for now charger will always be outputting
+
+    CAN_TxMessage_t txMessage = {0};
+
+    txMessage.tx_header.ExtId = CHARGER_CONTROL_ID;
+    txMessage.tx_header.IDE   = CAN_ID_EXT;
+    txMessage.tx_header.RTR   = CAN_RTR_DATA;
+    txMessage.tx_header.DLC   = 6;
+
+    txMessage.data[0] = (MAX_CHARGING_VOLTAGE_DV >> 8) & 0xFF;
+    txMessage.data[1] = (MAX_CHARGING_VOLTAGE_DV)      & 0xFF;
+    txMessage.data[2] = (MAX_CHARGING_CURRENT_DA >> 8) & 0xFF;
+    txMessage.data[3] = (MAX_CHARGING_CURRENT_DA)      & 0xFF;
+    txMessage.data[4] = charger_switch;
+    txMessage.data[5] = charger_enable;
+
+    CAN_QueueTxMessage(&txMessage);
+
+    charger_enable = 1U;
+}
+
+/**
+ * @brief Check whether the HK-MF-103-32 charger status message (0x18FF50E5) has been received
+ *        since the last call. Clears the flag when it returns true.
+ *
+ * @return true if a charger status message was received since the last call, otherwise false.
+ */
+bool CAN_CheckRxChargerMessage()
+{
+    if (!CAN_driver.charger_status_received)
+    {
+        return false;
+    }
+
+    CAN_driver.charger_status_received = false;
+    return true;
+}
 
 #if (INT_TEST_CAN == RUN)
 /**
@@ -438,6 +532,16 @@ void CAN_RecievedMessageCallback(uint32_t fifo_num)
     }
 
     new_rx_message.timestamp = HAL_GetTick();
+
+    // HAL only fills StdId for standard frames and ExtId for extended frames; the other is garbage
+    if (new_rx_message.rx_header.IDE == CAN_ID_EXT)
+    {
+        if (new_rx_message.rx_header.ExtId == CHARGER_STATUS_ID)
+        {
+            CAN_driver.charger_status_received = true;
+        }
+        return;
+    }
 
     switch (new_rx_message.rx_header.StdId) {
         case TEL_HEARTBEAT_ID:

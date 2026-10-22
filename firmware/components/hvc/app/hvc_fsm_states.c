@@ -389,6 +389,7 @@ void LvPowerup(void)
 
 /**
  * @brief Normal operating state. Polls fault inputs and sends CAN heartbeat.
+ *        With CHARGE_BATTERY == RUN, also replies to the charger's status message.
  *
  * Exit Condition: IMD fault, masterboard fault, or DCDC dropout.
  * Exit State: FAULT
@@ -408,6 +409,13 @@ void Monitoring(void)
         hvc_state = FAULT;
         return;
     }
+
+#if (CHARGE_BATTERY == RUN)
+    // Only send the charger control message while the charger is connected (status msg received)
+    if (CAN_CheckRxChargerMessage()) {
+        CAN_SendMessage1806E5F4();
+    }
+#endif // (CHARGE_BATTERY == RUN)
 }
 
 /**

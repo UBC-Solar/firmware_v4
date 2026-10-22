@@ -40,7 +40,8 @@ void HVC_Init(
         DIST_FAULT_ID,
         DIST_HEARTBEAT_ID
     };
-    CAN_InitFilterList(_hcan, filter_ids, 7);
+    uint32_t num_std_banks = CAN_InitFilterList(_hcan, filter_ids, 7);
+    CAN_InitExtFilter(_hcan, CHARGER_STATUS_ID, num_std_banks); // Extended CAN IDs required for pack charger
     CAN_Init(_hcan);
 
     DEBUG_IO_print("UART and ADC and I2C initialized.\n");

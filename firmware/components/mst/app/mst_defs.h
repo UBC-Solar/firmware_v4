@@ -98,6 +98,8 @@
 #define CAN_MODULE_VOLT_SUMMARY_ID          0x201
 #define CAN_MODULE_TEMP_SUMMARY_ID          0x202
 #define CAN_BALANCE_DATA_ID                 0x203
+#define CAN_COMMIT_HASH_ID                  0x204
+#define CAN_COMMIT_HASH_PERIOD_MS           1000
 #define CAN_MODULE_VOLT_DATA_ID_START       0x210
 #define CAN_MODULE_TEMP_DATA_ID_START       0x220
 #define CAN_MODULE_STATUS_ID_START          0x230

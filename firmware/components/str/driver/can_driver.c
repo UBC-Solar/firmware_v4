@@ -5,6 +5,7 @@
 
 /* INCLUDES */
 #include "can_driver.h"
+#include "git_version.h"
 
 /* GLOBAL VARIABLES */
 const CAN_TxHeaderTypeDef steering_header = {
@@ -23,6 +24,12 @@ const CAN_TxHeaderTypeDef time_since_bootup_can_header = {
 	.DLC = TIME_SINCE_BOOTUP_CAN_DATA_LENGTH,
 };
 
+const CAN_TxHeaderTypeDef commit_hash_can_header = {
+	.StdId = COMMIT_HASH_CAN_ID,
+	.ExtId = 0x0000,
+	.IDE = CAN_ID_STD,
+	.RTR = CAN_RTR_DATA,
+	.DLC = GIT_VERSION_CAN_DLC,
 const CAN_TxHeaderTypeDef str_flags_can_header = {
     .StdId = STR_FLAGS_CAN_ID,
     .ExtId = 0x0000,

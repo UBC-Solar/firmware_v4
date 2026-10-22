@@ -65,6 +65,7 @@ void CAN_SendMessageXXX();
 void CAN_SendAllMessages();
 void CAN_LV_PowerupMessage();
 void CAN_SendHeartbeat();
+void CAN_SendCommitHash(void);
 void CAN_Send_ShuntCurrent();
 void CAN_Send_LVCurrent();
 void CAN_Send_SuppVoltage();

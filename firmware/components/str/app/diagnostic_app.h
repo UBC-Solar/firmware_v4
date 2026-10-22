@@ -23,6 +23,10 @@ typedef union {
 void DiagnosticTimeSinceBootup();
 
 /**
+ * @brief  Sends the git commit hash the firmware was built from via CAN
+ * @retval None
+ */
+void DiagnosticSendCommitHash();
  * @brief Calibrates ADC
  * @retval None
  */

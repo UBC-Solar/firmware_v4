@@ -8,6 +8,8 @@
 #include "can_driver.h"
 #include "gpio_driver.h"
 #include "rtd_driver.h"
+#include "stm32f1xx_hal_gpio.h"
+
 
 static MdiDiagnosticFlags s_diagnostic_flags = {0};
 
@@ -82,6 +84,8 @@ void DiagnosticSendRtdTemp(void)
 	RtdStatus rtd_status = RtdDriverGetTemp(&rtd_temp_c);
 	RtdFaultFlags faults = RtdDriverGetFaults();
 	bool rtd_read_success = (rtd_status == RtdStatusOk);
+
+	GpioDriverToggleRtdFaultLed(faults);
 
 	s_diagnostic_flags.bits.mdi_rtd_fault = (faults != 0U);
 	s_diagnostic_flags.bits.mdi_rtd_comm_error = (rtd_status == RtdStatusHalError);

@@ -5,8 +5,8 @@
     "${workspaceFolder}/firmware/components/drd",
     "${workspaceFolder}/firmware/components/hvc",
     "${workspaceFolder}/firmware/components/mst",
-    "${workspaceFolder}/firmware/components/dist"
-    "${workspaceFolder}/firmware/components/str",
+    "${workspaceFolder}/firmware/components/dist",
+    "${workspaceFolder}/firmware/components/str"
   ],
   "cmake.buildDirectory": "${sourceDirectory}/build",
   "cmake.cmakePath": "cube-cmake",
@@ -36,6 +36,6 @@
     "source.organizeImports": "never"
   },
   "stm32-for-vscode.openOCDPath": false,
-  "stm32-for-vscode.makePath": false
+  "stm32-for-vscode.makePath": false,
   "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }

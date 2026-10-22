@@ -6,7 +6,7 @@
 #include <math.h>
 #include <float.h>
 #include <string.h>
-#include <ina228_runtime.h>
+#include <shunt_runtime.h>
 
 #include "stm32f1xx_hal.h"
 #include "can.h"

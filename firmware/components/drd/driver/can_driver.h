@@ -40,6 +40,8 @@
 #define FRAME0 0x08850225
 #define STR_CAN_MSG_ID 0x580
 
+#define DRD_MCU_HEALTH_CAN_ID               0x402
+#define DRD_MCU_HEALTH_CAN_DATA_LENGTH      4
 
 
 /* CAN HEADERS */
@@ -48,6 +50,7 @@ extern const CAN_TxHeaderTypeDef mdu_request_header;
 extern const CAN_TxHeaderTypeDef drd_diagnostic_header;
 extern const CAN_TxHeaderTypeDef time_since_bootup_can_header;
 extern const CAN_TxHeaderTypeDef commit_hash_can_header;
+extern const CAN_TxHeaderTypeDef drd_mcu_health_header;
 
 /* FUNCTION PROTOTYPES */
 /**

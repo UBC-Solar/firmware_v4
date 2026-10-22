@@ -97,7 +97,7 @@ typedef enum
 /*============================================================================*/
 /* THRESHOLD CONSTANTS */
 #define HVC_SUPP_LOW_THRESHOLD_MV   10500
-#define Thermistor_MAX_THRESHOLD_MV 5000U
+#define DCDC_TEMP_MAX_MV 5000U //Dummy Value --> Replace with Actual Value once known
 #define DISCHARGE_COMPLETE_THRESHOLD_MV 100000U
 
 /*============================================================================*/
@@ -128,9 +128,20 @@ typedef struct
     uint32_t startup;
     uint32_t retry;
     uint32_t supp_voltage;
+    uint32_t can_send;
 } HVC_Ticks_t;
 
 typedef struct {
+    /*Timeout faults for relevent states*/
+    bool MvpLvPowerup_timeout;
+    bool MST_Ready_timeout;
+    bool MST_Check_timeout;
+    bool MotorDischarge_timeout;
+    bool MotorPrecharge_timeout;
+    bool MpptPrecharge_timeout;
+    bool LvPowerup_timeout;
+
+    /*General faults*/
     bool estop;
     bool imd_fault;
     bool masterboard_fault;
@@ -138,6 +149,10 @@ typedef struct {
     bool dcdc_fault;
     bool overcurrent;
     bool undercurrent;
+    bool watchdog_fired;
+    bool dcdc_thermistor;
+    
+    /*Heartbeat timeout faults*/
     bool tel_heartbeat_timeout;
     bool mst_heartbeat_timeout;
     bool dist_heartbeat_timeout;
@@ -147,7 +162,7 @@ typedef struct {
 
 extern volatile HVC_State_t hvc_state;
 extern HVC_Ticks_t ticks;
-extern HVC_FaultFlags_t fault_flags;
+extern volatile HVC_FaultFlags_t fault_flags;
 extern bool startup_complete;
 extern bool tel_heartbeat_received;
 extern bool mst_status_healthy;

@@ -48,6 +48,7 @@ typedef enum
 #define SUPP_VOLTAGE_ID             0x327U
 #define HVC_MC_PC_ID                0x328U
 #define HVC_MPPT_PC_ID              0x329U
+#define HVC_12V_VOLTAGE_ID          0x32AU
 
 /*============================================================================*/
 /* EXTERNAL CAN ID's*/
@@ -106,6 +107,8 @@ typedef enum
 #define HVC_MOTOR_PC_SCALE          61
 #define SUPP_SENSE_DIVIDER_NUM      5700  // (R13.4 + R13.5)
 #define SUPP_SENSE_DIVIDER_DEN      1000  // R13.5
+#define LV_12V_SENSE_DIVIDER_NUM    5700  // (R309 + R311) = 4.7k + 1k
+#define LV_12V_SENSE_DIVIDER_DEN    1000  // R311
 #define LV_CURRENT_SENSOR_VOFFSET_MV   330    // VS × 0.1, VS = 3.3V, A3U variant
 #define LV_CURRENT_SENSOR_MV_PER_A     200    // A3 sensitivity (both B/U variants)
 

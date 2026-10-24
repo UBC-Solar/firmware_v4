@@ -445,6 +445,10 @@ void CAN_Send_MPPT_PC (void) {
  *  - [2:3] max charging current
  *  - [4]   charger switch: 0 = close output (charge), 1 = open output (output ramps down to 0)
  *  - [5]   charger enable: 0 = standby, ignore byte 4; 1 = act on byte 4
+ *
+ * @warning The byte 4/5 meanings above are from the v3 ECU code. v3's brightside.dbc says instead:
+ *          byte 4 = 0 start, 1 close output, 2 stop (sleep); byte 5 = 0 charging mode, 1 heating
+ *          mode (output on without sensing the battery). Confirm against the charger datasheet.
  *  - [6:7] reserved, not sent (DLC = 6, same as v3 ECU)
  *
  * @note Ported from firmware_v3 ECU. The first message is sent with enable = 0 and every message
@@ -478,6 +482,8 @@ void CAN_SendMessage1806E5F4()
  * @brief Check whether the HK-MF-103-32 charger status message (0x18FF50E5) has been received
  *        since the last call. Clears the flag when it returns true.
  *
+ * In DEBUG builds, prints the decoded status frame when it returns true.
+ *
  * @return true if a charger status message was received since the last call, otherwise false.
  */
 bool CAN_CheckRxChargerMessage()
@@ -488,6 +494,57 @@ bool CAN_CheckRxChargerMessage()
     }
 
     CAN_driver.charger_status_received = false;
+
+#ifdef DEBUG
+    /*
+     * Charger status frame 0x18FF50E5, broadcast by the charger ~every 1 s.
+     * Layout from v3 brightside.dbc (OBCStatus). Voltage/current are big-endian like the command.
+     *
+     * [0:1] Output voltage, 0.1 V/bit. This is the charger's own output terminal voltage, so it
+     *       reads ~setpoint whenever the output is on, even with no battery connected.
+     * [2:3] Output current, 0.1 A/bit
+     * [4]   bit 0    Hardware protection         0 = normal, 1 = protection tripped
+     *       bit 1    Temperature protection      0 = normal, 1 = internal over-temperature
+     *       bits 2-3 Input (AC) voltage status   0 = normal, 1 = under, 2 = over, 3 = no input
+     *       bit 4    Output under-voltage        0 = normal, 1 = fault
+     *       bit 5    Output over-voltage         0 = normal, 1 = fault
+     *       bit 6    Output over-current         0 = normal, 1 = fault
+     *       bit 7    Output short circuit        0 = normal, 1 = fault
+     * [5]   bit 0    Communication status        0 = normal, 1 = timed out waiting for 0x1806E5F4
+     *       bits 1-2 Working status              0 = undefined, 1 = working (output on),
+     *                                            2 = stopped, 3 = stopped/standby
+     *       bit 3    Initialization complete     0 = not complete, 1 = complete
+     *       bit 4    Fan enable                  0 = off, 1 = on
+     *       bit 5    Cooling pump enable         0 = off, 1 = on
+     * [6]   Charge-gun/EVSE signals, all 0 unless charging through a J1772/GB-T style inlet
+     *       bits 0-1 CC (gun resistance)         0 = not connected, 1 = half, 2 = connected,
+     *                                            3 = resistance detection error
+     *       bit 2    CP pilot signal             0 = none, 1 = normal
+     *       bit 3    Charging socket over-temp   0 = normal, 1 = overheating
+     *       bits 4-6 Electronic lock             0 = judging, 1 = locked, 2 = unlocked,
+     *                                            3 = unlock fault, 4 = lock fault
+     *       bit 7    S2 switch                   0 = off, 1 = closed
+     * [7]   Temperature, 1 degC/bit, -40 offset (0x3B = 59 -> 19 degC)
+     */
+    uint8_t d[CAN_MAX_DATAFRAME_BYTES];
+    memcpy(d, (const uint8_t *) CAN_driver.charger_status_data, CAN_MAX_DATAFRAME_BYTES);
+    uint16_t out_dV = ((uint16_t) d[0] << 8) | d[1];
+    uint16_t out_dA = ((uint16_t) d[2] << 8) | d[3];
+
+    DEBUG_IO_PRINT("Charger status: %u.%u V, %u.%u A, raw %02X %02X %02X %02X %02X %02X %02X %02X\r\n",
+                   out_dV / 10U, out_dV % 10U, out_dA / 10U, out_dA % 10U,
+                   d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7]);
+    DEBUG_IO_PRINT("  HW prot %u, temp prot %u, input V %u, out UV %u, OV %u, OC %u, short %u\r\n",
+                   (d[4] >> 0) & 0x1U, (d[4] >> 1) & 0x1U, (d[4] >> 2) & 0x3U,
+                   (d[4] >> 4) & 0x1U, (d[4] >> 5) & 0x1U, (d[4] >> 6) & 0x1U, (d[4] >> 7) & 0x1U);
+    DEBUG_IO_PRINT("  comm timeout %u, working status %u, init complete %u\r\n",
+                   (d[5] >> 0) & 0x1U, (d[5] >> 1) & 0x3U, (d[5] >> 3) & 0x1U);
+
+    // HVC's own shunt reading, to compare against the charger's reported output current.
+    // Cached value, refreshed every CAN_TX_INTERVAL_MS by CAN_Send_ShuntCurrent() (no I2C here).
+    DEBUG_IO_PRINT("  HVC shunt current: %ld mA\r\n", (long) Shunt_Get_Shunt_Current_mA());
+#endif // DEBUG
+
     return true;
 }
 
@@ -538,6 +595,7 @@ void CAN_RecievedMessageCallback(uint32_t fifo_num)
     {
         if (new_rx_message.rx_header.ExtId == CHARGER_STATUS_ID)
         {
+            memcpy((uint8_t *) CAN_driver.charger_status_data, new_rx_message.data, CAN_MAX_DATAFRAME_BYTES);
             CAN_driver.charger_status_received = true;
         }
         return;

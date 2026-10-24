@@ -50,6 +50,7 @@ typedef struct {
     volatile uint32_t tx_queue_pop_index;
     volatile CAN_RxMessage_t rx_message_0x450;
     volatile bool charger_status_received;
+    volatile uint8_t charger_status_data[CAN_MAX_DATAFRAME_BYTES];
 } CAN_Driver_t;
 
 

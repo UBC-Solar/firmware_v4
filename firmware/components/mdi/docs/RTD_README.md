@@ -12,7 +12,7 @@ Hardware:
 - Connection: 3-wire RTD
 - Communication: SPI1
 
-Diagnostics (`diagnostic.c`) call this driver once per second. Temperature is only trusted on `RtdStatusOk`. Failed reads still produce a motor-temp CAN frame (`0x502`) with `success=0` and temperature `0`; they never reuse a last-good temperature.
+Diagnostics (`diagnostic.c`) call this driver once per second. Temperature is only trusted on `RtdStatusOk`. Failed reads still produce a motor-temp CAN frame (`0x502`) with `success=0` and the last good temperature (`0` if there has been no good read since boot).
 
 ## Functions
 

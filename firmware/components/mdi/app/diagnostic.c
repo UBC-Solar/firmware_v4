@@ -101,7 +101,7 @@ void DiagnosticSendRtdTemp(void)
 	}
 	else
 	{
-		rtd_temp_c = s_last_rtd_temp_c; // byte 0 (success) still tells consumers this is stale
+		rtd_temp_c = s_last_rtd_temp_c; 
 	}
 
 	uint8_t data[6];

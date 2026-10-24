@@ -68,6 +68,7 @@ void CAN_SendHeartbeat();
 void CAN_Send_ShuntCurrent();
 void CAN_Send_LVCurrent();
 void CAN_Send_SuppVoltage();
+void CAN_Send_12VRailVoltage();
 void CAN_Send_DCDCThermistorTemp();
 void CAN_Send_MC_PC();
 void CAN_Send_MPPT_PC();

@@ -60,7 +60,7 @@ const osThreadAttr_t CAN_comms_Rx_task_attributes = {
     .priority = (osPriority_t) osPriorityHigh,
 };
 
-const osThreadAttr_t CAN_comms_Tx_task_attributes = { // not sure if needed
+const osThreadAttr_t CAN_comms_Tx_task_attributes = { 
     .name = "CAN_comms_Tx_task",
     .cb_mem = &CAN_comms_Tx_task_control_block,
     .cb_size = sizeof(CAN_comms_Tx_task_control_block),
@@ -72,7 +72,7 @@ const osThreadAttr_t CAN_comms_Tx_task_attributes = { // not sure if needed
 
 /* Private function declarations */
 void CAN_comms_Rx_task(void* argument);
-
+void CAN_comms_Dequeue_Tx_message();
 
 /* Function definitions */
 /**
@@ -125,7 +125,7 @@ void CAN_comms_init(CAN_comms_config_t* config)
     HAL_CAN_ActivateNotification(CAN_comms_config.hcan, CAN_IT_TX_MAILBOX_EMPTY); // interrupt if a mailbox slot has freed up
 
     /* Start CAN */
-    if (HAL_CAN_Start(CAN_comms_config.hcan) != HAL_OK) { // handles a failure and sets the flag, but what do we do if this happens?
+    if (HAL_CAN_Start(CAN_comms_config.hcan) != HAL_OK) { // handles a failure and sets the flag, but no action is taken once the flag is set
         CAN_comms_diagnostic.comms_init_error = COMMS_INIT_FAILURE;
     }
  }
@@ -138,9 +138,10 @@ void CAN_comms_init(CAN_comms_config_t* config)
  * @param CAN_comms_Tx_msg: Pointer to the CAN_comms_Tx_msg_t struct to be added to the queue
  */
 void CAN_comms_Add_Tx_message(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
-{   
+{
         /* TASK that enqueues CAN message */
 		taskENTER_CRITICAL();
+
             /* Enqueue the incoming message */
             if (osOK != osMessageQueuePut(CAN_comms_Tx_queue, CAN_comms_Tx_msg, 0U, 0)) { // message priority is ignored
                 CAN_comms_diagnostic.failure_tx++;
@@ -155,16 +156,23 @@ void CAN_comms_Add_Tx_message(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
 
 /**
  * @brief Dequeues the oldest CAN Tx message from the CAN_comms_Tx_queue
- * 
  */
 static void CAN_comms_Dequeue_Tx_message()
 {
-    CAN_comms_Tx_msg* p_tx_msg;
-    if (osOK == osMessageQueueGet(CAN_comms_Tx_queue, p_tx_msg, 0U, 0)) {
-        CAN_comms_diagnostic.sucess_tx++;
+    CAN_comms_Tx_msg* CAN_comms_Tx_msg;
+    if (osOK == osMessageQueueGet(CAN_comms_Tx_queue, CAN_comms_Tx_msg, 0U, 0)) {
+        uint32_t canMailbox; // throwaway local variable to store which mailbox was used
+        
+        if (HAL_OK == HAL_CAN_AddTxMessage(CAN_comms_config.hcan, &CAN_comms_Tx_msg->header, CAN_comms_Tx_msg->data, &canMailbox)) {
+            CAN_comms_diagnostic.sucess_tx++;
+        }
+        else {
+            CAN_comms_diagnostic.failure_tx++;
+        }
+
     }
     else {
-        CAN_comms_diagnostic.failure_tx++;
+        CAN_comms_diagnostic.failure_tx++; // could recover more error information using HAL_CAN_GetError()
     }
 }
 
@@ -203,7 +211,7 @@ void CAN_comms_Add_Tx_messageISR(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
  */
 void CAN_comms_Rx_task(void* argument)
 {
-    UNUSED(argument); // tf is this
+    UNUSED(argument);
 
     /* Initialize HAL_CAN */
     CAN_comms_HAL_CAN_init(); // this should not be initialized every time, this should be initialized ONCE in like main or smth more important
@@ -267,8 +275,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
    if (hcan->Instance == CAN_comms_config.hcan->Instance)
    {
-       CAN_comms_Dequeue_Tx_message();
-   }
+       CAN_comms_Rx_message_pending_ISR();   
+    }
 }
 
 void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan)
@@ -283,7 +291,7 @@ void HAL_CAN_TxMailbox1CompleteCallback(CAN_HandleTypeDef *hcan)
 {
     if (hcan->Instance == CAN_comms_config.hcan->Instance)
     {
-        CAN_comms_Add_Tx_messageISR;
+        CAN_comms_Dequeue_Tx_message();
     }
 
 }

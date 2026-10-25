@@ -46,6 +46,7 @@ void CanTasksInit(void)
     CAN_comms_config_drd.CAN_comms_Rx_callback = CANCommsRxCallback;
 
     CAN_comms_init(&CAN_comms_config_drd);
+    CAN_comms_HAL_CAN_init();
 }
 
 /* CAN TX */

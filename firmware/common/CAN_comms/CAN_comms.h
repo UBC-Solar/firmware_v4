@@ -82,6 +82,7 @@ typedef struct {
    uint8_t rx_queue_count;
    uint32_t success_rx;
    uint32_t success_tx;
+   uint32_t failure_rx;
    uint32_t hal_failure_tx;
    uint32_t hal_failure_rx;
 

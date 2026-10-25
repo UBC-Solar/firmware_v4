@@ -29,6 +29,7 @@ void CanAppInit(){
     CAN_comms_config_tel.CAN_comms_Rx_callback = CanAppRxCallback;
 
     CAN_comms_init(&CAN_comms_config_tel);
+    CAN_comms_HAL_CAN_init();
 }
 
 static void CanAppRxCallback(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg){

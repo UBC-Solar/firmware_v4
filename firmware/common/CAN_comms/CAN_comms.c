@@ -12,11 +12,12 @@
 
 /* Includes */
 #include "CAN_comms.h"
+#include "cmsis_os2.h"
 
 
 /* Private defines */
-#define COMMS_INIT_SUCCESS          0
-#define COMMS_INIT_FAILURE          1
+#define COMMS_INIT_SUCCESS     0
+#define COMMS_INIT_FAILURE     1
 #define CAN_RX_TASK_STACK_SIZE 1028
 #define CAN_TX_TASK_STACK_SIZE 1028
 #define CAN_RX_QUEUE_SIZE 64
@@ -38,14 +39,16 @@ uint32_t CAN_comms_Rx_task_buffer[CAN_RX_TASK_STACK_SIZE];
 uint32_t CAN_comms_Tx_task_buffer[CAN_TX_TASK_STACK_SIZE];
 osSemaphoreId_t CAN_comms_Tx_mailbox_semaphore;
 
+
 CAN_comms_diagnostics_t CAN_comms_diagnostic = {
     .comms_init_error = COMMS_INIT_SUCCESS,
     .dropped_rx_msg = 0,
     .rx_queue_count = 0,
     .success_rx = 0,
     .success_tx = 0,
-    .hal_failure_tx = 0,
-    .hal_failure_rx = 0
+    .failure_tx = 0,
+    .hal_failure_rx = 0,
+    .hal_failure_tx = 0
 };
 
 const osThreadAttr_t CAN_comms_Rx_task_attributes = {
@@ -54,6 +57,15 @@ const osThreadAttr_t CAN_comms_Rx_task_attributes = {
     .cb_size = sizeof(CAN_comms_Rx_task_control_block),
     .stack_mem = &CAN_comms_Rx_task_buffer[0],
     .stack_size = sizeof(CAN_comms_Rx_task_buffer),
+    .priority = (osPriority_t) osPriorityHigh,
+};
+
+const osThreadAttr_t CAN_comms_Tx_task_attributes = { // not sure if needed
+    .name = "CAN_comms_Tx_task",
+    .cb_mem = &CAN_comms_Tx_task_control_block,
+    .cb_size = sizeof(CAN_comms_Tx_task_control_block),
+    .stack_mem = &CAN_comms_Tx_task_buffer[0],
+    .stack_size = sizeof(CAN_comms_Tx_task_buffer),
     .priority = (osPriority_t) osPriorityHigh,
 };
 
@@ -73,8 +85,6 @@ void CAN_comms_Rx_task(void* argument);
  */
 void CAN_comms_init(CAN_comms_config_t* config)
 {
-
-	
     /* Check config is not NULL */
     if (config == NULL)
     {
@@ -87,12 +97,14 @@ void CAN_comms_init(CAN_comms_config_t* config)
 
     /* Create queues */
     CAN_comms_Rx_queue = osMessageQueueNew(CAN_RX_QUEUE_SIZE, CAN_RX_STRUCT_SIZE, NULL);
-
+    CAN_comms_Tx_queue = osMessageQueueNew(CAN_TX_QUEUE_SIZE, CAN_TX_STRUCT_SIZE, NULL);
+    
     /* Create Semaphores */
-    CAN_comms_Tx_mailbox_semaphore = osSemaphoreNew(NUM_CAN_TX_MAILBOXES, NUM_CAN_TX_MAILBOXES, NULL);
+    CAN_comms_Tx_mailbox_semaphore = osSemaphoreNew(NUM_CAN_TX_MAILBOXES, NUM_CAN_TX_MAILBOXES, NULL); // initial count would be the number of free mailboxes
 
     /* Create tasks */
     CAN_comms_Rx_task_handle = osThreadNew(CAN_comms_Rx_task, NULL, &CAN_comms_Rx_task_attributes);
+    CAN_comms_Tx_task_handle = osThreadNew(CAN_comms_Tx_task, NULL, &CAN_comms_Tx_task_attributes);
 }
 
 
@@ -109,10 +121,13 @@ void CAN_comms_init(CAN_comms_config_t* config)
     HAL_CAN_ConfigFilter(CAN_comms_config.hcan, &CAN_comms_config.CAN_Filter);
 
     /* Activate notifications */
-    HAL_CAN_ActivateNotification(CAN_comms_config.hcan, CAN_IT_RX_FIFO0_MSG_PENDING);
+    HAL_CAN_ActivateNotification(CAN_comms_config.hcan, CAN_IT_RX_FIFO0_MSG_PENDING); // interrupt if CAN received a frame
+    HAL_CAN_ActivateNotification(CAN_comms_config.hcan, CAN_IT_TX_MAILBOX_EMPTY); // interrupt if a mailbox slot has freed up
 
     /* Start CAN */
-    HAL_CAN_Start(CAN_comms_config.hcan);
+    if (HAL_CAN_Start(CAN_comms_config.hcan) != HAL_OK) { // handles a failure and sets the flag, but what do we do if this happens?
+        CAN_comms_diagnostic.comms_init_error = COMMS_INIT_FAILURE;
+    }
  }
 
 
@@ -123,20 +138,34 @@ void CAN_comms_init(CAN_comms_config_t* config)
  * @param CAN_comms_Tx_msg: Pointer to the CAN_comms_Tx_msg_t struct to be added to the queue
  */
 void CAN_comms_Add_Tx_message(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
-{
+{   
+        /* TASK that enqueues CAN message */
 		taskENTER_CRITICAL();
-		uint32_t canMailbox;
-		if (HAL_OK == HAL_CAN_AddTxMessage(CAN_comms_config.hcan, &CAN_comms_Tx_msg->header, CAN_comms_Tx_msg->data, &canMailbox))
-		{
-			CAN_comms_diagnostic.success_tx++;
+            /* Enqueue the incoming message */
+            if (osOK != osMessageQueuePut(CAN_comms_Tx_queue, CAN_comms_Tx_msg, 0U, 0)) { // message priority is ignored
+                CAN_comms_diagnostic.failure_tx++;
+            }
 
-		}
-		else
-		{
-			CAN_comms_diagnostic.hal_failure_tx++;
-		}
-		taskEXIT_CRITICAL();
+            /* Dequeue immediately if mailbox is free */
+            CAN_comms_Dequeue_Tx_message();
 
+        taskEXIT_CRITICAL();
+
+}
+
+/**
+ * @brief Dequeues the oldest CAN Tx message from the CAN_comms_Tx_queue
+ * 
+ */
+static void CAN_comms_Dequeue_Tx_message()
+{
+    CAN_comms_Tx_msg* p_tx_msg;
+    if (osOK == osMessageQueueGet(CAN_comms_Tx_queue, p_tx_msg, 0U, 0)) {
+        CAN_comms_diagnostic.sucess_tx++;
+    }
+    else {
+        CAN_comms_diagnostic.failure_tx++;
+    }
 }
 
 
@@ -174,10 +203,11 @@ void CAN_comms_Add_Tx_messageISR(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
  */
 void CAN_comms_Rx_task(void* argument)
 {
-    UNUSED(argument);
+    UNUSED(argument); // tf is this
 
     /* Initialize HAL_CAN */
-    CAN_comms_HAL_CAN_init();
+    CAN_comms_HAL_CAN_init(); // this should not be initialized every time, this should be initialized ONCE in like main or smth more important
+    // i initialized it in str/tel/drd main because thats where CAN_comms_init is initialized, not sure why it isn't in mdi, but i don't have time to look into that rn
 
     /* Infinite loop */
     for(;;)
@@ -237,10 +267,34 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
    if (hcan->Instance == CAN_comms_config.hcan->Instance)
    {
-       CAN_comms_Rx_message_pending_ISR();
+       CAN_comms_Dequeue_Tx_message();
    }
 }
 
+void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan)
+{
+    if (hcan->Instance == CAN_comms_config.hcan->Instance)
+    {
+        CAN_comms_Dequeue_Tx_message();
+    }
+
+}
+void HAL_CAN_TxMailbox1CompleteCallback(CAN_HandleTypeDef *hcan)
+{
+    if (hcan->Instance == CAN_comms_config.hcan->Instance)
+    {
+        CAN_comms_Add_Tx_messageISR;
+    }
+
+}
+void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan)
+{
+    if (hcan->Instance == CAN_comms_config.hcan->Instance)
+    {
+        CAN_comms_Dequeue_Tx_message();
+    }
+
+}
 
 /**
  * @brief  Returns diagnostic struct populated with diagnostic data

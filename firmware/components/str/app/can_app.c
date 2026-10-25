@@ -41,6 +41,7 @@ void CanAppInit(void)
     CAN_comms_config_str.CAN_comms_Rx_callback = CANCommsRxCallback;
 
     CAN_comms_init(&CAN_comms_config_str);
+    CAN_comms_HAL_CAN_init();
 }
 
 /* CAN RX */

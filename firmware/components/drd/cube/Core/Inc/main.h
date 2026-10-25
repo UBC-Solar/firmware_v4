@@ -92,6 +92,8 @@ void Error_Handler(void);
 #define DRIVE_STATE_PREV_Pin GPIO_PIN_11
 #define DRIVE_STATE_PREV_GPIO_Port GPIOA
 #define DRIVE_STATE_PREV_EXTI_IRQn EXTI15_10_IRQn
+#define PTT_EN_Pin GPIO_PIN_5
+#define PTT_EN_GPIO_Port GPIOB
 #define HAZARD_Pin GPIO_PIN_6
 #define HAZARD_GPIO_Port GPIOB
 #define ECO_POWER_Pin GPIO_PIN_7

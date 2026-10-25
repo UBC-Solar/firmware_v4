@@ -110,6 +110,13 @@ const CAN_TxHeaderTypeDef gps_utc_time_can_header = {
     .RTR = CAN_RTR_DATA,
     .DLC = GPS_UTC_TIME_CAN_DATA_LENGTH};
 
+const CAN_TxHeaderTypeDef tel_health_can_header = {
+    .StdId = TEL_HEALTH_CAN_ID,
+    .ExtId = 0x0000,
+    .IDE = CAN_ID_STD,
+    .RTR = CAN_RTR_DATA,
+    .DLC = TEL_HEALTH_CAN_DATA_LENGTH};
+
 /**
  * @brief Initialize CAN filter configuration
  * @param can_filter Pointer to CAN filter configuration structure

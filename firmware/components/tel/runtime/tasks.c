@@ -66,9 +66,11 @@ void TasksDiagnostics(void* argument)
 {
     (void)argument; // Unused parameter
 
+    DiagnosticsInit();
     for (;;)
     {
         DiagnosticsSendTelFlags();
+        DiagnosticsSendTelHealth();
         osDelay(DIAGNOSTICS_TASK_DELAY);
     }
 }

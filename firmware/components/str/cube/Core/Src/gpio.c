@@ -53,6 +53,9 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(DEBUG_LED_GPIO_Port, DEBUG_LED_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(HEARTBEAT_GPIO_Port, HEARTBEAT_Pin, GPIO_PIN_RESET);
+
   /*Configure GPIO pin : DEBUG_LED_Pin */
   GPIO_InitStruct.Pin = DEBUG_LED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -60,13 +63,20 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(DEBUG_LED_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : LTS_IN_Pin RTS_IN_Pin NEXT_PAGE_Pin HORN_MCU_Pin
+  /*Configure GPIO pins : RTS_IN_Pin LTS_IN_Pin NEXT_PAGE_Pin HORN_MCU_Pin
                            REGEN_Pin */
-  GPIO_InitStruct.Pin = LTS_IN_Pin|RTS_IN_Pin|NEXT_PAGE_Pin|HORN_MCU_Pin
+  GPIO_InitStruct.Pin = RTS_IN_Pin|LTS_IN_Pin|NEXT_PAGE_Pin|HORN_MCU_Pin
                           |REGEN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : HEARTBEAT_Pin */
+  GPIO_InitStruct.Pin = HEARTBEAT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(HEARTBEAT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PTT_MCU_Pin */
   GPIO_InitStruct.Pin = PTT_MCU_Pin;
@@ -80,8 +90,8 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(CRUISE_CONTROL_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : CRUISE_INC_Pin CRUISE_DEC_Pin */
-  GPIO_InitStruct.Pin = CRUISE_INC_Pin|CRUISE_DEC_Pin;
+  /*Configure GPIO pins : CRUISE_DEC_Pin CRUISE_INC_Pin */
+  GPIO_InitStruct.Pin = CRUISE_DEC_Pin|CRUISE_INC_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);

@@ -18,6 +18,8 @@
 #include "stdbool.h"
 #include "rtc_driver.h"
 #include <string.h>
+#include "xbee/ipv4.h"
+#include "xbee/serial.h"
 
 /* DEFINES */
 #define NO_PRIORITY                                 0
@@ -28,8 +30,24 @@
 #define MASK_4_BITS                                 0xF
 #define NUM_FILTERS                                 ((int)(sizeof(filter_whitelist) / sizeof(filter_whitelist[0])))
 
+/* Cellular test settings. Configure the UART and modem to match (modem AP=1). */
+#define CELLULAR_UART                   (&huart2)
+#define CELLULAR_BAUD_RATE              9600U
+#define CELLULAR_SERVER_IP              {45, 79, 112, 203}
+#define CELLULAR_SERVER_PORT            4242U
+#define CELLULAR_TX_BUFFER_SIZE         64U
+#define CELLULAR_UART_BITS_PER_BYTE     10U /* 8N1: start + 8 data + stop */
+#define CELLULAR_TX_TIMEOUT_MARGIN_MS   100U
+#define MILLISECONDS_PER_SECOND         1000U
+#define CELLULAR_TEST_PAYLOAD           "{\"can_id\":1878,\"data\":\"0102030405060708\"}\n"
+
 /* STATIC VARIABLES */
 static TEL_Msg_TypeDef tel_msg = {0};
+
+/* Digi builds the frame here; HAL sends it in one checked write. */
+static uint8_t cellular_tx[CELLULAR_TX_BUFFER_SIZE];
+static unsigned cellular_tx_used;
+static bool cellular_write_error;
 
 /* STATIC FUNCTION PROTOTYPES */
 /**
@@ -180,4 +198,144 @@ static uint32_t get_can_id(CAN_RxHeaderTypeDef* can_msg_header_ptr)
 static uint8_t get_data_length(uint32_t DLC)
 {
     return (uint8_t) (DLC & MASK_4_BITS);
+}
+
+HAL_StatusTypeDef CellularTelemetry_SendTest(void)
+{
+    static xbee_dev_t radio;
+    static const char payload[] = CELLULAR_TEST_PAYLOAD;
+    const uint8_t server_ip[] = CELLULAR_SERVER_IP;
+    xbee_serial_t serial = {
+        .baudrate = CELLULAR_BAUD_RATE,
+        .uart = CELLULAR_UART
+    };
+
+    if (xbee_dev_init(&radio, &serial, NULL, NULL) != 0)
+    {
+        return HAL_ERROR;
+    }
+    xbee_dev_flowcontrol(&radio, false);
+
+    xbee_ipv4_envelope_t packet = {
+        .xbee = &radio,
+        .remote_port = CELLULAR_SERVER_PORT,
+        .protocol = XBEE_IPV4_PROTOCOL_TCP,
+        .payload = payload,
+        .length = sizeof(payload) - 1U /* Exclude the terminating null byte. */
+    };
+    memcpy(&packet.remote_addr_be, server_ip, sizeof(server_ip));
+
+    cellular_tx_used = 0;
+    cellular_write_error = false;
+    int result = xbee_ipv4_envelope_send(&packet);
+    if (result == -EBUSY)
+    {
+        return HAL_BUSY;
+    }
+    if (result < 0 || cellular_write_error || cellular_tx_used == 0)
+    {
+        return HAL_ERROR;
+    }
+
+    /* Round the wire time up to milliseconds, then allow extra HAL overhead. */
+    uint32_t wire_bits = cellular_tx_used * CELLULAR_UART_BITS_PER_BYTE;
+    uint32_t wire_time_ms = (wire_bits * MILLISECONDS_PER_SECOND +
+                            CELLULAR_BAUD_RATE - 1U) / CELLULAR_BAUD_RATE;
+    uint32_t timeout_ms = wire_time_ms + CELLULAR_TX_TIMEOUT_MARGIN_MS;
+    return HAL_UART_Transmit(CELLULAR_UART, cellular_tx,
+                             (uint16_t)cellular_tx_used, timeout_ms);
+}
+
+/* Digi serial hooks: validate the UART and collect the frame's pieces. */
+bool_t xbee_ser_invalid(xbee_serial_t *serial)
+{
+    return serial == NULL || serial->uart == NULL;
+}
+
+int xbee_ser_open(xbee_serial_t *serial, uint32_t baud_rate)
+{
+    if (xbee_ser_invalid(serial))
+    {
+        return -EINVAL;
+    }
+
+    /* Cube initializes the hardware; this hook only checks its settings. */
+    UART_HandleTypeDef *uart = serial->uart;
+    if (baud_rate != CELLULAR_BAUD_RATE || uart->Instance == NULL ||
+        uart->Init.BaudRate != baud_rate ||
+        uart->Init.WordLength != UART_WORDLENGTH_8B ||
+        uart->Init.StopBits != UART_STOPBITS_1 ||
+        uart->Init.Parity != UART_PARITY_NONE ||
+        uart->Init.Mode != UART_MODE_TX_RX ||
+        uart->Init.HwFlowCtl != UART_HWCONTROL_NONE)
+    {
+        return -EINVAL;
+    }
+    if (uart->gState != HAL_UART_STATE_READY || uart->RxState != HAL_UART_STATE_READY)
+    {
+        return -EINVAL;
+    }
+    return 0;
+}
+
+int xbee_ser_write(xbee_serial_t *serial, const void *data, int length)
+{
+    if (xbee_ser_invalid(serial) || data == NULL || length < 0 ||
+        (unsigned)length > sizeof(cellular_tx) - cellular_tx_used)
+    {
+        cellular_write_error = true;
+        return -EINVAL;
+    }
+
+    memcpy(cellular_tx + cellular_tx_used, data, (unsigned)length);
+    cellular_tx_used += (unsigned)length;
+    return length;
+}
+
+int xbee_ser_tx_free(xbee_serial_t *serial)
+{
+    if (xbee_ser_invalid(serial))
+    {
+        return -EINVAL;
+    }
+    return (int)(sizeof(cellular_tx) - cellular_tx_used);
+}
+
+int xbee_ser_tx_used(xbee_serial_t *serial)
+{
+    if (xbee_ser_invalid(serial))
+    {
+        return -EINVAL;
+    }
+    return (int)cellular_tx_used;
+}
+
+/* No hardware flow control; sending disables Digi's CTS check. */
+int xbee_ser_flowcontrol(xbee_serial_t *serial, bool_t enabled)
+{
+    (void)enabled;
+    if (xbee_ser_invalid(serial))
+    {
+        return -EINVAL;
+    }
+    return 0;
+}
+
+int xbee_ser_get_cts(xbee_serial_t *serial)
+{
+    if (xbee_ser_invalid(serial))
+    {
+        return -EINVAL;
+    }
+    return true;
+}
+
+uint32_t xbee_millisecond_timer(void)
+{
+    return HAL_GetTick();
+}
+
+uint32_t xbee_seconds_timer(void)
+{
+    return HAL_GetTick() / MILLISECONDS_PER_SECOND;
 }

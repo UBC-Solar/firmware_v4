@@ -32,4 +32,10 @@ void TelAppTransmitMsg(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg);
  */
 void TelAppTransmitInternalMsg(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg);
 
+/* One cellular test on TEL3.1 USART2 (PA2/PA3), configured at 9600 8N1.
+ * Modem AP=1. Call before normal telemetry traffic starts; single caller.
+ * HAL_OK confirms UART transmission only, not cellular delivery.
+ */
+HAL_StatusTypeDef CellularTelemetry_SendTest(void);
+
 #endif /* __TELEMETRY__APP__H__ */

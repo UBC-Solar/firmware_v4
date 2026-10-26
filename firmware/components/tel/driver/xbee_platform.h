@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <string.h>
+/* Must match the cellular modem and Cube USART2 configuration. */
+#define CELLULAR_BAUD_RATE 230400U
+
 #define PACKED_STRUCT struct __attribute__((__packed__))
 #define XBEE_PACKED(name, decl) PACKED_STRUCT name decl
 #define XBEE_NATIVE_64BIT
@@ -23,4 +26,5 @@ typedef struct {
     uint32_t baudrate;
     UART_HandleTypeDef *uart;
 } xbee_serial_t;
+
 #endif

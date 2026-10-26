@@ -32,10 +32,12 @@ void TelAppTransmitMsg(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg);
  */
 void TelAppTransmitInternalMsg(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg);
 
-/* One cellular test on TEL3.1 USART2 (PA2/PA3), configured at 9600 8N1.
- * Modem AP=1. Call before normal telemetry traffic starts; single caller.
- * HAL_OK confirms UART transmission only, not cellular delivery.
+/* Initialize the Digi device and send one test packet per call.
+ * TEL3.1 USART2 (PA2/PA3), configured at 230400 8N1.
+ * Modem AP=1. Call from a task after RTOS startup, with normal traffic paused.
+ * HAL_OK means DMA started; HAL_BUSY means the transmit semaphore is in use.
+ * The DMA completion callback releases the buffer. No delivery acknowledgement.
  */
-HAL_StatusTypeDef CellularTelemetry_SendTest(void);
+HAL_StatusTypeDef CellularXbeeInit(void);
 
 #endif /* __TELEMETRY__APP__H__ */

@@ -4,6 +4,9 @@
  */
 #include "can_driver.h"
 
+// wait for a free Tx mailbox
+#define CAN_TX_MAILBOX_TIMEOUT_MS 1U
+
 /**
  * @brief Configures CAN filter settings for accepted incoming IDs.
  * @param filter Pointer to filter configuration structure to populate.
@@ -29,6 +32,16 @@ bool CanDriverSend(const CAN_TxHeaderTypeDef *header, const uint8_t *data)
     if (header == NULL || data == NULL)
     {
         return false;
+    }
+
+    // bxCAN has 3 Tx mailboxes, wait for one to free up instead of dropping the frame
+    uint32_t start_tick = HAL_GetTick();
+    while (HAL_CAN_GetTxMailboxesFreeLevel(&hcan) == 0U)
+    {
+        if ((uint32_t)(HAL_GetTick() - start_tick) > CAN_TX_MAILBOX_TIMEOUT_MS)
+        {
+            return false;
+        }
     }
 
     return (HAL_CAN_AddTxMessage(&hcan, header, (uint8_t *)data, &mailbox) == HAL_OK);

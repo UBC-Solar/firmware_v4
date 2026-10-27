@@ -10,6 +10,12 @@
 #define RILM_SPARE_MUX     910.0f
 #define RILM_SPARE         910.0f
 
+/* TEL current sensor ACS70331 data sheet (pg. 13) equation: 
+ * VIOUT = SENS * IOUT + VZERO
+ * Rearranged: IOUT(A) = (VIOUT(V) - VZERO(V)) / SENS(V/A) */
+#define TEL_SENSE_V_PER_A  0.400f /* TEL current sense U3.2: 0.400 V/A typical */
+#define TEL_VIOUT_ZERO_A   0.250f /* output at 0 A typical (25 degrees C) */
+
 #define ADC_VREF           3.3f
 #define ADC_COUNTS         4095.0f
 
@@ -60,6 +66,13 @@ static float correct_910(float amps)
     return (amps + EFUSE_CORRECTION_OFFSET) / EFUSE_CORRECTION_SLOPE;
 }
 
+/* Apply ADC: VIOUT = (raw / 4095) * 3.3V and rearranged equation for IOUT */
+static float tel_sense_to_amps(uint16_t raw)
+{
+    float vout = ((float)raw / ADC_COUNTS) * ADC_VREF;
+    return (vout - TEL_VIOUT_ZERO_A) / TEL_SENSE_V_PER_A;
+}
+
 uint16_t ADC_Read_ESTOP(void)
 {
     return adc_read_channel(ADC_CHANNEL_10); /* PC0 */
@@ -74,6 +87,7 @@ AdcCurrentReadings ADC_Read_Currents(void)
     readings.spare      = correct_910(ilm_to_amps(adc_read_channel(ADC_CHANNEL_4),  RILM_SPARE));      /* PA4 */
     readings.spare_mux  = correct_910(ilm_to_amps(adc_read_channel(ADC_CHANNEL_5),  RILM_SPARE_MUX));  /* PA5 */
     readings.spare_ctrl = correct_910(ilm_to_amps(adc_read_channel(ADC_CHANNEL_6),  RILM_SPARE_CTRL)); /* PA6 */
-
+    readings.tel        = tel_sense_to_amps(adc_read_channel(ADC_CHANNEL_15)); /* PC5 */
+    
     return readings;
 }

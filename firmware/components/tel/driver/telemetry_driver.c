@@ -45,6 +45,7 @@ HAL_StatusTypeDef UART_telemetry_transmit(const uint8_t *data, uint16_t length)
     } else {
         telemetry_diagnostic.successful_telemetry_tx++;
     }
+    
     return status;
 }
 

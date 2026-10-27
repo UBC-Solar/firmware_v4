@@ -32,12 +32,16 @@ void TelAppTransmitMsg(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg);
  */
 void TelAppTransmitInternalMsg(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg);
 
-/* Initialize the Digi device and send one test packet per call.
- * TEL3.1 USART2 (PA2/PA3), configured at 230400 8N1.
- * Modem AP=1. Call from a task after RTOS startup, with normal traffic paused.
- * HAL_OK means DMA started; HAL_BUSY means the transmit semaphore is in use.
- * The DMA completion callback releases the buffer. No delivery acknowledgement.
+/* Initialize Digi and send the known test CAN frame once (ID 1878, bytes 01..08).
+ * Uses the same path as normal CAN forwarding below.
  */
 HAL_StatusTypeDef CellularXbeeInit(void);
+
+/* Send one classic CAN data frame as newline-delimited JSON over cellular TCP.
+ * Supports 11/29-bit IDs and DLC 0..8. Call from a task after RTOS startup.
+ * Waits for the previous UART DMA send; HAL_OK means the new DMA send started.
+ * Modem: 230400 baud, AP=1. No delivery acknowledgement or echo check.
+ */
+HAL_StatusTypeDef CellularXbeeSendCAN(uint32_t can_id, const uint8_t *data, uint32_t dlc);
 
 #endif /* __TELEMETRY__APP__H__ */

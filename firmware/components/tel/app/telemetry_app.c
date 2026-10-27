@@ -18,6 +18,8 @@
 #include "stdbool.h"
 #include "rtc_driver.h"
 #include <string.h>
+#include <stdio.h>
+#include <inttypes.h>
 #include "xbee/ipv4.h"
 #include "xbee/serial.h"
 
@@ -30,13 +32,25 @@
 #define MASK_4_BITS                                 0xF
 #define NUM_FILTERS                                 ((int)(sizeof(filter_whitelist) / sizeof(filter_whitelist[0])))
 
-/* Cellular test settings. Configure the UART and modem to match (modem AP=1). */
-#define CELLULAR_SERVER_IP              {45, 79, 112, 203}
-#define CELLULAR_SERVER_PORT            4242U
-#define CELLULAR_TEST_PAYLOAD           "{\"can_id\":1878,\"data\":\"0102030405060708\"}\n"
+/* Cellular settings. Configure the UART and modem to match (modem AP=1). */
+#define CELLULAR_SERVER_IP {155, 248, 204, 190}
+#define CELLULAR_SERVER_PORT 4242U
+
+#define CELLULAR_JSON_BUFFER_SIZE       64U
+#define CELLULAR_CAN_ID_MAX             0x1FFFFFFFU
+#define HEX_CHARS_PER_BYTE              2U
+#define HEX_NIBBLE_BITS                 4U
+#define CELLULAR_TEST_CAN_ID            1878U
+#define CELLULAR_TEST_DATA              {1, 2, 3, 4, 5, 6, 7, 8}
 
 /* STATIC VARIABLES */
 static TEL_Msg_TypeDef tel_msg = {0};
+/* Protected by the same semaphore as the DMA transmit buffer. */
+static xbee_dev_t cellular_xbee;
+static char cellular_json[CELLULAR_JSON_BUFFER_SIZE];
+static char cellular_hex[TEL_DATA_LENGTH * HEX_CHARS_PER_BYTE + 1U];
+static const char hex_digits[] = "0123456789abcdef";
+static const uint8_t cellular_test_data[] = CELLULAR_TEST_DATA;
 
 /* STATIC FUNCTION PROTOTYPES */
 /**
@@ -110,6 +124,16 @@ void TelAppTransmitMsg(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg)
     {
         return;
     }
+    if (car_config_cellular)
+    {
+        /* Remote-request frames contain no data payload for this JSON format. */
+        if (CAN_comms_Rx_msg->header.RTR != CAN_RTR_DATA ||
+            CellularXbeeSendCAN(can_id, CAN_comms_Rx_msg->data, CAN_comms_Rx_msg->header.DLC) != HAL_OK)
+        {
+            telemetry_diagnostic.dropped_telemetry_msg++;
+        }
+        return;
+    }
     osSemaphoreAcquire(usart1_tx_semaphore, osWaitForever);   // Dont Tx until previous Tx is done
     TelAppSetMsg(&(CAN_comms_Rx_msg->header), CAN_comms_Rx_msg->data, &tel_msg);
     UART_telemetry_transmit((const uint8_t *)&tel_msg, sizeof(tel_msg));
@@ -126,6 +150,16 @@ void TelAppTransmitInternalMsg(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
     uint32_t can_id = (CAN_comms_Tx_msg->header.IDE == CAN_ID_STD) ? CAN_comms_Tx_msg->header.StdId : CAN_comms_Tx_msg->header.ExtId;
     if (!car_config_can_msg_all && !filter(can_id))
     {
+        return;
+    }
+    if (car_config_cellular)
+    {
+        /* Remote-request frames contain no data payload for this JSON format. */
+        if (CAN_comms_Tx_msg->header.RTR != CAN_RTR_DATA ||
+            CellularXbeeSendCAN(can_id, CAN_comms_Tx_msg->data, CAN_comms_Tx_msg->header.DLC) != HAL_OK)
+        {
+            telemetry_diagnostic.dropped_telemetry_msg++;
+        }
         return;
     }
     osSemaphoreAcquire(usart1_tx_semaphore, osWaitForever);   // Dont Tx until previous Tx is done
@@ -191,56 +225,70 @@ static uint8_t get_data_length(uint32_t DLC)
 
 HAL_StatusTypeDef CellularXbeeInit(void)
 {
-    if (!car_config_cellular)
+    /* Keep the existing bring-up call: initialize and send one known CAN frame. */
+    return CellularXbeeSendCAN(CELLULAR_TEST_CAN_ID, cellular_test_data,
+                               sizeof(cellular_test_data));
+}
+
+HAL_StatusTypeDef CellularXbeeSendCAN(uint32_t can_id, const uint8_t *data, uint32_t dlc)
+{
+    if (!car_config_cellular || can_id > CELLULAR_CAN_ID_MAX ||
+        dlc > TEL_DATA_LENGTH || (dlc != 0 && data == NULL))
     {
         return HAL_ERROR;
     }
-
     if (osKernelGetState() != osKernelRunning || usart1_tx_semaphore == NULL)
     {
         return HAL_ERROR;
     }
-    
-    if (osSemaphoreAcquire(usart1_tx_semaphore, NON_BLOCKING) != osOK)
+    /* Wait for the previous DMA send before changing any shared buffers. */
+    if (osSemaphoreAcquire(usart1_tx_semaphore, osWaitForever) != osOK)
     {
         return HAL_BUSY;
     }
 
-    static xbee_dev_t radio;
-    static const char payload[] = CELLULAR_TEST_PAYLOAD;
-    const uint8_t server_ip[] = CELLULAR_SERVER_IP;
+    for (uint32_t i = 0; i < dlc; ++i)
+    {
+        cellular_hex[i * HEX_CHARS_PER_BYTE] = hex_digits[data[i] >> HEX_NIBBLE_BITS];
+        cellular_hex[i * HEX_CHARS_PER_BYTE + 1U] = hex_digits[data[i] & MASK_4_BITS];
+    }
+    cellular_hex[dlc * HEX_CHARS_PER_BYTE] = '\0';
 
-    xbee_serial_t serial = {
-        .baudrate = CELLULAR_BAUD_RATE,
-        .uart = TELEMETRY_UART
-    };
-
-    xbee_ipv4_envelope_t packet = {
-        .xbee = &radio,
-        .remote_port = CELLULAR_SERVER_PORT,
-        .protocol = XBEE_IPV4_PROTOCOL_TCP,
-        .payload = payload,
-        .length = sizeof(payload) - 1U // Exclude the terminating null byte.
-    };
-
-    if (xbee_dev_init(&radio, &serial, NULL, NULL) != 0)
+    int length = snprintf(cellular_json, sizeof(cellular_json),
+                          "{\"can_id\":%" PRIu32 ",\"data\":\"%s\"}\n", can_id, cellular_hex);
+    if (length < 0 || (size_t)length >= sizeof(cellular_json))
     {
         osSemaphoreRelease(usart1_tx_semaphore);
         return HAL_ERROR;
     }
 
-    xbee_dev_flowcontrol(&radio, false);
+    const uint8_t server_ip[] = CELLULAR_SERVER_IP;
+    xbee_serial_t serial = {
+        .baudrate = CELLULAR_BAUD_RATE,
+        .uart = TELEMETRY_UART
+    };
+    if (xbee_dev_init(&cellular_xbee, &serial, NULL, NULL) != 0)
+    {
+        osSemaphoreRelease(usart1_tx_semaphore);
+        return HAL_ERROR;
+    }
+    xbee_dev_flowcontrol(&cellular_xbee, false);
 
+    xbee_ipv4_envelope_t packet = {
+        .xbee = &cellular_xbee,
+        .remote_port = CELLULAR_SERVER_PORT,
+        .protocol = XBEE_IPV4_PROTOCOL_TCP,
+        .payload = cellular_json,
+        .length = (uint16_t)length
+    };
     memcpy(&packet.remote_addr_be, server_ip, sizeof(server_ip));
 
     XBeePlatform_ResetTx();
     int result = xbee_ipv4_envelope_send(&packet);
-
-    if (result < 0) // Error
+    if (result < 0)
     {
         osSemaphoreRelease(usart1_tx_semaphore);
-        return (result == -EBUSY ? HAL_BUSY : HAL_ERROR);
+        return result == -EBUSY ? HAL_BUSY : HAL_ERROR;
     }
-
     return XBeePlatform_Transmit();
 }

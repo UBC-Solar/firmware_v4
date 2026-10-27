@@ -23,6 +23,7 @@ typedef struct {
 static volatile FsmState_t FSM_state;
 static dist_ticks_t ticks;
 static uint8_t led_driver_ready;
+static uint8_t fault_mask = FAULT_NONE; // FaultSource_t bits latched on FAULT entry
 
 /*============================================================================*/
 /* PRIVATE FUNCTION PROTOTYPES */
@@ -32,6 +33,7 @@ static void send_heartbeat_if_due(void);
 static void send_lv_on_if_due(void);
 static void send_currents_if_due(void);
 static void send_branch_id_if_due(void);
+static void send_fault_if_due(void);
 static bool check_critical_faults(FaultSource_t faults);
 static bool check_efuse_faults(FaultSource_t faults);
 static void print_currents(void);
@@ -80,6 +82,16 @@ void FSM_Run(void)
         {
             CAN_Send_LV_ON();
         }
+        if (FSM_state == FSM_STATE_FAULT)
+        {
+            // Snapshot the cause once. Later bits (e.g. EXTI edges caused by
+            // CTRL_Disable_All(), or ESTOP being released) must not change it.
+            fault_mask = (uint8_t)Fault_Get();
+            if (CAN_ExtFault_Received())
+            {
+                fault_mask |= FAULT_HVC;
+            }
+        }
         prev_state = FSM_state;
     }
 
@@ -89,6 +101,7 @@ void FSM_Run(void)
     send_lv_on_if_due();
     send_currents_if_due();
     send_branch_id_if_due();
+    send_fault_if_due();
 }
 
 /*============================================================================*/
@@ -196,7 +209,6 @@ static void state_fault(void)
     if (timer_check(200, &ticks.blink_tick))
     {
         DEBUG_LED_Toggle();
-        CAN_Send_Fault();
         DEBUG_IO_PRINT("MUX_STATUS: %d\r\n", MUX_STATUS_Read());
 
         if (led_driver_ready)
@@ -247,6 +259,16 @@ static void send_branch_id_if_due(void)
     if (timer_check(1000, &branch_id_tick))
     {
         CAN_Send_Branch_ID();
+    }
+}
+
+// Sends the latched fault mask every 200 ms in every state (0 until FAULT is entered).
+static void send_fault_if_due(void)
+{
+    static uint32_t fault_tick = 0U;
+    if (timer_check(200, &fault_tick))
+    {
+        CAN_Send_Fault(fault_mask);
     }
 }
 

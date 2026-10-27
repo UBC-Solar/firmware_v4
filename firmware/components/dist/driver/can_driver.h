@@ -92,8 +92,9 @@ void CAN_Send_Heartbeat(void);
 void CAN_Send_Currents(uint8_t drd_mA, uint8_t mdi_mA, uint8_t spare_ctrl_mA,
                        uint8_t spare_mux_mA, uint8_t spare_mA);
 
-/** @brief Send the dist board fault message (ID 0x3A1, data[0] bit 0 set). */
-void CAN_Send_Fault(void);
+/** @brief Send the dist board fault message (ID 0x3A1).
+ *  @param fault_mask FaultSource_t bitmask latched on FAULT entry; 0 when not faulted. */
+void CAN_Send_Fault(uint8_t fault_mask);
 
 /** @brief Send the dist branch ID (ID 0x3A4, data[0] = DIST_BRANCH_ID). */
 void CAN_Send_Branch_ID(void);

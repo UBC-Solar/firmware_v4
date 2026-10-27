@@ -285,14 +285,14 @@ void CAN_Send_Currents(uint8_t drd_mA, uint8_t mdi_mA, uint8_t spare_ctrl_mA,
     CAN_QueueTxMessage(&msg);
 }
 
-void CAN_Send_Fault(void)
+void CAN_Send_Fault(uint8_t fault_mask)
 {
     CAN_TxMessage_t msg = {0};
     msg.tx_header.StdId = DIST_FAULT_ID;
     msg.tx_header.IDE   = CAN_ID_STD;
     msg.tx_header.RTR   = CAN_RTR_DATA;
     msg.tx_header.DLC   = 1U;
-    msg.data[0]         = 0x01U;
+    msg.data[0]         = fault_mask;
     CAN_QueueTxMessage(&msg);
 }
 

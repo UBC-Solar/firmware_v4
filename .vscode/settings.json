@@ -8,8 +8,10 @@
     "${workspaceFolder}/firmware/components/dist",
     "${workspaceFolder}/firmware/components/str"
   ],
-  "cmake.cmakePath": "/usr/bin/cmake",
+  "cmake.buildDirectory": "${sourceDirectory}/build",
+  "cmake.cmakePath": "cube-cmake",
   "cmake.configureArgs": [
+    "-DCMAKE_COMMAND=cube-cmake",
     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
   ],
   "cmake.preferredGenerators": [

@@ -1,10 +1,16 @@
+/**
+ * @file    xbee_platform.h
+ * @brief   STM32 HAL platform definitions for the Digi XBee ANSI C library.
+ * @author  Tony Chen
+ */
+
 #ifndef TEL_XBEE_PLATFORM_H
 #define TEL_XBEE_PLATFORM_H
 #include "stm32f1xx_hal.h"
-#include <stdint.h>
 #include <inttypes.h>
+#include <stdint.h>
 #include <string.h>
-/* Must match the cellular modem and Cube USART2 configuration. */
+/** @brief Baud rate shared by the cellular modem and Cube USART2 configuration. */
 #define CELLULAR_BAUD_RATE 230400U
 
 #define PACKED_STRUCT struct __attribute__((__packed__))
@@ -21,10 +27,13 @@
 #define BIG_ENDIAN 4321
 #define BYTE_ORDER LITTLE_ENDIAN
 #endif
+/** @brief Boolean type required by the Digi platform interface. */
 typedef int bool_t;
-typedef struct {
-    uint32_t baudrate;
-    UART_HandleTypeDef *uart;
+/** @brief UART configuration passed to the Digi serial hooks. */
+typedef struct
+{
+    uint32_t baudrate;        /**< Configured UART baud rate in bits per second. */
+    UART_HandleTypeDef* uart; /**< Cube-initialized UART handle. */
 } xbee_serial_t;
 
 #endif

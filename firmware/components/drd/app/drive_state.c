@@ -36,6 +36,7 @@ volatile DriveStateCtx g_drive_state_ctx = {
         .next_state_request = false,
         .prev_state_request = false,
         .eco_mode_on = false,
+        .ptt_on = false,
     },
     .velocity_kmh = 0,
     .velocity_mph = 0,
@@ -287,7 +288,9 @@ void DriveStateSteeringCanMsgHandler(uint8_t* data)
 
     g_drive_state_ctx.flags.regen_on = ((data[0] >> 0) & 0x01);
     g_drive_state_ctx.flags.cruise_on = ((data[0] >> 1) & 0x01);
+    g_drive_state_ctx.flags.ptt_on = ((data[0] >> 6) & 0x01);
     DiagnosticSetRegenEnabled(g_drive_state_ctx.flags.regen_on);
+    GpioDriverSetPtt(g_drive_state_ctx.flags.ptt_on);
 
 }
 

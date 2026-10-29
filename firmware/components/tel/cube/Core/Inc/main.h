@@ -71,10 +71,12 @@ void Error_Handler(void);
 #define G_FIX_LED_GPIO_Port GPIOB
 #define DEBUG_LED_1_Pin GPIO_PIN_14
 #define DEBUG_LED_1_GPIO_Port GPIOB
-#define I_NRST_Pin GPIO_PIN_6
+#define HEARTBEAT_Pin GPIO_PIN_15
+#define HEARTBEAT_GPIO_Port GPIOB
+#define RADIO_CEL_STATE_Pin GPIO_PIN_6
+#define RADIO_CEL_STATE_GPIO_Port GPIOC
+#define I_NRST_Pin GPIO_PIN_7
 #define I_NRST_GPIO_Port GPIOC
-#define I_BOOTN_Pin GPIO_PIN_7
-#define I_BOOTN_GPIO_Port GPIOC
 #define I_INTN_Pin GPIO_PIN_8
 #define I_INTN_GPIO_Port GPIOC
 #define R_CTS_Pin GPIO_PIN_9
@@ -89,6 +91,8 @@ void Error_Handler(void);
 #define R_UART_TX_GPIO_Port GPIOC
 #define R_UART_RX_Pin GPIO_PIN_11
 #define R_UART_RX_GPIO_Port GPIOC
+#define R_ASSOCIATE_LED_Pin GPIO_PIN_9
+#define R_ASSOCIATE_LED_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

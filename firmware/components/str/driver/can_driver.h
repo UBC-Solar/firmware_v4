@@ -25,7 +25,6 @@ extern CAN_HandleTypeDef hcan;
 extern const CAN_TxHeaderTypeDef steering_header;
 extern const CAN_TxHeaderTypeDef time_since_bootup_can_header;
 extern const CAN_TxHeaderTypeDef commit_hash_can_header;
-
 extern const CAN_TxHeaderTypeDef str_mcu_health_can_header;
 extern const CAN_TxHeaderTypeDef str_flags_can_header;
 /* FUNCTION PROTOTYPES */

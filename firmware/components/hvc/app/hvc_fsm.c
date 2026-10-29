@@ -106,6 +106,7 @@ void HVC_FSM_Run(void)
     if (timer_elapsed(HVC_HEARTBEAT_INTERVAL_MS, &last_heartbeat_tick))
     {
         CAN_SendHeartbeat();
+        CAN_SendCommitHash();
         DEBUG_IO_PRINT("%lu ms since startup\r\n", ticks.startup); 
     }
 
@@ -153,16 +154,7 @@ void HVC_FSM_Run(void)
         default:
             Fault();
             break;
-    }
-    
-    static uint32_t last_heartbeat_tick = 0U;
-    ticks.startup = HAL_GetTick();
-    if (timer_elapsed(HVC_HEARTBEAT_INTERVAL_MS, &last_heartbeat_tick))
-    {
-        CAN_SendHeartbeat();
-        CAN_SendCommitHash();
-        DEBUG_IO_PRINT("%lu ms since startup\r\n", ticks.startup); 
-    }
+    }    
 }   
 
 /*============================================================================*/

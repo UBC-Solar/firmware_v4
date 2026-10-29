@@ -38,6 +38,8 @@ void DiagnosticSendCommitHash()
     };
     GitVersionPackCan(commit_hash_can_tx.data);
     CAN_comms_Add_Tx_message(&commit_hash_can_tx);
+}
+
 void McuDiagnsoticInit() {
     McuHealthDriverInit();
 }

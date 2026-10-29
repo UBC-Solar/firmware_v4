@@ -69,6 +69,8 @@ void DiagnosticsSendCommitHash()
     CAN_comms_Add_Tx_message(&commit_hash_can_tx);
     osDelay(3);
     TelAppTransmitInternalMsg(&commit_hash_can_tx);
+}
+
 void DiagnosticsSendTelHealth()
 {
     uint16_t vdd_mV = ReadVdd_mV();

@@ -27,6 +27,8 @@ void DiagnosticTimeSinceBootup();
  * @retval None
  */
 void DiagnosticSendCommitHash();
+
+/**
  * @brief Calibrates ADC
  * @retval None
  */

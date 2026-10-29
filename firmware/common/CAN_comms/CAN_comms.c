@@ -21,16 +21,18 @@
 #define CAN_RX_TASK_STACK_SIZE 1028
 #define CAN_TX_TASK_STACK_SIZE 1028
 #define CAN_RX_QUEUE_SIZE 64
-#define CAN_TX_QUEUE_SIZE 16
+#define CAN_TX_QUEUE_SIZE 64
 #define CAN_RX_STRUCT_SIZE sizeof(CAN_comms_Rx_msg_t)
 #define CAN_TX_STRUCT_SIZE sizeof(CAN_comms_Tx_msg_t)
 #define NUM_CAN_TX_MAILBOXES 3
+#define HIGH_PRIORITY_ID_LIMIT 580 // temporary
 
 
 /* Private varibles */
 CAN_comms_config_t CAN_comms_config;
 osMessageQueueId_t CAN_comms_Rx_queue;
-osMessageQueueId_t CAN_comms_Tx_queue;
+osMessageQueueId_t CAN_comms_Tx_queue_normal;
+osMessageQueueId_t CAN_comms_Tx_queue_high;
 osThreadId_t CAN_comms_Rx_task_handle;
 osThreadId_t CAN_comms_Tx_task_handle;
 StaticTask_t CAN_comms_Rx_task_control_block;
@@ -87,7 +89,8 @@ void CAN_comms_init(CAN_comms_config_t* config)
 
     /* Create queues */
     CAN_comms_Rx_queue = osMessageQueueNew(CAN_RX_QUEUE_SIZE, CAN_RX_STRUCT_SIZE, NULL);
-    CAN_comms_Tx_queue = osMessageQueueNew(CAN_TX_QUEUE_SIZE, CAN_TX_STRUCT_SIZE, NULL);
+    CAN_comms_Tx_queue_normal = osMessageQueueNew(CAN_TX_QUEUE_SIZE, CAN_TX_STRUCT_SIZE, NULL);
+    CAN_comms_Tx_queue_high = osMessageQueueNew(CAN_TX_QUEUE_SIZE, CAN_TX_STRUCT_SIZE, NULL);
     
     /* Create tasks */
     CAN_comms_Rx_task_handle = osThreadNew(CAN_comms_Rx_task, NULL, &CAN_comms_Rx_task_attributes);
@@ -98,7 +101,7 @@ void CAN_comms_init(CAN_comms_config_t* config)
  * @brief Initializes CAN filters, activates notifications and starts CAN
  * This function is called once at the start of the CAN_comms_Rx_task RTOS task.
  * 
- * @attention THis function needs to be called after the FreeRTOS kernel has started. So it cannot
+ * @attention This function needs to be called after the FreeRTOS kernel has started. So it cannot
  * be called in the CAN_comms_init function.
  */
  void CAN_comms_HAL_CAN_init()
@@ -117,46 +120,67 @@ void CAN_comms_init(CAN_comms_config_t* config)
 
  }
 
+/**
+ * @brief returns true if high priority, false otherwise
+ * @param msg is the message we would like to distinguish
+*/
+ static bool is_high_priority(const CAN_comms_Tx_msg_t* msg) {
+    return (msg->header.IDE == CAN_ID_STD) && (msg->header.StdId < HIGH_PRIORITY_ID_LIMIT);
+ }
+
+
 
 /**
- * @brief Adds a CAN Tx message to the CAN_comms_Tx_queue
+ * @brief Adds a CAN Tx message to the appropriate priority CAN_comms_Tx_queue
  * This function can be called be a user to add a CAN message to the CAN_comms_Tx_queue.
  * 
  * @param CAN_comms_Tx_msg: Pointer to the CAN_comms_Tx_msg_t struct to be added to the queue
  */
 void CAN_comms_Add_Tx_message(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
 {
-        /* TASK that enqueues CAN message */
-		taskENTER_CRITICAL();
+    /* TASK that enqueues CAN message */
+    taskENTER_CRITICAL();
 
-            /* Enqueue the incoming message */
-            if (osOK != osMessageQueuePut(CAN_comms_Tx_queue, CAN_comms_Tx_msg, 0U, 0)) { // message priority is ignored
+        /* Enqueue the incoming message */
+        if (is_high_priority(CAN_comms_Tx_msg)) {
+            if (osOK != osMessageQueuePut(CAN_comms_Tx_queue_high, CAN_comms_Tx_msg, 0U, 0)) {
                 CAN_comms_diagnostic.failure_tx++;
             }
+        }
+        else {
+            if (osOK != osMessageQueuePut(CAN_comms_Tx_queue_normal, CAN_comms_Tx_msg, 0U, 0)) {
+                CAN_comms_diagnostic.failure_tx++;
+            } 
+        }
 
-            /* Dequeue immediately if mailbox is free */
-            if (HAL_CAN_GetTxMailboxesFreeLevel(CAN_comms_config.hcan) > 0) {
-                CAN_comms_Dequeue_Tx_message();
-            }
-        taskEXIT_CRITICAL();
+        /* Dequeue immediately if mailbox is free */
+        if (HAL_CAN_GetTxMailboxesFreeLevel(CAN_comms_config.hcan) > 0) {
+            CAN_comms_Dequeue_Tx_message();
+        }
 
+    taskEXIT_CRITICAL();
 }
 
 /**
  * @brief Dequeues the oldest CAN Tx message from the CAN_comms_Tx_queue
  */
-static void CAN_comms_Dequeue_Tx_message()
+static void CAN_comms_Dequeue_Tx_message(void)
 {
-    CAN_comms_Tx_msg_t CAN_comms_Tx_msg;
+    CAN_comms_Tx_msg_t msg;
     
     while (HAL_CAN_GetTxMailboxesFreeLevel(CAN_comms_config.hcan) > 0) {
-        if (osOK != osMessageQueueGet(CAN_comms_Tx_queue, &CAN_comms_Tx_msg, NULL, 0)) {
-            break; // Queue is empty
+        /* if message from high priority queue is empty */
+
+        if (osOK != osMessageQueueGet(CAN_comms_Tx_queue_high, &msg, NULL, 0)) {
+            // High priority queue is empty
+            if (osOK != osMessageQueueGet(CAN_comms_Tx_queue_normal, &msg, NULL, 0)) {
+                break; // Both queues are empty
+            }
         }
-        
+
         uint32_t canMailbox; // throwaway local variable to store which mailbox was used
         
-        if (HAL_OK == HAL_CAN_AddTxMessage(CAN_comms_config.hcan, &CAN_comms_Tx_msg.header, CAN_comms_Tx_msg.data, &canMailbox)) {
+        if (HAL_OK == HAL_CAN_AddTxMessage(CAN_comms_config.hcan, &msg.header, msg.data, &canMailbox)) {
             CAN_comms_diagnostic.success_tx++;
         }
         else {

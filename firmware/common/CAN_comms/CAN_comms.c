@@ -37,7 +37,6 @@ StaticTask_t CAN_comms_Rx_task_control_block;
 StaticTask_t CAN_comms_Tx_task_control_block;
 uint32_t CAN_comms_Rx_task_buffer[CAN_RX_TASK_STACK_SIZE];
 uint32_t CAN_comms_Tx_task_buffer[CAN_TX_TASK_STACK_SIZE];
-osSemaphoreId_t CAN_comms_Tx_mailbox_semaphore;
 
 
 CAN_comms_diagnostics_t CAN_comms_diagnostic = {
@@ -139,8 +138,9 @@ void CAN_comms_Add_Tx_message(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
             }
 
             /* Dequeue immediately if mailbox is free */
-            CAN_comms_Dequeue_Tx_message();
-
+            if (HAL_CAN_GetTxMailboxesFreeLevel(CAN_comms_config.hcan) > 0) {
+                CAN_comms_Dequeue_Tx_message();
+            }
         taskEXIT_CRITICAL();
 
 }
@@ -150,7 +150,7 @@ void CAN_comms_Add_Tx_message(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
  */
 static void CAN_comms_Dequeue_Tx_message()
 {
-    CAN_comms_Tx_msg_t* CAN_comms_Tx_msg;
+    CAN_comms_Tx_msg_t* CAN_comms_Tx_msg = NULL;
     if (osOK == osMessageQueueGet(CAN_comms_Tx_queue, CAN_comms_Tx_msg, 0U, 0)) {
         uint32_t canMailbox; // throwaway local variable to store which mailbox was used
         

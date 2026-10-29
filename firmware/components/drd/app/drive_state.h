@@ -41,6 +41,7 @@ typedef struct
     volatile bool next_state_request;
     volatile bool prev_state_request;
     volatile bool eco_mode_on;
+    volatile bool ptt_on;
 } DriveStateFlags;
 
 typedef struct

@@ -6,28 +6,29 @@
 #include <stdint.h>
 #include <stdio.h>
 
-unsigned char TestBitmap[] =
+enum
+{
+    TEST_BITMAP_WIDTH = 8,
+    TEST_BITMAP_HEIGHT = 11,
+    TEST_BITMAP_BYTES_PER_COL = (TEST_BITMAP_HEIGHT + 7) / 8,
+    TEST_BITMAP_SIZE = TEST_BITMAP_WIDTH * TEST_BITMAP_BYTES_PER_COL,
+    TEST_BITMAP_DATA_START = 8
+};
+
+unsigned char TestBitmap[TEST_BITMAP_DATA_START + TEST_BITMAP_SIZE] =
 {
     // Font Header
     0x01,   // FONT_TYPE_PROPORTIONAL
     0x02,   // FONT_ORIENTATION_VERTICAL_CEILING
-    0x58,   // Start char = 88 ('X')
+    0x58,   // Start char
     0x01,   // One character
-    0x0B,   // Height = 11
+    0x0B,   // Height
 
     // Bitmap Index
     0x00, 0x07,
 
     // Bitmap
-    0x08,
-    0, 0,
-    0, 0,
-    0, 0,
-    0, 0,
-    0, 0,
-    0, 0,
-    0, 0,
-    0, 0
+    0x08    // Width
 };
 
 int main(void)
@@ -37,10 +38,7 @@ int main(void)
         return 1;
     }
 
-    const uint8_t width = 8;
-    const uint8_t height = 11;
-
-    uint8_t pixels[11][8] =
+    uint8_t pixels[TEST_BITMAP_HEIGHT][TEST_BITMAP_WIDTH] =
     {
         {1,1,1,1,1,1,1,1},
         {1,0,0,0,0,0,0,1},
@@ -55,18 +53,23 @@ int main(void)
         {1,1,1,1,1,1,1,1}
     };
 
-    uint8_t bitmap[16];
+    uint8_t bitmap[TEST_BITMAP_SIZE];
 
-    LcdBitmapEncode(&pixels[0][0], width, height, bitmap);
+    LcdBitmapEncode(
+        &pixels[0][0],
+        TEST_BITMAP_WIDTH,
+        TEST_BITMAP_HEIGHT,
+        bitmap
+    );
 
-    for (uint8_t i = 0; i < 16; i++)
+    for (uint8_t i = 0; i < TEST_BITMAP_SIZE; i++)
     {
-        TestBitmap[8 + i] = bitmap[i];
+        TestBitmap[TEST_BITMAP_DATA_START + i] = bitmap[i];
     }
 
     printf("Generated bitmap: ");
 
-    for (uint8_t i = 0; i < 16; i++)
+    for (uint8_t i = 0; i < TEST_BITMAP_SIZE; i++)
     {
         printf("0x%02X ", bitmap[i]);
     }

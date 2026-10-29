@@ -62,7 +62,7 @@ const osThreadAttr_t CAN_comms_Rx_task_attributes = {
 
 /* Private function declarations */
 void CAN_comms_Rx_task(void* argument);
-static void CAN_comms_Dequeue_Tx_message();
+static void CAN_comms_Dequeue_Tx_message(void);
 
 /* Function definitions */
 /**
@@ -89,9 +89,6 @@ void CAN_comms_init(CAN_comms_config_t* config)
     CAN_comms_Rx_queue = osMessageQueueNew(CAN_RX_QUEUE_SIZE, CAN_RX_STRUCT_SIZE, NULL);
     CAN_comms_Tx_queue = osMessageQueueNew(CAN_TX_QUEUE_SIZE, CAN_TX_STRUCT_SIZE, NULL);
     
-    /* Create Semaphores */
-    CAN_comms_Tx_mailbox_semaphore = osSemaphoreNew(NUM_CAN_TX_MAILBOXES, NUM_CAN_TX_MAILBOXES, NULL); // initial count would be the number of free mailboxes
-
     /* Create tasks */
     CAN_comms_Rx_task_handle = osThreadNew(CAN_comms_Rx_task, NULL, &CAN_comms_Rx_task_attributes);
 }
@@ -150,20 +147,21 @@ void CAN_comms_Add_Tx_message(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
  */
 static void CAN_comms_Dequeue_Tx_message()
 {
-    CAN_comms_Tx_msg_t* CAN_comms_Tx_msg = NULL;
-    if (osOK == osMessageQueueGet(CAN_comms_Tx_queue, CAN_comms_Tx_msg, 0U, 0)) {
+    CAN_comms_Tx_msg_t CAN_comms_Tx_msg;
+    
+    while (HAL_CAN_GetTxMailboxesFreeLevel(CAN_comms_config.hcan) > 0) {
+        if (osOK != osMessageQueueGet(CAN_comms_Tx_queue, &CAN_comms_Tx_msg, NULL, 0)) {
+            break; // Queue is empty
+        }
+        
         uint32_t canMailbox; // throwaway local variable to store which mailbox was used
         
-        if (HAL_OK == HAL_CAN_AddTxMessage(CAN_comms_config.hcan, &CAN_comms_Tx_msg->header, CAN_comms_Tx_msg->data, &canMailbox)) {
+        if (HAL_OK == HAL_CAN_AddTxMessage(CAN_comms_config.hcan, &CAN_comms_Tx_msg.header, CAN_comms_Tx_msg.data, &canMailbox)) {
             CAN_comms_diagnostic.success_tx++;
         }
         else {
             CAN_comms_diagnostic.failure_tx++;
         }
-
-    }
-    else {
-        CAN_comms_diagnostic.failure_tx++; // could recover more error information using HAL_CAN_GetError()
     }
 }
 
@@ -205,9 +203,8 @@ void CAN_comms_Rx_task(void* argument)
     UNUSED(argument);
 
     /* Initialize HAL_CAN */
-    CAN_comms_HAL_CAN_init(); // this should not be initialized every time, this should be initialized ONCE in like main or smth more important
-    // i initialized it in str/tel/drd main because thats where CAN_comms_init is initialized, not sure why it isn't in mdi, but i don't have time to look into that rn
-
+    CAN_comms_HAL_CAN_init(); 
+    
     /* Infinite loop */
     for(;;)
     {

@@ -76,6 +76,7 @@ void TimeSinceBootUp(void *argument)
     for (;;)
     {
         DiagnosticTimeSinceBootup();
+        DiagnosticSendCommitHash();
         osDelay(TIME_SINCE_BOOTUP_DELAY);
     }
 }

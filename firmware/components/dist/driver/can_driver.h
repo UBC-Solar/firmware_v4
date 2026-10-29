@@ -15,6 +15,7 @@
 #define LV_POWERUP_RECIEVED_ID	0x3A2
 #define LV_CURRENTS_ID      	0x3A3
 #define SEND_DIST_BRANCH_ID     0x3A4 
+#define DIST_COMMIT_HASH_ID     0x3A5
 
 /*============================================================================*/
 /* CAN ID's Receive*/
@@ -100,6 +101,9 @@ void CAN_Send_Branch_ID(void);
 
 /** @brief Send the LV power-on notification (ID 0x3A2, data[0] = 0x01). */
 void CAN_Send_LV_ON(void);
+
+/** @brief Send the git commit hash the firmware was built from (ID 0x3A5, see git_version.h). */
+void CAN_Send_Commit_Hash(void);
 
 /*============================================================================*/
 /* RX / STATUS */

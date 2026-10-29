@@ -235,6 +235,7 @@ void DriveOutputs() {
 void SendCanMessages() {
     #if CAN_CONNECTED
     CAN_SendHeartbeatMessage();
+    CAN_SendCommitHashMessage();
     if (pack_state.mainloop_count <= NUM_INIT_MAINLOOPS) {
         return;
     }

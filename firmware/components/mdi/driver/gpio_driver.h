@@ -8,10 +8,16 @@
  */
 #ifndef INC_GPIO_DRIVER_H_
 #define INC_GPIO_DRIVER_H_
+#include <stdbool.h>
 
 /**
  * @brief Toggles the state of the debug LED.
  */
 void GpioDriverToggleDebugLed(void);
+
+/**
+ * @brief Toggles the state of the RTD fault LED.
+ */
+ void GpioDriverToggleRtdFaultLed(bool fault);
 
 #endif /* INC_GPIO_DRIVER_H_ */

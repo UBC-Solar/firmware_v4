@@ -16,6 +16,8 @@ extern CAN_HandleTypeDef hcan;
 #define MDI_TIME_SINCE_BOOTUP_CAN_ID 0x500U
 #define MDI_DIAGNOSTIC_FLAGS_CAN_ID 0x501U
 #define MDI_MOTOR_TEMP_CAN_ID 0x502U
+#define STR_DRD_CONTROL_CAN_ID 0x580U
+#define DRD_MOTOR_COMMANT_CAN_ID 0x401U
 
 typedef void (*CanDriverRxCallback)(const CAN_RxHeaderTypeDef *header, const uint8_t *data);
 

@@ -61,13 +61,24 @@ void LcdDriverRefresh(void);
 /**
  * @brief Draws a rectangle outline using the internal pixel function.
  *
- * @param x1 Left coordinate (1-based).
- * @param y1 Top coordinate (1-based).
- * @param x2 Right coordinate (1-based).
- * @param y2 Bottom coordinate (1-based).
+ * @param x1 Left coordinate (0-based).
+ * @param y1 Top coordinate (0-based).
+ * @param x2 Right coordinate (0-based).
+ * @param y2 Bottom coordinate (0-based).
  * @param color 1 to draw pixel.
  */
 void LcdDriverDrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t color);
+
+/**
+ * @brief Draws a bitmap using the LCD vertical-column bitmap format.
+ *
+ * @param x Starting x coordinate.
+ * @param y Starting y coordinate.
+ * @param width Bitmap width in pixels.
+ * @param height Bitmap height in pixels.
+ * @param bitmap Pointer to the bitmap data.
+ */
+void LcdDriverDrawBitmap(uint8_t x, uint8_t y, uint8_t width, uint8_t height, const uint8_t* bitmap);
 
 /**
  * @brief Forces a clear a rectangular area in the internal display buffer.

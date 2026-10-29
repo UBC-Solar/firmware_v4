@@ -57,6 +57,23 @@ void LcdDriverDrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint
     }
 }
 
+void LcdDriverDrawBitmap(uint8_t x, uint8_t y, uint8_t width, uint8_t height, const uint8_t* bitmap)
+{
+    uint8_t bytes_per_col = (height + 7) / 8;
+
+    for (uint8_t bitmap_x = 0; bitmap_x < width; bitmap_x++)
+    {
+        for (uint8_t bitmap_y = 0; bitmap_y < height; bitmap_y++)
+        {
+            uint16_t bitmap_index = bitmap_x * bytes_per_col + (bitmap_y / 8);
+
+            uint8_t bit = (bitmap[bitmap_index] >> (bitmap_y % 8)) & 1;
+
+            LcdDriverSetPixel(x + bitmap_x, y + bitmap_y, bit);
+        }
+    }
+}
+
 LcdDriverBoundingBox LcdDriverDrawChar(unsigned char c, unsigned char x, unsigned char y, const unsigned char* font)
 {
     unsigned short pos;

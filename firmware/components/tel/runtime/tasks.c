@@ -18,6 +18,7 @@
 #include "diagnostics.h"
 #include "imu_app.h"
 #include "canload.h"
+#include "can_app.h"
 #include "gps_app.h"
 
 /* CAN Load task */

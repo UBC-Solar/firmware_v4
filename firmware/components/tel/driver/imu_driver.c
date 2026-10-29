@@ -191,8 +191,11 @@ bool ImuDriverReadReport(ImuAppData *data)
         return false;
     }
 
-    if (g_IMU_DRIVER_rx_buffer[2] != SHTP_CHANNEL_REPORTS) {
-        return false;
+    if (!ImuDriverDataReady()) {
+        return false;   
+    }
+    if (!ImuDriverReadPacket()) {
+        return false;   
     }
 
     offset = IMU_SHTP_HEADER_LEN;

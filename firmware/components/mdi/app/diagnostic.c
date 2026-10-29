@@ -78,6 +78,7 @@ void DiagnosticSendTimeSinceBootup(void)
 
 void DiagnosticSendRtdTemp(void)
 {
+	static int32_t s_last_rtd_temp_c = 0;
 	int32_t rtd_temp_c = 0;
 	RtdStatus rtd_status = RtdDriverGetTemp(&rtd_temp_c);
 	RtdFaultFlags faults = RtdDriverGetFaults();
@@ -88,6 +89,7 @@ void DiagnosticSendRtdTemp(void)
 
 	if (rtd_read_success)
 	{
+		s_last_rtd_temp_c = rtd_temp_c;
 		if (!s_diagnostic_flags.bits.mdi_motor_over_temp && rtd_temp_c >= MOTOR_OVER_TEMP_SET_C)
 		{
 			DiagnosticSetMotorOverTemp(true);
@@ -99,7 +101,7 @@ void DiagnosticSendRtdTemp(void)
 	}
 	else
 	{
-		rtd_temp_c = 0;
+		rtd_temp_c = s_last_rtd_temp_c; 
 	}
 
 	uint8_t data[6];

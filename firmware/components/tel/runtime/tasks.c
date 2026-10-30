@@ -9,6 +9,7 @@
 
 #include "tasks.h"
 #include "CAN_comms.h"
+#include "can_app.h"
 #include "iwdg_common.h"
 #include "cmsis_os2.h"
 #include "stm32f1xx_hal.h"

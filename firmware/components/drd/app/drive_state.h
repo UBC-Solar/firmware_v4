@@ -101,6 +101,12 @@ void DriveStateSteeringCanMsgHandler(uint8_t* data);
  */
 DriveStateStates DriveStateGetDriveState(void);
 
+/**
+ * @brief Getter function for retrieving the current drive mode (eco mode).
+ * @return The current drive mode (true if eco mode is on, false otherwise).
+ */
+volatile bool DriveStateGetDriveMode(void);
+
 #ifdef DEBUG
 /**
  * @brief Handles CAN messages requesting a drive state change (debug only).
@@ -108,18 +114,6 @@ DriveStateStates DriveStateGetDriveState(void);
  * @param data Pointer to CAN message data.
  */
 void StateRequestCanMsgHandler(uint8_t* data);
-
-/**
- * @brief Getter function for retrieving the current drive state.
- * @return The current drive state.
- */
-DriveStateStates DriveStateGetDriveState(void);
-
-/**
- * @brief Getter function for retrieving the current drive mode (eco mode).
- * @return The current drive mode (true if eco mode is on, false otherwise).
- */
-volatile bool DriveStateGetDriveMode();
 #endif
 
 #endif /* __DRIVE_STATE_H_ */

@@ -10,7 +10,6 @@
 /* INCLUDES */
 #include "tasks.h"
 #include "cmsis_os2.h"
-#include "iwdg_app.h"
 #include "lcd_handler.h"
 #include "fault_handler.h"
 #include "debug_io.h"
@@ -19,6 +18,9 @@
 #include "external_lights.h"
 #include "diagnostic.h"
 #include "car_configs.h"
+#include "mcu_health_driver.h"
+#include "iwdg_common.h"
+
 
 /* DRIVE STATE TASK */
 void TasksDriveState(void* argument)
@@ -105,11 +107,13 @@ void TasksLcdUpdate(void *argument)
 
 /* DRD HEARTBEAT TASK */
 void TasksTimeSinceStartup(void *argument)
-{
+{   
+    McuHealthDriverInit();
     for (;;)
     {
         // Transmit DRD heartbeat over CAN
         DiagnosticTimeSinceBootup();
+        DiagnosticMcuHealth();
         osDelay(TIME_SINCE_STARTUP_TASK_DELAY);
     }
 }
@@ -117,13 +121,8 @@ void TasksTimeSinceStartup(void *argument)
 /* DIAGNOSTIC TASK */
 void TasksDiagnostic(void *argument)
 {
-    IwdgAppResetHandle();
-
     for (;;)
     {
-        // Refresh the watchdog timer to prevent reset and transmit diagnostics over CAN
-        IwdgAppRefresh(&hiwdg);
-        
         DiagnosticTransmit(false);
         osDelay(DIAGNOSTIC_TASK_DELAY);
     }
@@ -144,5 +143,17 @@ void TasksFaultLightFlash(void *argument)
         // Implementation for fault light flash task
         FaultHandlerFlashLED();
         osDelay(FAULT_LIGHT_FLASH_DELAY);
+    }
+}
+
+void TasksIWDG(void *argument)
+{
+    DiagnosticSetWatchdogReset(IwdgResetHandle());
+
+    for (;;)
+    {
+        // Refresh the watchdog PPtimer to prevent reset and transmit diagnostics over CAN
+        IwdgRefresh(&hiwdg);
+        osDelay(IWDG_TASK_DELAY);
     }
 }

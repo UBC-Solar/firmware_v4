@@ -1,4 +1,4 @@
-/******************************************************************************
+/** 
 * @file    imu_driver.c
 * @brief   reset/boot handling, SH2 feature-enable commands, and sensor report parsing.
 *
@@ -6,7 +6,7 @@
 *
 * @author Shlok Lande
 * @date Aug 19 2026
-******************************************************************************/
+*/
 
 #include "imu_driver.h"
 #include "bitops.h"
@@ -59,8 +59,6 @@ void ImuDriverInit(void)
     uint32_t start;
     uint8_t header[IMU_SHTP_HEADER_LEN];
     uint16_t packet_len;
-
-    HAL_GPIO_WritePin(I_BOOTN_GPIO_Port, I_BOOTN_Pin, GPIO_PIN_SET);
 
     HAL_GPIO_WritePin(I_NRST_GPIO_Port, I_NRST_Pin, GPIO_PIN_RESET);
     HAL_Delay(IMU_RESET_PULSE_MS);

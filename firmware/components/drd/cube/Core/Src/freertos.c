@@ -19,7 +19,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
-#include "cmsis_os2.h"
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
@@ -32,7 +31,6 @@
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
-typedef StaticTask_t osStaticThreadDef_t;
 /* USER CODE BEGIN PTD */
 typedef StaticTask_t osStaticThreadDef_t;
 typedef StaticEventGroup_t osStaticEventGroupDef_t;
@@ -130,6 +128,20 @@ const osThreadAttr_t TasksDiagnostic_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
 };
 
+/* Definitions for TasksWatchDog */
+osThreadId_t TasksIWDGHandle;
+uint32_t TasksIWDGBuffer[128];
+osStaticThreadDef_t TasksIWDGControlBlock;
+
+const osThreadAttr_t TasksIWDG_attributes = {
+  .name = "TasksIWDG",
+  .cb_mem = &TasksIWDGControlBlock,
+  .cb_size = sizeof(TasksIWDGControlBlock),
+  .stack_mem = &TasksIWDGBuffer[0],
+  .stack_size = sizeof(TasksIWDGBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
+
 /* Definitions for TasksFaultLightFlash */
 osThreadId_t TasksFaultLightFlashHandle;
 uint32_t TasksFaultLightFlashBuffer[128];
@@ -161,14 +173,9 @@ const osThreadAttr_t TasksTimeSinceStartup_attributes = {
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
-uint32_t defaultTaskBuffer[ 128 ];
-osStaticThreadDef_t defaultTaskControlBlock;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .cb_mem = &defaultTaskControlBlock,
-  .cb_size = sizeof(defaultTaskControlBlock),
-  .stack_mem = &defaultTaskBuffer[0],
-  .stack_size = sizeof(defaultTaskBuffer),
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 
@@ -227,6 +234,8 @@ void MX_FREERTOS_Init(void) {
   TasksFaultLightFlashHandle = osThreadNew(TasksFaultLightFlash, NULL, &TasksFaultLightFlash_attributes);
   /* creation of TasksTimeSinceStartup */
   TasksTimeSinceStartupHandle = osThreadNew(TasksTimeSinceStartup, NULL, &TasksTimeSinceStartup_attributes);
+  /* Initialization for TasksIWDG */
+  TasksIWDGHandle = osThreadNew(TasksIWDG, NULL, &TasksIWDG_attributes);
 
   /* USER CODE END RTOS_THREADS */
 

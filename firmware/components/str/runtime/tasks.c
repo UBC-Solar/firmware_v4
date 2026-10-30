@@ -5,18 +5,18 @@
 
 /* INCLUDES */
 #include "tasks.h"
-#include "iwdg_app.h"
+#include "iwdg_common.h"
 #include "cmsis_os.h"
 #include "can_app.h"
 #include "cyclic_data_handler.h"
-#include "gpio_app.h"
 #include "gpio_driver.h"
 #include "hex_driver.h"
 #include "hex_app.h"
-#include "iwdg_app.h"
 #include "diagnostic_app.h"
 #include "main.h"
+#include "mcu_health_driver.h"
 #include "stm32f1xx_hal.h"
+#include "stm32f1xx_hal_gpio.h"
 #include <stdint.h>
 
 /* DEFINES */
@@ -26,9 +26,10 @@
 /* RTOS TASKS */
 void StartSteeringOutputsTask(void *argument)
 {
+    GPIOInitState();
+
     for(;;)
     {
-        StrState();
         TransmitDriveControlState();
         osDelay(STEERING_TASK_DELAY);
     }
@@ -46,14 +47,26 @@ void StartHexDisplayTask(void *argument)
 
 void TasksDiagnostic(void *argument)
 {
-    IwdgAppResetHandle();
+    McuDiagnsoticInit();
+
+    for (;;)
+    {
+        McuDiagnosticSendHealth();
+        DiagnosticsSendStrFlags();
+        osDelay(DIAGNOSTIC_TASK_DELAY);
+    }
+}
+
+// #TODO: Set diagnostic flags for iwdg
+void TasksIWDG(void *argument)
+{
+    //IwdgResetHandle();
 
     for (;;)
     {
         // Refresh the watchdog PPtimer to prevent reset and transmit diagnostics over CAN
-        IwdgAppRefresh(&hiwdg);
-        
-        osDelay(DIAGNOSTIC_TASK_DELAY);
+        IwdgRefresh(&hiwdg);
+        osDelay(IWDG_TASK_DELAY);
     }
 }
 

@@ -1,0 +1,9 @@
+#!/bin/sh
+# Block commits on branches that don't follow the naming convention.
+
+. "$(dirname "$0")/check-branch-name.sh"
+
+# Detached HEAD (rebase, bisect, ...) has no branch name to check.
+branch=$(git symbolic-ref --short -q HEAD) || exit 0
+
+check_branch_name "$branch"

@@ -60,6 +60,19 @@ void LcdSimDisplayRender(const uint8_t* buffer)
     SDL_RenderPresent(renderer);
 }
 
+int LcdSimDisplayWindowToPixel(int window_x, int window_y, uint8_t *lcd_x, uint8_t *lcd_y)
+{
+    if (window_x < 0 || window_y < 0 || window_x >= LCD_SIM_WIDTH * LCD_SIM_SCALE || window_y >= LCD_SIM_HEIGHT * LCD_SIM_SCALE)
+    {
+        return 0;
+    }
+
+    *lcd_x = window_x / LCD_SIM_SCALE;
+    *lcd_y = window_y / LCD_SIM_SCALE;
+
+    return 1;
+}
+
 void LcdSimDisplayShutdown()
 {
     SDL_DestroyRenderer(renderer);

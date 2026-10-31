@@ -199,7 +199,7 @@ void CAN_SendAllMessages(void)
         CAN_Send_ShuntCurrent();
         CAN_Send_LVCurrent();
         CAN_Send_SuppVoltage();
-        CAN_Send_12VRailVoltage();
+        CAN_Send_lv_12v_sense();
         CAN_Send_DCDCThermistorTemp();
         CAN_Send_PC_Monitoring();
     }
@@ -347,7 +347,7 @@ void CAN_Send_SuppVoltage(void)
     CAN_QueueTxMessage(&txMessage);
 }
 
-void CAN_Send_12VRailVoltage(void)
+void CAN_Send_lv_12v_sense(void)
 {
     ADC_Voltages adc = ADC_GetVoltages();
     uint32_t actual_mV = (uint32_t)adc.lv_12v_sense * LV_12V_SENSE_DIVIDER_NUM / LV_12V_SENSE_DIVIDER_DEN;

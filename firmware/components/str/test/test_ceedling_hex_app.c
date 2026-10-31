@@ -1,17 +1,31 @@
-#include "unity.h"
+/**
+ * @file test_ceedling_hex_app.c
+ * @brief STR speed-display formatting and I2C-output unit test.
+ */
+
+#include "cyclic_data_handler.h"
 #include "hex_app.h"
 #include "hex_driver.h"
-#include "cyclic_data_handler.h"
 #include "test_hal.h"
+#include "unity.h"
 
+/**
+ * @brief Reset test inputs and captured outputs before each test.
+ */
 void setUp(void)
 {
     TestHalReset();
     HexAppSetSpeedUnits(STR_SPEED_UNITS_KPH);
     CyclicDataSetSpeed(0);
 }
+/**
+ * @brief Complete the test; no additional cleanup is required.
+ */
 void tearDown(void) {}
 
+/**
+ * @brief Verify speed 42 produces the expected display register writes.
+ */
 void test_speed_is_formatted_and_sent_to_display_over_i2c(void)
 {
     CyclicDataSetSpeed(42);
@@ -20,7 +34,8 @@ void test_speed_is_formatted_and_sent_to_display_over_i2c(void)
     TEST_ASSERT_EQUAL_UINT(2, test_hal.i2c_count);
     uint8_t tens[] = {AS1115_REG_DIGIT0, 4};
     uint8_t ones[] = {AS1115_REG_DIGIT1, 2};
-    for (unsigned i = 0; i < 2; ++i) {
+    for (unsigned i = 0; i < 2; ++i)
+    {
         TEST_ASSERT_EQUAL_PTR(&hi2c1, test_hal.i2c[i].bus);
         TEST_ASSERT_EQUAL_UINT16(0, test_hal.i2c[i].address);
         TEST_ASSERT_EQUAL_UINT16(2, test_hal.i2c[i].size);

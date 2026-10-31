@@ -1,10 +1,24 @@
-#include "unity.h"
+/**
+ * @file test_ceedling_rtc_driver.c
+ * @brief TEL RTC time-setting unit test.
+ */
+
 #include "rtc_driver.h"
 #include "test_hal.h"
+#include "unity.h"
 
+/**
+ * @brief Reset test inputs and captured outputs before each test.
+ */
 void setUp(void) { TestHalReset(); }
+/**
+ * @brief Complete the test; no additional cleanup is required.
+ */
 void tearDown(void) {}
 
+/**
+ * @brief Verify RTC time fields are written in binary format.
+ */
 void test_set_time_maps_hour_minute_second_in_binary_format(void)
 {
     RtcDriverTimeData data = {.seconds = 56, .minutes = 34, .hours = 12};

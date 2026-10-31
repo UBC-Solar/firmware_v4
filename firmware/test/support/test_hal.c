@@ -1,7 +1,14 @@
+/**
+ * @file test_hal.c
+ * @brief Fake HAL operations used by host unit tests.
+ */
+
+/* INCLUDES */
 #include "test_hal.h"
 #include "unity.h"
 #include <string.h>
 
+/* VARIABLES */
 TestHalState test_hal;
 GPIO_TypeDef test_gpio_a = {.token = 1};
 GPIO_TypeDef test_gpio_b = {.token = 2};
@@ -11,6 +18,12 @@ I2C_HandleTypeDef hi2c1 = {.token = 1}, hi2c2 = {.token = 2};
 RTC_HandleTypeDef hrtc = {.token = 1};
 static uint16_t pins[3];
 
+/* PRIVATE FUNCTIONS */
+/**
+ * @brief Map a supported test GPIO port to its stored pin state.
+ * @param port GPIO port A, B, or C; other ports fail the test.
+ * @return Index into the stored pin-state array.
+ */
 static unsigned TestHalPortIndex(GPIO_TypeDef* port)
 {
     if (port == GPIOA)
@@ -23,6 +36,7 @@ static unsigned TestHalPortIndex(GPIO_TypeDef* port)
     return 0;
 }
 
+/* TEST HELPERS */
 void TestHalReset(void)
 {
     test_hal = (TestHalState){.i2c_status = HAL_OK};
@@ -43,6 +57,7 @@ GPIO_PinState TestHalGetPin(GPIO_TypeDef* port, uint16_t pin)
     return (pins[TestHalPortIndex(port)] & pin) ? GPIO_PIN_SET : GPIO_PIN_RESET;
 }
 
+/* HAL STUBS */
 uint32_t HAL_GetTick(void)
 {
     uint32_t now = test_hal.tick;

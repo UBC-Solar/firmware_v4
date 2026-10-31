@@ -71,14 +71,14 @@ void Error_Handler(void);
 #define SPI1_RDY_GPIO_Port GPIOA
 #define SPI1_CS_Pin GPIO_PIN_4
 #define SPI1_CS_GPIO_Port GPIOA
-#define PWR_Pin GPIO_PIN_2
-#define PWR_GPIO_Port GPIOB
+#define BOOT1_Pin GPIO_PIN_2
+#define BOOT1_GPIO_Port GPIOB
 #define ACC_SCL_Pin GPIO_PIN_10
 #define ACC_SCL_GPIO_Port GPIOB
 #define ACC_SDA_Pin GPIO_PIN_11
 #define ACC_SDA_GPIO_Port GPIOB
-#define PWRB12_Pin GPIO_PIN_12
-#define PWRB12_GPIO_Port GPIOB
+#define PWR_Pin GPIO_PIN_12
+#define PWR_GPIO_Port GPIOB
 #define PIN_6_Pin GPIO_PIN_13
 #define PIN_6_GPIO_Port GPIOB
 #define DIR_Pin GPIO_PIN_14
@@ -95,8 +95,6 @@ void Error_Handler(void);
 #define REG_SCL_GPIO_Port GPIOB
 #define REG_SDA_Pin GPIO_PIN_7
 #define REG_SDA_GPIO_Port GPIOB
-#define RTD_FAULT_LED_GPIO_PORT GPIOD
-#define RTD_FAULT_LED_GPIO_PIN GPIO_PIN_2
 
 /* USER CODE BEGIN Private defines */
 

@@ -11,10 +11,10 @@ void GpioDriverToggleDebugLed(void) { HAL_GPIO_TogglePin(DEBUG_LED_GPIO_Port, DE
 
 void GpioDriverToggleRtdFaultLed(bool fault){
     if(fault){
-		HAL_GPIO_WritePin(RTD_FAULT_LED_GPIO_PORT, RTD_FAULT_LED_GPIO_PIN, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(RTD_LED_GPIO_Port, RTD_LED_Pin, GPIO_PIN_SET);
 	}
 	else{
-		HAL_GPIO_WritePin(RTD_FAULT_LED_GPIO_PORT, RTD_FAULT_LED_GPIO_PIN, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(RTD_LED_GPIO_Port, RTD_LED_Pin, GPIO_PIN_RESET);
 	}
 }
 
@@ -26,6 +26,14 @@ void GpioDriverToggleFwdLeds(void){
 void GpioDriverToggleRevLeds(void){
 	HAL_GPIO_WritePin(REV_LED_GPIO_Port, REV_LED_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(FWD_LED_GPIO_Port, FWD_LED_Pin, GPIO_PIN_RESET);
+}
+
+void GpioDriverEnableEcoLeds(void){
+	HAL_GPIO_WritePin(ECO_LED_GPIO_Port, ECO_LED_Pin, GPIO_PIN_SET);
+}
+
+void GpioDriverDisableEcoLeds(void){
+	HAL_GPIO_WritePin(ECO_LED_GPIO_Port, ECO_LED_Pin, GPIO_PIN_RESET);
 }
 
 void GpioDriverEnableRegenLed(void){

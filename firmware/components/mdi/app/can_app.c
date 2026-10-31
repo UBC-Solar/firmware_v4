@@ -88,7 +88,14 @@ void CanMdiLedHandler(uint32_t msg_id, const uint8_t* data)
     {
     case DRD_MOTOR_COMMAND_CAN_ID:{
         uint8_t direction = data[4] & 0x01;
+        uint8_t eco_mode = (data[4] >> 1) & 0x01;
 
+        if(eco_mode == 1){
+            GpioDriverEnableEcoLeds();
+        }
+        else {
+            GpioDriverDisableEcoLeds();
+        }
         if(direction == 1){
             GpioDriverToggleFwdLeds();
         }

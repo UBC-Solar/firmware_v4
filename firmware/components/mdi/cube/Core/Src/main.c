@@ -111,9 +111,7 @@ int main(void)
   MX_I2C2_Init();
   MX_SPI1_Init();
   MX_UART4_Init();
-  #ifndef DEBUG
   MX_IWDG_Init();
-  #endif
   /* USER CODE BEGIN 2 */
   AppMain();
   /* USER CODE END 2 */
@@ -401,7 +399,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, PWR_Pin|PWRB12_Pin|PIN_6_Pin|DIR_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, BOOT1_Pin|PWR_Pin|PIN_6_Pin|DIR_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(RTD_LED_GPIO_Port, RTD_LED_Pin, GPIO_PIN_RESET);
@@ -426,19 +424,19 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PWR_Pin PIN_6_Pin DIR_Pin */
-  GPIO_InitStruct.Pin = PWR_Pin|PIN_6_Pin|DIR_Pin;
+  /*Configure GPIO pins : BOOT1_Pin PIN_6_Pin DIR_Pin */
+  GPIO_InitStruct.Pin = BOOT1_Pin|PIN_6_Pin|DIR_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PWRB12_Pin */
-  GPIO_InitStruct.Pin = PWRB12_Pin;
+  /*Configure GPIO pin : PWR_Pin */
+  GPIO_InitStruct.Pin = PWR_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(PWRB12_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(PWR_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : ROT_IP_Pin */
   GPIO_InitStruct.Pin = ROT_IP_Pin;

@@ -25,6 +25,8 @@ typedef union {
 		volatile bool throttle_ADC_mismatch 	: 1; // done
 		volatile bool watchdog_reset 			: 1; // done
 		volatile bool motor_comm_fault 			: 1; // never set in v3
+		volatile bool mcu_overtemp_fault		: 1;
+		volatile bool mcu_undervolt_fault		: 1;
 	};
 	uint8_t all_flags;
 } DiagnosticDRDAllFlags;
@@ -37,8 +39,9 @@ typedef union {
 		volatile bool soc_timeout 			: 1; //done
 		volatile bool voltage_timeout 		: 1; //done
 		volatile bool current_timeout 		: 1; //done
+		volatile bool accel_timeout 		: 1; //done
 	};
-	uint8_t cyclic_data_all_flags;
+	volatile uint8_t cyclic_data_all_flags;
 } DiagnosticCyclicDataFlags;
 
 typedef struct {
@@ -131,5 +134,25 @@ void DiagnosticSetVoltageTimeout(bool timeout);
  * @param timeout The current timeout status
  */
 void DiagnosticSetCurrentTimeout(bool timeout);
+/**
+ * @brief Sets the accelerator timeout status
+ * @param timeout The accelerator timeout status
+ */
+void DiagnosticSetAccelTimeout(bool timeout);
+
+/**
+ * @brief Sends MCU health information (temperature in C and voltage in mv) over CAN
+ */
+void DiagnosticMcuHealth();
+
+/**
+ * @brief Sends a safeguard flag for MCU Temperature
+ */
+void DiagnosticSetMcuOvertemp(bool fault);
+
+/**
+ * @brief Sends a safeguard flag for MCU voltage
+ */
+void DiagnosticSetMcuUnderVolt(bool fault);
 
 #endif /* INC_DIAGNOSTIC_H_ */

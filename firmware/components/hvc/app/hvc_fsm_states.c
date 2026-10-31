@@ -64,6 +64,7 @@ void MvpLvPowerup(void) {
     if (timer_elapsed(MVP_LV_POWERUP_TIMEOUT_MS, &ticks.generic)) {
         dist_powered = false;
         DEBUG_IO_print("HVC: MVP_LV_POWERUP timeout\r\n");
+        fault_flags.MvpLvPowerup_timeout = true;
         hvc_state = FAULT;
         return;
     }
@@ -90,6 +91,7 @@ void MST_Ready(void)
 
     if (timer_elapsed(MST_READY_TIMEOUT_MS, &ticks.generic)) {
         DEBUG_IO_print("HVC: MST_READY timeout\r\n");
+        fault_flags.MST_Ready_timeout = true;
         hvc_state = FAULT;
         return;
     }
@@ -121,6 +123,7 @@ void MST_Check(void)
 
     if (timer_elapsed(MST_CHECK_TIMEOUT_MS, &ticks.generic)) {
         DEBUG_IO_print("HVC: MST_CHECK timeout\r\n");
+        fault_flags.MST_Check_timeout = true;
         hvc_state = FAULT;
         return;
     }
@@ -209,6 +212,7 @@ void MotorDischarge()
     }
     if (timer_elapsed(MOTOR_DISCHARGE_TIMEOUT_MS, &ticks.generic)) {
         DEBUG_IO_print("HVC: MotorDischarge timeout\r\n");
+        fault_flags.MotorDischarge_timeout = true;
         hvc_state = FAULT;
         return;
     }
@@ -251,6 +255,7 @@ void MotorPrecharge(void)
         if (timer_elapsed(MOTOR_PC_TIMEOUT_MS, &ticks.generic)) {
             pc_started = false;
             DEBUG_IO_print("Motor-Precharge timeout\r\n");
+            fault_flags.MotorPrecharge_timeout = true;
             hvc_state = FAULT;
             return;
         }
@@ -300,6 +305,7 @@ void MpptPrecharge(void)
     if (timer_elapsed(MPPT_PC_TIMEOUT_MS, &ticks.generic)) {
         pc_started = false;
         DEBUG_IO_print("MPPT-Precharge timeout\r\n");
+        fault_flags.MpptPrecharge_timeout = true;
         hvc_state = FAULT;
         return;
     }
@@ -375,6 +381,7 @@ void LvPowerup(void)
 
     if (timer_elapsed(LV_POWERUP_TIMEOUT_MS, &ticks.generic)) {
         DEBUG_IO_print("LV_POWERUP timeout\r\n");
+        fault_flags.LvPowerup_timeout = true;
         hvc_state = FAULT;
         return;
     }
@@ -388,49 +395,19 @@ void LvPowerup(void)
  */
 void Monitoring(void)
 {
-    if (GPIO_Read(IMD_GPIO_IN_GPIO_Port, IMD_GPIO_IN_Pin) == GPIO_PIN_SET) {
-        DEBUG_IO_print("Monitoring: IMD Fault\r\n");
-        hvc_state = FAULT;
-        return;
-    }
-    
-    GPIO_PinState mst_fault = GPIO_Read(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin);
-    #if (INT_TEST_JUNE_11TH == RUN) 
-    mst_fault = GPIO_PIN_RESET;
-    #endif
-
-    if (mst_fault == GPIO_PIN_SET) {
-        DEBUG_IO_print("Monitoring: Masterboard Fault\r\n");
-        hvc_state = FAULT;
-        return;
-    }
-
-    if (GPIO_Read(DCDC_ACTIVE_GPIO_Port, DCDC_ACTIVE_Pin) == GPIO_PIN_SET) {
-        DEBUG_IO_print("Monitoring: DCDC dropout Fault\r\n");
-        hvc_state = FAULT;
-        return;
-    }
-
     ADC_Voltages adc = ADC_GetVoltages();
-    if (adc.dcdc_thermistor > Thermistor_MAX_THRESHOLD_MV) {
+    if (adc.dcdc_thermistor > DCDC_TEMP_MAX_MV) {
         DEBUG_IO_print("Monitoring: DCDC Thermistor Over-Temperature Fault\r\n");
+        fault_flags.dcdc_thermistor = true;
         hvc_state = FAULT;
         return;
     }
 
-    if (fault_flags.estop == GPIO_PIN_SET) {
-        DEBUG_IO_PRINT("Monitoring: ESTOP Pressed\r\n");
-        hvc_state = FAULT;
-        return;
-    }
-
-    if (fault_flags.dist_fault == GPIO_PIN_SET) {
+    if (fault_flags.dist_fault == true) {
         DEBUG_IO_PRINT("Monitoring: DIST Fault\r\n");
         hvc_state = FAULT;
         return;
     }
-    CAN_SendAllMessages();
-    check_supp_voltage();
 }
 
 /**
@@ -446,6 +423,4 @@ void Fault(void)
     if (timer_elapsed(FAULT_LED_BLINK_MS, &ticks.fault_led)) {
         GPIO_Toggle(FAULT_LED_GPIO_Port, FAULT_LED_Pin);
     }
-    CAN_SendAllMessages();
-    check_supp_voltage();
 }

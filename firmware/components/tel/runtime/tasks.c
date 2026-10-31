@@ -9,14 +9,18 @@
 
 #include "tasks.h"
 #include "CAN_comms.h"
+#include "iwdg_common.h"
 #include "cmsis_os2.h"
+#include "stm32f1xx_hal.h"
 #include "usart.h"
 #include "rtc.h"
 #include "telemetry_app.h"
 #include "diagnostics.h"
 #include "imu_app.h"
 #include "canload.h"
+#include "can_app.h"
 #include "gps_app.h"
+#include "can_app.h"
 
 /* CAN Load task */
 void TasksCanload(void *argument)
@@ -64,10 +68,24 @@ void TasksDiagnostics(void* argument)
 {
     (void)argument; // Unused parameter
 
+    DiagnosticsInit();
     for (;;)
     {
         DiagnosticsSendTelFlags();
+        DiagnosticsSendTelHealth();
         osDelay(DIAGNOSTICS_TASK_DELAY);
+    }
+}
+
+void TasksIWDG(void *argument)
+{
+    DiagnosticsSetTelCrashIwdgFlag(IwdgResetHandle());
+
+    for (;;)
+    {
+        // Refresh the watchdog PPtimer to prevent reset and transmit diagnostics over CAN
+        IwdgRefresh(&hiwdg);
+        osDelay(IWDG_TASK_DELAY);
     }
 }
 

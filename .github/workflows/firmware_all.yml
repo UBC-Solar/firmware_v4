@@ -23,7 +23,6 @@ jobs:
     strategy:
       matrix:
         module: [mdi, tel, drd, hvc, mst, str]
-        # Makefile mode selectors are lowercase; uppercase Release builds Debug.
         mode: [debug, release]
     
     steps:

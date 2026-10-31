@@ -7,7 +7,7 @@
 #define __TASKS_H__
 
 #define DIAGNOSTIC_TASK_DELAY 100
-
+#define IWDG_TASK_DELAY 100
 #define TIME_SINCE_BOOTUP_DELAY 1000
 
 /**
@@ -17,7 +17,7 @@
 void StartHexDisplayTask(void *argument);
 
 /**
- * @brief FreeRTOS task for polling and transmitting steering wheel outputs.
+ * @brief FreeRTOS task for transmitting interrupt-driven steering wheel state.
  * @param argument Task argument provided by the RTOS.
  */
 void StartSteeringOutputsTask(void *argument);
@@ -29,5 +29,7 @@ void StartSteeringOutputsTask(void *argument);
 void TasksDiagnostic(void *argument);
 
 void TimeSinceBootUp(void *argument);
+
+void TasksIWDG(void *argument);
 
 #endif /* __TASKS_H__ */

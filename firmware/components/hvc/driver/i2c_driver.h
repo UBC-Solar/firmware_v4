@@ -8,7 +8,7 @@
  */
 typedef enum {
     I2C_IDLE,                 /**< No read in progress. */
-    I2C_INA228_SHUNT_VOLTAGE, /**< Reading the INA228 shunt voltage register. */
+    I2C_SHUNT_VOLTAGE, /**< Reading the shunt monitor VSHUNT register. */
 } I2C_Read_State;
 
 /**

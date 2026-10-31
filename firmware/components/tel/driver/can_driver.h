@@ -54,6 +54,7 @@
 
 #define DRD_TIME_SINCE_BOOTUP_ID            0x404
 #define MDI_TIME_SINCE_BOOTUP_ID            0x500
+#define MDI_MOTOR_TEMP_ID                   0x502
 #define STR_TIME_SINCE_BOOTUP_ID            0x582
 
 #define DRD_MOTOR_COMMAND_ID                0x401
@@ -96,10 +97,14 @@
 
 #define OBC_STATUS_ID                       0x18FF50E5
 
+#define TEL_HEALTH_CAN_DATA_LENGTH                 4
+#define TEL_HEALTH_CAN_ID                          0x764      
+
 /* CAN Message Headers */
 extern const CAN_TxHeaderTypeDef time_since_bootup_can_header;
 extern const CAN_TxHeaderTypeDef tel_flags_can_header;
 extern const CAN_TxHeaderTypeDef CANLOAD_busload;
+extern const CAN_TxHeaderTypeDef tel_health_can_header;
 
 extern const CAN_TxHeaderTypeDef imu_ag_x;
 extern const CAN_TxHeaderTypeDef imu_ag_y;

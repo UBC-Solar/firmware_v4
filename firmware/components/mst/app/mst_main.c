@@ -48,6 +48,7 @@ void IsoSpiErrorHandler_() {
 
     while (true) {
         CAN_SendHeartbeatMessage();
+        CAN_SendCommitHashMessage();
         GPIO_Toggle(LED_OUT_GPIO_Port, LED_OUT_Pin);
         HAL_Delay(1000);
     }

@@ -28,6 +28,8 @@ void GPIOInitState(void)
 
     gpio_pin_state.lights_state.rts_en = (HAL_GPIO_ReadPin(RTS_IN_GPIO_Port, RTS_IN_Pin) == GPIO_PIN_RESET);
     gpio_pin_state.lights_state.lts_en = (HAL_GPIO_ReadPin(LTS_IN_GPIO_Port, LTS_IN_Pin) == GPIO_PIN_RESET);
+
+    gpio_pin_state.ptt_en = (HAL_GPIO_ReadPin(PTT_MCU_GPIO_Port, PTT_MCU_Pin) == GPIO_PIN_SET);
 }
 
 /* PRIVATE FUNCTIONS */
@@ -62,7 +64,7 @@ static void HandleButtonInterrupt(uint16_t GPIO_Pin)
             break;
 
         case PTT_MCU_Pin:
-            gpio_pin_state.ptt_en = !gpio_pin_state.ptt_en;
+            gpio_pin_state.ptt_en = (HAL_GPIO_ReadPin(PTT_MCU_GPIO_Port, PTT_MCU_Pin) == GPIO_PIN_SET);
             break;
 
         default:

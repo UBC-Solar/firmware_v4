@@ -20,4 +20,12 @@ void GpioDriverToggleDebugLed(void);
  */
  void GpioDriverToggleRtdFaultLed(bool fault);
 
+ void GpioDriverToggleFwdLeds(void);
+
+ void GpioDriverToggleRevLeds(void);
+
+ void GpioDriverEnableRegenLed(void);
+
+ void GpioDriverDisableRegenLed(void);
+
 #endif /* INC_GPIO_DRIVER_H_ */

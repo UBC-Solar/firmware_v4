@@ -8,6 +8,8 @@
 #include "main.h"
 #include "stm32f1xx_hal_gpio.h"
 #include <stdint.h>
+#include "gpio_driver.h"
+
 
 static MdiMotorCommand s_motor_command = {0};
 static bool s_motor_command_received = false;
@@ -88,21 +90,19 @@ void CanMdiLedHandler(uint32_t msg_id, const uint8_t* data)
         uint8_t direction = data[4] & 0x01;
 
         if(direction == 1){
-            HAL_GPIO_WritePin(REV_LED_GPIO_Port, REV_LED_Pin, GPIO_PIN_RESET);
-            HAL_GPIO_WritePin(FWD_LED_GPIO_Port, FWD_LED_Pin, GPIO_PIN_SET);
+            GpioDriverToggleFwdLeds();
         }
         else {
-            HAL_GPIO_WritePin(REV_LED_GPIO_Port, REV_LED_Pin, GPIO_PIN_SET);
-            HAL_GPIO_WritePin(FWD_LED_GPIO_Port, FWD_LED_Pin, GPIO_PIN_RESET);
+            GpioDriverToggleRevLeds();
         }
         break;
     }
     case STR_DRD_CONTROL_CAN_ID:{
         if((data[0] & 0x01) == 1){
-            HAL_GPIO_WritePin(REGEN_LED_GPIO_Port, REGEN_LED_Pin, GPIO_PIN_SET);
+            GpioDriverEnableRegenLed();
         }
         else {
-            HAL_GPIO_WritePin(REGEN_LED_GPIO_Port, REGEN_LED_Pin, GPIO_PIN_RESET);
+            GpioDriverDisableRegenLed();
         }
         break;
     }

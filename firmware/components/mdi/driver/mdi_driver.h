@@ -24,8 +24,8 @@ typedef enum {
 } MdiDacAddr;
 
 typedef enum {
-    MDI_DIRECTION_FORWARD = 0,
-    MDI_DIRECTION_REVERSE = 1
+    MDI_DIRECTION_FORWARD = 1,
+    MDI_DIRECTION_REVERSE = 0
 } MdiDirection;
 
 typedef enum {

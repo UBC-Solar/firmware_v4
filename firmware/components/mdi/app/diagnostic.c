@@ -95,8 +95,7 @@ void DiagnosticSendCommitHash(void)
 	CanDriverSend(&mdi_commit_hash_header, data);
 }
 
-void DiagnosticSendRtdTemp(void)
-{
+void DiagnosticSendRtdTemp(void){
 	int32_t rtd_temp_c = 0;
 	RtdStatus rtd_status = RtdDriverGetTemp(&rtd_temp_c);
 	RtdFaultFlags faults = RtdDriverGetFaults();

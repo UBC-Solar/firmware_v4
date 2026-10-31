@@ -67,5 +67,5 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential
 
-      - name: Run SIL tests and verify nonzero executed test count
+      - name: Run unit tests and verify nonzero executed test count
         run: make utest

@@ -18,8 +18,8 @@ help:
 	@echo "  make all release    - Build all modules (Release)"
 	@echo "  make mdi debug      - Build MDI in Debug"
 	@echo "  make mdi release    - Build MDI in Release"
-	@echo "  make utest          - Run host SIL tests (DRD, MDI, TEL, STR)"
-	@echo "  make utest UTEST_BOARDS=drd - Select configured SIL boards"
+	@echo "  make utest          - Run host unit tests (DRD, MDI, TEL, STR)"
+	@echo "  make utest UTEST_BOARDS=drd - Select configured unit test boards"
 	@echo "  make clean          - Remove all build directories"
 	@echo "  make hooks          - Install git hooks (branch naming checks)"
 
@@ -81,17 +81,17 @@ str:
 	cmake --build firmware/components/str/$(BUILD_DIR)
 
 utest:
-	@test -n "$(strip $(UTEST_BOARDS))" || { echo "Select at least one SIL board." >&2; exit 1; }
+	@test -n "$(strip $(UTEST_BOARDS))" || { echo "Select at least one unit test board." >&2; exit 1; }
 	@set -e; \
 	if [ "$$(uname -s)" = Darwin ] && [ -z "$$SDKROOT" ]; then \
 		SDKROOT="$$(/usr/bin/xcrun --sdk macosx --show-sdk-path)"; export SDKROOT; \
 	fi; \
 	for board in $(UTEST_BOARDS); do \
-		echo "Running $$board SIL tests"; \
+		echo "Running $$board unit tests"; \
 		(cd "firmware/components/$$board" && \
 			bundle exec ceedling clobber test:all && \
 			ruby -rjson -e 's = JSON.parse(File.read(ARGV.fetch(0))).fetch("Summary"); abort "No passing tests" unless s.fetch("passed") > 0' \
-			build_sil/artifacts/test/tests_report.json); \
+			build_unit/artifacts/test/tests_report.json); \
 	done
 
 

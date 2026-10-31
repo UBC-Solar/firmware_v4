@@ -2,19 +2,14 @@
 :project:
   :use_mocks: false
   :use_backtrace: :none
-  :build_root: build_sil
+  :build_root: build_unit
   :test_file_prefix: test_ceedling_
 
-# Only directly included modules are linked into each test executable.
-# Cube/HAL/FreeRTOS sources and on-device test_scripts are deliberately excluded.
+# Sources are listed explicitly below; Cube/HAL/FreeRTOS are not linked.
 :paths:
+  :source: []
   :test:
     - test
-  :source:
-    - app
-    - driver
-    - ../../test/support
-    - test/support
   :include:
     - app
     - driver
@@ -23,7 +18,15 @@
     - ../../common/CAN_comms
     - ../../common/debug_io
     - ../../common/cyclic_data
-    - test/support
+
+# Production modules linked by these tests.
+:files:
+  :source:
+    - app/drive_state.c
+    - app/cyclic_data_handler.c
+    - driver/accel_driver.c
+    - driver/gpio_driver.c
+    - ../../test/support/test_hal.c
 
 :plugins:
   :enabled:

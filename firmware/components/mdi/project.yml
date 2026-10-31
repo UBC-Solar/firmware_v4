@@ -2,23 +2,25 @@
 :project:
   :use_mocks: false
   :use_backtrace: :none
-  :build_root: build_sil
+  :build_root: build_unit
   :test_file_prefix: test_ceedling_
 
-# Only directly included modules are linked into each test executable.
-# Cube/HAL/FreeRTOS sources and on-device test_scripts are deliberately excluded.
+# Sources are listed explicitly below; Cube/HAL/FreeRTOS are not linked.
 :paths:
   :test:
     - test
-  :source:
-    - app
-    - driver
-    - ../../test/support
+  :source: []
   :include:
     - app
     - driver
     - ../../test/support
     - cube/Core/Inc
+
+# Production modules linked by these tests.
+:files:
+  :source:
+    - driver/mdi_driver.c
+    - ../../test/support/test_hal.c
 
 :plugins:
   :enabled:

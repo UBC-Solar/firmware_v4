@@ -52,13 +52,13 @@ Presets `Debug` and `Release` are defined per board in `firmware/components/<boa
 - **`make <board> Release` silently builds Debug.** The Makefile only matches lowercase
   `debug`/`release` in `MAKECMDGOALS`. CI (`.github/workflows/firmware_all.yml`) uses
   lowercase selectors and checks both configurations for all six boards.
-- **`make utest` runs DRD, MDI, TEL, and STR SIL tests** using `bundle exec ceedling` (1.1.8) and native `gcc`.
+- **`make utest` runs DRD, MDI, TEL, and STR unit tests** using `bundle exec ceedling` (1.1.8) and native `gcc`.
   Install dependencies with `bundle install`; versions live in `Gemfile.lock`.
-  Cases live in `<board>/test/test_ceedling_*.c`, board helpers in `test/support/`,
-  and shared native HAL support in `firmware/test/support/`. Hardware scripts
+  Cases and board-specific stubs live in `<board>/test/test_ceedling_*.c`;
+  shared native HAL support lives in `firmware/test/support/`. Hardware scripts
   live in `test/test_scripts/` and are excluded from Ceedling discovery.
-  It verifies a fresh report with a nonzero executed-test count. See `docs/SIL_TESTING.md`.
-  `tools/ceedling/` is legacy vendored 1.0.1 and is not used by the active SIL suites.
+  It verifies a fresh report with a nonzero executed-test count. See `TESTING.md`.
+  `tools/ceedling/` is legacy vendored 1.0.1 and is not used by the active unit test suites.
 - `dist` is absent from `make all` and from `make clean`.
 - `.vscode/settings.json` currently has JSON syntax errors (missing commas), so VS Code may
   ignore it.

@@ -199,6 +199,7 @@ void CAN_SendAllMessages(void)
         CAN_Send_ShuntCurrent();
         CAN_Send_LVCurrent();
         CAN_Send_SuppVoltage();
+        CAN_Send_lv_12v_sense();
         CAN_Send_DCDCThermistorTemp();
         CAN_Send_PC_Monitoring();
     }
@@ -338,6 +339,21 @@ void CAN_Send_SuppVoltage(void)
 
     CAN_TxMessage_t txMessage = {0};
     txMessage.tx_header.StdId = SUPP_VOLTAGE_ID;
+    txMessage.tx_header.DLC = 4;
+    txMessage.data[0] = (actual_mV >> 24) & 0xFF;
+    txMessage.data[1] = (actual_mV >> 16) & 0xFF;
+    txMessage.data[2] = (actual_mV >> 8)  & 0xFF;
+    txMessage.data[3] = (actual_mV)       & 0xFF;
+    CAN_QueueTxMessage(&txMessage);
+}
+
+void CAN_Send_lv_12v_sense(void)
+{
+    ADC_Voltages adc = ADC_GetVoltages();
+    uint32_t actual_mV = (uint32_t)adc.lv_12v_sense * LV_12V_SENSE_DIVIDER_NUM / LV_12V_SENSE_DIVIDER_DEN;
+
+    CAN_TxMessage_t txMessage = {0};
+    txMessage.tx_header.StdId = HVC_12V_VOLTAGE_ID;
     txMessage.tx_header.DLC = 4;
     txMessage.data[0] = (actual_mV >> 24) & 0xFF;
     txMessage.data[1] = (actual_mV >> 16) & 0xFF;

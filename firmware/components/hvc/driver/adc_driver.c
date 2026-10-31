@@ -72,6 +72,11 @@ static void ADC1_ProcessReadings(int half) {
                 adc1_readings.lv_curr_sense = results[channel];
                 adc1_voltages.lv_curr_sense = voltage;
             break;
+
+            case 5:
+                adc1_readings.lv_12v_sense = results[channel];
+                adc1_voltages.lv_12v_sense = voltage;
+            break;
         }
     }
 }

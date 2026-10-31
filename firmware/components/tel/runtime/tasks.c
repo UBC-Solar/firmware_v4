@@ -20,6 +20,7 @@
 #include "canload.h"
 #include "can_app.h"
 #include "gps_app.h"
+#include "can_app.h"
 
 /* CAN Load task */
 void TasksCanload(void *argument)
@@ -96,7 +97,6 @@ void TimeSinceStartup(void* argument)
     for (;;)
     {
         DiagnosticsTimeSinceBootup();
-        DiagnosticsSendCommitHash();
         osDelay(TIME_SINCE_STARTUP_TASK_DELAY); // Delay for specified time
     }
 }

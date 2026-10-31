@@ -464,7 +464,7 @@ void CAN_RecievedMessageCallback(uint32_t fifo_num)
             last_dist_heartbeat_ms = HAL_GetTick();
             break;
         case DIST_FAULT_ID:
-            fault_flags.dist_fault = true;
+            fault_flags.dist_fault = (uint8_t) new_rx_message.data[0] != 0;
             break;
         default:
             break;

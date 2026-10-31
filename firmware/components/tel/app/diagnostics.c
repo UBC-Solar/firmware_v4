@@ -13,6 +13,7 @@
 #include "CAN_comms.h"
 #include "telemetry_app.h"
 #include "can_driver.h"
+#include "git_version.h"
 #include "can_app.h"
 #include "gpio_driver.h"
 #include "mcu_health_driver.h"
@@ -56,6 +57,18 @@ void DiagnosticsSendTelFlags()
     CAN_comms_Add_Tx_message(&tel_flags_can_tx);
     osDelay(3);
     TelAppTransmitInternalMsg(&tel_flags_can_tx);
+}
+
+void DiagnosticsSendCommitHash()
+{
+    CAN_comms_Tx_msg_t commit_hash_can_tx = {
+        .header = commit_hash_can_header,
+    };
+    GitVersionPackCan(commit_hash_can_tx.data);
+
+    CAN_comms_Add_Tx_message(&commit_hash_can_tx);
+    osDelay(3);
+    TelAppTransmitInternalMsg(&commit_hash_can_tx);
 }
 
 void DiagnosticsSendTelHealth()

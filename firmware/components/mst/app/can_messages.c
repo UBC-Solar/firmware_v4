@@ -3,6 +3,7 @@
 #include "mst_defs.h"
 #include "mst_main.h"
 #include "stm32f1xx_hal.h"
+#include "git_version.h"
 
 
 void CAN_SendHeartbeatMessage(void) {
@@ -60,6 +61,24 @@ void CAN_SendHeartbeatMessage(void) {
     
     CAN_QueueTxMessage(&msg);
     current_heartbeat++;
+}
+
+void CAN_SendCommitHashMessage(void) {
+    static uint32_t last_commit_hash_time_ms = 0;
+
+    if (HAL_GetTick() - last_commit_hash_time_ms < CAN_COMMIT_HASH_PERIOD_MS) {
+        return;
+    }
+    last_commit_hash_time_ms = HAL_GetTick();
+
+    CAN_TxMessage_t msg = {0};
+    msg.tx_header.StdId = CAN_COMMIT_HASH_ID;
+    msg.tx_header.IDE = CAN_ID_STD;
+    msg.tx_header.RTR = CAN_RTR_DATA;
+    msg.tx_header.DLC = GIT_VERSION_CAN_DLC;
+    GitVersionPackCan(msg.data);
+
+    CAN_QueueTxMessage(&msg);
 }
 
 void CAN_SendVoltageSummaryMessage(void) {

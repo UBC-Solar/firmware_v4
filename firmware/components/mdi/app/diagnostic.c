@@ -6,6 +6,7 @@
 #include "diagnostic.h"
 
 #include "can_driver.h"
+#include "git_version.h"
 #include "gpio_driver.h"
 #include "rtd_driver.h"
 
@@ -33,6 +34,14 @@ static const CAN_TxHeaderTypeDef mdi_motor_temp_header = {
 	.IDE = CAN_ID_STD,
 	.RTR = CAN_RTR_DATA,
 	.DLC = 6
+};
+
+static const CAN_TxHeaderTypeDef mdi_commit_hash_header = {
+	.StdId = MDI_COMMIT_HASH_CAN_ID,
+	.ExtId = 0x0000,
+	.IDE = CAN_ID_STD,
+	.RTR = CAN_RTR_DATA,
+	.DLC = GIT_VERSION_CAN_DLC
 };
 
 /**
@@ -74,6 +83,14 @@ void DiagnosticSendTimeSinceBootup(void)
 	GpioDriverToggleDebugLed();
 	CanDriverSend(&mdi_time_since_bootup_header, data);
 	time_since_bootup_counter++;
+}
+
+void DiagnosticSendCommitHash(void)
+{
+	uint8_t data[GIT_VERSION_CAN_DLC];
+
+	GitVersionPackCan(data);
+	CanDriverSend(&mdi_commit_hash_header, data);
 }
 
 void DiagnosticSendRtdTemp(void)

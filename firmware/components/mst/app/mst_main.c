@@ -48,6 +48,7 @@ void IsoSpiErrorHandler_() {
 
     while (true) {
         CAN_SendHeartbeatMessage();
+        CAN_SendCommitHashMessage();
         GPIO_Toggle(LED_OUT_GPIO_Port, LED_OUT_Pin);
         HAL_Delay(1000);
     }
@@ -235,6 +236,7 @@ void DriveOutputs() {
 void SendCanMessages() {
     #if CAN_CONNECTED
     CAN_SendHeartbeatMessage();
+    CAN_SendCommitHashMessage();
     if (pack_state.mainloop_count <= NUM_INIT_MAINLOOPS) {
         return;
     }

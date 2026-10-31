@@ -24,8 +24,8 @@ typedef enum {
 } MdiDacAddr;
 
 typedef enum {
-    MDI_DIRECTION_FORWARD = 0,
-    MDI_DIRECTION_REVERSE = 1
+    MDI_DIRECTION_FORWARD = 1,
+    MDI_DIRECTION_REVERSE = 0
 } MdiDirection;
 
 typedef enum {
@@ -58,7 +58,7 @@ void MdiSetMotorCommand(const MdiMotorCommand *command);
  * @param buffer Pointer to the incoming CAN payload buffer.
  * @param command Output motor command populated from the payload.
  */
-void MdiParseMotorCommand(const uint8_t *buffer, MdiMotorCommand *command);
+void MdiParseMotorCommand(uint32_t msg_id, const uint8_t *buffer, MdiMotorCommand *command);
 
 /**
  * @brief Drives outputs to a safe stopped motor state.

@@ -32,8 +32,8 @@ void AppMain(void)
         uint32_t now = HAL_GetTick();
 
         if ((uint32_t)(now - last_iwdg_tick) >= IWDG_REFRESH_DELAY){
-        IwdgRefresh(&hiwdg);
-        last_iwdg_tick = now;
+            IwdgRefresh(&hiwdg);
+            last_iwdg_tick = now;
         }
 
         if ((uint32_t)(now - last_diagnostic_tick) >= MDI_DIAGNOSTICS_DELAY)

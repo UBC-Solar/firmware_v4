@@ -1,0 +1,49 @@
+---
+:project:
+  :use_mocks: false
+  :use_backtrace: :none
+  :build_root: build_unit
+  :test_file_prefix: test_ceedling_
+
+# Sources are listed explicitly below; Cube/HAL/FreeRTOS are not linked.
+:paths:
+  :test:
+    - test
+  :source: []
+  :include:
+    - app
+    - driver
+    - ../../test/support
+    - cube/Core/Inc
+
+# Production modules linked by these tests.
+:files:
+  :source:
+    - driver/mdi_driver.c
+    - ../../test/support/test_hal.c
+
+:plugins:
+  :enabled:
+    - report_tests_pretty_stdout
+    - report_tests_log_factory
+
+:report_tests_log_factory:
+  :reports:
+    - json
+
+:flags:
+  :test:
+    :compile:
+      '*':
+        - -std=c11
+        - -Wall
+        - -Wextra
+
+# Release semantics: no DEBUG timing calls or STM32 target defines.
+:defines:
+  :test:
+    - TEST
+
+:libraries:
+  :system:
+    - m

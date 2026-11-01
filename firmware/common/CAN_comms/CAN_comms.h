@@ -11,10 +11,14 @@
 
 
 #include <stdint.h>
+#ifndef TEST
 #include "cmsis_os.h"
 #include "FreeRTOS.h"
+#endif
 #include "stm32f1xx_hal.h"
+#ifndef TEST
 #include "task.h"
+#endif
 
 
 /* Defines */

@@ -37,14 +37,14 @@ add_executable(${CMAKE_PROJECT_NAME})
 # Add STM32CubeMX generated sources
 add_subdirectory(cube/cmake/stm32cubemx)
 
-# Fetch Digi into the build directory
+# Extract the pinned local Digi sources into the build directory (offline-safe).
 include(FetchContent)
 if(POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)
 endif()
 FetchContent_Declare(xbee_ansic
-    URL https://codeload.github.com/digidotcom/xbee_ansic_library/tar.gz/66603bd42157a9de73899c00d30bfdd5e968d661
-    URL_HASH SHA256=d781550a974c97755022d1b34d05d630b1b9c5fcd4d5250c274573c31624c502
+    URL ${CMAKE_CURRENT_SOURCE_DIR}/../../common/xbee/xbee_ansic.tar.gz
+    URL_HASH SHA256=d84697dc9bc2b8567f15f234360d87249aed8e8f7eb791d2d343eb63935ad910
 )
 FetchContent_MakeAvailable(xbee_ansic)
 add_library(xbee STATIC

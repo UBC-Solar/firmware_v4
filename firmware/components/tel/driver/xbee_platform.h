@@ -18,7 +18,7 @@
 #define XBEE_NATIVE_64BIT
 #define XBEE_CELLULAR_ENABLED 1
 #define XBEE_WIFI_ENABLED 0
-#define XBEE_MAX_RFPAYLOAD 64
+#define XBEE_MAX_RFPAYLOAD 128
 #define XBEE_MS_TIMER_RESOLUTION 1
 #define _f_memcpy memcpy
 #define _f_memset memset

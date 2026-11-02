@@ -32,13 +32,14 @@ void TelAppTransmitMsg(CAN_comms_Rx_msg_t* CAN_comms_Rx_msg);
  */
 void TelAppTransmitInternalMsg(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg);
 
-/**
- * @brief   Initialize Digi and send a test CAN frame (ID 1878, bytes 01..08).
- * @note    Sends one frame per call through CellularXbeeSendCAN().
- *          Call from a task after RTOS startup with cellular mode enabled.
- * @return  The status returned by CellularXbeeSendCAN().
- */
+/** @brief Initialize Digi once without sending test data. Call from an RTOS task. */
 HAL_StatusTypeDef CellularXbeeInit(void);
+
+/** @brief Drain modem responses from task context; does not wait for the TX semaphore. */
+void CellularXbeePoll(void);
+
+/** @brief Explicit bench test: sends CAN ID 1878, bytes 01..08. Never called automatically. */
+HAL_StatusTypeDef CellularXbeeSendTest(void);
 
 /**
  * @brief   Send a classic CAN data frame as newline-delimited JSON over cellular TCP.
@@ -47,7 +48,8 @@ HAL_StatusTypeDef CellularXbeeInit(void);
  * @param   dlc: Number of payload bytes (0..8).
  * @note    Call from a task after RTOS startup. Waits for the previous UART DMA send.
  *          The modem must use 230400 baud and API mode AP=1. Payload bytes are copied
- *          before returning. No delivery acknowledgement or echo check is performed.
+ *          before returning. Modem statuses are counted asynchronously; backend receipt is not confirmed.
+ *          JSON ts is RTC Unix time in seconds (millisecond precision); RTC must be set correctly.
  * @retval  HAL_OK DMA transmission started; remote delivery is not confirmed.
  * @retval  HAL_BUSY The transmit semaphore, Digi frame builder, or UART was busy.
  * @retval  HAL_ERROR Invalid arguments/state, encoding, initialization, or transmit failure.

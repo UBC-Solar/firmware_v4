@@ -38,7 +38,15 @@ typedef struct
 {
     uint32_t dropped_telemetry_msg;
     uint32_t telemetry_hal_transmit_failures;
-    uint32_t successful_telemetry_tx;
+    uint32_t successful_telemetry_tx; /* UART DMA starts, not backend deliveries. */
+    uint32_t cellular_modem_tx_success;
+    uint32_t cellular_modem_tx_failures;
+    uint32_t cellular_modem_status_count;
+    volatile uint32_t cellular_rx_overflows;
+    volatile uint32_t cellular_uart_rx_errors;
+    uint8_t cellular_last_frame_id;
+    uint8_t cellular_last_tx_status;
+    uint8_t cellular_last_modem_status;
 } telemetry_diagnostics_t;
 
 /* TODO: SEND THIS OVER CAN AND SEE ON GRAFANA NUMBER */
@@ -65,6 +73,12 @@ HAL_StatusTypeDef UART_telemetry_transmit(const uint8_t* data, uint16_t length);
  * @retval  None
  */
 void XBeePlatform_ResetTx(void);
+
+/** @brief Start/rearm cellular interrupt RX. Radio mode is unaffected. */
+HAL_StatusTypeDef XBeePlatform_StartRx(void);
+/** @brief Called from the HAL UART RX complete/error callbacks. */
+void XBeePlatform_RxComplete(UART_HandleTypeDef* uart);
+void XBeePlatform_RxError(UART_HandleTypeDef* uart);
 
 /**
  * @brief   Start DMA transmission of the buffered Digi API frame.

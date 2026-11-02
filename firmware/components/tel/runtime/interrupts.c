@@ -16,3 +16,13 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
         osSemaphoreRelease(usart1_tx_semaphore);
     }
 }
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart)
+{
+    XBeePlatform_RxComplete(huart);
+}
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef* huart)
+{
+    XBeePlatform_RxError(huart);
+}

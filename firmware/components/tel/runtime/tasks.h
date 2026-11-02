@@ -17,6 +17,11 @@
 #define CANLOAD_TASK_DELAY 100
 #define GPS_TASK_DELAY 900           // + GPS_APP_RESPONSE_DELAY = 1 Hz, the receiver's solution rate
 #define IWDG_TASK_DELAY 100
+#define CELLULAR_TASK_DELAY_TICKS 1U
+#define CELLULAR_TASK_STACK_WORDS 256U
+
+/** @brief Process cellular modem replies in task context. */
+void TasksCellular(void* argument);
 
 /**
  * @brief   Canload task function

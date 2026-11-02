@@ -11,12 +11,18 @@
 #include "xbee/serial.h"
 
 /* DEFINES */
-#define CELLULAR_TX_BUFFER_SIZE 64U
+#define CELLULAR_TX_BUFFER_SIZE 128U
+#define CELLULAR_RX_BUFFER_SIZE 256U
 
 /* STATIC VARIABLES */
 static uint8_t cellular_tx[CELLULAR_TX_BUFFER_SIZE];
 static unsigned cellular_tx_used;
 static bool cellular_write_error;
+static uint8_t cellular_rx_byte;
+static uint8_t cellular_rx[CELLULAR_RX_BUFFER_SIZE];
+/* Single producer (UART ISR), single consumer (Digi parser under TX semaphore). */
+static volatile unsigned cellular_rx_head;
+static volatile unsigned cellular_rx_tail;
 
 telemetry_diagnostics_t telemetry_diagnostic;
 
@@ -165,4 +171,66 @@ int xbee_ser_get_cts(xbee_serial_t* serial)
 {
     (void)serial;
     return true;
+}
+
+HAL_StatusTypeDef XBeePlatform_StartRx(void)
+{
+    if (TELEMETRY_UART->RxState != HAL_UART_STATE_READY)
+    {
+        return HAL_OK;
+    }
+    HAL_StatusTypeDef status = HAL_UART_Receive_IT(TELEMETRY_UART, &cellular_rx_byte, 1U);
+    if (status != HAL_OK)
+    {
+        telemetry_diagnostic.cellular_uart_rx_errors++;
+    }
+    return status;
+}
+
+void XBeePlatform_RxComplete(UART_HandleTypeDef* uart)
+{
+    if (!car_config_cellular || uart != TELEMETRY_UART)
+    {
+        return;
+    }
+    unsigned next = (cellular_rx_head + 1U) % CELLULAR_RX_BUFFER_SIZE;
+    if (next == cellular_rx_tail)
+    {
+        telemetry_diagnostic.cellular_rx_overflows++;
+    }
+    else
+    {
+        cellular_rx[cellular_rx_head] = cellular_rx_byte;
+        __DMB();
+        cellular_rx_head = next;
+    }
+    (void)XBeePlatform_StartRx();
+}
+
+void XBeePlatform_RxError(UART_HandleTypeDef* uart)
+{
+    if (car_config_cellular && uart == TELEMETRY_UART)
+    {
+        telemetry_diagnostic.cellular_uart_rx_errors++;
+        /* HAL ends RX on overrun; the task rearms it once the handle is ready. */
+    }
+}
+
+/* Digi consumes the static ISR ring without blocking a task. */
+int xbee_ser_read(xbee_serial_t* serial, void* buffer, int length)
+{
+    if (xbee_ser_invalid(serial) || buffer == NULL || length < 0)
+    {
+        return -EINVAL;
+    }
+    uint8_t* bytes = buffer;
+    int used = 0;
+    while (used < length && cellular_rx_tail != cellular_rx_head)
+    {
+        __DMB();
+        bytes[used++] = cellular_rx[cellular_rx_tail];
+        __DMB();
+        cellular_rx_tail = (cellular_rx_tail + 1U) % CELLULAR_RX_BUFFER_SIZE;
+    }
+    return used;
 }

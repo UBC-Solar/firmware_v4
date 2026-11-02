@@ -32,6 +32,10 @@
  */
 #define CAR_CONFIG_CELLULAR 1
 
+/* Cellular TCP backend (modem must use API mode AP=1). */
+#define CELLULAR_SERVER_IP {155, 248, 204, 190}
+#define CELLULAR_SERVER_PORT 4242U
+
 /**
  * @brief Selects which CAN messages the TEL board forwards to telemetry.
  *

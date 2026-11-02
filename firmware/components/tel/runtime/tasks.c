@@ -22,6 +22,18 @@
 #include "gps_app.h"
 #include "can_app.h"
 
+/* Cellular receive/status task. CAN/GPS/IMU tasks retain transmit ownership. */
+void TasksCellular(void* argument)
+{
+    (void)argument;
+
+    for (;;)
+    {
+        CellularXbeePoll();
+        osDelay(CELLULAR_TASK_DELAY_TICKS);
+    }
+}
+
 /* CAN Load task */
 void TasksCanload(void *argument)
 {

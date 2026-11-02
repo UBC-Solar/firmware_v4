@@ -37,6 +37,28 @@ add_executable(${CMAKE_PROJECT_NAME})
 # Add STM32CubeMX generated sources
 add_subdirectory(cube/cmake/stm32cubemx)
 
+# Extract the pinned local Digi sources into the build directory (offline-safe).
+include(FetchContent)
+if(POLICY CMP0135)
+    cmake_policy(SET CMP0135 NEW)
+endif()
+FetchContent_Declare(xbee_ansic
+    URL ${CMAKE_CURRENT_SOURCE_DIR}/../../common/xbee/xbee_ansic.tar.gz
+    URL_HASH SHA256=d84697dc9bc2b8567f15f234360d87249aed8e8f7eb791d2d343eb63935ad910
+)
+FetchContent_MakeAvailable(xbee_ansic)
+add_library(xbee STATIC
+    ${xbee_ansic_SOURCE_DIR}/src/xbee/xbee_device.c
+    ${xbee_ansic_SOURCE_DIR}/src/xbee/xbee_ipv4.c
+    ${xbee_ansic_SOURCE_DIR}/src/util/swapbytes.c
+)
+target_include_directories(xbee PUBLIC
+    ${xbee_ansic_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver
+)
+target_compile_definitions(xbee PUBLIC XBEE_PLATFORM_HEADER="xbee_platform.h")
+target_link_libraries(xbee PUBLIC stm32cubemx)
+
 # Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
@@ -92,6 +114,7 @@ list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
 # Add linked libraries
 target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
+    xbee
 
     # Add user defined libraries
 )

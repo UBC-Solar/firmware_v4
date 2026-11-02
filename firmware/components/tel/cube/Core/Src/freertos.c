@@ -49,6 +49,25 @@ typedef StaticEventGroup_t osStaticEventGroupDef_t;
 /* USER CODE BEGIN Variables */
 
 osSemaphoreId_t usart1_tx_semaphore;
+static StaticSemaphore_t usart1_tx_semaphore_control_block;
+static const osSemaphoreAttr_t usart1_tx_semaphore_attributes = {
+  .name = "usart1_tx_semaphore",
+  .cb_mem = &usart1_tx_semaphore_control_block,
+  .cb_size = sizeof(usart1_tx_semaphore_control_block),
+};
+
+/* Definitions for TasksCellular (allocated statically, created only in cellular mode). */
+static osThreadId_t TasksCellularHandle;
+static uint32_t TasksCellularBuffer[CELLULAR_TASK_STACK_WORDS];
+static osStaticThreadDef_t TasksCellularControlBlock;
+static const osThreadAttr_t TasksCellular_attributes = {
+  .name = "TasksCellular",
+  .cb_mem = &TasksCellularControlBlock,
+  .cb_size = sizeof(TasksCellularControlBlock),
+  .stack_mem = TasksCellularBuffer,
+  .stack_size = sizeof(TasksCellularBuffer),
+  .priority = (osPriority_t) osPriorityNormal,
+};
 
 /* Definitions for TasksIMU */
 osThreadId_t TasksIMUHandle;
@@ -168,7 +187,8 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
-  usart1_tx_semaphore = osSemaphoreNew(NUM_USART1_TX_SEMAPHORES, NUM_USART1_TX_SEMAPHORES, NULL);
+  usart1_tx_semaphore = osSemaphoreNew(NUM_USART1_TX_SEMAPHORES, NUM_USART1_TX_SEMAPHORES,
+                                      &usart1_tx_semaphore_attributes);
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -184,6 +204,10 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
+  if (car_config_cellular)
+  {
+    TasksCellularHandle = osThreadNew(TasksCellular, NULL, &TasksCellular_attributes);
+  }
   /* add threads, ... */
 
   /* creation of TasksIMU */

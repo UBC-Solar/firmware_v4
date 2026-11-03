@@ -9,6 +9,7 @@
 #include "stm32f1xx_hal_gpio.h"
 #include <stdint.h>
 #include "gpio_driver.h"
+#include "tick_driver.h"
 
 
 static MdiMotorCommand s_motor_command = {0};
@@ -27,7 +28,7 @@ void CanAppInit(void)
     CanDriverInit();
     CanDriverRegisterRxCallback(CanAppRxCallback);
     s_motor_command_received = false;
-    s_last_command_tick = HAL_GetTick();
+    s_last_command_tick = TickDriverGetMs();
 }
 
 bool CanAppTryGetMotorCommand(MdiMotorCommand *command)
@@ -73,7 +74,7 @@ static void CanAppRxCallback(const CAN_RxHeaderTypeDef *header, const uint8_t *d
     if (header -> StdId == DRD_MOTOR_COMMAND_CAN_ID){
         MdiParseMotorCommand(CanId, data, &s_motor_command);
         s_motor_command_received = true;
-        s_last_command_tick = HAL_GetTick();
+        s_last_command_tick = TickDriverGetMs();
 
     }
 

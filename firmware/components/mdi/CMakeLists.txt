@@ -51,6 +51,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/can_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/gpio_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/mdi_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/tick_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/tasks.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/debug_io/debug_io.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/iwdg/iwdg_common.c

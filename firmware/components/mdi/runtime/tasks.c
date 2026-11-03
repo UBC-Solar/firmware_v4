@@ -8,6 +8,7 @@
 #include "iwdg_common.h"
 #include "stm32f1xx_hal.h"
 #include "gpio_driver.h"
+#include "tick_driver.h"
 
 void AppMain(void)
 {
@@ -19,8 +20,8 @@ void AppMain(void)
 
     DiagnosticSendFlags();
 
-    uint32_t last_diagnostic_tick = HAL_GetTick();
-    uint32_t last_iwdg_tick = HAL_GetTick();
+    uint32_t last_diagnostic_tick = TickDriverGetMs();
+    uint32_t last_iwdg_tick = TickDriverGetMs();
     // Half a period out of phase with the diagnostics burst, which already fills all 3 Tx mailboxes
     uint32_t last_commit_hash_tick = last_diagnostic_tick - (MDI_DIAGNOSTICS_DELAY / 2U);
 
@@ -29,11 +30,11 @@ void AppMain(void)
     for (;;)
     {
           
-        uint32_t now = HAL_GetTick();
+        uint32_t now = TickDriverGetMs();
 
         if ((uint32_t)(now - last_iwdg_tick) >= IWDG_REFRESH_DELAY){
-        IwdgRefresh(&hiwdg);
-        last_iwdg_tick = now;
+            IwdgRefresh(&hiwdg);
+            last_iwdg_tick = now;
         }
 
         if ((uint32_t)(now - last_diagnostic_tick) >= MDI_DIAGNOSTICS_DELAY)

@@ -70,6 +70,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/gpio_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/can_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/lcd_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/tick_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/font_verdana.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/external_lights_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/tasks.c

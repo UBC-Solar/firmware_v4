@@ -65,3 +65,7 @@ firmware/components/tel/tests/environment/
 # tools/candump.sh
 # tools/setup_can_autoconfig.sh
 # greg wants these 2 ^^
+
+# Generated Ceedling unit test artifacts (including the former build directory)
+firmware/components/*/build_unit/
+firmware/components/*/build_sil/

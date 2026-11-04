@@ -31,7 +31,7 @@
  */
 // The number of modules used by the pack depends on
 // whether scrutineering is enabled.
-#define NUM_MODULES 32U
+#define NUM_MODULES 16U
 #define NUM_CELLS_PER_MODULE 13U
 
 /**
@@ -52,7 +52,7 @@
 
 
 // Slave(board)s
-#define SLAVE_NUM_DEVICES 2U // Number of ADBMS1818 ICs daisy chained
+#define SLAVE_NUM_DEVICES 1U // Number of ADBMS1818 ICs daisy chained
 #define SLAVEBOARD_REV 1
 
 /**
@@ -72,7 +72,7 @@
 #define ISOSPI_CONNECTED true
 
 // Will not attempt to send CAN messages if false
-#define CAN_CONNECTED true
+#define CAN_CONNECTED false
 
 // If true, measure temp of all modules on every mainloop
 // If false, measure one multiplexer setting each mainloop
@@ -147,7 +147,7 @@
  */
 // Set current logging level - users can adjust this to filter log output
 // This affects which logging function are allowed to print in logging.h
-#define CURRENT_LOG_LEVEL LOG_LEVEL_INFO
+#define CURRENT_LOG_LEVEL LOG_LEVEL_DEBUG
 
 
 /**
@@ -165,6 +165,7 @@
 #define UNIT_TEST_CAN SKIP // Test if CAN peripheral can send pulses
 #define UNIT_TEST_ISOSPI SKIP // Test if IsoSPI peripheral can send pulses
 #define INT_TEST_SLAVE SKIP // Test basic communication with slaveboards
-#define INT_TEST_SLAVE_BAL_VOLT SKIP // Characterize measured voltage drop when balancing is enabled
+#define INT_TEST_SLAVE_BAL_VOLT RUN // Characterize measured voltage drop when balancing is enabled
+#define INT_TEST_BALANCE_MODULE_IDX 5U // Module index to enable in the balancing voltage test
 #define INT_TEST_SLAVE_BAL_SCRUT SKIP // Test if scrutineering and balancing modes can be enabled/disabled
 #define INT_TEST_SLAVE_MUX SKIP // Characterize slaveboard multiplexer behaviour

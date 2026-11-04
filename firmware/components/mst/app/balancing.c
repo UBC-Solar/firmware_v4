@@ -85,13 +85,24 @@ void ResumeAllBalancing() {
 
 #if (INT_TEST_SLAVE == RUN || INT_TEST_SLAVE_BAL_VOLT == RUN)
 void Debug_SetBalancingForModules(slave_t slaves[SLAVE_NUM_DEVICES], bool module_enables[NUM_MODULES]) {
+    pack_state.balancing_active = false;
 
     for (int slave_num = 0; slave_num < SLAVE_NUM_DEVICES; slave_num++) {
         for (int reg_num = 0; reg_num < SLAVE_NUM_BAL_REG; reg_num++) {
             for (int val_offset = 0; val_offset < SLAVE_NUM_VAL_PER_BAL_REG; val_offset++) {
 
-                uint8_t module_balance_enables = 0;
                 int module_start_idx = slaves[slave_num].bal_mappings[reg_num][val_offset];
+                int reg_offset = val_offset / 2;
+                int reg_bitshift_bits = (val_offset % 2) * SLAVE_NUM_MODULES_PER_BAL_VAL;
+                slaves[slave_num].config_regs[reg_num][reg_offset] &=
+                    (uint8_t)(~(0x0F << reg_bitshift_bits));
+
+                if (module_start_idx < 0 ||
+                    module_start_idx > (int)NUM_MODULES - SLAVE_NUM_MODULES_PER_BAL_VAL) {
+                    continue;
+                }
+
+                uint8_t module_balance_enables = 0;
 
                 for (int module_offset = 0; module_offset < SLAVE_NUM_MODULES_PER_BAL_VAL; module_offset++)
                 {
@@ -104,16 +115,23 @@ void Debug_SetBalancingForModules(slave_t slaves[SLAVE_NUM_DEVICES], bool module
                     module_balance_enables |= if_balance << module_offset;
                 }
 
-                int reg_offset = val_offset / 2;
-                int reg_bitshift_bits = (val_offset % 2) * SLAVE_NUM_MODULES_PER_BAL_VAL;
                 uint8_t mask = (uint8_t)(module_balance_enables << reg_bitshift_bits);
-
-                slaves[slave_num].config_regs[reg_num][reg_offset] &= (uint8_t)(~(0x0F << reg_bitshift_bits));
                 slaves[slave_num].config_regs[reg_num][reg_offset] |= mask;
             }
         }
     }
 
     WriteConfigRegisters(slaves);
+}
+
+void Debug_SetBalancingForSingleModule(slave_t slaves[SLAVE_NUM_DEVICES], unsigned module_idx) {
+    if (module_idx >= NUM_MODULES) {
+        ERROR_HANDLER_LOGGED();
+        return;
+    }
+
+    bool module_enables[NUM_MODULES] = { false };
+    module_enables[module_idx] = true;
+    Debug_SetBalancingForModules(slaves, module_enables);
 }
 #endif // (INT_TEST_SLAVE == RUN || INT_TEST_SLAVE_BAL_VOLT == RUN)

@@ -344,6 +344,9 @@ void Debug_SlaveTestCommsCycle(void) {
 #endif // (INT_TEST_SLAVE == RUN)
 #if (INT_TEST_SLAVE_BAL_VOLT == RUN)
 void Debug_SlaveTestBalancingVoltageDrop(void) {
+    _Static_assert(INT_TEST_BALANCE_MODULE_IDX < NUM_MODULES,
+                   "INT_TEST_BALANCE_MODULE_IDX must be a valid module index");
+
     // 6 newlines to separate test data for each round of tests
     LOG_INFO("");
     LOG_INFO("");
@@ -351,17 +354,6 @@ void Debug_SlaveTestBalancingVoltageDrop(void) {
     LOG_INFO("");
     LOG_INFO("");
     LOG_INFO("");
-
-    static uint32_t bal_enable_mod_idx = 0;
-    static uint32_t last_iter_time = 0;
-    static const uint32_t time_per_module_ms = 4500;
-    if (HAL_GetTick() - last_iter_time >= time_per_module_ms) {
-        bal_enable_mod_idx++;
-        last_iter_time = HAL_GetTick();
-    }
-
-    bool module_bal_enables[NUM_MODULES] = {0};
-    module_bal_enables[bal_enable_mod_idx] = true;
 
     uint32_t previous_voltages[NUM_MODULES] = {0};
     uint32_t current_voltages[NUM_MODULES] = {0};
@@ -386,7 +378,7 @@ void Debug_SlaveTestBalancingVoltageDrop(void) {
 
     LOG_INFO("Balancing ON");
     Slave_WakeUp();
-    Debug_SetBalancingForModules(slaves, module_bal_enables);
+    Debug_SetBalancingForSingleModule(slaves, INT_TEST_BALANCE_MODULE_IDX);
     ResumeAllBalancing();
     HAL_Delay(500);
     RequestVoltageMeasurement();
@@ -398,7 +390,8 @@ void Debug_SlaveTestBalancingVoltageDrop(void) {
     CAN_SendHeartbeatMessage();
     #endif // CAN_CONNECTED
 
-    LOG_INFO("At tick %u. Now comparing voltages of module index %d", HAL_GetTick(), bal_enable_mod_idx);
+    LOG_INFO("At tick %u. Now comparing voltages of module index %u",
+             HAL_GetTick(), INT_TEST_BALANCE_MODULE_IDX);
     for (int module_idx = 0; module_idx < NUM_MODULES; module_idx++) {
         current_voltages[module_idx] = pack_modules[module_idx].voltage_mv;
         int32_t voltage_delta_mv = (int32_t)current_voltages[module_idx] - (int32_t)previous_voltages[module_idx];
@@ -465,4 +458,3 @@ void Debug_SlaveTestMuxCycle(void) {
     current_mux_state = (current_mux_state + 1) % 4;
 }
 #endif // (INT_TEST_SLAVE_MUX == RUN)
-

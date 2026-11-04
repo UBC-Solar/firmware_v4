@@ -9,4 +9,5 @@ void PauseAllBalancing();
 void ResumeAllBalancing();
 #if (INT_TEST_SLAVE == RUN || INT_TEST_SLAVE_BAL_VOLT == RUN)
 void Debug_SetBalancingForModules(slave_t slaves[SLAVE_NUM_DEVICES], bool module_enables[NUM_MODULES]);
+void Debug_SetBalancingForSingleModule(slave_t slaves[SLAVE_NUM_DEVICES], unsigned module_idx);
 #endif // (INT_TEST_SLAVE == RUN || INT_TEST_SLAVE_BAL_VOLT == RUN)

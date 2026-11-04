@@ -40,6 +40,7 @@ static void state_startup(void);
 static void state_activate_ctrl(void);
 static void state_normal(void);
 static void state_fault(void);
+static uint16_t amps_to_ma_u16(float amps);
 
 /*============================================================================*/
 /* STATE TABLE */
@@ -227,6 +228,16 @@ static void send_heartbeat_if_due(void)
     }
 }
 
+// Converts amps to whole mA for CAN. Clamps to 0..65535 because a slightly
+// negative reading (sensor zero-offset) is undefined behaviour when cast to unsigned.
+static uint16_t amps_to_ma_u16(float amps)
+{
+    float ma = (amps * 1000.0f) + 0.5f;   // +0.5 rounds to nearest mA
+    if (ma < 0.0f)     { return 0U; }
+    if (ma > 65535.0f) { return 65535U; }
+    return (uint16_t)ma;
+}
+
 static void send_currents_if_due(void)
 {
     static uint32_t currents_tick = 0U;
@@ -236,6 +247,10 @@ static void send_currents_if_due(void)
 #define TO_MA_U8(x) ((uint8_t)(((x) * 1000.0f / 5.0f) > 255.0f ? 255U : (unsigned int)((x) * 1000.0f / 5.0f)))
         CAN_Send_Currents(TO_MA_U8(c.drd), TO_MA_U8(c.mdi), TO_MA_U8(c.spare_ctrl),
                           TO_MA_U8(c.spare_mux), TO_MA_U8(c.spare));
+
+#undef TO_MA_U8
+        CAN_Send_TEL_Current(amps_to_ma_u16(c.tel));
+
 #undef TO_MA_U8
         print_currents();
     }

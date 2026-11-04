@@ -42,6 +42,8 @@
 #define PTT_EN_PIN PTT_EN_Pin
 #define PTT_EN_PORT PTT_EN_GPIO_Port
 
+#define DEBOUNCE_MS 20
+
 /* DRIVERS FUNCTION PROTOTYPES */
 /**
  * @brief Reads the state of the brake input pin.

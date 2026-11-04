@@ -8,9 +8,29 @@
 
 /* INCLUDES */
 #include "gpio_driver.h"
+#include "stm32f1xx_hal_gpio.h"
+#include "tick_driver.h"
 
 /* DRIVE STATE DRIVERS */
-uint8_t ReadBrakePin(GPIO_TypeDef* port, uint16_t pin) { return HAL_GPIO_ReadPin(port, pin); }
+uint8_t ReadBrakePin(GPIO_TypeDef* port, uint16_t pin) { 
+
+    static uint8_t stable = GPIO_PIN_SET;
+    static uint32_t last_press_time = 0;
+    static uint8_t last_press = GPIO_PIN_SET;
+
+    uint32_t now = TickDriverGetMs();
+    uint8_t current = HAL_GPIO_ReadPin(port, pin);
+
+    if(current != last_press){
+        last_press = current;
+        last_press_time = now;
+    }
+    else if((now - last_press_time) >= DEBOUNCE_MS){
+        stable = current;
+    }
+    
+    return stable;
+}
 
 uint8_t ReadEcoPowerPin(GPIO_TypeDef* port, uint16_t pin) { return HAL_GPIO_ReadPin(port, pin); }
 

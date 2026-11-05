@@ -270,7 +270,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 }
 
 /**
-  * @brief Message was sent and Tx mailbox was freed
+  * @brief Callback for freed Tx mailbox
   * @param hcan pointer to CAN_HandleTypeDef structure that contains
   *         the configuration information for the specified CAN.
   * @retval None
@@ -297,21 +297,21 @@ void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan)
     }
 }
 
-/**
-  * 
-  * 
-
+/** @brief Callback for error on the bus
+  * @param hcan pointer to CAN_HandleTypeDef structure that contains
+  *         the configuration information for the specified CAN.
+  * @retval None
 */
 void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan) {
     uint32_t errmask = HAL_CAN_GetError(hcan);
 
     if (errmask & HAL_CAN_ERROR_BR || errmask & HAL_CAN_ERROR_BD) {
         // Bit Error: Transmitted a bit (1 or 0), but read back the opposite value.
-
+        CAN_error_stats.bit_errors++;
     }
     if (errmask & HAL_CAN_ERROR_STF) {
         // Stuff Error: More than 5 consecutive bits of the same polarity detected.
-        CAN_error_stats.bit_errors++;
+        CAN_error_stats.stuff_errors++;
     }
     if (errmask & HAL_CAN_ERROR_FOR) {
         // Form Error: Fixed-form bit field (e.g., CRC delimiter, ACK delimiter) contained an illegal bit.

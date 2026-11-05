@@ -38,7 +38,6 @@ osThreadId_t CAN_comms_Tx_task_handle;
 StaticTask_t CAN_comms_Rx_task_control_block;
 StaticTask_t CAN_comms_Tx_task_control_block;
 uint32_t CAN_comms_Rx_task_buffer[CAN_RX_TASK_STACK_SIZE];
-uint32_t CAN_comms_Tx_task_buffer[CAN_TX_TASK_STACK_SIZE];
 
 
 CAN_comms_diagnostics_t CAN_comms_diagnostic = {
@@ -116,6 +115,7 @@ void CAN_comms_init(CAN_comms_config_t* config)
     /* Activate notifications */
     HAL_CAN_ActivateNotification(CAN_comms_config.hcan, CAN_IT_RX_FIFO0_MSG_PENDING); // interrupt if CAN received a frame
     HAL_CAN_ActivateNotification(CAN_comms_config.hcan, CAN_IT_TX_MAILBOX_EMPTY); // interrupt if a mailbox slot has freed up
+    HAL_CAN_ActivateNotification(CAN_comms_config.hcan, CAN_IT_ERROR); // interrupt if error on CAN bus
 
  }
 

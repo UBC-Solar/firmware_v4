@@ -13,6 +13,7 @@
 /* Includes */
 #include "CAN_comms.h"
 #include "cmsis_os2.h"
+#include "stm32f1xx_hal_can.h"
 
 
 /* Private defines */
@@ -29,6 +30,7 @@
 
 /* Private varibles */
 CAN_comms_config_t CAN_comms_config;
+volatile CAN_Error_Stats_t CAN_error_stats = {0};
 osMessageQueueId_t CAN_comms_Rx_queue;
 osMessageQueueId_t CAN_comms_Tx_queue;
 osThreadId_t CAN_comms_Rx_task_handle;
@@ -160,7 +162,7 @@ static void CAN_comms_Dequeue_Tx_message()
             CAN_comms_diagnostic.success_tx++;
         }
         else {
-            CAN_comms_diagnostic.failure_tx++;
+            CAN_comms_diagnostic.hal_failure_tx++;
         }
     }
 }
@@ -267,13 +269,18 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
     }
 }
 
+/**
+  * @brief Message was sent and Tx mailbox was freed
+  * @param hcan pointer to CAN_HandleTypeDef structure that contains
+  *         the configuration information for the specified CAN.
+  * @retval None
+*/
 void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan)
 {
     if (hcan->Instance == CAN_comms_config.hcan->Instance)
     {
         CAN_comms_Dequeue_Tx_message();
     }
-
 }
 void HAL_CAN_TxMailbox1CompleteCallback(CAN_HandleTypeDef *hcan)
 {
@@ -281,7 +288,6 @@ void HAL_CAN_TxMailbox1CompleteCallback(CAN_HandleTypeDef *hcan)
     {
         CAN_comms_Dequeue_Tx_message();
     }
-
 }
 void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan)
 {
@@ -289,8 +295,46 @@ void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan)
     {
         CAN_comms_Dequeue_Tx_message();
     }
-
 }
+
+/**
+  * 
+  * 
+
+*/
+void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan) {
+    uint32_t errmask = HAL_CAN_GetError(hcan);
+
+    if (errmask & HAL_CAN_ERROR_BR || errmask & HAL_CAN_ERROR_BD) {
+        // Bit Error: Transmitted a bit (1 or 0), but read back the opposite value.
+
+    }
+    if (errmask & HAL_CAN_ERROR_STF) {
+        // Stuff Error: More than 5 consecutive bits of the same polarity detected.
+        CAN_error_stats.bit_errors++;
+    }
+    if (errmask & HAL_CAN_ERROR_FOR) {
+        // Form Error: Fixed-form bit field (e.g., CRC delimiter, ACK delimiter) contained an illegal bit.
+        CAN_error_stats.form_errors++;
+    }
+    if (errmask & HAL_CAN_ERROR_ACK) {
+        // Acknowledge Error: No node on the bus pulled the ACK slot low.
+        CAN_error_stats.ack_errors++;
+    }
+    if (errmask & HAL_CAN_ERROR_CRC) {
+        // CRC Error: Transmitted CRC did not match the calculated CRC on reception.
+        CAN_error_stats.crc_errors++;
+    }
+    if (errmask & HAL_CAN_ERROR_RX_FOV0 ) {
+        // Rx FIFO 0 Overrun: FIFO 0 was full when a new message arrived (message lost).
+        CAN_error_stats.rx_overrun++;
+    }
+    if (errmask & HAL_CAN_ERROR_BOF) {
+        // Bus-Off State: Transmit error counter surpassed 255. Node auto-isolated from bus.
+        CAN_error_stats.bus_off_events++;
+    }
+}
+
 
 /**
  * @brief  Returns diagnostic struct populated with diagnostic data

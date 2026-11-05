@@ -13,7 +13,7 @@
 /* Includes */
 #include "CAN_comms.h"
 #include "cmsis_os2.h"
-
+#include <stdbool.h>
 
 /* Private defines */
 #define COMMS_INIT_SUCCESS     0

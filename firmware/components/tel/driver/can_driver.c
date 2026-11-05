@@ -150,8 +150,3 @@ static void CanDriverFilterInit(CAN_FilterTypeDef* can_filter){
     can_filter->FilterScale = CAN_FILTERSCALE_16BIT;
     can_filter->FilterActivation = CAN_FILTER_ENABLE;
 }
-
-void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan)
-{
-    // Handle CAN error callback if needed
-}

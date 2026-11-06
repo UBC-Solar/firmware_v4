@@ -61,6 +61,12 @@ typedef struct {
 void DiagnosticTimeSinceBootup();
 
 /**
+ * @brief  Sends the git commit hash the firmware was built from via CAN
+ * @retval None
+ */
+void DiagnosticSendCommitHash();
+
+/**
  * @brief  Transmits DRD Diagnostic Messages over CAN
  * @param from_ISR Indicates if the function is called from an ISR context
  */

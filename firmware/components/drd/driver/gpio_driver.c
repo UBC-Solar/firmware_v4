@@ -26,6 +26,14 @@ void SetBrakeLedPin(GPIO_TypeDef* port, uint16_t pin, uint8_t brake_on)
         HAL_GPIO_WritePin(port, pin, GPIO_PIN_RESET); // LED OFF
 }
 
+void GpioDriverSetPtt(uint8_t ptt_on)
+{
+    if (ptt_on)
+        HAL_GPIO_WritePin(PTT_EN_PORT, PTT_EN_PIN, GPIO_PIN_SET);
+    else 
+        HAL_GPIO_WritePin(PTT_EN_PORT, PTT_EN_PIN, GPIO_PIN_RESET); 
+}
+
 void GpioDriverToggleDebugLed(void)
 {
     HAL_GPIO_TogglePin(DEBUG_LEDA1_PORT, DEBUG_LEDA1_PIN);

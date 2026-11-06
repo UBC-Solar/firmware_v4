@@ -9,6 +9,7 @@
 /* INCLUDES */
 #include "can_driver.h"
 #include "can.h"
+#include "git_version.h"
 #include "stm32f1xx_hal_can.h"
 
 /**
@@ -37,6 +38,12 @@ const CAN_TxHeaderTypeDef time_since_bootup_can_header = {  .StdId = TIME_SINCE_
                                                             .IDE = CAN_ID_STD,
                                                             .RTR = CAN_RTR_DATA,
                                                             .DLC = TIME_SINCE_BOOTUP_CAN_DATA_LENGTH};
+
+const CAN_TxHeaderTypeDef commit_hash_can_header = {    .StdId = COMMIT_HASH_CAN_ID,
+                                                        .ExtId = 0x0000,
+                                                        .IDE = CAN_ID_STD,
+                                                        .RTR = CAN_RTR_DATA,
+                                                        .DLC = GIT_VERSION_CAN_DLC};
                                         
 const CAN_TxHeaderTypeDef drd_mcu_health_header = { .StdId = DRD_MCU_HEALTH_CAN_ID,
                                                     .ExtId = 0x0000,

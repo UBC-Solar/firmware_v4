@@ -61,26 +61,7 @@ void CAN_Init(CAN_HandleTypeDef *handle);
 
 void CAN_QueueTxMessage(CAN_TxMessage_t *message);
 
-void CAN_SendMessageXXX();
-void CAN_SendAllMessages();
-void CAN_LV_PowerupMessage();
-void CAN_SendHeartbeat();
-void CAN_SendCommitHash(void);
-void CAN_Send_ShuntCurrent();
-void CAN_Send_LVCurrent();
-void CAN_Send_SuppVoltage();
-void CAN_Send_DCDCThermistorTemp();
-void CAN_Send_MC_PC();
-void CAN_Send_MPPT_PC();
-void CAN_Send_PC_Monitoring();
-void CAN_SendStatusMsg();
-void CAN_SendFaultMsg();
-
-
-#if (INT_TEST_CAN == RUN)
-void CAN_SendMessgeDebug();
-#endif // UNIT_TEST_CAN
-
+// HVC message functions (CAN_Send*) are declared in can_messages.h
 
 void CAN_RecievedMessageCallback(uint32_t fifo_num);
 

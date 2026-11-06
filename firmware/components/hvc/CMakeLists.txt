@@ -46,14 +46,17 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     ${CMAKE_CURRENT_SOURCE_DIR}/app/hvc_main.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/app/hvc_fsm.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/app/hvc_fsm_states.c
-    
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/fsm.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/can_messages.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/debug_output.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/tests.c
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/adc_runtime.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/pin_runtime.c
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/shunt_runtime.c
 
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/uart_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/adc_driver.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/driver/uart_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/gpio_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/i2c_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/can_driver.c

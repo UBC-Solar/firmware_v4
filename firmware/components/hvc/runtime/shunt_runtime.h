@@ -3,29 +3,32 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// ---------------------------------------------------------------------------
-// Shunt monitor chip selection
-// The INA237 and INA228 share a register map; only the VSHUNT register
-// (0x04) differs: INA228 is 24-bit (20-bit data), INA237 is 16-bit.
-// ---------------------------------------------------------------------------
-#define SHUNT_MONITOR_INA228 1
-#define SHUNT_MONITOR_INA237 2
-#define SHUNT_MONITOR SHUNT_MONITOR_INA237
+#include "hvc_defs.h" // SHUNT_MONITOR, SHUNT_ADCRANGE, SHUNT_RESISTANCE_NOHMS, SHUNT_OVERCURRENT_A, SHUNT_REVERSE_CURRENT_A
+
+/*==============================================================================
+ * === SHUNT MONITOR CHIP SELECTION ============================================
+ * Chosen in hvc_defs.h. The INA237 and INA228 share a register map; only the
+ * VSHUNT register (0x04) differs: INA228 is 24-bit (20-bit data), INA237 is
+ * 16-bit.
+ *============================================================================*/
 
 #if !defined(SHUNT_MONITOR) || (SHUNT_MONITOR != SHUNT_MONITOR_INA228 && SHUNT_MONITOR != SHUNT_MONITOR_INA237)
 #error "SHUNT_MONITOR must be SHUNT_MONITOR_INA228 or SHUNT_MONITOR_INA237"
 #endif
 
-// ---------------------------------------------------------------------------
-// I2C address
-// INA228/INA237 7-bit address with A1=GND, A0=GND is 0b1000000 = 0x40.
-// HAL expects the 8-bit form (7-bit << 1).
-// ---------------------------------------------------------------------------
+/*==============================================================================
+ * === I2C ADDRESS =============================================================
+ * INA228/INA237 7-bit address with A1=GND, A0=GND is 0b1000000 = 0x40.
+ * HAL expects the 8-bit form (7-bit << 1).
+ *============================================================================*/
+
 #define SHUNT_I2C_ADDRESS (0x40 << 1)
 
-// ---------------------------------------------------------------------------
-// Register addresses (Table 7-3)
-// ---------------------------------------------------------------------------
+/*==============================================================================
+ * === REGISTER ADDRESSES ======================================================
+ * Table 7-3.
+ *============================================================================*/
+
 #define SHUNT_REG_CONFIG       0x00  // Configuration (16-bit)
 #define SHUNT_REG_ADC_CONFIG   0x01  // ADC Configuration (16-bit)
 #define SHUNT_REG_SHUNT_CAL    0x02  // Shunt Calibration (16-bit)
@@ -37,11 +40,6 @@
 #define SHUNT_REG_SUVL         0x0D  // Shunt Undervoltage Threshold (reverse current)
 #define SHUNT_REG_BOVL         0x0E  // Bus Overvoltage Threshold
 #define SHUNT_REG_BUVL         0x0F  // Bus Undervoltage Threshold
-
-// ADC range selection
-// 0 = ±163.84 mV full scale, shunt LSB = 312.5 nV (INA228) / 5 µV (INA237)
-// 1 = ±40.96 mV full scale, shunt LSB = 78.125 nV (INA228) / 1.25 µV (INA237)  (higher resolution, lower range)
-#define SHUNT_ADCRANGE 1
 
 #if SHUNT_MONITOR == SHUNT_MONITOR_INA228
 // VSHUNT is 24-bit; bits 23:4 hold the 20-bit measurement
@@ -77,12 +75,6 @@
 #else
 #define SHUNT_FAULT_LSB_NV     5000
 #endif
-
-#define SHUNT_RESISTANCE_NOHMS  100496   // Shunt resistor value in nano-ohms (Thx Bryan Cady of Moment Energy!)
-
-// Fault thresholds in Amperes, unisgned in either case
-#define SHUNT_OVERCURRENT_A     60   // Positive overcurrent limit (A)
-#define SHUNT_REVERSE_CURRENT_A 20    // Reverse current magnitude limit (A)
 
 /**
  * @brief Initialise the shunt monitor — call once at startup after I2C is ready.

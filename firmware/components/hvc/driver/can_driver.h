@@ -69,6 +69,7 @@ void CAN_SendCommitHash(void);
 void CAN_Send_ShuntCurrent();
 void CAN_Send_LVCurrent();
 void CAN_Send_SuppVoltage();
+void CAN_Send_lv_12v_sense();
 void CAN_Send_DCDCThermistorTemp();
 void CAN_Send_MC_PC();
 void CAN_Send_MPPT_PC();

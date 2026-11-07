@@ -51,8 +51,8 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO1_Pin|GPIO2_Pin|NEG_CTRL_Pin|ESTOP_LED_Pin
-                          |FAULT_LED_Pin|SUPP_LOW_LED_Pin|IMD_CTRL_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO2_Pin|NEG_CTRL_Pin|ESTOP_LED_Pin|FAULT_LED_Pin
+                          |SUPP_LOW_LED_Pin|IMD_CTRL_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, POS_CTRL_Pin|LLIM_CTRL_Pin|MOTOR_PC_CTRL_Pin|HLIM_CTRL_Pin
@@ -61,10 +61,10 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, DEBUG_LED_Pin|MPPT_CTRL_Pin|DIST_CTRL_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : GPIO1_Pin GPIO2_Pin NEG_CTRL_Pin ESTOP_LED_Pin
-                           FAULT_LED_Pin SUPP_LOW_LED_Pin IMD_CTRL_Pin */
-  GPIO_InitStruct.Pin = GPIO1_Pin|GPIO2_Pin|NEG_CTRL_Pin|ESTOP_LED_Pin
-                          |FAULT_LED_Pin|SUPP_LOW_LED_Pin|IMD_CTRL_Pin;
+  /*Configure GPIO pins : GPIO2_Pin NEG_CTRL_Pin ESTOP_LED_Pin FAULT_LED_Pin
+                           SUPP_LOW_LED_Pin IMD_CTRL_Pin */
+  GPIO_InitStruct.Pin = GPIO2_Pin|NEG_CTRL_Pin|ESTOP_LED_Pin|FAULT_LED_Pin
+                          |SUPP_LOW_LED_Pin|IMD_CTRL_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

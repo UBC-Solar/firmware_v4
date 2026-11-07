@@ -16,6 +16,8 @@ static ADC_Voltages adc1_voltages = {0};
 void ADC_Init(ADC_HandleTypeDef *_hadc1, TIM_HandleTypeDef *_htim3) {
     hadc1 = _hadc1;
 
+    HAL_ADCEx_Calibration_Start(hadc1);   // calibrate ADC offset before conversions start
+
     HAL_TIM_Base_Start(_htim3); // TIM3 triggered ADC conversion
 
     HAL_ADC_Start_DMA(hadc1, (uint32_t*)adc_buffer, ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT * 2);
@@ -71,6 +73,11 @@ static void ADC1_ProcessReadings(int half) {
             case 4:
                 adc1_readings.lv_curr_sense = results[channel];
                 adc1_voltages.lv_curr_sense = voltage;
+            break;
+
+            case 5:
+                adc1_readings.lv_12v_sense = results[channel];
+                adc1_voltages.lv_12v_sense = voltage;
             break;
         }
     }

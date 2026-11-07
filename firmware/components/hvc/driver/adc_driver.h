@@ -4,7 +4,7 @@
 #include "stm32f1xx_hal_adc.h"
 #include "stm32f1xx_hal_tim.h"
 
-#define ADC1_NUM_CHANNELS 5
+#define ADC1_NUM_CHANNELS 6
 #define ADC1_SAMPLE_COUNT 100
 
 #define ADC_RESOLUTION 4095
@@ -21,6 +21,7 @@ typedef struct {
     uint16_t mppt_precharge; 
     uint16_t supp_sense;     
     uint16_t lv_curr_sense;  
+    uint16_t lv_12v_sense;
 } ADC_Readings;
 
 /**
@@ -32,6 +33,7 @@ typedef struct {
     uint16_t mppt_precharge; 
     uint16_t supp_sense;     
     uint16_t lv_curr_sense;  
+    uint16_t lv_12v_sense;
 } ADC_Voltages;
 
 typedef struct

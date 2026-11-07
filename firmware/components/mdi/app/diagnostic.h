@@ -45,6 +45,11 @@ void DiagnosticSetVoltageOverThreshold(bool is_over_threshold);
 void DiagnosticSendTimeSinceBootup(void);
 
 /**
+ * @brief Sends the git commit hash the firmware was built from over CAN.
+ */
+void DiagnosticSendCommitHash(void);
+
+/**
  * @brief Reads RTD temperature, updates RTD/thermal flags, and transmits motor-temp CAN.
  */
 void DiagnosticSendRtdTemp(void);

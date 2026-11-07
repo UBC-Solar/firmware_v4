@@ -10,6 +10,7 @@
 #include "can_driver.h"
 #include "can.h"
 #include "CAN_comms.h"
+#include "git_version.h"
 
 const CAN_TxHeaderTypeDef time_since_bootup_can_header = {
     .StdId = TIME_SINCE_BOOTUP_CAN_ID,
@@ -24,6 +25,13 @@ const CAN_TxHeaderTypeDef tel_flags_can_header = {
     .IDE = CAN_ID_STD,
     .RTR = CAN_RTR_DATA,
     .DLC = TEL_FLAGS_CAN_DATA_LENGTH};
+
+const CAN_TxHeaderTypeDef commit_hash_can_header = {
+    .StdId = COMMIT_HASH_CAN_ID,
+    .ExtId = 0x0000,
+    .IDE = CAN_ID_STD,
+    .RTR = CAN_RTR_DATA,
+    .DLC = GIT_VERSION_CAN_DLC};
 
 //IMU Can header definitions
 const CAN_TxHeaderTypeDef imu_ag_x = {

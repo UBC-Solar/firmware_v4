@@ -49,6 +49,7 @@ typedef enum
 #define HVC_MC_PC_ID                0x328U
 #define HVC_MPPT_PC_ID              0x329U
 #define HVC_12V_VOLTAGE_ID          0x32AU
+#define HVC_COMMIT_HASH_ID          0x32BU
 
 /*============================================================================*/
 /* EXTERNAL CAN ID's*/

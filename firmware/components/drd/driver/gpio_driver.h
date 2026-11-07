@@ -39,6 +39,9 @@
 #define HAZARD_PIN HAZARD_Pin
 #define HAZARD_PORT HAZARD_GPIO_Port
 
+#define PTT_EN_PIN PTT_EN_Pin
+#define PTT_EN_PORT PTT_EN_GPIO_Port
+
 /* DRIVERS FUNCTION PROTOTYPES */
 /**
  * @brief Reads the state of the brake input pin.
@@ -78,5 +81,10 @@ uint8_t ReadHazardPin(GPIO_TypeDef* port, uint16_t pin);
  * @brief Toggles the state of the debug LED.
  */
 void GpioDriverToggleDebugLed(void);
+/**
+ * @brief Drives the push-to-talk enable pin (PTT_EN).
+ * @param ptt_on Non-zero to turn on, zero to turn off.
+ */
+void GpioDriverSetPtt(uint8_t ptt_on);
 
 #endif //__DRIVERS_H__

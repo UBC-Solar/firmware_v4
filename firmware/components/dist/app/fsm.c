@@ -247,6 +247,7 @@ static void send_branch_id_if_due(void)
     if (timer_check(1000, &branch_id_tick))
     {
         CAN_Send_Branch_ID();
+        CAN_Send_Commit_Hash();
     }
 }
 

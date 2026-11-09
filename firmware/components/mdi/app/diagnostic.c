@@ -32,7 +32,7 @@ static const CAN_TxHeaderTypeDef mdi_motor_temp_header = {
 	.ExtId = 0x0000,
 	.IDE = CAN_ID_STD,
 	.RTR = CAN_RTR_DATA,
-	.DLC = 6
+	.DLC = 8
 };
 
 /**
@@ -102,13 +102,15 @@ void DiagnosticSendRtdTemp(void)
 		rtd_temp_c = 0;
 	}
 
-	uint8_t data[6];
+	uint8_t data[8];
 	data[0] = (uint8_t)(rtd_read_success);
 	data[1] = (uint8_t)(rtd_temp_c & 0xFFU);
 	data[2] = (uint8_t)((rtd_temp_c >> 8) & 0xFFU);
 	data[3] = (uint8_t)((rtd_temp_c >> 16) & 0xFFU);
 	data[4] = (uint8_t)((rtd_temp_c >> 24) & 0xFFU);
 	data[5] = (uint8_t)faults;
+    data[6] = (CAN_comms_get_tec());
+    data[7] = (CAN_comms_get_rec());
 
 	CanDriverSend(&mdi_motor_temp_header, data);
 }

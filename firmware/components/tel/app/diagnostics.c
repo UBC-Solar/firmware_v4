@@ -71,6 +71,8 @@ void DiagnosticsSendTelHealth()
         .data[1] = (vdd_mV & 0xFF00U) >> 8,
         .data[2] = (temp_c & 0x00FFU),
         .data[3] = (temp_c & 0xFF00U) >> 8,
+        .data[4] = (CAN_comms_get_tec()),
+        .data[5] = (CAN_comms_get_rec()),
         .header = tel_health_can_header,
     };
 

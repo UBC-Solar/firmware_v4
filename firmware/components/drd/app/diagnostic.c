@@ -142,6 +142,8 @@ void DiagnosticMcuHealth() {
         .data[1] = (uint8_t)((vdd_mv >> 8) & 0xFFU),
         .data[2] = (uint8_t)((uint16_t)temp_c & 0xFFU),
         .data[3] = (uint8_t)(((uint16_t)temp_c >> 8) & 0xFFU),
+        .data[4] = CAN_comms_get_tec(),
+        .data[5] = CAN_comms_get_rec()
     };
     CAN_comms_Add_Tx_message(&msg);
 }

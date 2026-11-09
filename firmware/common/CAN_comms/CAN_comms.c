@@ -303,7 +303,7 @@ void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan)
     }
 }
 
-/** @brief Callback for error on the bus
+/** @brief Callback for error on the bus. This is ONLY for bench debugging.
   * @param hcan pointer to CAN_HandleTypeDef structure that contains
   *         the configuration information for the specified CAN.
   * @retval None
@@ -336,10 +336,35 @@ void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan) {
         // Rx FIFO 0 Overrun: FIFO 0 was full when a new message arrived (message lost).
         CAN_error_stats.rx_overrun++;
     }
+    if (errmask & HAL_CAN_ERROR_EPV) {
+        // Error passive: Transmit error counter surpassed 127. Essentially, the node is on probation.
+        CAN_error_stats.passive_errors++;
+    }
     if (errmask & HAL_CAN_ERROR_BOF) {
         // Bus-Off State: Transmit error counter surpassed 255. Node auto-isolated from bus.
         CAN_error_stats.bus_off_events++;
     }
+}
+
+/**
+ * @brief  Reads the CAN transmit error counter (TEC) from the controller.
+ *         The hardware adds 8 per transmit error and subtracts 1 per successful transmit.
+ * @return TEC value (0–255). Above 127 the node is error passive.
+ */
+uint8_t CAN_comms_get_tec()
+{
+    return (CAN_comms_config.hcan->Instance->ESR & CAN_ESR_TEC) >> CAN_ESR_TEC_Pos;
+}
+
+/**
+ * @brief  Reads the CAN receive error counter (REC) from the controller.
+ *         The hardware adds 1 per receive error (up to 8) and subtracts 1 per
+ *         successful reception.
+ * @return REC value (0–255). Above 127 the node is error passive.
+ */
+uint8_t CAN_comms_get_rec()
+{
+    return (CAN_comms_config.hcan->Instance->ESR & CAN_ESR_REC) >> CAN_ESR_REC_Pos;
 }
 
 

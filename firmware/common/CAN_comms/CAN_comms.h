@@ -97,7 +97,7 @@ typedef struct {
    uint32_t stuff_errors;
    uint32_t rx_overrun;
    uint32_t timeout_errors;
-   uint32_t passive_errors++;
+   uint32_t passive_errors;
    uint32_t bus_off_events;
 } CAN_Error_Stats_t;
 

@@ -12,6 +12,7 @@
 
 /* Includes */
 #include "CAN_comms.h"
+#include "cmsis_os.h"
 #include "cmsis_os2.h"
 #include <stdbool.h>
 
@@ -65,6 +66,7 @@ const osThreadAttr_t CAN_comms_Rx_task_attributes = {
 /* Private function declarations */
 void CAN_comms_Rx_task(void* argument);
 static void CAN_comms_Dequeue_Tx_message(void);
+static bool is_high_priority(const CAN_comms_Tx_msg_t* msg);
 
 /* Function definitions */
 /**
@@ -118,48 +120,47 @@ void CAN_comms_init(CAN_comms_config_t* config)
     HAL_CAN_ActivateNotification(CAN_comms_config.hcan, CAN_IT_RX_FIFO0_MSG_PENDING); // interrupt if CAN received a frame
     HAL_CAN_ActivateNotification(CAN_comms_config.hcan, CAN_IT_TX_MAILBOX_EMPTY); // interrupt if a mailbox slot has freed up
 
- }
-
-/**
- * @brief returns true if high priority, false otherwise
- * @param msg is the message we would like to distinguish
-*/
- static bool is_high_priority(const CAN_comms_Tx_msg_t* msg) {
-    return true; // TEMPORARY
+    /* Kick start dequeing CAN Tx messages */
+    taskENTER_CRITICAL();
+    CAN_comms_Dequeue_Tx_message();
+    taskEXIT_CRITICAL();
  }
 
 
+ /**
+  * @brief Enqueues Tx message in appropriate priority queue and dequeues immediately if a mailbox is free
+  * @param CAN_comms_Tx_msg: Pointer to the CAN_comms_Tx_msg_t struct to be added to the queue
+  */
+static void CAN_comms_enqueue_msg(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
+{
+    osMessageQueueId_t q = is_high_priority(CAN_comms_Tx_msg) ? CAN_comms_Tx_queue_high
+                                                                   : CAN_comms_Tx_queue_normal;
+
+    /* Enqueue the incoming message */
+    if (osOK != osMessageQueuePut(q, CAN_comms_Tx_msg, 0U, 0)) {
+        CAN_comms_diagnostic.failure_tx++;
+    } 
+
+    /* Dequeue immediately if mailbox is free */
+    if (HAL_CAN_GetTxMailboxesFreeLevel(CAN_comms_config.hcan) > 0) {
+        CAN_comms_Dequeue_Tx_message();
+    }
+}
 
 /**
- * @brief Adds a CAN Tx message to the appropriate priority CAN_comms_Tx_queue
- * This function can be called be a user to add a CAN message to the CAN_comms_Tx_queue.
- * 
+ * @brief This function can be called by a user to add a CAN Tx message within a task to the appropriate priority CAN_comms_Tx_queue.
  * @param CAN_comms_Tx_msg: Pointer to the CAN_comms_Tx_msg_t struct to be added to the queue
  */
 void CAN_comms_Add_Tx_message(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
 {
     /* TASK that enqueues CAN message */
     taskENTER_CRITICAL();
-
-        osMessageQueueId_t q = is_high_priority(CAN_comms_Tx_msg) ? CAN_comms_Tx_queue_high
-                                                                       : CAN_comms_Tx_queue_normal;
-
-        /* Enqueue the incoming message */
-        if (osOK != osMessageQueuePut(q, CAN_comms_Tx_msg, 0U, 0)) {
-            CAN_comms_diagnostic.failure_tx++;
-        } 
-        
-
-        /* Dequeue immediately if mailbox is free */
-        if (HAL_CAN_GetTxMailboxesFreeLevel(CAN_comms_config.hcan) > 0) {
-            CAN_comms_Dequeue_Tx_message();
-        }
-
+    CAN_comms_enqueue_msg(CAN_comms_Tx_msg);
     taskEXIT_CRITICAL();
 }
 
 /**
- * @brief Dequeues high priority messages first followed by normal priority messages
+ * @brief Dequeues high priority messages followed by normal priority messages
  */
 static void CAN_comms_Dequeue_Tx_message(void)
 {
@@ -180,38 +181,29 @@ static void CAN_comms_Dequeue_Tx_message(void)
         }
         else {
             CAN_comms_diagnostic.hal_failure_tx++;
+            break;
         }
     }
 }
 
 
 /**
- * @brief Adds a CAN Tx message to the CAN_comms_Tx_queue
- * This function can be called be a user to add a CAN message to the CAN_comms_Tx_queue.
+ * @brief ISR-safe variant of adding a CAN Tx message to the queue.
  *
  * @param CAN_comms_Tx_msg: Pointer to the CAN_comms_Tx_msg_t struct to be added to the queue
  */
 void CAN_comms_Add_Tx_messageISR(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
 {
-        osMessageQueueId_t q = is_high_priority(CAN_comms_Tx_msg) ? CAN_comms_Tx_queue_high
-                                                                       : CAN_comms_Tx_queue_normal;
-
 		UBaseType_t uxSavedInterruptStatus;
+
 		uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
-
-        /* Enqueue the incoming message */
-        if (osOK != osMessageQueuePut(q, CAN_comms_Tx_msg, 0U, 0)) {
-            CAN_comms_diagnostic.failure_tx++;
-        } 
-
-        /* Dequeue immediately if mailbox is free */
-        if (HAL_CAN_GetTxMailboxesFreeLevel(CAN_comms_config.hcan) > 0) {
-            CAN_comms_Dequeue_Tx_message();
-        }
-
+        CAN_comms_enqueue_msg(CAN_comms_Tx_msg);
 		taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
 }
 
+/**
+ * @brief ISR-safe dequeing message in critical section.
+ */
 static void CAN_comms_Dequeue_Tx_message_ISR(void)
 {
     UBaseType_t saved = taskENTER_CRITICAL_FROM_ISR();
@@ -276,6 +268,13 @@ void CAN_comms_Rx_message_pending_ISR()
     }
 }
 
+/**
+ * @brief returns true if high priority, false otherwise
+ * @param msg is the message we would like to distinguish
+*/
+ static bool is_high_priority(const CAN_comms_Tx_msg_t* msg) {
+    return true; // TEMPORARY
+ }
 
 
 /**
@@ -297,7 +296,12 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
     }
 }
 
-
+/**
+ * @brief Callback triggered when message is sent and mailbox is freed
+ * @param  hcan pointer to a CAN_HandleTypeDef structure that contains
+ *         the configuration information for the specified CAN.
+ * @retval None
+ */
 void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan)
 {
     if (hcan->Instance == CAN_comms_config.hcan->Instance)
@@ -314,24 +318,6 @@ void HAL_CAN_TxMailbox1CompleteCallback(CAN_HandleTypeDef *hcan)
 }
 void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan)
 {
-    if (hcan->Instance == CAN_comms_config.hcan->Instance)
-    {
-        CAN_comms_Dequeue_Tx_message_ISR();
-    }
-}
-void HAL_CAN_TxMailbox0AbortCallback(CAN_HandleTypeDef *hcan) {
-    if (hcan->Instance == CAN_comms_config.hcan->Instance)
-    {
-        CAN_comms_Dequeue_Tx_message_ISR();
-    }
-}
-void HAL_CAN_TxMailbox1AbortCallback(CAN_HandleTypeDef *hcan) {
-    if (hcan->Instance == CAN_comms_config.hcan->Instance)
-    {
-        CAN_comms_Dequeue_Tx_message_ISR();
-    }
-}
-void HAL_CAN_TxMailbox2AbortCallback(CAN_HandleTypeDef *hcan) {
     if (hcan->Instance == CAN_comms_config.hcan->Instance)
     {
         CAN_comms_Dequeue_Tx_message_ISR();

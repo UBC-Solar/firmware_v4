@@ -19,14 +19,17 @@
 #define COMMS_INIT_SUCCESS     0
 #define COMMS_INIT_FAILURE     1
 #define CAN_RX_TASK_STACK_SIZE 1028
-#define CAN_TX_TASK_STACK_SIZE 1028
 #define CAN_RX_QUEUE_SIZE 64
 #define CAN_TX_QUEUE_SIZE 64
 #define CAN_RX_STRUCT_SIZE sizeof(CAN_comms_Rx_msg_t)
 #define CAN_TX_STRUCT_SIZE sizeof(CAN_comms_Tx_msg_t)
-#define NUM_CAN_TX_MAILBOXES 3
 #define HIGH_PRIORITY_ID_LIMIT 580 // temporary
 
+// TODOS:
+// reminder to merge error frames from other branch into this one
+// function headers
+// go through CAN ID Table and make initial pass as to what is considered a high priority ID
+// write up solution in Monday
 
 /* Private varibles */
 CAN_comms_config_t CAN_comms_config;
@@ -34,14 +37,11 @@ osMessageQueueId_t CAN_comms_Rx_queue;
 osMessageQueueId_t CAN_comms_Tx_queue_normal;
 osMessageQueueId_t CAN_comms_Tx_queue_high;
 osThreadId_t CAN_comms_Rx_task_handle;
-osThreadId_t CAN_comms_Tx_task_handle;
 StaticTask_t CAN_comms_Rx_task_control_block;
-StaticTask_t CAN_comms_Tx_task_control_block;
 uint32_t CAN_comms_Rx_task_buffer[CAN_RX_TASK_STACK_SIZE];
-uint32_t CAN_comms_Tx_task_buffer[CAN_TX_TASK_STACK_SIZE];
 
 
-CAN_comms_diagnostics_t CAN_comms_diagnostic = {
+volatile CAN_comms_diagnostics_t CAN_comms_diagnostic = {
     .comms_init_error = COMMS_INIT_SUCCESS,
     .dropped_rx_msg = 0,
     .rx_queue_count = 0,
@@ -104,7 +104,7 @@ void CAN_comms_init(CAN_comms_config_t* config)
  * @attention This function needs to be called after the FreeRTOS kernel has started. So it cannot
  * be called in the CAN_comms_init function.
  */
- void CAN_comms_HAL_CAN_init()
+ static void CAN_comms_HAL_CAN_init(void)
  {
     /* Configure CAN filter */
     HAL_CAN_ConfigFilter(CAN_comms_config.hcan, &CAN_comms_config.CAN_Filter);
@@ -125,7 +125,7 @@ void CAN_comms_init(CAN_comms_config_t* config)
  * @param msg is the message we would like to distinguish
 */
  static bool is_high_priority(const CAN_comms_Tx_msg_t* msg) {
-    return (msg->header.IDE == CAN_ID_STD) && (msg->header.StdId < HIGH_PRIORITY_ID_LIMIT);
+    return true; // TEMPORARY
  }
 
 
@@ -141,17 +141,14 @@ void CAN_comms_Add_Tx_message(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
     /* TASK that enqueues CAN message */
     taskENTER_CRITICAL();
 
+        osMessageQueueId_t q = is_high_priority(CAN_comms_Tx_msg) ? CAN_comms_Tx_queue_high
+                                                                       : CAN_comms_Tx_queue_normal;
+
         /* Enqueue the incoming message */
-        if (is_high_priority(CAN_comms_Tx_msg)) {
-            if (osOK != osMessageQueuePut(CAN_comms_Tx_queue_high, CAN_comms_Tx_msg, 0U, 0)) {
-                CAN_comms_diagnostic.failure_tx++;
-            }
-        }
-        else {
-            if (osOK != osMessageQueuePut(CAN_comms_Tx_queue_normal, CAN_comms_Tx_msg, 0U, 0)) {
-                CAN_comms_diagnostic.failure_tx++;
-            } 
-        }
+        if (osOK != osMessageQueuePut(q, CAN_comms_Tx_msg, 0U, 0)) {
+            CAN_comms_diagnostic.failure_tx++;
+        } 
+        
 
         /* Dequeue immediately if mailbox is free */
         if (HAL_CAN_GetTxMailboxesFreeLevel(CAN_comms_config.hcan) > 0) {
@@ -162,15 +159,13 @@ void CAN_comms_Add_Tx_message(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
 }
 
 /**
- * @brief Dequeues the oldest CAN Tx message from the CAN_comms_Tx_queue
+ * @brief Dequeues high priority messages first followed by normal priority messages
  */
 static void CAN_comms_Dequeue_Tx_message(void)
 {
     CAN_comms_Tx_msg_t msg;
     
     while (HAL_CAN_GetTxMailboxesFreeLevel(CAN_comms_config.hcan) > 0) {
-        /* if message from high priority queue is empty */
-
         if (osOK != osMessageQueueGet(CAN_comms_Tx_queue_high, &msg, NULL, 0)) {
             // High priority queue is empty
             if (osOK != osMessageQueueGet(CAN_comms_Tx_queue_normal, &msg, NULL, 0)) {
@@ -184,7 +179,7 @@ static void CAN_comms_Dequeue_Tx_message(void)
             CAN_comms_diagnostic.success_tx++;
         }
         else {
-            CAN_comms_diagnostic.failure_tx++;
+            CAN_comms_diagnostic.hal_failure_tx++;
         }
     }
 }
@@ -198,20 +193,30 @@ static void CAN_comms_Dequeue_Tx_message(void)
  */
 void CAN_comms_Add_Tx_messageISR(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
 {
+        osMessageQueueId_t q = is_high_priority(CAN_comms_Tx_msg) ? CAN_comms_Tx_queue_high
+                                                                       : CAN_comms_Tx_queue_normal;
+
 		UBaseType_t uxSavedInterruptStatus;
 		uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
-		uint32_t canMailbox;
-		if (HAL_OK == HAL_CAN_AddTxMessage(CAN_comms_config.hcan, &CAN_comms_Tx_msg->header, CAN_comms_Tx_msg->data, &canMailbox))
-		{
-			CAN_comms_diagnostic.success_tx++;
 
-		}
-		else
-		{
-			CAN_comms_diagnostic.hal_failure_tx++;
-		}
+        /* Enqueue the incoming message */
+        if (osOK != osMessageQueuePut(q, CAN_comms_Tx_msg, 0U, 0)) {
+            CAN_comms_diagnostic.failure_tx++;
+        } 
+
+        /* Dequeue immediately if mailbox is free */
+        if (HAL_CAN_GetTxMailboxesFreeLevel(CAN_comms_config.hcan) > 0) {
+            CAN_comms_Dequeue_Tx_message();
+        }
+
 		taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+}
 
+static void CAN_comms_Dequeue_Tx_message_ISR(void)
+{
+    UBaseType_t saved = taskENTER_CRITICAL_FROM_ISR();
+    CAN_comms_Dequeue_Tx_message();
+    taskEXIT_CRITICAL_FROM_ISR(saved);
 }
 
 
@@ -256,6 +261,7 @@ void CAN_comms_Rx_message_pending_ISR()
     if(HAL_OK != HAL_CAN_GetRxMessage(CAN_comms_config.hcan, CAN_RX_FIFO0, &CAN_Rx_msg.header, CAN_Rx_msg.data))
     {
     	CAN_comms_diagnostic.hal_failure_rx++;
+        return;
     }
 
     /* Add CAN message to the queue */
@@ -291,30 +297,47 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
     }
 }
 
+
 void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan)
 {
     if (hcan->Instance == CAN_comms_config.hcan->Instance)
     {
-        CAN_comms_Dequeue_Tx_message();
+        CAN_comms_Dequeue_Tx_message_ISR();
     }
-
 }
 void HAL_CAN_TxMailbox1CompleteCallback(CAN_HandleTypeDef *hcan)
 {
     if (hcan->Instance == CAN_comms_config.hcan->Instance)
     {
-        CAN_comms_Dequeue_Tx_message();
+        CAN_comms_Dequeue_Tx_message_ISR();
     }
-
 }
 void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan)
 {
     if (hcan->Instance == CAN_comms_config.hcan->Instance)
     {
-        CAN_comms_Dequeue_Tx_message();
+        CAN_comms_Dequeue_Tx_message_ISR();
     }
-
 }
+void HAL_CAN_TxMailbox0AbortCallback(CAN_HandleTypeDef *hcan) {
+    if (hcan->Instance == CAN_comms_config.hcan->Instance)
+    {
+        CAN_comms_Dequeue_Tx_message_ISR();
+    }
+}
+void HAL_CAN_TxMailbox1AbortCallback(CAN_HandleTypeDef *hcan) {
+    if (hcan->Instance == CAN_comms_config.hcan->Instance)
+    {
+        CAN_comms_Dequeue_Tx_message_ISR();
+    }
+}
+void HAL_CAN_TxMailbox2AbortCallback(CAN_HandleTypeDef *hcan) {
+    if (hcan->Instance == CAN_comms_config.hcan->Instance)
+    {
+        CAN_comms_Dequeue_Tx_message_ISR();
+    }
+}
+
 
 /**
  * @brief  Returns diagnostic struct populated with diagnostic data
@@ -325,6 +348,8 @@ void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan)
  */
 void CAN_comms_get_diagnostic(CAN_comms_diagnostics_t* diagnostic)
 {
+    taskENTER_CRITICAL();
 	CAN_comms_diagnostic.rx_queue_count = osMessageQueueGetCount(CAN_comms_Rx_queue);
 	*diagnostic = CAN_comms_diagnostic;
+    taskEXIT_CRITICAL();
 }

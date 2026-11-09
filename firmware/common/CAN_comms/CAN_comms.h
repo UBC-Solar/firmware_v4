@@ -59,9 +59,7 @@ typedef struct {
  */
 typedef struct {
     CAN_HandleTypeDef* hcan;
-
     CAN_FilterTypeDef CAN_Filter;
-
     void (*CAN_comms_Rx_callback)(CAN_comms_Rx_msg_t*);
 } CAN_comms_config_t;
 
@@ -91,7 +89,6 @@ typedef struct {
 
 /* Public function declarations */
 void CAN_comms_init(CAN_comms_config_t* config);
-void CAN_comms_HAL_CAN_init();
 void CAN_comms_Add_Tx_message(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg);
 void CAN_comms_Add_Tx_messageISR(CAN_comms_Tx_msg_t* CAN_comms_Tx_msg);
 void CAN_comms_get_diagnostic(CAN_comms_diagnostics_t* diagnostic);

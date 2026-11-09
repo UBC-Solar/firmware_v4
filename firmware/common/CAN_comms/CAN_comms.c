@@ -15,6 +15,8 @@
 #include "cmsis_os.h"
 #include "cmsis_os2.h"
 #include <stdbool.h>
+#include "stm32f1xx_hal_can.h"
+
 
 /* Private defines */
 #define COMMS_INIT_SUCCESS     0
@@ -34,6 +36,7 @@
 
 /* Private varibles */
 CAN_comms_config_t CAN_comms_config;
+volatile CAN_Error_Stats_t CAN_error_stats = {0};
 osMessageQueueId_t CAN_comms_Rx_queue;
 osMessageQueueId_t CAN_comms_Tx_queue_normal;
 osMessageQueueId_t CAN_comms_Tx_queue_high;
@@ -103,7 +106,7 @@ void CAN_comms_init(CAN_comms_config_t* config)
  * @brief Initializes CAN filters, activates notifications and starts CAN
  * This function is called once at the start of the CAN_comms_Rx_task RTOS task.
  * 
- * @attention This function needs to be called after the FreeRTOS kernel has started. So it cannot
+ * @attention This function needs to be called aPfter the FreeRTOS kernel has started. So it cannot
  * be called in the CAN_comms_init function.
  */
  static void CAN_comms_HAL_CAN_init(void)
@@ -119,6 +122,7 @@ void CAN_comms_init(CAN_comms_config_t* config)
     /* Activate notifications */
     HAL_CAN_ActivateNotification(CAN_comms_config.hcan, CAN_IT_RX_FIFO0_MSG_PENDING); // interrupt if CAN received a frame
     HAL_CAN_ActivateNotification(CAN_comms_config.hcan, CAN_IT_TX_MAILBOX_EMPTY); // interrupt if a mailbox slot has freed up
+    HAL_CAN_ActivateNotification(CAN_comms_config.hcan, CAN_IT_ERROR); // interrupt if error on CAN bus
 
     /* Kick start dequeing CAN Tx messages */
     taskENTER_CRITICAL();
@@ -321,6 +325,44 @@ void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan)
     if (hcan->Instance == CAN_comms_config.hcan->Instance)
     {
         CAN_comms_Dequeue_Tx_message_ISR();
+    }
+}
+
+/** @brief Callback for error on the bus
+  * @param hcan pointer to CAN_HandleTypeDef structure that contains
+  *         the configuration information for the specified CAN.
+  * @retval None
+*/
+void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan) {
+    uint32_t errmask = HAL_CAN_GetError(hcan);
+
+    if (errmask & HAL_CAN_ERROR_BR || errmask & HAL_CAN_ERROR_BD) {
+        // Bit Error: Transmitted a bit (1 or 0), but read back the opposite value.
+        CAN_error_stats.bit_errors++;
+    }
+    if (errmask & HAL_CAN_ERROR_STF) {
+        // Stuff Error: More than 5 consecutive bits of the same polarity detected.
+        CAN_error_stats.stuff_errors++;
+    }
+    if (errmask & HAL_CAN_ERROR_FOR) {
+        // Form Error: Fixed-form bit field (e.g., CRC delimiter, ACK delimiter) contained an illegal bit.
+        CAN_error_stats.form_errors++;
+    }
+    if (errmask & HAL_CAN_ERROR_ACK) {
+        // Acknowledge Error: No node on the bus pulled the ACK slot low.
+        CAN_error_stats.ack_errors++;
+    }
+    if (errmask & HAL_CAN_ERROR_CRC) {
+        // CRC Error: Transmitted CRC did not match the calculated CRC on reception.
+        CAN_error_stats.crc_errors++;
+    }
+    if (errmask & HAL_CAN_ERROR_RX_FOV0 ) {
+        // Rx FIFO 0 Overrun: FIFO 0 was full when a new message arrived (message lost).
+        CAN_error_stats.rx_overrun++;
+    }
+    if (errmask & HAL_CAN_ERROR_BOF) {
+        // Bus-Off State: Transmit error counter surpassed 255. Node auto-isolated from bus.
+        CAN_error_stats.bus_off_events++;
     }
 }
 

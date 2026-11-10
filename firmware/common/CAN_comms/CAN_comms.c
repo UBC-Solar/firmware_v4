@@ -130,10 +130,9 @@ static void CAN_comms_enqueue_msg(const CAN_comms_Tx_msg_t* CAN_comms_Tx_msg)
         CAN_comms_diagnostic.failure_tx++;
     } 
 
-    /* Dequeue immediately if mailbox is free */
-    if (HAL_CAN_GetTxMailboxesFreeLevel(CAN_comms_config.hcan) > 0) {
-        CAN_comms_Dequeue_Tx_message();
-    }
+    /* Attempt to dequeue immediately */
+    CAN_comms_Dequeue_Tx_message();
+    
 }
 
 /**

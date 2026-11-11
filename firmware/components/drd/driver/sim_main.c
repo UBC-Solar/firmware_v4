@@ -14,6 +14,28 @@ enum
     EDITOR_BITMAP_SIZE = EDITOR_WIDTH * EDITOR_BYTES_PER_COL
 };
 
+static void PrintBitmap(const uint8_t* bitmap)
+{
+    printf("\nconst uint8_t bitmap[%d] =\n{\n", EDITOR_BITMAP_SIZE);
+
+    for (uint16_t i = 0; i < EDITOR_BITMAP_SIZE; i++)
+    {
+        printf("0x%02X", bitmap[i]);
+
+        if (i < EDITOR_BITMAP_SIZE - 1)
+        {
+            printf(", ");
+        }
+
+        if ((i + 1) % 16 == 0)
+        {
+            printf("\n");
+        }
+    }
+
+    printf("};\n\n");
+}
+
 int main(void)
 {
     if (LcdSimDisplayInit() != 0)
@@ -57,6 +79,12 @@ int main(void)
 
                     printf("Pixel (%u, %u): %s\n", lcd_x, lcd_y, pixels[lcd_y][lcd_x] ? "ON" : "OFF");
                 }
+            }
+
+            if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_e)
+            {
+                LcdBitmapEncode(&pixels[0][0], EDITOR_WIDTH, EDITOR_HEIGHT, bitmap);
+                PrintBitmap(bitmap);
             }
         }
 

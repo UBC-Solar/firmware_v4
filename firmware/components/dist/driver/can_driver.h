@@ -15,11 +15,8 @@
 #define LV_POWERUP_RECIEVED_ID	0x3A2
 #define LV_CURRENTS_ID      	0x3A3
 #define SEND_DIST_BRANCH_ID     0x3A4 
-<<<<<<< HEAD
-#define DIST_TEL_CURRENT_ID     0x3A5
-=======
 #define DIST_COMMIT_HASH_ID     0x3A5
->>>>>>> origin
+#define DIST_TEL_CURRENT_ID     0x3A6
 
 /*============================================================================*/
 /* CAN ID's Receive*/
@@ -97,7 +94,7 @@ void CAN_Send_Heartbeat(void);
 void CAN_Send_Currents(uint8_t drd_mA, uint8_t mdi_mA, uint8_t spare_ctrl_mA,
                        uint8_t spare_mux_mA, uint8_t spare_mA);
 
-/** @brief Send TEL supply current (ID 0x3A5, data[0..1] = mA, MSB first) */
+/** @brief Send TEL supply current (ID 0x3A6, data[0..1] = mA, MSB first) */
 void CAN_Send_TEL_Current(uint16_t current_mA);
 
 /** @brief Send the dist board fault message (ID 0x3A1, data[0] bit 0 set). */

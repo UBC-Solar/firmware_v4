@@ -15,11 +15,8 @@
 #define LV_POWERUP_RECIEVED_ID	0x3A2
 #define LV_CURRENTS_ID      	0x3A3
 #define SEND_DIST_BRANCH_ID     0x3A4 
-<<<<<<< HEAD
 #define DIST_TEL_CURRENT_ID     0x3A5
-=======
 #define DIST_COMMIT_HASH_ID     0x3A5
->>>>>>> origin
 
 /*============================================================================*/
 /* CAN ID's Receive*/

@@ -2,8 +2,8 @@
  * @file hvc_main.c
  * @brief HVC entry points for cube main.c: init and one pass of the main loop.
  *
- * The top of the HVC code: cube main.c only calls these two. HvcMainInit() starts every
- * driver and the FSM. HvcMainRun() reads this pass's inputs and runs the FSM, or runs the
+ * The top of the HVC code: cube main.c only calls these two. HVC_Init() starts every
+ * driver and the FSM. HVC_Main() reads this pass's inputs and runs the FSM, or runs the
  * hardware test HVC_TEST picks instead. The HVC's own logic lives in fsm.c.
  */
 
@@ -21,7 +21,7 @@
 
 // Runtime
 #include "adc_runtime.h"
-#include "pin_runtime.h"
+#include "gpio_runtime.h"
 #include "shunt_runtime.h"
 
 // HVC app
@@ -33,11 +33,11 @@
 
 /*==============================================================================
  * === PUBLIC API ==============================================================
- * Called from cube main.c: HvcMainInit() once, HvcMainRun() every pass.
+ * Called from cube main.c: HVC_Init() once, HVC_Main() every pass.
  *============================================================================*/
 
 /**
- * @brief Initializes every HVC peripheral and the FSM. Call once from main.c before HvcMainRun().
+ * @brief Initializes every HVC peripheral and the FSM. Call once from main.c before HVC_Main().
  *
  * In order: starts the drivers (UART2, ADC, I2C, fan PWM, CAN with RX filters), sets up
  * the shunt monitor and the thermistor lookup table, sets the starting FSM state, then prints
@@ -59,7 +59,7 @@
  * @param shunt_i2c1       I2C1 (hi2c1), the bus to the shunt monitor.
  * @param can              CAN (hcan), the only CAN peripheral.
  */
-void HvcMainInit(
+void HVC_Init(
     UART_HandleTypeDef* uart2,
     ADC_HandleTypeDef* adc1,
     TIM_HandleTypeDef* adc_trigger_tim3,
@@ -98,7 +98,7 @@ void HvcMainInit(
  *
  * Terms used across the HVC code:
  *   main loop:      the while (1) in cube main.c.
- *   pass:           one time around the main loop. HvcMainRun() is called once per pass.
+ *   pass:           one time around the main loop. HVC_Main() is called once per pass.
  *   main-loop code: code run from the main loop, as opposed to from an interrupt.
  *
  * Kept as its own function so per-pass work is added here, not in cube main.c: CubeMX
@@ -112,13 +112,13 @@ void HvcMainInit(
  * The watchdog is refreshed in the main loop. If a pass takes longer than the watchdog
  * timeout, the watchdog resets the HVC, and FsmInit() starts it in STATE_FAULT.
  */
-void HvcMainRun(void)
+void HVC_Main(void)
 {
 #if (HVC_TEST != TEST_NONE)
     TestRunSelected(); // Runs the test HVC_TEST picks, instead of the FSM
 #else
     g_shared.adc = AdcRuntimeRead(); // Read once, so the FSM and CAN use the same values
-    g_shared.pins = PinRuntimeRead(); // Read once, so the FSM uses the same levels all pass
+    g_shared.pins = GpioRuntimeRead(); // Read once, so the FSM uses the same levels all pass
     BenchFakeInputs(); // Bench overrides replace this pass's inputs, before the FSM reads them
     FsmRun();
 #endif // (HVC_TEST != TEST_NONE)

@@ -14,13 +14,7 @@
 
 // Runtime
 #include "adc_runtime.h" // AdcMeasurements
-#include "pin_runtime.h" // PinLevels
-
-/*==============================================================================
- * === FSM STATES ==============================================================
- * The values g_state can hold. Each one has a state function of the same name
- * in fsm.c (Ex. STATE_MST_HANDSHAKE -> MstHandshake()).
- *============================================================================*/
+#include "gpio_runtime.h" // PinLevels
 
 /**
  * @brief Every state of the HVC FSM.
@@ -49,12 +43,6 @@ typedef enum
 
     STATE_UNKNOWN, // Not a real state: last printed state before the first pass (debug_output.c)
 } FsmState;
-
-/*==============================================================================
- * === FAULT FLAGS =============================================================
- * One flag per fault cause (g_fault_flags). Setting any flag sends the FSM to
- * STATE_FAULT. Flags are never cleared: only a reset of the HVC clears them.
- *============================================================================*/
 
 /**
  * @brief Every condition that sends the HVC to STATE_FAULT, one bool each.
@@ -98,12 +86,6 @@ typedef struct
     bool dist_heartbeat_timeout;
 } FaultFlags;
 
-/*==============================================================================
- * === SHARED DATA =============================================================
- * Everything else the FSM, the CAN messages, and the interrupts pass between
- * each other (g_shared): received CAN data, this pass's inputs, and FSM flags.
- *============================================================================*/
-
 /**
  * @brief Values passed between the FSM and the interrupts.
  *
@@ -123,7 +105,7 @@ typedef struct
     volatile bool     mst_healthy;
     volatile int32_t  mst_pack_voltage_mv;              // From MST_VOLT_SUMMARY
 
-    // Read once per pass by HvcMainRun(), before the FSM. Bench overrides (tests.c) may
+    // Read once per pass by HVC_Main(), before the FSM. Bench overrides (tests.c) may
     // write fake values over them before the FSM reads them.
     AdcMeasurements   adc;                              // This pass's ADC readings, in real units
     PinLevels         pins;                             // This pass's polled input pin levels
@@ -136,11 +118,6 @@ typedef struct
     // MST heartbeat check, enabled after STATE_MST_STATUS_CHECK
     bool              mst_heartbeat_check_enabled;
 } SharedData;
-
-/*==============================================================================
- * === TICKS ===================================================================
- * The start time of every HVC timer (g_ticks), checked with TimerElapsed().
- *============================================================================*/
 
 /**
  * @brief Start times (HAL_GetTick(), in ms) for every delay, timeout, and periodic task.

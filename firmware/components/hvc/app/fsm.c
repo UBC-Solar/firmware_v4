@@ -53,7 +53,7 @@ Ticks               g_ticks;
  *============================================================================*/
 
 /**
- * @brief Sets the starting FSM state. Call once from HvcMainInit().
+ * @brief Sets the starting FSM state. Call once from HVC_Init().
  *
  * If the last reset was caused by the watchdog, starts in STATE_FAULT with watchdog_fired set;
  * otherwise starts in STATE_RESET.
@@ -75,7 +75,7 @@ void FsmInit(void)
 }
 
 /**
- * @brief Runs one pass of the FSM. Call from HvcMainRun() every pass.
+ * @brief Runs one pass of the FSM. Call from HVC_Main() every pass.
  *
  * In order: prints the debug output (DebugOutputRun(), debug_output.c), checks heartbeat
  * timeouts, switches to STATE_FAULT if any fault flag is set, sends periodic CAN messages,

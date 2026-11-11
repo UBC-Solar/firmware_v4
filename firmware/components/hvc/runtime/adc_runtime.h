@@ -2,7 +2,7 @@
  * @file adc_runtime.h
  * @brief ADC measurements in real units, built on adc_driver.
  *
- * AdcRuntimeRead() gives every ADC measurement in real units (AdcMeasurements). HvcMainRun()
+ * AdcRuntimeRead() gives every ADC measurement in real units (AdcMeasurements). HVC_Main()
  * calls it once per pass and stores the result in g_shared.adc.
  */
 

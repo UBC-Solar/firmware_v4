@@ -82,7 +82,7 @@ void SendMessageTemplate(void);
  * CAN driver's receive interrupt).
  *============================================================================*/
 
-// Every RX CAN ID above, the ones CanMessagesHandleRx() handles. HvcMainInit() sets the RX filters
+// Every RX CAN ID above, the ones CanMessagesHandleRx() handles. HVC_Init() sets the RX filters
 // from it. Update CAN_RX_ID_COUNT with the list: a wrong count does not compile.
 #define CAN_RX_ID_COUNT 6U
 extern const uint16_t CAN_RX_IDS[CAN_RX_ID_COUNT];

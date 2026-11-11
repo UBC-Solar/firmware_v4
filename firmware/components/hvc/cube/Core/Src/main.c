@@ -106,7 +106,7 @@ int main(void)
   MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
 
-  HvcMainInit(&huart2, &hadc1, &htim3, &htim4, &hi2c1, &hcan);
+  HVC_Init(&huart2, &hadc1, &htim3, &htim4, &hi2c1, &hcan);
 
   /* USER CODE END 2 */
 
@@ -120,7 +120,7 @@ int main(void)
 
       HAL_IWDG_Refresh(&hiwdg); // every pass, in normal mode and in tests
 
-      HvcMainRun();
+      HVC_Main();
     }
   /* USER CODE END 3 */
 }

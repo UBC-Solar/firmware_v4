@@ -64,7 +64,7 @@
 
 /*==============================================================================
  * === PUBLIC API ==============================================================
- * Implemented in debug_output.c. DebugOutputInit() is called from HvcMainInit(),
+ * Implemented in debug_output.c. DebugOutputInit() is called from HVC_Init(),
  * DebugOutputRun() from FsmRun().
  *============================================================================*/
 

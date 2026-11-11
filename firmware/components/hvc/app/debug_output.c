@@ -24,7 +24,7 @@
  *   tagged. i2c_driver.c can print from its interrupt, so its line can land inside another.)
  *
  * Sections, same order as debug_output.h (which also has the PRINT_* macros):
- *   PUBLIC API: DebugOutputInit() (from HvcMainInit()) and DebugOutputRun() (from FsmRun()).
+ *   PUBLIC API: DebugOutputInit() (from HVC_Init()) and DebugOutputRun() (from FsmRun()).
  *   HELPERS:    events, reports, dump, names.
  */
 
@@ -52,13 +52,13 @@
 
 /*==============================================================================
  * === PUBLIC API ==============================================================
- * DebugOutputInit() runs once, at the end of HvcMainInit(). DebugOutputRun()
+ * DebugOutputInit() runs once, at the end of HVC_Init(). DebugOutputRun()
  * runs first in every FsmRun() pass (not during a hardware test). Without DEBUG
  * both do nothing.
  *============================================================================*/
 
 /**
- * @brief Prints the startup lines. Call once, at the end of HvcMainInit().
+ * @brief Prints the startup lines. Call once, at the end of HVC_Init().
  *
  * In order: firmware version, reset cause, the bench overrides that are on
  * (BenchPrintOverrides(), tests.c), then "done". Runs after FsmInit(), which records a

@@ -19,7 +19,7 @@
 /**
  * @brief Reads the ADC once and converts every channel to real units.
  *
- * Call once per pass and keep the result (HvcMainRun() stores it in g_shared.adc), so the
+ * Call once per pass and keep the result (HVC_Main() stores it in g_shared.adc), so the
  * whole pass uses the same values: adc_driver updates its values in the background, so two
  * reads in one pass can differ.
  *

@@ -1,12 +1,12 @@
 /**
- * @file pin_runtime.c
+ * @file gpio_runtime.c
  * @brief Levels of the input pins the FSM checks itself, built on gpio_driver.
  *
  * Only for pins the FSM reads itself (polled). Pin interrupts are not handled here: they stay in
  * gpio_driver.c (HAL_GPIO_EXTI_Callback()), which calls the fault callbacks in fsm.c.
  */
 
-#include "pin_runtime.h"
+#include "gpio_runtime.h"
 
 // HAL and CubeMX
 #include "main.h" // Pin names
@@ -17,12 +17,12 @@
 /**
  * @brief Reads every polled input pin once.
  *
- * Call once per pass and keep the result (HvcMainRun() stores it in g_shared.pins), so the
+ * Call once per pass and keep the result (HVC_Main() stores it in g_shared.pins), so the
  * whole pass uses the same levels, and bench overrides can change them before the FSM runs.
  *
  * @return Every polled input pin's level.
  */
-PinLevels PinRuntimeRead(void)
+PinLevels GpioRuntimeRead(void)
 {
     PinLevels pins;
 

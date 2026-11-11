@@ -34,15 +34,15 @@
  * hvc_defs.h: unit tests, then integration tests. Each test is named after its
  * TEST_* value, and only the picked test is compiled. Every function here is
  * listed in tests.h; only TestRunSelected() is called from outside
- * (HvcMainRun()).
+ * (HVC_Main()).
  *============================================================================*/
 
 // --- Entry point ---
 
 /**
- * @brief Runs the test HVC_TEST picks. Call from HvcMainRun() every pass, in place of the FSM.
+ * @brief Runs the test HVC_TEST picks. Call from HVC_Main() every pass, in place of the FSM.
  *
- * Does nothing with TEST_NONE: HvcMainRun() runs the FSM instead.
+ * Does nothing with TEST_NONE: HVC_Main() runs the FSM instead.
  */
 void TestRunSelected(void)
 {
@@ -155,13 +155,13 @@ void TestIntCan(void)
  *   Print<Board>Overrides()         [BENCH] line for each override on, at startup
  * Grouped by board like hvc_defs.h: MST, TEL, DIST, HVC. Every function here
  * is listed in tests.h; only the entry points are called from outside
- * (HvcMainInit(), HvcMainRun(), and DebugOutputInit()).
+ * (HVC_Init(), HVC_Main(), and DebugOutputInit()).
  *============================================================================*/
 
 // --- Entry points ---
 
 /**
- * @brief Copies the CAN IDs that are not faked into kept_ids. Call once from HvcMainInit(), on
+ * @brief Copies the CAN IDs that are not faked into kept_ids. Call once from HVC_Init(), on
  *        CAN_RX_IDS, before CAN_InitFilterList().
  *
  * The RX filters are then set from kept_ids, so a faked part's real messages are never received
@@ -194,7 +194,7 @@ size_t BenchRemoveFakedCanIds(const uint16_t* ids, size_t count, uint16_t* kept_
 
 /**
  * @brief Turns off the real pin interrupts of faked or ignored board parts. Call once from
- *        HvcMainInit().
+ *        HVC_Init().
  *
  * A pin interrupt sets its fault flag on its own, so a fake in g_shared.pins cannot stop it.
  * Turns off nothing during a hardware test.
@@ -209,7 +209,7 @@ void BenchBlockFakedPinInterrupts(void)
 }
 
 /**
- * @brief Writes this pass's fake inputs for every board part faked. Call from HvcMainRun() every
+ * @brief Writes this pass's fake inputs for every board part faked. Call from HVC_Main() every
  *        pass, after the ADC and pin reads and before the FSM.
  *
  * The fakes replace the real values in g_shared, so the FSM reads the fakes.

@@ -22,7 +22,7 @@
 /*==============================================================================
  * === HARDWARE TESTS ==========================================================
  * Implemented in tests.c (see its HARDWARE TESTS banner). Entry point:
- * TestRunSelected() (from HvcMainRun()).
+ * TestRunSelected() (from HVC_Main()).
  *============================================================================*/
 
 // --- Entry point ---
@@ -42,7 +42,7 @@ void SendDebugCanMessage(void);
  * === BENCH OVERRIDES =========================================================
  * Implemented in tests.c (see its BENCH OVERRIDES banner). Entry points:
  * BenchRemoveFakedCanIds() and BenchBlockFakedPinInterrupts() (from
- * HvcMainInit()), BenchFakeInputs() (from HvcMainRun()), BenchPrintOverrides()
+ * HVC_Init()), BenchFakeInputs() (from HVC_Main()), BenchPrintOverrides()
  * (from DebugOutputInit()).
  *============================================================================*/
 

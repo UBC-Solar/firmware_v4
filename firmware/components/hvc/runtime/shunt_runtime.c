@@ -190,7 +190,7 @@ void Shunt_Process_Shunt_Voltage(void) {
     // Casting to int16_t sign-extends the 16-bit two's complement value.
     int32_t raw_value = (int16_t)(((uint16_t)raw_shunt_voltage_buf[0] << 8)
                                  | (uint16_t)raw_shunt_voltage_buf[1]);
-#endif
+#endif // SHUNT_MONITOR
 
     // Convert counts into nanovolts, multiply first to avoid truncation to zero
     shunt_voltage_nV = (int32_t)(((int64_t)raw_value * SHUNT_VSHUNT_LSB_NV_NUM) / SHUNT_VSHUNT_LSB_NV_DEN);

@@ -14,7 +14,7 @@
 
 #if !defined(SHUNT_MONITOR) || (SHUNT_MONITOR != SHUNT_MONITOR_INA228 && SHUNT_MONITOR != SHUNT_MONITOR_INA237)
 #error "SHUNT_MONITOR must be SHUNT_MONITOR_INA228 or SHUNT_MONITOR_INA237"
-#endif
+#endif // SHUNT_MONITOR validity check
 
 /*==============================================================================
  * === I2C ADDRESS =============================================================
@@ -48,11 +48,11 @@
 // Shunt voltage LSB expressed as a fraction: 625/8 nV = 78.125 nV
 #define SHUNT_VSHUNT_LSB_NV_NUM  625 // Numerator
 #define SHUNT_VSHUNT_LSB_NV_DEN  8 // Denominator
-#else
+#else // (SHUNT_ADCRANGE == 0)
 // Shunt voltage LSB: 3125/10 nV = 312.5 nV
 #define SHUNT_VSHUNT_LSB_NV_NUM  3125 // Numerator
 #define SHUNT_VSHUNT_LSB_NV_DEN  10 // Denominator
-#endif
+#endif // SHUNT_ADCRANGE
 #elif SHUNT_MONITOR == SHUNT_MONITOR_INA237
 // VSHUNT is 16-bit; all bits hold the measurement
 #define SHUNT_VSHUNT_READ_BYTES  2
@@ -60,21 +60,21 @@
 // Shunt voltage LSB: 1250 nV = 1.25 µV
 #define SHUNT_VSHUNT_LSB_NV_NUM  1250 // Numerator
 #define SHUNT_VSHUNT_LSB_NV_DEN  1 // Denominator
-#else
+#else // (SHUNT_ADCRANGE == 0)
 // Shunt voltage LSB: 5000 nV = 5 µV
 #define SHUNT_VSHUNT_LSB_NV_NUM  5000 // Numerator
 #define SHUNT_VSHUNT_LSB_NV_DEN  1 // Denominator
-#endif
-#endif
+#endif // SHUNT_ADCRANGE
+#endif // SHUNT_MONITOR
 
 // Fault thresholds for SOVL/SUVL threshold register LSB
 // ADCRANGE=1: 1250 nV/LSB
 // ADCRANGE=0: 5000 nV/LSB
 #if SHUNT_ADCRANGE == 1
 #define SHUNT_FAULT_LSB_NV     1250
-#else
+#else // (SHUNT_ADCRANGE == 0)
 #define SHUNT_FAULT_LSB_NV     5000
-#endif
+#endif // SHUNT_ADCRANGE
 
 /**
  * @brief Initialise the shunt monitor — call once at startup after I2C is ready.

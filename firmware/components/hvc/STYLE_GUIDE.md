@@ -31,6 +31,19 @@ CubeMX-generated).
 - **Blank lines:** one between functions, and one between logical blocks inside a function.
 - **No banner comments** (`/*=====`, `=== SECTION ===`). Group code with blank lines and plain
   comments instead.
+- **Preprocessor directives** (`#if`, `#elif`, `#else`, `#endif`) go at column 0 on their own
+  line, even inside a function body. Label every `#endif` (and `#else`) with the condition it
+  closes:
+
+  ```c
+  void HVC_Main(void) {
+  #if (HVC_TEST != TEST_NONE)
+      TestRunSelected();
+  #else
+      FsmRun();
+  #endif // (HVC_TEST != TEST_NONE)
+  }
+  ```
 
 ## Naming
 

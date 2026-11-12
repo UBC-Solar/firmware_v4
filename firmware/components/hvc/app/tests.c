@@ -328,7 +328,7 @@ void FakeMstFaultCall(void)
         fault_sent = true;
 #if IGNORE_MST_FAULT
         PRINT_BENCH("fake MST: fault pin high (ignored: IGNORE_MST_FAULT)");
-#else
+#else // !IGNORE_MST_FAULT
         PRINT_BENCH("fake MST: fault pin high");
         MstFaultCallback(g_shared.mst_irq_armed);
 #endif // IGNORE_MST_FAULT

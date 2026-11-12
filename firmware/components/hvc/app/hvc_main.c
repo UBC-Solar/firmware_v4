@@ -116,7 +116,7 @@ void HVC_Main(void)
 {
 #if (HVC_TEST != TEST_NONE)
     TestRunSelected(); // Runs the test HVC_TEST picks, instead of the FSM
-#else
+#else // (HVC_TEST == TEST_NONE)
     ADC_Runtime_ProcessReadings();
     g_shared.adc = ADC_Runtime_GetValues(); // Read once, so the FSM and CAN use the same values
     g_shared.pins = GpioRuntimeRead(); // Read once, so the FSM uses the same levels all pass

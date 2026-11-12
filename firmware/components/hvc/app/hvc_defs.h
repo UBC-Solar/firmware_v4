@@ -189,7 +189,7 @@
 #define SUPP_LOW_THRESHOLD_MV           10500U // SUPP_LOW_LED on below this supp battery voltage
 
 // LV current sensor
-// The LV current sensor outputs a voltage read on the ADC. adc_runtime.c removes
+// The LV current sensor (TMCS2209A3U) outputs a voltage read on the ADC. adc_runtime.c removes
 // the sensor's offset and divides by its sensitivity to get mA (sent over CAN).
 
 #define LV_CURRENT_SENSOR_OFFSET_MV     330 // VS x 0.1, VS = 3.3V, A3U variant

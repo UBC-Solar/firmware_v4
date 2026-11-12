@@ -312,7 +312,7 @@ void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan)
 */
 void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan) {
     if (hcan->Instance != CAN_comms_config.hcan->Instance) {
-        break;
+        return;
     }
 
     uint32_t errmask = HAL_CAN_GetError(hcan);

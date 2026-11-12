@@ -137,8 +137,8 @@ void DiagnosticSendFlags(void)
 {
 	uint8_t data[3];
 	data[0] = s_diagnostic_flags.raw;
-	data[1] = CAN_comms_get_tec();
-	data[2] = CAN_comms_get_rec();
+	data[1] = CanDriverGetTec();
+	data[2] = CanDriverGetRec();
 
 	CanDriverSend(&mdi_diagnostic_flags_header, data);
 }

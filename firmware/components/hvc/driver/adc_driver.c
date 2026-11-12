@@ -1,5 +1,7 @@
 #include "adc_driver.h"
 
+#include "hvc_defs.h"
+
 static void ADC1_ProcessReadings(int half);
 
 static ADC_HandleTypeDef *hadc1;
@@ -19,12 +21,11 @@ void ADC_Init(ADC_HandleTypeDef *_hadc1, TIM_HandleTypeDef *_htim3) {
     HAL_TIM_Base_Start(_htim3); // TIM3 triggered ADC conversion
 
     HAL_ADC_Start_DMA(hadc1, (uint32_t*)adc_buffer, ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT * 2);
-
-    //UART_Printf("ADC Initialized with DMA buffer size: %d\n\r", ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT * 2);
 }
 
 /**
- * @brief Read averaged ADC values for a given half of the buffer, then convert to voltages and store in global structs.
+ * @brief Read averaged ADC values for a given half of the buffer, then convert to voltages and
+ *        store them in the file-scope structs.
  * @param half 0 for the first half, 1 for the second half.
  * @return None
  */
@@ -35,18 +36,30 @@ static void ADC1_ProcessReadings(int half) {
     // Sum readings
     for (uint8_t sample = 0; sample < ADC1_SAMPLE_COUNT; sample++) {
         for (uint8_t channel = 0; channel < ADC1_NUM_CHANNELS; channel++) {
-            sum[channel] += adc_buffer[half * ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT + sample * ADC1_NUM_CHANNELS + channel];
+            uint32_t index = half * ADC1_NUM_CHANNELS * ADC1_SAMPLE_COUNT +
+                             sample * ADC1_NUM_CHANNELS + channel;
+            sum[channel] += adc_buffer[index];
         }
     }
 
-    // Average readings (divide sum by SAMPLE_COUNT)
+    // Average readings (divide sum by SAMPLE_COUNT), then remove the ADC error bias
     for (int channel = 0; channel < ADC1_NUM_CHANNELS; channel++) {
-        results[channel] = sum[channel] / ADC1_SAMPLE_COUNT;
+        int32_t corrected = (int32_t)(sum[channel] / ADC1_SAMPLE_COUNT) - ADC_ERROR_BIAS;
+
+        // Keep the corrected reading inside the ADC's range
+        if (corrected < 0) {
+            corrected = 0;
+        } else if (corrected > ADC_RESOLUTION) {
+            corrected = ADC_RESOLUTION;
+        }
+
+        results[channel] = (uint16_t)corrected;
     }
 
     // Store readings and voltages
     for (int channel = 0; channel < ADC1_NUM_CHANNELS; channel++) {
-        uint16_t voltage = (uint64_t)results[channel] * ADC_VOLTAGE_REFERENCE / ADC_RESOLUTION; // Convert to millivolts with uint32_t for no truncation
+        // Convert to millivolts, widened to uint64_t for no truncation
+        uint16_t voltage = (uint64_t)results[channel] * ADC_VOLTAGE_REFERENCE / ADC_RESOLUTION;
         switch (channel) {
             case 0:
                 adc1_readings.dcdc_thermistor = results[channel];
@@ -57,12 +70,12 @@ static void ADC1_ProcessReadings(int half) {
                 adc1_readings.motor_precharge = results[channel];
                 adc1_voltages.motor_precharge = voltage;
             break;
-            
+
             case 2:
                 adc1_readings.mppt_precharge = results[channel];
                 adc1_voltages.mppt_precharge = voltage;
             break;
-            
+
             case 3:
                 adc1_readings.supp_sense = results[channel];
                 adc1_voltages.supp_sense = voltage;
@@ -107,9 +120,8 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
 /**
  * Thermistor voltage-to-temperature look-up table.
  * See https://www.vishay.com/docs/29050/ntclg100.pdf.
- * First value is temperature in milli-Celsius,
- * second value is resistance (computed at initialization time),
- * third value is thermistor resistance.
+ * First value is temperature in milli-Celsius, second value is resistance (computed at
+ * initialization time), third value is thermistor resistance.
  */
  // inverted table from MST code
 thermistor_mapping_t thermistor_temp_lut[THERMISTOR_LUT_TABLE_SIZE] = {
@@ -134,24 +146,26 @@ thermistor_mapping_t thermistor_temp_lut[THERMISTOR_LUT_TABLE_SIZE] = {
     { -30000, 0, 175200 }
 };
 
-//COPIED FROM MST
-void InitTemperatureReading() {
+// COPIED FROM MST
+void ADC_InitTemperatureReading(void) {
     for (int i = 0; i < THERMISTOR_LUT_TABLE_SIZE; i++) {
-        //V_T: thermistor voltage. R_T: thermistor resistance.
+        // V_T: thermistor voltage.
+        // R_T: thermistor resistance.
         // V_T = V_ref2 * (10,000)/(10,000 + R_T)  // (thermistor is in different place)
-        //Vref2 = 3300000 uV
-        uint64_t resistance_Ohm = (uint64_t) 3300000 * (10000) / (10000 + thermistor_temp_lut[i].resistance_Ohm);
+        // Vref2 = 3300000 uV
+        uint64_t resistance_Ohm =
+            (uint64_t)3300000 * (10000) / (10000 + thermistor_temp_lut[i].resistance_Ohm);
         thermistor_temp_lut[i].voltage_uV = resistance_Ohm;
     }
 }
 
-//COPIED FROM MST
+// COPIED FROM MST
 /**
  * @brief Converts a voltage measurement to Temperature in milli-Celsius using pure integer math
  * @param thermistor_uV The raw ADC reading in microvolts
  * @return Temperature in milli-Celsius (e.g., 25500 = 25.5 C)
  */
-int32_t ThermistorVoltToTemp_(uint32_t thermistor_uV) {
+int32_t ADC_ThermistorVoltToTemp(uint32_t thermistor_uV) {
     // 1. Clamp to maximum or minimum values
     if (thermistor_uV >= thermistor_temp_lut[0].voltage_uV) {
         return thermistor_temp_lut[0].temperature_mC;
@@ -163,7 +177,8 @@ int32_t ThermistorVoltToTemp_(uint32_t thermistor_uV) {
     // 2. Iterate temperature look up table to find a match for the measured thermistor voltage
     for (uint16_t i = 0; i < THERMISTOR_LUT_TABLE_SIZE - 1; i++) {
         // Find the bounding ADC values (remember: voltage_uV is descending)
-        if (thermistor_uV <= thermistor_temp_lut[i].voltage_uV && thermistor_uV >= thermistor_temp_lut[i + 1].voltage_uV) {
+        if (thermistor_uV <= thermistor_temp_lut[i].voltage_uV &&
+            thermistor_uV >= thermistor_temp_lut[i + 1].voltage_uV) {
 
             int32_t adc1 = thermistor_temp_lut[i].voltage_uV;     // Higher ADC (Colder)
             int32_t t1   = thermistor_temp_lut[i].temperature_mC;       // Lower Temp
@@ -172,8 +187,8 @@ int32_t ThermistorVoltToTemp_(uint32_t thermistor_uV) {
             int32_t t2   = thermistor_temp_lut[i + 1].temperature_mC;   // Higher Temp
 
             // 3. Linear interpolation between the two values
-            // Formula: T = T1 + ( (T2 - T1) * (ADC1 - thermistor_uV) ) / (ADC1 - ADC2)
-            // Note: We arrange the subtraction to keep values positive before division
+            // Formula: T = T1 + ( (T2 - T1) * (ADC1 - thermistor_uV) ) / (ADC1 - ADC2) Note: We
+            // arrange the subtraction to keep values positive before division
             int32_t temp_diff = t2 - t1;
             int32_t adc_diff = adc1 - adc2;
             int32_t meas_diff = adc1 - thermistor_uV;

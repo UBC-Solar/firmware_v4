@@ -16,26 +16,25 @@
  * @brief Raw 12-bit ADC readings, one per channel, in scan order.
  */
 typedef struct {
-    uint16_t dcdc_thermistor;     
+    uint16_t dcdc_thermistor;
     uint16_t motor_precharge;
-    uint16_t mppt_precharge; 
-    uint16_t supp_sense;     
-    uint16_t lv_curr_sense;  
+    uint16_t mppt_precharge;
+    uint16_t supp_sense;
+    uint16_t lv_curr_sense;
 } ADC_Readings;
 
 /**
  * @brief ADC values converted to millivolts (0–3300 mV).
  */
 typedef struct {
-    uint16_t dcdc_thermistor;     
+    uint16_t dcdc_thermistor;
     uint16_t motor_precharge;
-    uint16_t mppt_precharge; 
-    uint16_t supp_sense;     
-    uint16_t lv_curr_sense;  
+    uint16_t mppt_precharge;
+    uint16_t supp_sense;
+    uint16_t lv_curr_sense;
 } ADC_Voltages;
 
-typedef struct
-{
+typedef struct {
     int32_t temperature_mC;
     uint32_t voltage_uV;
     uint32_t resistance_Ohm;
@@ -46,5 +45,5 @@ void ADC_Init(ADC_HandleTypeDef *_hadc1, TIM_HandleTypeDef *_htim3);
 ADC_Readings ADC_GetReadings(void);
 ADC_Voltages ADC_GetVoltages(void);
 
-void InitTemperatureReading();
-int32_t ThermistorVoltToTemp_(uint32_t thermistor_uV);
+void ADC_InitTemperatureReading(void);
+int32_t ADC_ThermistorVoltToTemp(uint32_t thermistor_uV);

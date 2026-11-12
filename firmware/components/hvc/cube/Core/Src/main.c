@@ -31,7 +31,7 @@
 /* USER CODE BEGIN Includes */
 
 #include "hvc_main.h"
-#include "hvc_fsm.h"
+#include "fsm.h"
 
 /* USER CODE END Includes */
 
@@ -118,16 +118,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-      #if (UNIT_TEST_SHUNT == RUN)
-      HVC_TestShuntCycle();
-      continue;
-      #endif // (UNIT_TEST_SHUNT == RUN)
-
-      #if (INT_TEST_CAN == RUN)
-      HVC_TestCanCycle();
-      HAL_Delay(2000);
-      continue;
-      #endif // (INT_TEST_CAN == RUN)
+      HAL_IWDG_Refresh(&hiwdg); // every pass, in normal mode and in tests
 
       HVC_Main();
     }
@@ -194,7 +185,7 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
     /* User can add his own implementation to report the HAL error return state */
     __disable_irq();
-    open_all_contactors();
+    FSM_OpenAllContactors();
     while (1)
     {
     }

@@ -2,7 +2,7 @@
 #include "stm32f1xx_hal_gpio.h"
 #include "uart_driver.h"
 #include "main.h"
-#include "hvc_fsm.h"  
+#include "fsm.h"
 
 /**
  * @brief Read the current logic state of a GPIO pin.
@@ -34,64 +34,64 @@ void GPIO_Toggle(GPIO_TypeDef *port, uint16_t pin) {
 }
 
 /**
- * @brief HAL callback invoked on external interrupt line events.
- * @param GPIO_Pin The pin number that triggered the interrupt (for example, DIST_CTRL_Pin).
+ * @brief HAL callback for the fault input interrupts: calls the fault callback if the pin is high.
+ *
+ * Each fault input interrupts on both edges (rising and falling, set in cube gpio.c), so this reads
+ * the pin to get its level now.
+ * High means fault, and the matching callback in fsm.c sets the fault flag.
+ * Low does nothing: fault flags are never cleared.
+ * A pin interrupt turned off by the bench overrides (TESTS_BenchBlockFakedPinInterrupts(), tests.c)
+ * never reaches here.
+ *
+ * Side effects: may set g_fault_flags.estop, imd_fault, mst_fault, overcurrent, reverse_current, or
+ * dcdc_fault (through the fsm.c callbacks).
+ *
+ * @param GPIO_Pin Pin that triggered the interrupt (for example, ESTOP_Pin).
  */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-    GPIO_PinState level;
-
-    // Interrupts are triggered on rising or falling edges, so we read the pin state to determine the current level
-
     switch (GPIO_Pin) {
         case ESTOP_Pin:
-            level = HAL_GPIO_ReadPin(ESTOP_GPIO_Port, ESTOP_Pin);
-            if (level == GPIO_PIN_SET) {
-                // ESTOP is high (rising edge or already high when sampled)
-                ESTOPCallback();
-            } else {
-                // ESTOP is low (falling edge or already low when sampled)
+            // Emergency stop pressed: turn on ESTOP_LED and set the estop fault
+            if (HAL_GPIO_ReadPin(ESTOP_GPIO_Port, ESTOP_Pin) == GPIO_PIN_SET) {
+                FSM_EstopCallback();
             }
             break;
 
         case IMD_GPIO_IN_Pin:
-            level = HAL_GPIO_ReadPin(IMD_GPIO_IN_GPIO_Port, IMD_GPIO_IN_Pin);
-            if (level == GPIO_PIN_SET) {
-                UART_Printf("High!\n\r");
-                IMDFaultCallback();// IMD_GPIO_IN is high
-            } else {
-                UART_Printf("Low!\n\r");
-                // IMD_GPIO_IN is low
+            // IMD reports an insulation fault: set the IMD fault
+            if (HAL_GPIO_ReadPin(IMD_GPIO_IN_GPIO_Port, IMD_GPIO_IN_Pin) == GPIO_PIN_SET) {
+                FSM_ImdFaultCallback();
             }
             break;
 
         case MASTERBOARD_FAULT_Pin:
-            level = HAL_GPIO_ReadPin(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin);
-            if (level == GPIO_PIN_SET) {
-                MasterboardFaultCallback(mst_irq_armed);// MASTERBOARD_FAULT is high
-            } else {
-                // MASTERBOARD_FAULT is low
-            }
-            break;
-
-        case DCDC_ACTIVE_Pin:
-            level = HAL_GPIO_ReadPin(DCDC_ACTIVE_GPIO_Port, DCDC_ACTIVE_Pin);
-            if (level == GPIO_PIN_SET) {
-                DCDCFaultCallback(); // DCDC_ACTIVE is high
-            } else {
-                // DCDC_ACTIVE is active-low
+            // Ignored until MstHandshake() arms it: MST holds this pin high during startup
+            if (HAL_GPIO_ReadPin(MASTERBOARD_FAULT_GPIO_Port, MASTERBOARD_FAULT_Pin) ==
+                GPIO_PIN_SET) {
+                FSM_MstFaultCallback(g_shared.mst_irq_armed);
             }
             break;
 
         case HV_CURRENT_ALERT_Pin:
-            level = HAL_GPIO_ReadPin(HV_CURRENT_ALERT_GPIO_Port, HV_CURRENT_ALERT_Pin);
-            if (level == GPIO_PIN_SET) {
-                HVCurrentAlertCallback();// HV_CURRENT_ALERT is high
-            } else {
-                // HV_CURRENT_ALERT is low
+            // Shunt monitor alert, pack current past a limit: the callback reads the shunt monitor
+            // and sets the overcurrent or reverse current fault
+            if (HAL_GPIO_ReadPin(HV_CURRENT_ALERT_GPIO_Port, HV_CURRENT_ALERT_Pin) ==
+                GPIO_PIN_SET) {
+                FSM_HvCurrentAlertCallback();
+            }
+            break;
+
+        case DCDC_ACTIVE_Pin:
+            // Ignored until HvConnect() arms it: DCDC_ACTIVE (active-low) is high until then
+            if (HAL_GPIO_ReadPin(DCDC_ACTIVE_GPIO_Port, DCDC_ACTIVE_Pin) == GPIO_PIN_SET) {
+                FSM_DcdcFaultCallback(g_shared.dcdc_irq_armed);
             }
             break;
 
         default:
+            // Not a fault input.
+            // SUPP_ACTIVE also lands here: it is only checked by the FSM, at startup and in
+            // HvConnect()
             break;
     }
 }

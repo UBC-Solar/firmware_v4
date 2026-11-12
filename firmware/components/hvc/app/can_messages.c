@@ -25,33 +25,40 @@
 #include "fsm.h"
 #include "hvc_defs.h"
 
-/*==============================================================================
- * === TX MESSAGES =============================================================
- * Every message the HVC sends. FsmRun() calls CanMessagesSendAll() every pass,
- * which sends the periodic ones when their interval is up. LvPowerup() sends the
- * LV power-up request itself. Each Send*() function builds one message and
- * queues it; the CAN driver sends it from the queue.
- *============================================================================*/
+// One function per TX message, called by CAN_Messages_SendAll()
+static void SendHeartbeat(void);
+static void SendCommitHash(void);
+static void SendState(void);
+static void SendFaults(void);
+static void SendShuntCurrent(void);
+static void SendLvCurrent(void);
+static void SendSuppVoltage(void);
+static void SendDcdcTemp(void);
+static void SendMotorPrecharge(void);
+static void SendMpptPrecharge(void);
+
+// TX messages
+// Every message the HVC sends. FSM_Run() calls CAN_Messages_SendAll() every pass,
+// which sends the periodic ones when their interval is up. LvPowerup() sends the
+// LV power-up request itself. Each Send*() function builds one message and
+// queues it; the CAN driver sends it from the queue.
 
 /**
  * @brief Sends every periodic HVC CAN message whose interval has elapsed.
  *
  * Heartbeat and commit hash every HVC_HEARTBEAT_INTERVAL_MS.
  * State, faults, and measurements every CAN_TX_INTERVAL_MS.
- * Call from FsmRun() every pass.
+ * Call from FSM_Run() every pass.
  *
  * Side effects: updates g_ticks.hvc_heartbeat and g_ticks.can_tx.
  */
-void CanMessagesSendAll(void)
-{
-    if (TimerElapsed(HVC_HEARTBEAT_INTERVAL_MS, &g_ticks.hvc_heartbeat))
-    {
+void CAN_Messages_SendAll(void) {
+    if (FSM_TimerElapsed(HVC_HEARTBEAT_INTERVAL_MS, &g_ticks.hvc_heartbeat)) {
         SendHeartbeat();
         SendCommitHash();
     }
 
-    if (TimerElapsed(CAN_TX_INTERVAL_MS, &g_ticks.can_tx))
-    {
+    if (FSM_TimerElapsed(CAN_TX_INTERVAL_MS, &g_ticks.can_tx)) {
         SendState();
         SendFaults();
         SendShuntCurrent();
@@ -68,8 +75,7 @@ void CanMessagesSendAll(void)
  *
  * Contains a counter that increases by 1 on every send.
  */
-void SendHeartbeat(void)
-{
+static void SendHeartbeat(void) {
     static uint32_t heartbeat_count = 0U;
     CAN_TxMessage_t tx_message = {0};
 
@@ -90,8 +96,7 @@ void SendHeartbeat(void)
  *
  * Lets you confirm over CAN which firmware is flashed. Data is packed by GitVersionPackCan().
  */
-void SendCommitHash(void)
-{
+static void SendCommitHash(void) {
     CAN_TxMessage_t tx_message = {0};
 
     tx_message.tx_header.StdId = COMMIT_HASH_ID;
@@ -105,8 +110,7 @@ void SendCommitHash(void)
 /**
  * @brief Sends the current FSM state (STATE_ID).
  */
-void SendState(void)
-{
+static void SendState(void) {
     CAN_TxMessage_t tx_message = {0};
 
     tx_message.tx_header.StdId = STATE_ID;
@@ -123,8 +127,7 @@ void SendState(void)
  * Bits follow FaultFlags (hvc_types.h) in order, starting at data[0] bit 7.
  * data[2] bits 1-0 are free.
  */
-void SendFaults(void)
-{
+static void SendFaults(void) {
     CAN_TxMessage_t tx_message = {0};
 
     tx_message.tx_header.StdId = FAULT_ID;
@@ -167,10 +170,9 @@ void SendFaults(void)
  *
  * Side effects: starts a new shunt read over I2C.
  */
-void SendShuntCurrent(void)
-{
-    Shunt_Read_Shunt_Voltage(); // Starts a new shunt read
-    int32_t current_ma = Shunt_Get_Shunt_Current_mA(); // Most recently calculated current
+static void SendShuntCurrent(void) {
+    SHUNT_ReadShuntVoltage(); // Starts a new shunt read
+    int32_t current_ma = SHUNT_GetShuntCurrent_mA(); // Most recently calculated current
     CAN_TxMessage_t tx_message = {0};
 
     tx_message.tx_header.StdId = SHUNT_CURRENT_ID;
@@ -189,8 +191,7 @@ void SendShuntCurrent(void)
  *
  * Current is in mA, from g_shared.adc (converted in adc_runtime).
  */
-void SendLvCurrent(void)
-{
+static void SendLvCurrent(void) {
     int16_t lv_current_ma = (int16_t)g_shared.adc.lv_current_ma;
     CAN_TxMessage_t tx_message = {0};
 
@@ -208,8 +209,7 @@ void SendLvCurrent(void)
  *
  * Voltage is in mV, from g_shared.adc (converted in adc_runtime).
  */
-void SendSuppVoltage(void)
-{
+static void SendSuppVoltage(void) {
     uint32_t supp_mv = (uint32_t)g_shared.adc.supp_mv;
     CAN_TxMessage_t tx_message = {0};
 
@@ -229,8 +229,7 @@ void SendSuppVoltage(void)
  *
  * Temperature is in milli-degrees C, from g_shared.adc (converted in adc_runtime).
  */
-void SendDcdcTemp(void)
-{
+static void SendDcdcTemp(void) {
     int32_t dcdc_temp_mc = g_shared.adc.dcdc_temp_mc;
     CAN_TxMessage_t tx_message = {0};
 
@@ -250,8 +249,7 @@ void SendDcdcTemp(void)
  *
  * HV-side voltage in mV, from g_shared.adc (converted in adc_runtime).
  */
-void SendMotorPrecharge(void)
-{
+static void SendMotorPrecharge(void) {
     int32_t motor_precharge_mv = g_shared.adc.motor_precharge_mv;
     CAN_TxMessage_t tx_message = {0};
 
@@ -271,8 +269,7 @@ void SendMotorPrecharge(void)
  *
  * HV-side voltage in mV, from g_shared.adc (converted in adc_runtime).
  */
-void SendMpptPrecharge(void)
-{
+static void SendMpptPrecharge(void) {
     int32_t mppt_precharge_mv = g_shared.adc.mppt_precharge_mv;
     CAN_TxMessage_t tx_message = {0};
 
@@ -292,8 +289,7 @@ void SendMpptPrecharge(void)
  *
  * LvPowerup() resends this every LV_POWERUP_RETRY_MS until LV_POWERUP_ACK_ID comes back.
  */
-void CanMessagesSendLvPowerupRequest(void)
-{
+void CAN_Messages_SendLvPowerupRequest(void) {
     static uint32_t request_count = 0U; // Requests sent so far, for the debug output
     CAN_TxMessage_t tx_message = {0};
 
@@ -312,8 +308,7 @@ void CanMessagesSendLvPowerupRequest(void)
 /**
  * @brief Template for a new TX message. Copy it, then set the ID, DLC, and data.
  */
-void SendMessageTemplate(void)
-{
+void CAN_Messages_SendMessageTemplate(void) {
     CAN_TxMessage_t tx_message = {0};
 
     // Note: replace with actual values
@@ -325,15 +320,13 @@ void SendMessageTemplate(void)
     CAN_QueueTxMessage(&tx_message);
 }
 
-/*==============================================================================
- * === RX MESSAGES =============================================================
- * What the HVC does with each message it receives. The CAN driver calls
- * CanMessagesHandleRx() from the CAN receive interrupt, so it only writes
- * g_shared and g_fault_flags; the FSM acts on them in the main loop.
- * CAN_RX_IDS lists the IDs the RX filters let in.
- *============================================================================*/
+// RX messages
+// What the HVC does with each message it receives. The CAN driver calls
+// CAN_Messages_HandleRx() from the CAN receive interrupt, so it only writes
+// g_shared and g_fault_flags; the FSM acts on them in the main loop.
+// CAN_RX_IDS lists the IDs the RX filters let in.
 
-// Every ID CanMessagesHandleRx() handles, in RX CAN IDS order. Keep the two in sync: an ID
+// Every ID CAN_Messages_HandleRx() handles, in RX CAN IDS order. Keep the two in sync: an ID
 // missing here is dropped by the RX filters and never reaches the handler.
 const uint16_t CAN_RX_IDS[] = {
     TEL_HEARTBEAT_ID,
@@ -355,10 +348,8 @@ const uint16_t CAN_RX_IDS[] = {
  *
  * @param rx_message The received message.
  */
-void CanMessagesHandleRx(const CAN_RxMessage_t* rx_message)
-{
-    switch (rx_message->rx_header.StdId)
-    {
+void CAN_Messages_HandleRx(const CAN_RxMessage_t *rx_message) {
+    switch (rx_message->rx_header.StdId) {
         case TEL_HEARTBEAT_ID:
             g_shared.tel_heartbeat_received = true;
             break;

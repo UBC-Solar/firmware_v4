@@ -8,12 +8,12 @@
  * the LV boards, then monitors. Any fault goes to STATE_FAULT, which opens every contactor
  * and stays there until the HVC is reset.
  *
- * Sections, same order as fsm.h:
+ * Sections, in order:
  *   GLOBAL VARIABLES:    the HVC-wide variables (types in hvc_types.h).
- *   PUBLIC API:          FsmInit() and FsmRun(), called from hvc_main.c.
+ *   PUBLIC API:          FSM_Init() and FSM_Run(), called from hvc_main.c.
  *   STATES:              one function per FsmState, in state order.
  *   INTERRUPT CALLBACKS: called from the fault pin interrupts, in fault flag order.
- *   HELPERS:             small functions used by the states and FsmRun().
+ *   HELPERS:             small functions used by the states and FSM_Run().
  */
 
 #include "fsm.h"
@@ -34,23 +34,40 @@
 #include "debug_output.h"
 #include "hvc_defs.h"
 
-/*==============================================================================
- * === GLOBAL VARIABLES ========================================================
- * The one variable of each HVC-wide type (types in hvc_types.h). Any file that
- * includes fsm.h can use them. g_fault_flags is volatile because interrupts
- * write it. g_state stays volatile to be safe, but only the main loop writes it.
- * g_shared marks its interrupt-written fields volatile.
- *============================================================================*/
+// States, in state order
+static void Reset(void);
+static void TelStartup(void);
+static void MstHandshake(void);
+static void MstStatusCheck(void);
+static void FansPowerup(void);
+static void HvConnect(void);
+static void OpenDischargeRelay(void);
+static void MotorPrecharge(void);
+static void MpptPrecharge(void);
+static void CloseLlim(void);
+static void CloseHlim(void);
+static void LvPowerup(void);
+static void Monitoring(void);
+static void Fault(void);
+
+// Fault, heartbeat, and supp battery checks
+static void CheckStartupFaultPins(void);
+static void CheckHeartbeats(void);
+static void CheckSuppVoltage(void);
+
+// Global variables
+// The one variable of each HVC-wide type (types in hvc_types.h). Any file that
+// includes fsm.h can use them. g_fault_flags is volatile because interrupts
+// write it. g_state stays volatile to be safe, but only the main loop writes it.
+// g_shared marks its interrupt-written fields volatile.
 
 volatile FsmState   g_state;
 volatile FaultFlags g_fault_flags;
 SharedData          g_shared;
 Ticks               g_ticks;
 
-/*==============================================================================
- * === PUBLIC API ==============================================================
- * Called from hvc_main.c: FsmInit() once at startup, FsmRun() every pass.
- *============================================================================*/
+// Public API
+// Called from hvc_main.c: FSM_Init() once at startup, FSM_Run() every pass.
 
 /**
  * @brief Sets the starting FSM state. Call once from HVC_Init().
@@ -60,16 +77,12 @@ Ticks               g_ticks;
  *
  * Side effects: writes g_state; may set g_fault_flags.watchdog_fired; clears the reset-cause flags.
  */
-void FsmInit(void)
-{
-    if (RCC->CSR & RCC_CSR_IWDGRSTF)
-    {
+void FSM_Init(void) {
+    if (RCC->CSR & RCC_CSR_IWDGRSTF) {
         __HAL_RCC_CLEAR_RESET_FLAGS();
         g_fault_flags.watchdog_fired = true;
         g_state = STATE_FAULT;
-    }
-    else
-    {
+    } else {
         g_state = STATE_RESET;
     }
 }
@@ -77,32 +90,29 @@ void FsmInit(void)
 /**
  * @brief Runs one pass of the FSM. Call from HVC_Main() every pass.
  *
- * In order: prints the debug output (DebugOutputRun(), debug_output.c), checks heartbeat
+ * In order: prints the debug output (DEBUG_Output_Run(), debug_output.c), checks heartbeat
  * timeouts, switches to STATE_FAULT if any fault flag is set, sends periodic CAN messages,
  * updates the supp-low LED, then runs the current state's function.
  *
  * A fault reaches STATE_FAULT one of two ways. A state that finds a fault sets its flag and goes
- * to STATE_FAULT itself, in the same pass. An interrupt only sets a flag; the AnyFaultActive()
+ * to STATE_FAULT itself, in the same pass. An interrupt only sets a flag; the FSM_AnyFaultActive()
  * check here moves to STATE_FAULT on the next pass.
  *
  * Side effects: may set heartbeat timeout flags and change g_state.
  */
-void FsmRun(void)
-{
-    DebugOutputRun(); // First, so it sees this pass's flags before anything clears them
+void FSM_Run(void) {
+    DEBUG_Output_Run(); // First, so it sees this pass's flags before anything clears them
 
     CheckHeartbeats();
 
-    if (AnyFaultActive())
-    {
+    if (FSM_AnyFaultActive()) {
         g_state = STATE_FAULT;
     }
 
-    CanMessagesSendAll();
+    CAN_Messages_SendAll();
     CheckSuppVoltage();
 
-    switch (g_state)
-    {
+    switch (g_state) {
         case STATE_RESET:
             Reset();
             break;
@@ -149,20 +159,18 @@ void FsmRun(void)
     }
 }
 
-/*==============================================================================
- * === STATES ==================================================================
- * One function per FsmState, in state order. FsmRun() calls the current state's
- * function every pass. Each state's doc lists its exit conditions and the state
- * each one goes to. Every state change restarts g_ticks.state_timeout and
- * g_ticks.state_delay, so the next state's timers start from zero.
- *============================================================================*/
+// States
+// One function per FsmState, in state order. FSM_Run() calls the current state's
+// function every pass. Each state's doc lists its exit conditions and the state
+// each one goes to. Every state change restarts g_ticks.state_timeout and
+// g_ticks.state_delay, so the next state's timers start from zero.
 
 /**
  * @brief Checks the fault inputs already active at power-up, then puts every output in its safe
  *        starting position.
  *
  * Runs once, on the first pass. CheckStartupFaultPins() runs first, before any output is set,
- * and reads this pass's pins, after BenchFakeInputs(). Then opens all contactors, sets
+ * and reads this pass's pins, after TESTS_BenchFakeInputs(). Then opens all contactors, sets
  * DISCHARGE_TOGGLE_OFF low (the discharge relay stays closed, see OpenDischargeRelay()), turns
  * fans, MPPT, and DIST off, and sets IMD_CTRL.
  *
@@ -172,11 +180,10 @@ void FsmRun(void)
  * Exit Condition: a fault flag set, by CheckStartupFaultPins() or before (immediately).
  * Exit State: STATE_FAULT
  */
-void Reset(void)
-{
+static void Reset(void) {
     CheckStartupFaultPins();
 
-    OpenAllContactors();
+    FSM_OpenAllContactors();
     GPIO_Write(DISCHARGE_TOGGLE_OFF_GPIO_Port, DISCHARGE_TOGGLE_OFF_Pin, GPIO_PIN_RESET);
     GPIO_Write(FAN_CTRL_GPIO_Port,             FAN_CTRL_Pin,             GPIO_PIN_RESET);
     GPIO_Write(MPPT_CTRL_GPIO_Port,            MPPT_CTRL_Pin,            GPIO_PIN_RESET);
@@ -185,12 +192,9 @@ void Reset(void)
 
     g_ticks.state_timeout = HAL_GetTick();
     g_ticks.state_delay = HAL_GetTick();
-    if (AnyFaultActive())
-    {
+    if (FSM_AnyFaultActive()) {
         g_state = STATE_FAULT; // Straight to STATE_FAULT, without a pass in STATE_TEL_STARTUP
-    }
-    else
-    {
+    } else {
         g_state = STATE_TEL_STARTUP;
     }
 }
@@ -206,19 +210,16 @@ void Reset(void)
  * Exit Condition: TEL_STARTUP_TIMEOUT_MS elapsed.
  * Exit State: STATE_FAULT
  */
-void TelStartup(void)
-{
+static void TelStartup(void) {
     static bool dist_powered = false;
 
-    if (!dist_powered)
-    {
+    if (!dist_powered) {
         GPIO_Write(DIST_CTRL_GPIO_Port, DIST_CTRL_Pin, GPIO_PIN_SET);
         dist_powered = true;
         PRINT_STEP("DIST on, waiting for TEL heartbeat");
     }
 
-    if (g_shared.tel_heartbeat_received)
-    {
+    if (g_shared.tel_heartbeat_received) {
         g_shared.tel_heartbeat_received = false;
         dist_powered = false;
         g_shared.tel_dist_heartbeat_check_enabled = true;
@@ -230,8 +231,7 @@ void TelStartup(void)
         return;
     }
 
-    if (TimerElapsed(TEL_STARTUP_TIMEOUT_MS, &g_ticks.state_timeout))
-    {
+    if (FSM_TimerElapsed(TEL_STARTUP_TIMEOUT_MS, &g_ticks.state_timeout)) {
         dist_powered = false;
         g_fault_flags.tel_startup_timeout = true;
         g_state = STATE_FAULT;
@@ -252,18 +252,15 @@ void TelStartup(void)
  * Exit Condition: MST_HANDSHAKE_TIMEOUT_MS elapsed.
  * Exit State: STATE_FAULT
  */
-void MstHandshake(void)
-{
+static void MstHandshake(void) {
     static bool pin_went_high = false;
 
-    if (!pin_went_high && (g_shared.pins.mst_fault == GPIO_PIN_SET))
-    {
+    if (!pin_went_high && (g_shared.pins.mst_fault == GPIO_PIN_SET)) {
         pin_went_high = true;
         PRINT_STEP("MASTERBOARD_FAULT high (MST starting)");
     }
 
-    if (pin_went_high && (g_shared.pins.mst_fault == GPIO_PIN_RESET))
-    {
+    if (pin_went_high && (g_shared.pins.mst_fault == GPIO_PIN_RESET)) {
         g_shared.mst_irq_armed = true;
         PRINT_STEP("MASTERBOARD_FAULT low, MST fault check armed");
         pin_went_high = false;
@@ -273,8 +270,7 @@ void MstHandshake(void)
         return;
     }
 
-    if (TimerElapsed(MST_HANDSHAKE_TIMEOUT_MS, &g_ticks.state_timeout))
-    {
+    if (FSM_TimerElapsed(MST_HANDSHAKE_TIMEOUT_MS, &g_ticks.state_timeout)) {
         pin_went_high = false;
         g_fault_flags.mst_handshake_timeout = true;
         g_state = STATE_FAULT;
@@ -294,10 +290,8 @@ void MstHandshake(void)
  * Exit Condition: MST_STATUS_CHECK_TIMEOUT_MS elapsed.
  * Exit State: STATE_FAULT
  */
-void MstStatusCheck(void)
-{
-    if (g_shared.mst_healthy)
-    {
+static void MstStatusCheck(void) {
+    if (g_shared.mst_healthy) {
         PRINT_STEP("MST healthy, pack %ld mV", (long)g_shared.mst_pack_voltage_mv);
         g_shared.mst_heartbeat_check_enabled = true;
         g_ticks.mst_heartbeat = HAL_GetTick(); // Heartbeat timeout counts from now
@@ -307,8 +301,7 @@ void MstStatusCheck(void)
         return;
     }
 
-    if (TimerElapsed(MST_STATUS_CHECK_TIMEOUT_MS, &g_ticks.state_timeout))
-    {
+    if (FSM_TimerElapsed(MST_STATUS_CHECK_TIMEOUT_MS, &g_ticks.state_timeout)) {
         g_fault_flags.mst_status_check_timeout = true;
         g_state = STATE_FAULT;
         return;
@@ -323,20 +316,17 @@ void MstStatusCheck(void)
  * Exit Condition: FANS_FULL_SPEED_DURATION_MS elapsed.
  * Exit State: STATE_HV_CONNECT
  */
-void FansPowerup(void)
-{
+static void FansPowerup(void) {
     static bool full_speed_started = false;
 
-    if (!full_speed_started)
-    {
+    if (!full_speed_started) {
         GPIO_Write(FAN_CTRL_GPIO_Port, FAN_CTRL_Pin, GPIO_PIN_SET);
         __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_3, FANS_FULL_SPEED);
         full_speed_started = true;
         PRINT_STEP("fans at full speed");
     }
 
-    if (TimerElapsed(FANS_FULL_SPEED_DURATION_MS, &g_ticks.state_delay))
-    {
+    if (FSM_TimerElapsed(FANS_FULL_SPEED_DURATION_MS, &g_ticks.state_delay)) {
         __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_3, FANS_HALF_SPEED);
         PRINT_STEP("fans at half speed");
         full_speed_started = false;
@@ -361,32 +351,28 @@ void FansPowerup(void)
  * Exit Condition: HV_CONNECT_TIMEOUT_MS elapsed.
  * Exit State: STATE_FAULT
  */
-void HvConnect(void)
-{
+static void HvConnect(void) {
     static bool neg_closed = false;
     static bool pos_closed = false;
 
     // Each wait restarts g_ticks.state_delay when it ends, so the next wait starts from there
-    if (!neg_closed && TimerElapsed(CONTACTOR_SETTLE_MS, &g_ticks.state_delay))
-    {
+    if (!neg_closed && FSM_TimerElapsed(CONTACTOR_SETTLE_MS, &g_ticks.state_delay)) {
         GPIO_Write(NEG_CTRL_GPIO_Port, NEG_CTRL_Pin, CONTACTOR_CLOSE);
         neg_closed = true;
         PRINT_STEP("NEG closed");
     }
 
-    if (neg_closed && !pos_closed && TimerElapsed(CONTACTOR_SETTLE_MS, &g_ticks.state_delay))
-    {
+    if (neg_closed && !pos_closed && FSM_TimerElapsed(CONTACTOR_SETTLE_MS, &g_ticks.state_delay)) {
         GPIO_Write(POS_CTRL_GPIO_Port, POS_CTRL_Pin, CONTACTOR_CLOSE);
         pos_closed = true;
         PRINT_STEP("POS closed");
     }
 
-    // TimerElapsed() last, so it only runs once the pins are right (see TimerElapsed())
+    // FSM_TimerElapsed() last, so it only runs once the pins are right (see FSM_TimerElapsed())
     if (pos_closed &&
         (g_shared.pins.dcdc_active == GPIO_PIN_RESET) &&
         (g_shared.pins.supp_active == GPIO_PIN_SET) &&
-        TimerElapsed(CONTACTOR_SETTLE_MS, &g_ticks.state_delay))
-    {
+        FSM_TimerElapsed(CONTACTOR_SETTLE_MS, &g_ticks.state_delay)) {
         g_shared.dcdc_irq_armed = true;
         PRINT_STEP("DCDC took over from supp, DCDC fault check armed");
         neg_closed = false;
@@ -397,8 +383,7 @@ void HvConnect(void)
         return;
     }
 
-    if (TimerElapsed(HV_CONNECT_TIMEOUT_MS, &g_ticks.state_timeout))
-    {
+    if (FSM_TimerElapsed(HV_CONNECT_TIMEOUT_MS, &g_ticks.state_timeout)) {
         neg_closed = false;
         pos_closed = false;
         g_fault_flags.hv_connect_timeout = true;
@@ -425,13 +410,11 @@ void HvConnect(void)
  * Exit Condition: OPEN_DISCHARGE_RELAY_TIMEOUT_MS elapsed before the motor side read discharged.
  * Exit State: STATE_FAULT
  */
-void OpenDischargeRelay(void)
-{
+static void OpenDischargeRelay(void) {
     static bool pulse_started = false;
 
     if (!pulse_started &&
-        ((int64_t)g_shared.adc.motor_precharge_mv < DISCHARGE_COMPLETE_MV))
-    {
+        ((int64_t)g_shared.adc.motor_precharge_mv < DISCHARGE_COMPLETE_MV)) {
         GPIO_Write(DISCHARGE_TOGGLE_OFF_GPIO_Port, DISCHARGE_TOGGLE_OFF_Pin, GPIO_PIN_SET);
         pulse_started = true;
         g_ticks.state_delay = HAL_GetTick();
@@ -439,8 +422,7 @@ void OpenDischargeRelay(void)
                    (long)g_shared.adc.motor_precharge_mv);
     }
 
-    if (pulse_started && TimerElapsed(DISCHARGE_RELAY_PULSE_MS, &g_ticks.state_delay))
-    {
+    if (pulse_started && FSM_TimerElapsed(DISCHARGE_RELAY_PULSE_MS, &g_ticks.state_delay)) {
         GPIO_Write(DISCHARGE_TOGGLE_OFF_GPIO_Port, DISCHARGE_TOGGLE_OFF_Pin, GPIO_PIN_RESET);
         PRINT_STEP("discharge relay open");
         pulse_started = false;
@@ -450,8 +432,8 @@ void OpenDischargeRelay(void)
         return;
     }
 
-    if (!pulse_started && TimerElapsed(OPEN_DISCHARGE_RELAY_TIMEOUT_MS, &g_ticks.state_timeout))
-    {
+    if (!pulse_started &&
+        FSM_TimerElapsed(OPEN_DISCHARGE_RELAY_TIMEOUT_MS, &g_ticks.state_timeout)) {
         g_fault_flags.open_discharge_relay_timeout = true;
         g_state = STATE_FAULT;
         return;
@@ -468,23 +450,20 @@ void OpenDischargeRelay(void)
  * Exit Condition: MOTOR_PRECHARGE_TIMEOUT_MS elapsed.
  * Exit State: STATE_FAULT
  */
-void MotorPrecharge(void)
-{
+static void MotorPrecharge(void) {
     static bool precharge_started = false;
 
-    if (!precharge_started)
-    {
+    if (!precharge_started) {
         GPIO_Write(MOTOR_PC_CTRL_GPIO_Port, MOTOR_PC_CTRL_Pin, CONTACTOR_CLOSE);
         precharge_started = true;
         PRINT_STEP("motor precharge started (target %ld mV)",
                    (long)((int64_t)g_shared.mst_pack_voltage_mv * PRECHARGE_PCT_OF_PACK / 100));
     }
 
-    // TimerElapsed() last, so it only runs once the voltage is reached (see TimerElapsed())
+    // FSM_TimerElapsed() last, so it only runs once the voltage is reached (see FSM_TimerElapsed())
     if (((int64_t)g_shared.adc.motor_precharge_mv >=
          (int64_t)g_shared.mst_pack_voltage_mv * PRECHARGE_PCT_OF_PACK / 100) &&
-        TimerElapsed(MOTOR_PRECHARGE_MIN_MS, &g_ticks.state_delay))
-    {
+        FSM_TimerElapsed(MOTOR_PRECHARGE_MIN_MS, &g_ticks.state_delay)) {
         PRINT_STEP("motor precharge done (%ld mV)", (long)g_shared.adc.motor_precharge_mv);
         precharge_started = false;
         g_ticks.state_timeout = HAL_GetTick();
@@ -493,8 +472,7 @@ void MotorPrecharge(void)
         return;
     }
 
-    if (TimerElapsed(MOTOR_PRECHARGE_TIMEOUT_MS, &g_ticks.state_timeout))
-    {
+    if (FSM_TimerElapsed(MOTOR_PRECHARGE_TIMEOUT_MS, &g_ticks.state_timeout)) {
         precharge_started = false;
         g_fault_flags.motor_precharge_timeout = true;
         g_state = STATE_FAULT;
@@ -512,23 +490,20 @@ void MotorPrecharge(void)
  * Exit Condition: MPPT_PRECHARGE_TIMEOUT_MS elapsed.
  * Exit State: STATE_FAULT
  */
-void MpptPrecharge(void)
-{
+static void MpptPrecharge(void) {
     static bool precharge_started = false;
 
-    if (!precharge_started)
-    {
+    if (!precharge_started) {
         GPIO_Write(MPPT_PC_CTRL_GPIO_Port, MPPT_PC_CTRL_Pin, CONTACTOR_CLOSE);
         precharge_started = true;
         PRINT_STEP("MPPT precharge started (target %ld mV)",
                    (long)((int64_t)g_shared.mst_pack_voltage_mv * PRECHARGE_PCT_OF_PACK / 100));
     }
 
-    // TimerElapsed() last, so it only runs once the voltage is reached (see TimerElapsed())
+    // FSM_TimerElapsed() last, so it only runs once the voltage is reached (see FSM_TimerElapsed())
     if (((int64_t)g_shared.adc.mppt_precharge_mv >=
          (int64_t)g_shared.mst_pack_voltage_mv * PRECHARGE_PCT_OF_PACK / 100) &&
-        TimerElapsed(MPPT_PRECHARGE_MIN_MS, &g_ticks.state_delay))
-    {
+        FSM_TimerElapsed(MPPT_PRECHARGE_MIN_MS, &g_ticks.state_delay)) {
         PRINT_STEP("MPPT precharge done (%ld mV)", (long)g_shared.adc.mppt_precharge_mv);
         precharge_started = false;
         g_ticks.state_timeout = HAL_GetTick();
@@ -537,8 +512,7 @@ void MpptPrecharge(void)
         return;
     }
 
-    if (TimerElapsed(MPPT_PRECHARGE_TIMEOUT_MS, &g_ticks.state_timeout))
-    {
+    if (FSM_TimerElapsed(MPPT_PRECHARGE_TIMEOUT_MS, &g_ticks.state_timeout)) {
         precharge_started = false;
         g_fault_flags.mppt_precharge_timeout = true;
         g_state = STATE_FAULT;
@@ -552,12 +526,10 @@ void MpptPrecharge(void)
  * Exit Condition: CONTACTOR_SETTLE_MS elapsed after closing LLIM.
  * Exit State: STATE_CLOSE_HLIM
  */
-void CloseLlim(void)
-{
+static void CloseLlim(void) {
     GPIO_Write(LLIM_CTRL_GPIO_Port, LLIM_CTRL_Pin, CONTACTOR_CLOSE);
 
-    if (TimerElapsed(CONTACTOR_SETTLE_MS, &g_ticks.state_delay))
-    {
+    if (FSM_TimerElapsed(CONTACTOR_SETTLE_MS, &g_ticks.state_delay)) {
         GPIO_Write(MOTOR_PC_CTRL_GPIO_Port, MOTOR_PC_CTRL_Pin, CONTACTOR_OPEN);
         PRINT_STEP("LLIM closed, motor precharge open");
         g_ticks.state_timeout = HAL_GetTick();
@@ -572,12 +544,10 @@ void CloseLlim(void)
  * Exit Condition: CONTACTOR_SETTLE_MS elapsed after closing HLIM.
  * Exit State: STATE_LV_POWERUP
  */
-void CloseHlim(void)
-{
+static void CloseHlim(void) {
     GPIO_Write(HLIM_CTRL_GPIO_Port, HLIM_CTRL_Pin, CONTACTOR_CLOSE);
 
-    if (TimerElapsed(CONTACTOR_SETTLE_MS, &g_ticks.state_delay))
-    {
+    if (FSM_TimerElapsed(CONTACTOR_SETTLE_MS, &g_ticks.state_delay)) {
         GPIO_Write(MPPT_PC_CTRL_GPIO_Port, MPPT_PC_CTRL_Pin, CONTACTOR_OPEN);
         GPIO_Write(MPPT_CTRL_GPIO_Port,    MPPT_CTRL_Pin,    GPIO_PIN_SET);
         PRINT_STEP("HLIM closed, MPPT precharge open, MPPT on");
@@ -599,15 +569,12 @@ void CloseHlim(void)
  * Exit Condition: LV_POWERUP_TIMEOUT_MS elapsed.
  * Exit State: STATE_FAULT
  */
-void LvPowerup(void)
-{
-    if (TimerElapsed(LV_POWERUP_RETRY_MS, &g_ticks.lv_powerup_retry))
-    {
-        CanMessagesSendLvPowerupRequest();
+static void LvPowerup(void) {
+    if (FSM_TimerElapsed(LV_POWERUP_RETRY_MS, &g_ticks.lv_powerup_retry)) {
+        CAN_Messages_SendLvPowerupRequest();
     }
 
-    if (g_shared.lv_powerup_received)
-    {
+    if (g_shared.lv_powerup_received) {
         g_shared.lv_powerup_received = false;
         PRINT_STEP("LV power-up ack received");
         g_ticks.state_timeout = HAL_GetTick();
@@ -616,8 +583,7 @@ void LvPowerup(void)
         return;
     }
 
-    if (TimerElapsed(LV_POWERUP_TIMEOUT_MS, &g_ticks.state_timeout))
-    {
+    if (FSM_TimerElapsed(LV_POWERUP_TIMEOUT_MS, &g_ticks.state_timeout)) {
         g_fault_flags.lv_powerup_timeout = true;
         g_state = STATE_FAULT;
         return;
@@ -627,15 +593,13 @@ void LvPowerup(void)
 /**
  * @brief Normal driving state. Checks the DCDC temperature.
  *
- * Other faults (ESTOP, IMD, MST, DIST, DCDC, current, heartbeats) are caught by FsmRun().
+ * Other faults (ESTOP, IMD, MST, DIST, DCDC, current, heartbeats) are caught by FSM_Run().
  *
  * Exit Condition: DCDC temperature above DCDC_TEMP_MAX_MC.
  * Exit State: STATE_FAULT
  */
-void Monitoring(void)
-{
-    if (g_shared.adc.dcdc_temp_mc > DCDC_TEMP_MAX_MC)
-    {
+static void Monitoring(void) {
+    if (g_shared.adc.dcdc_temp_mc > DCDC_TEMP_MAX_MC) {
         g_fault_flags.dcdc_overtemp = true;
         g_state = STATE_FAULT;
         return;
@@ -650,30 +614,26 @@ void Monitoring(void)
  *
  * Side effects: disarms the DCDC_ACTIVE interrupt (dcdc_irq_armed).
  */
-void Fault(void)
-{
+static void Fault(void) {
     g_shared.dcdc_irq_armed = false; // Opening the contactors drops the DCDC: not a DCDC fault
-    OpenAllContactors();
+    FSM_OpenAllContactors();
     // Discharge relay coil off, in case STATE_FAULT came mid-pulse (see OpenDischargeRelay())
     GPIO_Write(DISCHARGE_TOGGLE_OFF_GPIO_Port, DISCHARGE_TOGGLE_OFF_Pin, GPIO_PIN_RESET);
     GPIO_Write(MPPT_CTRL_GPIO_Port, MPPT_CTRL_Pin, GPIO_PIN_RESET);
     GPIO_Write(DIST_CTRL_GPIO_Port, DIST_CTRL_Pin, GPIO_PIN_SET);
 
-    if (TimerElapsed(FAULT_LED_BLINK_MS, &g_ticks.fault_led))
-    {
+    if (FSM_TimerElapsed(FAULT_LED_BLINK_MS, &g_ticks.fault_led)) {
         GPIO_Toggle(FAULT_LED_GPIO_Port, FAULT_LED_Pin);
     }
 }
 
-/*==============================================================================
- * === INTERRUPT CALLBACKS =====================================================
- * Called from the fault pin interrupts (HAL_GPIO_EXTI_Callback() in
- * gpio_driver.c) when a fault input goes high, in fault flag order. Each one only
- * sets its fault flag (EstopCallback() also turns on ESTOP_LED): FsmRun() sees
- * the flag and goes to STATE_FAULT on the next pass. Nothing prints here: the
- * fault is printed from the main loop (debug_output.c). MstFaultCallback() and
- * DcdcFaultCallback() do nothing until the FSM arms them.
- *============================================================================*/
+// Interrupt callbacks
+// Called from the fault pin interrupts (HAL_GPIO_EXTI_Callback() in
+// gpio_driver.c) when a fault input goes high, in fault flag order. Each one only
+// sets its fault flag (FSM_EstopCallback() also turns on ESTOP_LED): FSM_Run() sees
+// the flag and goes to STATE_FAULT on the next pass. Nothing prints here: the
+// fault is printed from the main loop (debug_output.c). FSM_MstFaultCallback() and
+// FSM_DcdcFaultCallback() do nothing until the FSM arms them.
 
 /**
  * @brief Handles ESTOP going high: turns on ESTOP_LED and sets the estop fault.
@@ -682,8 +642,7 @@ void Fault(void)
  *
  * Side effects: sets g_fault_flags.estop.
  */
-void EstopCallback(void)
-{
+void FSM_EstopCallback(void) {
     GPIO_Write(ESTOP_LED_GPIO_Port, ESTOP_LED_Pin, GPIO_PIN_SET);
     g_fault_flags.estop = true;
 }
@@ -695,8 +654,7 @@ void EstopCallback(void)
  *
  * Side effects: sets g_fault_flags.imd_fault.
  */
-void ImdFaultCallback(void)
-{
+void FSM_ImdFaultCallback(void) {
     g_fault_flags.imd_fault = true;
 }
 
@@ -710,10 +668,8 @@ void ImdFaultCallback(void)
  *
  * @param armed true to record the fault, false to ignore this edge.
  */
-void MstFaultCallback(bool armed)
-{
-    if (armed)
-    {
+void FSM_MstFaultCallback(bool armed) {
+    if (armed) {
         g_fault_flags.mst_fault = true;
     }
 }
@@ -726,14 +682,10 @@ void MstFaultCallback(bool armed)
  *
  * Side effects: sets g_fault_flags.overcurrent or g_fault_flags.reverse_current.
  */
-void HvCurrentAlertCallback(void)
-{
-    if (Shunt_IsOvercurrent())
-    {
+void FSM_HvCurrentAlertCallback(void) {
+    if (SHUNT_IsOvercurrent()) {
         g_fault_flags.overcurrent = true;
-    }
-    else
-    {
+    } else {
         g_fault_flags.reverse_current = true;
     }
 }
@@ -748,20 +700,16 @@ void HvCurrentAlertCallback(void)
  *
  * @param armed true to record the fault, false to ignore this edge.
  */
-void DcdcFaultCallback(bool armed)
-{
-    if (armed)
-    {
+void FSM_DcdcFaultCallback(bool armed) {
+    if (armed) {
         g_fault_flags.dcdc_fault = true;
     }
 }
 
-/*==============================================================================
- * === HELPERS =================================================================
- * Small functions used by the states and FsmRun(). Grouped by topic: general
- * ones first (Timing, Faults), then in hvc_defs.h order (Heartbeats,
- * Supplemental battery, Contactors). Debug output helpers are in debug_output.c.
- *============================================================================*/
+// Helpers
+// Small functions used by the states and FSM_Run(). Grouped by topic: general
+// ones first (Timing, Faults), then in hvc_defs.h order (Heartbeats,
+// Supplemental battery, Contactors). Debug output helpers are in debug_output.c.
 
 // --- Timing ---
 
@@ -776,10 +724,8 @@ void DcdcFaultCallback(bool armed)
  *                    Set to now when it returns true.
  * @return true if the interval has elapsed.
  */
-bool TimerElapsed(uint32_t interval_ms, uint32_t* last_tick)
-{
-    if (HAL_GetTick() - *last_tick >= interval_ms)
-    {
+bool FSM_TimerElapsed(uint32_t interval_ms, uint32_t *last_tick) {
+    if (HAL_GetTick() - *last_tick >= interval_ms) {
         *last_tick = HAL_GetTick();
         return true;
     }
@@ -795,14 +741,11 @@ bool TimerElapsed(uint32_t interval_ms, uint32_t* last_tick)
  *
  * @return true if at least one fault flag is set.
  */
-bool AnyFaultActive(void)
-{
-    const volatile bool* flag = (const volatile bool*)&g_fault_flags;
+bool FSM_AnyFaultActive(void) {
+    const volatile bool *flag = (const volatile bool*)&g_fault_flags;
 
-    for (uint32_t i = 0U; i < sizeof(g_fault_flags); i++)
-    {
-        if (flag[i])
-        {
+    for (uint32_t i = 0U; i < sizeof(g_fault_flags); i++) {
+        if (flag[i]) {
             return true;
         }
     }
@@ -821,24 +764,19 @@ bool AnyFaultActive(void)
  * Side effects: may set g_fault_flags.estop, imd_fault, overcurrent, reverse_current, or
  * supp_fault.
  */
-void CheckStartupFaultPins(void)
-{
+static void CheckStartupFaultPins(void) {
     // TODO: IMD will get a startup handshake like MST. Then skip it here and arm its interrupt
     // like mst_irq_armed.
-    if (g_shared.pins.estop == GPIO_PIN_SET)
-    {
-        EstopCallback();
+    if (g_shared.pins.estop == GPIO_PIN_SET) {
+        FSM_EstopCallback();
     }
-    if (g_shared.pins.imd_fault == GPIO_PIN_SET)
-    {
-        ImdFaultCallback();
+    if (g_shared.pins.imd_fault == GPIO_PIN_SET) {
+        FSM_ImdFaultCallback();
     }
-    if (g_shared.pins.hv_current_alert == GPIO_PIN_SET)
-    {
-        HvCurrentAlertCallback();
+    if (g_shared.pins.hv_current_alert == GPIO_PIN_SET) {
+        FSM_HvCurrentAlertCallback();
     }
-    if (g_shared.pins.supp_active == GPIO_PIN_SET)
-    {
+    if (g_shared.pins.supp_active == GPIO_PIN_SET) {
         g_fault_flags.supp_fault = true;
     }
 }
@@ -859,49 +797,39 @@ void CheckStartupFaultPins(void)
  * heartbeat timers, and may set g_fault_flags.tel_heartbeat_timeout, dist_heartbeat_timeout,
  * mst_heartbeat_timeout, or mst_unhealthy.
  */
-void CheckHeartbeats(void)
-{
-    if (g_shared.tel_dist_heartbeat_check_enabled)
-    {
+static void CheckHeartbeats(void) {
+    if (g_shared.tel_dist_heartbeat_check_enabled) {
         // A heartbeat received since the last pass restarts its timer
-        if (g_shared.tel_heartbeat_received)
-        {
+        if (g_shared.tel_heartbeat_received) {
             g_shared.tel_heartbeat_received = false;
             g_ticks.tel_heartbeat = HAL_GetTick();
         }
-        if (g_shared.dist_heartbeat_received)
-        {
+        if (g_shared.dist_heartbeat_received) {
             g_shared.dist_heartbeat_received = false;
             g_ticks.dist_heartbeat = HAL_GetTick();
         }
 
-        if (TimerElapsed(HEARTBEAT_TIMEOUT_MS, &g_ticks.tel_heartbeat))
-        {
+        if (FSM_TimerElapsed(HEARTBEAT_TIMEOUT_MS, &g_ticks.tel_heartbeat)) {
             g_fault_flags.tel_heartbeat_timeout = true;
         }
-        if (TimerElapsed(HEARTBEAT_TIMEOUT_MS, &g_ticks.dist_heartbeat))
-        {
+        if (FSM_TimerElapsed(HEARTBEAT_TIMEOUT_MS, &g_ticks.dist_heartbeat)) {
             g_fault_flags.dist_heartbeat_timeout = true;
         }
     }
 
-    if (g_shared.mst_heartbeat_check_enabled)
-    {
+    if (g_shared.mst_heartbeat_check_enabled) {
         // A heartbeat received since the last pass restarts its timer
-        if (g_shared.mst_heartbeat_received)
-        {
+        if (g_shared.mst_heartbeat_received) {
             g_shared.mst_heartbeat_received = false;
             g_ticks.mst_heartbeat = HAL_GetTick();
         }
 
-        if (TimerElapsed(HEARTBEAT_TIMEOUT_MS, &g_ticks.mst_heartbeat))
-        {
+        if (FSM_TimerElapsed(HEARTBEAT_TIMEOUT_MS, &g_ticks.mst_heartbeat)) {
             g_fault_flags.mst_heartbeat_timeout = true;
         }
     }
 
-    if (g_shared.mst_heartbeat_check_enabled && !g_shared.mst_healthy)
-    {
+    if (g_shared.mst_heartbeat_check_enabled && !g_shared.mst_healthy) {
         g_fault_flags.mst_unhealthy = true;
     }
 }
@@ -911,8 +839,7 @@ void CheckHeartbeats(void)
 /**
  * @brief Turns SUPP_LOW_LED on when the supplemental battery is below SUPP_LOW_THRESHOLD_MV.
  */
-void CheckSuppVoltage(void)
-{
+static void CheckSuppVoltage(void) {
     uint32_t supp_mv = (uint32_t)g_shared.adc.supp_mv;
 
     GPIO_PinState state = (supp_mv < SUPP_LOW_THRESHOLD_MV) ? GPIO_PIN_SET : GPIO_PIN_RESET;
@@ -926,8 +853,7 @@ void CheckSuppVoltage(void)
  *
  * Used by Reset(), Fault(), and Error_Handler() in main.c.
  */
-void OpenAllContactors(void)
-{
+void FSM_OpenAllContactors(void) {
     GPIO_Write(NEG_CTRL_GPIO_Port,      NEG_CTRL_Pin,      CONTACTOR_OPEN);
     GPIO_Write(POS_CTRL_GPIO_Port,      POS_CTRL_Pin,      CONTACTOR_OPEN);
     GPIO_Write(LLIM_CTRL_GPIO_Port,     LLIM_CTRL_Pin,     CONTACTOR_OPEN);

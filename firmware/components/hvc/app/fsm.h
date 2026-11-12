@@ -2,9 +2,8 @@
  * @file fsm.h
  * @brief Public interface for the HVC finite state machine
  *
- * Lists everything fsm.c defines, in the same sections and order (what each section is for
- * is explained in fsm.c). Include it to use the HVC-wide variables (g_state, g_fault_flags,
- * g_shared, g_ticks) or the helpers, such as TimerElapsed().
+ * Include it to use the HVC-wide variables (g_state, g_fault_flags, g_shared, g_ticks) or the
+ * public FSM functions. The states and internal checks are static in fsm.c.
  */
 
 #pragma once
@@ -16,72 +15,25 @@
 // HVC app
 #include "hvc_types.h"
 
-/*==============================================================================
- * === GLOBAL VARIABLES ========================================================
- * Defined in fsm.c.
- *============================================================================*/
+// HVC-wide variables, defined in fsm.c
 
 extern volatile FsmState   g_state;
 extern volatile FaultFlags g_fault_flags;
 extern SharedData          g_shared;
 extern Ticks               g_ticks;
 
-/*==============================================================================
- * === PUBLIC API ==============================================================
- * Implemented in fsm.c. Called from hvc_main.c.
- *============================================================================*/
+// Called from hvc_main.c
+void FSM_Init(void);
+void FSM_Run(void);
 
-void FsmInit(void);
-void FsmRun(void);
+// Called from the fault pin interrupts (gpio_driver.c)
+void FSM_EstopCallback(void);
+void FSM_ImdFaultCallback(void);
+void FSM_MstFaultCallback(bool armed);
+void FSM_HvCurrentAlertCallback(void);
+void FSM_DcdcFaultCallback(bool armed);
 
-/*==============================================================================
- * === STATES ==================================================================
- * Implemented in fsm.c.
- *============================================================================*/
-
-void Reset(void);
-void TelStartup(void);
-void MstHandshake(void);
-void MstStatusCheck(void);
-void FansPowerup(void);
-void HvConnect(void);
-void OpenDischargeRelay(void);
-void MotorPrecharge(void);
-void MpptPrecharge(void);
-void CloseLlim(void);
-void CloseHlim(void);
-void LvPowerup(void);
-void Monitoring(void);
-void Fault(void);
-
-/*==============================================================================
- * === INTERRUPT CALLBACKS =====================================================
- * Implemented in fsm.c.
- *============================================================================*/
-
-void EstopCallback(void);
-void ImdFaultCallback(void);
-void MstFaultCallback(bool armed);
-void HvCurrentAlertCallback(void);
-void DcdcFaultCallback(bool armed);
-
-/*==============================================================================
- * === HELPERS =================================================================
- * Implemented in fsm.c.
- *============================================================================*/
-
-// --- Timing ---
-bool TimerElapsed(uint32_t interval_ms, uint32_t* last_tick);
-
-// --- Faults ---
-bool AnyFaultActive(void);
-void CheckStartupFaultPins(void);
-
-// --- Heartbeats ---
-void CheckHeartbeats(void);
-
-// --- Supplemental battery ---
-void CheckSuppVoltage(void);
-
-// --- Contactors ---
-void OpenAllContactors(void);
+// Helpers used across the HVC app
+bool FSM_TimerElapsed(uint32_t interval_ms, uint32_t *last_tick);
+bool FSM_AnyFaultActive(void);
+void FSM_OpenAllContactors(void);

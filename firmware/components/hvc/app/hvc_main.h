@@ -11,16 +11,14 @@
 // HAL and CubeMX
 #include "stm32f1xx_hal.h" // The peripheral handle types (UART_HandleTypeDef, ...)
 
-/*==============================================================================
- * === PUBLIC API ==============================================================
- * Implemented in hvc_main.c. Called from cube main.c.
- *============================================================================*/
+// Public API
+// Implemented in hvc_main.c. Called from cube main.c.
 
 void HVC_Init(
-    UART_HandleTypeDef* uart2,
-    ADC_HandleTypeDef* adc1,
-    TIM_HandleTypeDef* adc_trigger_tim3,
-    TIM_HandleTypeDef* fan_pwm_tim4,
-    I2C_HandleTypeDef* shunt_i2c1,
-    CAN_HandleTypeDef* can);
+    UART_HandleTypeDef *uart2,
+    ADC_HandleTypeDef *adc1,
+    TIM_HandleTypeDef *adc_trigger_tim3,
+    TIM_HandleTypeDef *fan_pwm_tim4,
+    I2C_HandleTypeDef *shunt_i2c1,
+    CAN_HandleTypeDef *can);
 void HVC_Main(void);

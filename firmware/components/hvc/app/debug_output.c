@@ -4,7 +4,7 @@
  *
  * Every HVC app print goes through a PRINT_* macro (debug_output.h), one per kind of message.
  * Each kind has a SHOW_* switch in hvc_defs.h DEBUG OUTPUT, and every line starts with its tag:
- *   [INIT]               firmware version, reset cause, init done (DebugOutputInit())
+ *   [INIT]               firmware version, reset cause, init done (DEBUG_Output_Init())
  *   [BENCH]              bench overrides on at startup, fake board events (tests.c)
  *   [TEST]               hardware test running, its results (tests.c)
  *   [STATE]              every state change (here)
@@ -23,8 +23,8 @@
  *   Each line is one print call, so lines never mix. (Driver and runtime prints are not
  *   tagged. i2c_driver.c can print from its interrupt, so its line can land inside another.)
  *
- * Sections, same order as debug_output.h (which also has the PRINT_* macros):
- *   PUBLIC API: DebugOutputInit() (from HVC_Init()) and DebugOutputRun() (from FsmRun()).
+ * Sections, in order:
+ *   PUBLIC API: DEBUG_Output_Init() (from HVC_Init()) and DEBUG_Output_Run() (from FSM_Run()).
  *   HELPERS:    events, reports, dump, names.
  */
 
@@ -48,44 +48,63 @@
 // HVC app
 #include "fsm.h"
 #include "hvc_defs.h"
-#include "tests.h" // BenchPrintOverrides()
+#include "tests.h" // TESTS_BenchPrintOverrides()
 
-/*==============================================================================
- * === PUBLIC API ==============================================================
- * DebugOutputInit() runs once, at the end of HVC_Init(). DebugOutputRun()
- * runs first in every FsmRun() pass (not during a hardware test). Without DEBUG
- * both do nothing.
- *============================================================================*/
+#ifdef DEBUG
+// Events
+static void PrintStateChange(FsmState old_state, FsmState new_state);
+static void PrintNewFaults(void);
+static void PrintFaultLines(bool in_dump);
+static uint32_t CountSetFlags(const volatile FaultFlags *flags);
+static void PrintFirstHeartbeats(void);
+
+// Reports
+static void PrintNextReport(void);
+static void PrintMeasurementsReport(void);
+static void PrintPinsReport(void);
+static void PrintHeartbeatsReport(void);
+static void HeartbeatAgeText(char *text, size_t size, bool check_enabled, uint32_t last_tick);
+
+// Dump
+static void StartDump(void);
+static bool PrintNextDumpSection(void);
+
+// Names
+static const char *StateToString(FsmState state);
+#endif // DEBUG
+
+// Public API
+// DEBUG_Output_Init() runs once, at the end of HVC_Init(). DEBUG_Output_Run()
+// runs first in every FSM_Run() pass (not during a hardware test). Without DEBUG
+// both do nothing.
 
 /**
  * @brief Prints the startup lines. Call once, at the end of HVC_Init().
  *
  * In order: firmware version, reset cause, the bench overrides that are on
- * (BenchPrintOverrides(), tests.c), then "done". Runs after FsmInit(), which records a
+ * (TESTS_BenchPrintOverrides(), tests.c), then "done". Runs after FSM_Init(), which records a
  * watchdog reset. A hardware test prints its own name on its first pass (tests.c).
  */
-void DebugOutputInit(void)
-{
+void DEBUG_Output_Init(void) {
 #ifdef DEBUG
     PRINT_INIT("firmware %08lX%s", (unsigned long)GIT_VERSION_HASH,
                GIT_VERSION_DIRTY ? "-dirty" : "");
     PRINT_INIT("reset cause: %s", g_fault_flags.watchdog_fired ? "watchdog" : "normal");
-    BenchPrintOverrides();
+    TESTS_BenchPrintOverrides();
     PRINT_INIT("done");
 #endif // DEBUG
 }
 
 /**
  * @brief Prints what happened since the last pass, then at most one report or dump line. Call
- *        first in FsmRun(), every pass.
+ *        first in FSM_Run(), every pass.
  *
  * Events first (state change, new faults, first heartbeats), so they are never delayed. Runs
  * before CheckHeartbeats() and the state functions, so it sees the _received flags before
  * the main loop clears them. Then starts a dump if one is due, and prints the next dump
  * section, or if no dump is running, the next report that is due.
  */
-void DebugOutputRun(void)
-{
+void DEBUG_Output_Run(void) {
 #ifdef DEBUG
     static FsmState last_state = STATE_UNKNOWN;
 
@@ -99,28 +118,23 @@ void DebugOutputRun(void)
     last_state = state;
 
     // Dump: started by its switches, then one section per pass
-    if (SHOW_DUMP_ON_FAULT && fault_started)
-    {
+    if (SHOW_DUMP_ON_FAULT && fault_started) {
         StartDump();
     }
-    if (SHOW_DUMP_PERIODIC && TimerElapsed(DUMP_INTERVAL_MS, &g_ticks.dump))
-    {
+    if (SHOW_DUMP_PERIODIC && FSM_TimerElapsed(DUMP_INTERVAL_MS, &g_ticks.dump)) {
         StartDump();
     }
 
     // At most one repeating line per pass: a running dump goes first, reports wait for it
-    if (!PrintNextDumpSection())
-    {
+    if (!PrintNextDumpSection()) {
         PrintNextReport();
     }
 #endif // DEBUG
 }
 
-/*==============================================================================
- * === HELPERS =================================================================
- * Used by the entry points above, grouped by what they print. Only compiled with
- * DEBUG: nothing calls them otherwise.
- *============================================================================*/
+// Helpers
+// Used by the entry points above, grouped by what they print. Only compiled with
+// DEBUG: nothing calls them otherwise.
 
 #ifdef DEBUG
 
@@ -135,19 +149,14 @@ static FaultFlags printed_faults = {0}; // Flags whose [FAULT] line was already 
  * @param old_state State last pass (STATE_UNKNOWN on the first pass).
  * @param new_state State this pass.
  */
-void PrintStateChange(FsmState old_state, FsmState new_state)
-{
-    if (new_state == old_state)
-    {
+static void PrintStateChange(FsmState old_state, FsmState new_state) {
+    if (new_state == old_state) {
         return;
     }
 
-    if (old_state == STATE_UNKNOWN)
-    {
+    if (old_state == STATE_UNKNOWN) {
         PRINT_STATE("start in %s", StateToString(new_state));
-    }
-    else
-    {
+    } else {
         PRINT_STATE("%s -> %s", StateToString(old_state), StateToString(new_state));
     }
 }
@@ -160,12 +169,10 @@ void PrintStateChange(FsmState old_state, FsmState new_state)
  * prints on the pass it is set. Then warns once if a set flag has no line in
  * PrintFaultLines(), so a new flag that was not given a line does not go unnoticed.
  */
-void PrintNewFaults(void)
-{
+static void PrintNewFaults(void) {
     static bool missing_line_warned = false;
 
-    if (g_state != STATE_FAULT)
-    {
+    if (g_state != STATE_FAULT) {
         return;
     }
 
@@ -175,8 +182,7 @@ void PrintNewFaults(void)
 
     PrintFaultLines(false);
 
-    if (!missing_line_warned && (set_count > CountSetFlags(&printed_faults)))
-    {
+    if (!missing_line_warned && (set_count > CountSetFlags(&printed_faults))) {
         missing_line_warned = true;
         PRINT_FAULT("a fault flag is set that has no line in PrintFaultLines()");
     }
@@ -184,16 +190,11 @@ void PrintNewFaults(void)
 
 // Prints flag's line. In a dump: whenever it is set. Otherwise: only the first time it is set.
 #define PRINT_FAULT_LINE(flag, fmt, ...)                                  \
-    do                                                                    \
-    {                                                                     \
-        if (g_fault_flags.flag && (in_dump || !printed_faults.flag))      \
-        {                                                                 \
-            if (in_dump)                                                  \
-            {                                                             \
+    do {                                                                  \
+        if (g_fault_flags.flag && (in_dump || !printed_faults.flag)) {    \
+            if (in_dump) {                                                \
                 PRINT_DUMP("fault " #flag ": " fmt, ##__VA_ARGS__);       \
-            }                                                             \
-            else                                                          \
-            {                                                             \
+            } else {                                                      \
                 printed_faults.flag = true;                               \
                 PRINT_FAULT(#flag ": " fmt, ##__VA_ARGS__);               \
             }                                                             \
@@ -209,17 +210,16 @@ void PrintNewFaults(void)
  *
  * @param in_dump true to print every set flag as a dump line, false to print only new ones.
  */
-void PrintFaultLines(bool in_dump)
-{
+static void PrintFaultLines(bool in_dump) {
     // General faults
     PRINT_FAULT_LINE(estop, "ESTOP pressed");
     PRINT_FAULT_LINE(imd_fault, "IMD reports an insulation fault");
     PRINT_FAULT_LINE(mst_fault, "MASTERBOARD_FAULT went high");
     PRINT_FAULT_LINE(mst_unhealthy, "MST heartbeat reports errors, faults, or warnings");
     PRINT_FAULT_LINE(overcurrent, "shunt %ld mA, limit %u A",
-                     (long)Shunt_Get_Shunt_Current_mA(), SHUNT_OVERCURRENT_A);
+                     (long)SHUNT_GetShuntCurrent_mA(), SHUNT_OVERCURRENT_A);
     PRINT_FAULT_LINE(reverse_current, "shunt %ld mA, limit -%u A",
-                     (long)Shunt_Get_Shunt_Current_mA(), SHUNT_REVERSE_CURRENT_A);
+                     (long)SHUNT_GetShuntCurrent_mA(), SHUNT_REVERSE_CURRENT_A);
     PRINT_FAULT_LINE(dist_fault, "DIST sent a fault message");
     PRINT_FAULT_LINE(dcdc_fault, "DCDC_ACTIVE went high (DCDC stopped supplying LV)");
     PRINT_FAULT_LINE(supp_fault, "SUPP_ACTIVE high at startup (supp battery not in use)");
@@ -260,21 +260,18 @@ void PrintFaultLines(bool in_dump)
 /**
  * @brief Counts the flags set in a FaultFlags.
  *
- * Reads it as an array of bools, like AnyFaultActive(), so new flags are counted
+ * Reads it as an array of bools, like FSM_AnyFaultActive(), so new flags are counted
  * automatically.
  *
  * @param flags Flags to count.
  * @return Number of flags that are true.
  */
-uint32_t CountSetFlags(const volatile FaultFlags* flags)
-{
-    const volatile bool* flag = (const volatile bool*)flags;
+static uint32_t CountSetFlags(const volatile FaultFlags *flags) {
+    const volatile bool *flag = (const volatile bool*)flags;
     uint32_t count = 0U;
 
-    for (uint32_t i = 0U; i < sizeof(FaultFlags); i++)
-    {
-        if (flag[i])
-        {
+    for (uint32_t i = 0U; i < sizeof(FaultFlags); i++) {
+        if (flag[i]) {
             count++;
         }
     }
@@ -285,26 +282,22 @@ uint32_t CountSetFlags(const volatile FaultFlags* flags)
  * @brief Prints the first heartbeat received from TEL, DIST, and MST, once each.
  *
  * Reads the _received flags set by the CAN receive interrupt, without clearing them: they
- * belong to the FSM. DebugOutputRun() runs before the FSM clears them.
+ * belong to the FSM. DEBUG_Output_Run() runs before the FSM clears them.
  */
-void PrintFirstHeartbeats(void)
-{
+static void PrintFirstHeartbeats(void) {
     static bool tel_printed = false;
     static bool dist_printed = false;
     static bool mst_printed = false;
 
-    if (!tel_printed && g_shared.tel_heartbeat_received)
-    {
+    if (!tel_printed && g_shared.tel_heartbeat_received) {
         tel_printed = true;
         PRINT_CAN("first TEL heartbeat");
     }
-    if (!dist_printed && g_shared.dist_heartbeat_received)
-    {
+    if (!dist_printed && g_shared.dist_heartbeat_received) {
         dist_printed = true;
         PRINT_CAN("first DIST heartbeat");
     }
-    if (!mst_printed && g_shared.mst_heartbeat_received)
-    {
+    if (!mst_printed && g_shared.mst_heartbeat_received) {
         mst_printed = true;
         PRINT_CAN("first MST heartbeat (%s)",
                   g_shared.mst_healthy ? "healthy" : "reports a problem");
@@ -320,31 +313,24 @@ void PrintFirstHeartbeats(void)
  * One per pass, so the reports never print as one burst of lines.
  * To add a report: add its SHOW_* switch, its _due flag here, and its Print...Report().
  */
-void PrintNextReport(void)
-{
+static void PrintNextReport(void) {
     static bool measurements_due = false;
     static bool pins_due = false;
     static bool heartbeats_due = false;
 
-    if (TimerElapsed(REPORT_INTERVAL_MS, &g_ticks.report))
-    {
+    if (FSM_TimerElapsed(REPORT_INTERVAL_MS, &g_ticks.report)) {
         measurements_due = SHOW_MEASUREMENTS;
         pins_due = SHOW_PINS;
         heartbeats_due = SHOW_HEARTBEATS;
     }
 
-    if (measurements_due)
-    {
+    if (measurements_due) {
         measurements_due = false;
         PrintMeasurementsReport();
-    }
-    else if (pins_due)
-    {
+    } else if (pins_due) {
         pins_due = false;
         PrintPinsReport();
-    }
-    else if (heartbeats_due)
-    {
+    } else if (heartbeats_due) {
         heartbeats_due = false;
         PrintHeartbeatsReport();
     }
@@ -355,22 +341,20 @@ void PrintNextReport(void)
  *
  * Starts with the time and state, so each line can be read on its own.
  */
-void PrintMeasurementsReport(void)
-{
+static void PrintMeasurementsReport(void) {
     PRINT_MEAS("%lu ms %s | supp %ld mV | LV %ld mA | DCDC %ld mC | motor %ld mV | "
                "MPPT %ld mV | pack %ld mV | shunt %ld mA",
                (unsigned long)HAL_GetTick(), StateToString(g_state),
                (long)g_shared.adc.supp_mv, (long)g_shared.adc.lv_current_ma,
                (long)g_shared.adc.dcdc_temp_mc, (long)g_shared.adc.motor_precharge_mv,
                (long)g_shared.adc.mppt_precharge_mv, (long)g_shared.mst_pack_voltage_mv,
-               (long)Shunt_Get_Shunt_Current_mA());
+               (long)SHUNT_GetShuntCurrent_mA());
 }
 
 /**
  * @brief Prints this pass's input pin levels (1 = high), named after their pins.
  */
-void PrintPinsReport(void)
-{
+static void PrintPinsReport(void) {
     PRINT_PINS("ESTOP %d | IMD %d | HV_CURRENT_ALERT %d | MASTERBOARD_FAULT %d | "
                "DCDC_ACTIVE %d | SUPP_ACTIVE %d",
                (int)g_shared.pins.estop, (int)g_shared.pins.imd_fault,
@@ -382,8 +366,7 @@ void PrintPinsReport(void)
  * @brief Prints how long since each board's last heartbeat, or "check off" before its
  *        heartbeat check is enabled.
  */
-void PrintHeartbeatsReport(void)
-{
+static void PrintHeartbeatsReport(void) {
     char tel[16];
     char dist[16];
     char mst[16];
@@ -405,14 +388,10 @@ void PrintHeartbeatsReport(void)
  * @param check_enabled The board's heartbeat check is enabled.
  * @param last_tick     The board's heartbeat timer (g_ticks).
  */
-void HeartbeatAgeText(char* text, size_t size, bool check_enabled, uint32_t last_tick)
-{
-    if (check_enabled)
-    {
+static void HeartbeatAgeText(char *text, size_t size, bool check_enabled, uint32_t last_tick) {
+    if (check_enabled) {
         snprintf(text, size, "%lu ms", (unsigned long)(HAL_GetTick() - last_tick));
-    }
-    else
-    {
+    } else {
         snprintf(text, size, "check off");
     }
 }
@@ -420,8 +399,7 @@ void HeartbeatAgeText(char* text, size_t size, bool check_enabled, uint32_t last
 // --- Dump ---
 
 // Dump sections, in print order. One prints per pass.
-typedef enum
-{
+typedef enum {
     DUMP_BEGIN = 0,
     DUMP_FAULTS,
     DUMP_ADC,
@@ -440,10 +418,8 @@ static DumpSection next_dump_section = DUMP_IDLE;
 /**
  * @brief Starts a dump on the next pass. Does nothing if a dump is already running.
  */
-void StartDump(void)
-{
-    if (next_dump_section == DUMP_IDLE)
-    {
+static void StartDump(void) {
+    if (next_dump_section == DUMP_IDLE) {
         next_dump_section = DUMP_BEGIN;
     }
 }
@@ -457,24 +433,19 @@ void StartDump(void)
  *
  * @return true if a section was printed, false if no dump is running.
  */
-bool PrintNextDumpSection(void)
-{
+static bool PrintNextDumpSection(void) {
     uint32_t now_ms = HAL_GetTick();
 
-    switch (next_dump_section)
-    {
+    switch (next_dump_section) {
         case DUMP_BEGIN:
             PRINT_DUMP("begin: %lu ms, state %s, firmware %08lX%s", (unsigned long)now_ms,
                        StateToString(g_state), (unsigned long)GIT_VERSION_HASH,
                        GIT_VERSION_DIRTY ? "-dirty" : "");
             break;
         case DUMP_FAULTS:
-            if (AnyFaultActive())
-            {
+            if (FSM_AnyFaultActive()) {
                 PrintFaultLines(true); // The same lines as [FAULT], for every flag set now
-            }
-            else
-            {
+            } else {
                 PRINT_DUMP("faults: none");
             }
             break;
@@ -523,8 +494,8 @@ bool PrintNextDumpSection(void)
                        (unsigned long)(now_ms - g_ticks.hvc_heartbeat));
             break;
         case DUMP_SHUNT:
-            PRINT_DUMP("shunt (last read): %ld nV, %ld mA", (long)Shunt_Get_Shunt_Voltage_nV(),
-                       (long)Shunt_Get_Shunt_Current_mA());
+            PRINT_DUMP("shunt (last read): %ld nV, %ld mA", (long)SHUNT_GetShuntVoltage_nV(),
+                       (long)SHUNT_GetShuntCurrent_mA());
             break;
         case DUMP_END:
             PRINT_DUMP("end");
@@ -549,10 +520,8 @@ bool PrintNextDumpSection(void)
  * @return The state's name without the STATE_ prefix, or "UNKNOWN" for any value not in
  *         FsmState.
  */
-const char* StateToString(FsmState state)
-{
-    switch (state)
-    {
+static const char *StateToString(FsmState state) {
+    switch (state) {
         case STATE_RESET:                return "RESET";
         case STATE_TEL_STARTUP:          return "TEL_STARTUP";
         case STATE_MST_HANDSHAKE:        return "MST_HANDSHAKE";

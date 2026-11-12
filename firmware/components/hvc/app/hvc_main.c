@@ -31,23 +31,21 @@
 #include "hvc_defs.h"
 #include "tests.h"
 
-/*==============================================================================
- * === PUBLIC API ==============================================================
- * Called from cube main.c: HVC_Init() once, HVC_Main() every pass.
- *============================================================================*/
+// Public API
+// Called from cube main.c: HVC_Init() once, HVC_Main() every pass.
 
 /**
  * @brief Initializes every HVC peripheral and the FSM. Call once from main.c before HVC_Main().
  *
  * In order: starts the drivers (UART2, ADC, I2C, fan PWM, CAN with RX filters), sets up
  * the shunt monitor and the thermistor lookup table, sets the starting FSM state, then prints
- * the startup lines (DebugOutputInit(), debug_output.c). The startup fault checks run in the
+ * the startup lines (DEBUG_Output_Init(), debug_output.c). The startup fault checks run in the
  * FSM's first state (Reset()).
  *
  * The RX filters let in every ID in CAN_RX_IDS (can_messages.c). For each board part faked in
- * BENCH OVERRIDES, also blocks that part of the real board (tests.c): BenchRemoveFakedCanIds()
- * drops its CAN IDs from the RX filters, and BenchBlockFakedPinInterrupts() turns off its pin
- * interrupts.
+ * the bench overrides, also blocks that part of the real board (tests.c):
+ * TESTS_BenchRemoveFakedCanIds() drops its CAN IDs from the RX filters, and
+ * TESTS_BenchBlockFakedPinInterrupts() turns off its pin interrupts.
  *
  * Each parameter is named after its peripheral, so it matches the CubeMX handle main.c passes.
  *
@@ -60,13 +58,12 @@
  * @param can              CAN (hcan), the only CAN peripheral.
  */
 void HVC_Init(
-    UART_HandleTypeDef* uart2,
-    ADC_HandleTypeDef* adc1,
-    TIM_HandleTypeDef* adc_trigger_tim3,
-    TIM_HandleTypeDef* fan_pwm_tim4,
-    I2C_HandleTypeDef* shunt_i2c1,
-    CAN_HandleTypeDef* can)
-{
+    UART_HandleTypeDef *uart2,
+    ADC_HandleTypeDef *adc1,
+    TIM_HandleTypeDef *adc_trigger_tim3,
+    TIM_HandleTypeDef *fan_pwm_tim4,
+    I2C_HandleTypeDef *shunt_i2c1,
+    CAN_HandleTypeDef *can) {
     // Drivers: start the hardware
     UART_Init(uart2);
     ADC_Init(adc1, adc_trigger_tim3);
@@ -76,21 +73,21 @@ void HVC_Init(
     // RX filters: every ID can_messages handles (CAN_RX_IDS), minus the IDs of faked boards
     // (bench overrides), so a connected real board's messages are not received
     uint16_t filter_ids[CAN_RX_ID_COUNT];
-    size_t filter_count = BenchRemoveFakedCanIds(CAN_RX_IDS, CAN_RX_ID_COUNT, filter_ids);
+    size_t filter_count = TESTS_BenchRemoveFakedCanIds(CAN_RX_IDS, CAN_RX_ID_COUNT, filter_ids);
     CAN_InitFilterList(can, filter_ids, filter_count);
     CAN_Init(can);
 
-    BenchBlockFakedPinInterrupts(); // Bench overrides: turns off faked boards' pin interrupts
+    TESTS_BenchBlockFakedPinInterrupts(); // Bench overrides: turns off faked boards' pin interrupts
 
     // Devices on the drivers: shunt monitor chip and thermistor table
-    Shunt_Init();
-    InitTemperatureReading();
+    SHUNT_Init();
+    ADC_InitTemperatureReading();
 
     // FSM: starting state
-    FsmInit();
+    FSM_Init();
 
-    // Debug output: startup lines, after FsmInit() records a watchdog reset
-    DebugOutputInit();
+    // Debug output: startup lines, after FSM_Init() records a watchdog reset
+    DEBUG_Output_Init();
 }
 
 /**
@@ -104,23 +101,22 @@ void HVC_Init(
  * Kept as its own function so per-pass work is added here, not in cube main.c: CubeMX
  * deletes anything outside the USER CODE sections when it regenerates main.c.
  *
- * Runs the FSM, or the test HVC_TEST picks in hvc_defs.h instead (TestRunSelected(), tests.c).
+ * Runs the FSM, or the test HVC_TEST picks in hvc_defs.h instead (TESTS_RunSelected(), tests.c).
  * With the FSM, in order: converts the ADC once into g_shared.adc and the input pins once into
- * g_shared.pins, so the FSM and CAN use the same values all pass; BenchFakeInputs() (tests.c)
+ * g_shared.pins, so the FSM and CAN use the same values all pass; TESTS_BenchFakeInputs() (tests.c)
  * writes the BENCH OVERRIDES' fake inputs (hvc_defs.h) over those values; then the FSM runs.
  *
  * The watchdog is refreshed in the main loop. If a pass takes longer than the watchdog
- * timeout, the watchdog resets the HVC, and FsmInit() starts it in STATE_FAULT.
+ * timeout, the watchdog resets the HVC, and FSM_Init() starts it in STATE_FAULT.
  */
-void HVC_Main(void)
-{
+void HVC_Main(void) {
 #if (HVC_TEST != TEST_NONE)
-    TestRunSelected(); // Runs the test HVC_TEST picks, instead of the FSM
+    TESTS_RunSelected(); // Runs the test HVC_TEST picks, instead of the FSM
 #else // (HVC_TEST == TEST_NONE)
     ADC_Runtime_ProcessReadings();
     g_shared.adc = ADC_Runtime_GetValues(); // Read once, so the FSM and CAN use the same values
-    g_shared.pins = GpioRuntimeRead(); // Read once, so the FSM uses the same levels all pass
-    BenchFakeInputs(); // Bench overrides replace this pass's inputs, before the FSM reads them
-    FsmRun();
+    g_shared.pins = GPIO_Runtime_Read(); // Read once, so the FSM uses the same levels all pass
+    TESTS_BenchFakeInputs(); // Bench overrides replace this pass's inputs before the FSM runs
+    FSM_Run();
 #endif // (HVC_TEST != TEST_NONE)
 }

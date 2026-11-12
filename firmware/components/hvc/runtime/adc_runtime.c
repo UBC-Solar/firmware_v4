@@ -25,7 +25,7 @@ void ADC_Runtime_ProcessReadings(void) {
                                1000 / LV_CURRENT_SENSOR_MV_PER_A;
 
     // Convert thermistor mV to uV, then to milli-degrees C through the lookup table
-    adc_values.dcdc_temp_mc = ThermistorVoltToTemp_((uint32_t)voltages.dcdc_thermistor * 1000U);
+    adc_values.dcdc_temp_mc = ADC_ThermistorVoltToTemp((uint32_t)voltages.dcdc_thermistor * 1000U);
 }
 
 /**

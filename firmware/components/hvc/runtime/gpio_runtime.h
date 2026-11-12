@@ -2,7 +2,7 @@
  * @file gpio_runtime.h
  * @brief Levels of the input pins the FSM checks itself, built on gpio_driver.
  *
- * GpioRuntimeRead() gives the level of every polled input pin (PinLevels). HVC_Main() calls
+ * GPIO_Runtime_Read() gives the level of every polled input pin (PinLevels). HVC_Main() calls
  * it once per pass and stores the result in g_shared.pins.
  */
 
@@ -12,10 +12,9 @@
 #include "stm32f1xx_hal.h" // GPIO_PinState
 
 /**
- * @brief Every polled input pin's level, from one GpioRuntimeRead().
+ * @brief Every polled input pin's level, from one GPIO_Runtime_Read().
  */
-typedef struct
-{
+typedef struct {
     GPIO_PinState estop;            // GPIO_PIN_SET = ESTOP pressed
     GPIO_PinState imd_fault;        // GPIO_PIN_SET = IMD reports a fault
     GPIO_PinState hv_current_alert; // GPIO_PIN_SET = shunt monitor alert
@@ -24,4 +23,4 @@ typedef struct
     GPIO_PinState supp_active;      // Active-low: GPIO_PIN_RESET = supp in use
 } PinLevels;
 
-PinLevels GpioRuntimeRead(void);
+PinLevels GPIO_Runtime_Read(void);

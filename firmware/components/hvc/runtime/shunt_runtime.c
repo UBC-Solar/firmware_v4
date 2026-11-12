@@ -15,6 +15,13 @@ static uint8_t raw_shunt_voltage_buf[3];
 static volatile int32_t shunt_voltage_nV = 0;
 static volatile int32_t shunt_current_mA = 0;
 
+// Register writes, called once by SHUNT_Init()
+static void Shunt_Write_Config(void);
+static void Shunt_Write_ADC_Config(void);
+static void Shunt_Write_Diagnostic_Flags(void);
+static void Shunt_Write_Over_Voltage(void);
+static void Shunt_Write_Under_Voltage(void);
+
 /**
  * @brief Reverse the byte order of a buffer in-place.
  * @param buf Pointer to the buffer to reverse.
@@ -44,7 +51,7 @@ static inline void pack_buf(uint8_t *buf, uint32_t value, uint8_t size) {
  * @brief Initialise the shunt monitor — call once at startup after I2C is ready.
  *        Writes CONFIG, ADC_CONFIG, DIAG_ALRT, SOVL, and SUVL using blocking I2C.
  */
-void Shunt_Init(void) {
+void SHUNT_Init(void) {
     Shunt_Write_Config();
     Shunt_Write_ADC_Config();
     Shunt_Write_Diagnostic_Flags();
@@ -60,7 +67,7 @@ void Shunt_Init(void) {
 /**
  * @brief Write the CONFIG register (0x00) to set the ADC range.
  */
-void Shunt_Write_Config(void) {
+static void Shunt_Write_Config(void) {
     // CONFIG register (0x00), 16-bit, reset = 0x0000
     // Bit 4: ADCRANGE — set according to SHUNT_ADCRANGE define
 
@@ -78,7 +85,7 @@ void Shunt_Write_Config(void) {
 /**
  * @brief Write the ADC_CONFIG register (0x01) to set conversion mode, times, and averaging.
  */
-void Shunt_Write_ADC_Config(void) {
+static void Shunt_Write_ADC_Config(void) {
     // ADC_CONFIG register (0x01), 16-bit, reset = 0xFB68
     //
     // Bits 15:12  MODE   = 0xF  — continuous bus + shunt + temperature
@@ -102,9 +109,10 @@ void Shunt_Write_ADC_Config(void) {
 /**
  * @brief Write the DIAG_ALRT register (0x0B) to configure alert latch and slow-alert behaviour.
  */
-void Shunt_Write_Diagnostic_Flags(void) {
+static void Shunt_Write_Diagnostic_Flags(void) {
     // DIAG_ALRT register (0x0B), 16-bit, reset = 0x0001
-    // Bit 15: ALATCH = 1 - Latches alert pin until read, we never read it so it's kept high until a power cycle
+    // Bit 15: ALATCH = 1 - Latches alert pin until read, we never read it so it's kept high until
+    //         a power cycle
     // Bit 13: SLOWALERT = 1 - Internal alert is done after averaging, not before on every sample
     // Bit  0: MEMSTAT = 1 - reads 1 when trim memory is healthy (reset default).
 
@@ -122,10 +130,11 @@ void Shunt_Write_Diagnostic_Flags(void) {
 /**
  * @brief Write the SOVL register (0x0C) to set the shunt overvoltage (overcurrent) threshold.
  */
-void Shunt_Write_Over_Voltage(void) {
+static void Shunt_Write_Over_Voltage(void) {
     // SOVL register (0x0C), 16-bit, reset = 7FFFh
     // Counts = SHUNT_OVERCURRENT_A (A) × SHUNT_RESISTANCE_NOHMS (nΩ) / fault_LSB_nV (nV/LSB)
-    uint16_t sovl = (uint16_t)((uint32_t)SHUNT_OVERCURRENT_A * SHUNT_RESISTANCE_NOHMS / SHUNT_FAULT_LSB_NV);
+    uint16_t sovl =
+        (uint16_t)((uint32_t)SHUNT_OVERCURRENT_A * SHUNT_RESISTANCE_NOHMS / SHUNT_FAULT_LSB_NV);
 
     uint8_t buf[2];
     pack_buf(buf, sovl, 2);
@@ -139,10 +148,11 @@ void Shunt_Write_Over_Voltage(void) {
 /**
  * @brief Write the SUVL register (0x0D) to set the shunt undervoltage (reverse-current) threshold.
  */
-void Shunt_Write_Under_Voltage(void) {
+static void Shunt_Write_Under_Voltage(void) {
     // SUVL register (0x0D), 16-bit, reset = 8000h
     // Counts = (SHUNT_REVERSE_CURRENT_A (A) × SHUNT_RESISTANCE_NOHMS (nΩ) / fault_LSB_nV)
-    int16_t suvl = -(int16_t)((uint32_t)SHUNT_REVERSE_CURRENT_A * SHUNT_RESISTANCE_NOHMS / SHUNT_FAULT_LSB_NV);
+    int16_t suvl =
+        -(int16_t)((uint32_t)SHUNT_REVERSE_CURRENT_A * SHUNT_RESISTANCE_NOHMS / SHUNT_FAULT_LSB_NV);
 
     uint8_t buf[2];
     pack_buf(buf, (uint16_t)suvl, 2);
@@ -155,24 +165,28 @@ void Shunt_Write_Under_Voltage(void) {
 
 /**
  * @brief Trigger a read of the VSHUNT register.
- *        Shunt_Process_Shunt_Voltage() is called automatically from the I2C RxCplt callback.
+ *        SHUNT_ProcessShuntVoltage() is called automatically from the I2C RxCplt callback.
  */
-void Shunt_Read_Shunt_Voltage(void) {
-    //HAL_StatusTypeDef status = I2C_MemRead_IT(SHUNT_I2C_ADDRESS, SHUNT_REG_SHUNT_VOLTAGE, raw_shunt_voltage_buf, 3, I2C_SHUNT_VOLTAGE);
-    // Test interrupt later
-
-    I2C_MemRead(SHUNT_I2C_ADDRESS, SHUNT_REG_SHUNT_VOLTAGE, raw_shunt_voltage_buf, SHUNT_VSHUNT_READ_BYTES, I2C_SHUNT_VOLTAGE);
+void SHUNT_ReadShuntVoltage(void) {
+    // TODO: test the interrupt-driven read (I2C_MemRead_IT()) and switch to it
+    I2C_MemRead(SHUNT_I2C_ADDRESS,
+                SHUNT_REG_SHUNT_VOLTAGE,
+                raw_shunt_voltage_buf,
+                SHUNT_VSHUNT_READ_BYTES,
+                I2C_SHUNT_VOLTAGE);
 }
 
 /**
  * @brief Convert the raw VSHUNT bytes into engineering units.
  *        Called from HAL_I2C_MemRxCpltCallback — do not call directly.
  */
-void Shunt_Process_Shunt_Voltage(void) {
-    // Processing the buffer is documented here: https://docs.google.com/document/d/1IN_0Pcg9eEbxtUkUSTO_Nc7S2LKmDKqyU20G1GsCJE0/edit?tab=t.i0huserxy3py
+void SHUNT_ProcessShuntVoltage(void) {
+    // Processing the buffer is documented here:
+    // https://docs.google.com/document/d/1IN_0Pcg9eEbxtUkUSTO_Nc7S2LKmDKqyU20G1GsCJE0/edit?tab=t.i0huserxy3py
 
 #if SHUNT_MONITOR == SHUNT_MONITOR_INA228
-    // INA228 sends bytes big-endian: buf[0]=MSB, buf[1]=MID, buf[2]=LSB. Assemble the buf into an int32_t.
+    // INA228 sends bytes big-endian: buf[0]=MSB, buf[1]=MID, buf[2]=LSB. Assemble the buf into an
+    // int32_t.
     int32_t raw_value = ((int32_t)raw_shunt_voltage_buf[0] << 16)
                       | ((int32_t)raw_shunt_voltage_buf[1] << 8)
                       |  (int32_t)raw_shunt_voltage_buf[2];
@@ -186,27 +200,26 @@ void Shunt_Process_Shunt_Voltage(void) {
         raw_value |= 0xFFF00000;
     }
 #elif SHUNT_MONITOR == SHUNT_MONITOR_INA237
-    // INA237 sends bytes big-endian: buf[0]=MSB, buf[1]=LSB. VSHUNT bits 15:0 are the 16-bit measurement.
+    // INA237 sends bytes big-endian: buf[0]=MSB, buf[1]=LSB. VSHUNT bits 15:0 are the 16-bit
+    // measurement.
     // Casting to int16_t sign-extends the 16-bit two's complement value.
     int32_t raw_value = (int16_t)(((uint16_t)raw_shunt_voltage_buf[0] << 8)
                                  | (uint16_t)raw_shunt_voltage_buf[1]);
 #endif // SHUNT_MONITOR
 
     // Convert counts into nanovolts, multiply first to avoid truncation to zero
-    shunt_voltage_nV = (int32_t)(((int64_t)raw_value * SHUNT_VSHUNT_LSB_NV_NUM) / SHUNT_VSHUNT_LSB_NV_DEN);
+    shunt_voltage_nV =
+        (int32_t)(((int64_t)raw_value * SHUNT_VSHUNT_LSB_NV_NUM) / SHUNT_VSHUNT_LSB_NV_DEN);
 
     // nV / nΩ = A; A * 1000 = mA
     shunt_current_mA = (int32_t)(((int64_t)shunt_voltage_nV * 1000) / SHUNT_RESISTANCE_NOHMS);
-
-    //DEBUG_IO_print("Calculated shunt voltage: %d nV\n\r", shunt_voltage_nV);
-    //DEBUG_IO_print("Calculated shunt current: %d mA\n\r", shunt_current_mA);
 }
 
 /**
  * @brief Return the most recently measured shunt voltage.
  * @return Shunt voltage in nanovolts. Negative values indicate reverse current.
  */
-int32_t Shunt_Get_Shunt_Voltage_nV(void) {
+int32_t SHUNT_GetShuntVoltage_nV(void) {
     return shunt_voltage_nV;
 }
 
@@ -214,11 +227,11 @@ int32_t Shunt_Get_Shunt_Voltage_nV(void) {
  * @brief Return the most recently calculated shunt current.
  * @return Current in milliamps. Negative values indicate reverse current.
  */
-int32_t Shunt_Get_Shunt_Current_mA(void) {
+int32_t SHUNT_GetShuntCurrent_mA(void) {
     return shunt_current_mA;
 }
 
-bool Shunt_IsOvercurrent(void) {
+bool SHUNT_IsOvercurrent(void) {
     uint8_t buffer[2] = {0};
 
     // read DIAG_ALRT register — 2 bytes, big-endian

@@ -22,8 +22,7 @@
  *
  * @return Every polled input pin's level.
  */
-PinLevels GpioRuntimeRead(void)
-{
+PinLevels GPIO_Runtime_Read(void) {
     PinLevels pins;
 
     pins.estop = GPIO_Read(ESTOP_GPIO_Port, ESTOP_Pin);

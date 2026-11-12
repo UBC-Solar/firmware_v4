@@ -34,7 +34,8 @@ void I2C_Init(I2C_HandleTypeDef *_hi2c) {
  */
 HAL_StatusTypeDef I2C_MasterTransmit(uint16_t dev_addr, uint8_t *data, uint16_t size) {
     if (HAL_I2C_GetState(hi2c) != HAL_I2C_STATE_READY) {
-        DEBUG_IO_print("I2C is not ready, cannot start new transmit operation. I2C State: %02X\n\r", (uint8_t)HAL_I2C_GetState(hi2c));
+        DEBUG_IO_print("I2C is not ready, cannot start new transmit operation. I2C State: %02X\n\r",
+                       (uint8_t)HAL_I2C_GetState(hi2c));
         return HAL_I2C_GetState(hi2c);
     }
 
@@ -52,7 +53,8 @@ HAL_StatusTypeDef I2C_MasterTransmit(uint16_t dev_addr, uint8_t *data, uint16_t 
  */
 HAL_StatusTypeDef I2C_MasterTransmit_IT(uint16_t dev_addr, uint8_t *data, uint16_t size) {
     if (HAL_I2C_GetState(hi2c) != HAL_I2C_STATE_READY) {
-        DEBUG_IO_print("I2C is not ready, cannot start new transmit operation. I2C State: %02X\n\r", (uint8_t)HAL_I2C_GetState(hi2c));
+        DEBUG_IO_print("I2C is not ready, cannot start new transmit operation. I2C State: %02X\n\r",
+                       (uint8_t)HAL_I2C_GetState(hi2c));
         return HAL_I2C_GetState(hi2c);
     }
 
@@ -70,7 +72,8 @@ HAL_StatusTypeDef I2C_MasterTransmit_IT(uint16_t dev_addr, uint8_t *data, uint16
  */
 HAL_StatusTypeDef I2C_MasterReceive(uint16_t dev_addr, uint8_t *data, uint16_t size) {
     if (HAL_I2C_GetState(hi2c) != HAL_I2C_STATE_READY) {
-        DEBUG_IO_print("I2C is not ready, cannot start new receive operation. I2C State: %02X\n\r", (uint8_t)HAL_I2C_GetState(hi2c));
+        DEBUG_IO_print("I2C is not ready, cannot start new receive operation. I2C State: %02X\n\r",
+                       (uint8_t)HAL_I2C_GetState(hi2c));
         return HAL_I2C_GetState(hi2c);
     }
 
@@ -88,7 +91,8 @@ HAL_StatusTypeDef I2C_MasterReceive(uint16_t dev_addr, uint8_t *data, uint16_t s
  */
 HAL_StatusTypeDef I2C_MasterReceive_IT(uint16_t dev_addr, uint8_t *data, uint16_t size) {
     if (HAL_I2C_GetState(hi2c) != HAL_I2C_STATE_READY) {
-        DEBUG_IO_print("I2C is not ready, cannot start new receive operation. I2C State: %02X\n\r", (uint8_t)HAL_I2C_GetState(hi2c));
+        DEBUG_IO_print("I2C is not ready, cannot start new receive operation. I2C State: %02X\n\r",
+                       (uint8_t)HAL_I2C_GetState(hi2c));
         return HAL_I2C_GetState(hi2c);
     }
 
@@ -107,11 +111,13 @@ HAL_StatusTypeDef I2C_MasterReceive_IT(uint16_t dev_addr, uint8_t *data, uint16_
  */
 HAL_StatusTypeDef I2C_MemWrite(uint16_t dev_addr, uint16_t mem_addr, uint8_t *data, uint16_t size) {
     if (HAL_I2C_GetState(hi2c) != HAL_I2C_STATE_READY) {
-        DEBUG_IO_print("I2C is not ready, cannot start new MemWrite operation. I2C State: %02X\n\r", (uint8_t)HAL_I2C_GetState(hi2c));
+        DEBUG_IO_print("I2C is not ready, cannot start new MemWrite operation. I2C State: %02X\n\r",
+                       (uint8_t)HAL_I2C_GetState(hi2c));
         return HAL_I2C_GetState(hi2c);
     }
 
-    return HAL_I2C_Mem_Write(hi2c, dev_addr, mem_addr, I2C_MEMADD_SIZE_8BIT, data, size, HAL_MAX_DELAY);
+    return HAL_I2C_Mem_Write(
+        hi2c, dev_addr, mem_addr, I2C_MEMADD_SIZE_8BIT, data, size, HAL_MAX_DELAY);
 }
 
 /**
@@ -124,9 +130,14 @@ HAL_StatusTypeDef I2C_MemWrite(uint16_t dev_addr, uint16_t mem_addr, uint8_t *da
  * @retval HAL_ERROR HAL reported a peripheral error.
  * @retval other Current HAL_I2C_StateTypeDef value if the bus was not ready.
  */
-HAL_StatusTypeDef I2C_MemWrite_IT(uint16_t dev_addr, uint16_t mem_addr, uint8_t *data, uint16_t size) {
+HAL_StatusTypeDef I2C_MemWrite_IT(
+    uint16_t dev_addr,
+    uint16_t mem_addr,
+    uint8_t *data,
+    uint16_t size) {
     if (HAL_I2C_GetState(hi2c) != HAL_I2C_STATE_READY) {
-        DEBUG_IO_print("I2C not ready, cannot start new MemWrite operation. I2C State: %02X\n\r", (uint8_t)HAL_I2C_GetState(hi2c));
+        DEBUG_IO_print("I2C not ready, cannot start new MemWrite operation. I2C State: %02X\n\r",
+                       (uint8_t)HAL_I2C_GetState(hi2c));
         return HAL_I2C_GetState(hi2c);
     }
 
@@ -134,7 +145,8 @@ HAL_StatusTypeDef I2C_MemWrite_IT(uint16_t dev_addr, uint16_t mem_addr, uint8_t 
 }
 
 /**
- * @brief Blocking memory read — reads bytes from a device register and immediately calls the RxCplt callback.
+ * @brief Blocking memory read — reads bytes from a device register and immediately calls the
+ *        RxCplt callback.
  * @param dev_addr 8-bit I2C device address (7-bit address shifted left by one).
  * @param mem_addr Register address on the target device.
  * @param data Pointer to the buffer to store received bytes.
@@ -144,18 +156,25 @@ HAL_StatusTypeDef I2C_MemWrite_IT(uint16_t dev_addr, uint16_t mem_addr, uint8_t 
  * @retval HAL_ERROR HAL reported a peripheral error.
  * @retval other Current HAL_I2C_StateTypeDef value if the bus was not ready.
  */
-HAL_StatusTypeDef I2C_MemRead(uint16_t dev_addr, uint16_t mem_addr, uint8_t *data, uint16_t size, I2C_Read_State state) {
+HAL_StatusTypeDef I2C_MemRead(
+    uint16_t dev_addr,
+    uint16_t mem_addr,
+    uint8_t *data,
+    uint16_t size,
+    I2C_Read_State state) {
     if (HAL_I2C_GetState(hi2c) != HAL_I2C_STATE_READY) {
-        DEBUG_IO_print("I2C is not ready, cannot start new MemRead operation. I2C State: %02X\n\r", (uint8_t)HAL_I2C_GetState(hi2c));
+        DEBUG_IO_print("I2C is not ready, cannot start new MemRead operation. I2C State: %02X\n\r",
+                       (uint8_t)HAL_I2C_GetState(hi2c));
         return HAL_I2C_GetState(hi2c);
     }
 
     current_i2c_read_state = state;
 
-    HAL_StatusTypeDef status = HAL_I2C_Mem_Read(hi2c, dev_addr, mem_addr, I2C_MEMADD_SIZE_8BIT, data, size, HAL_MAX_DELAY);
+    HAL_StatusTypeDef status = HAL_I2C_Mem_Read(
+        hi2c, dev_addr, mem_addr, I2C_MEMADD_SIZE_8BIT, data, size, HAL_MAX_DELAY);
 
     HAL_I2C_MemRxCpltCallback(hi2c); // Manually call the callback since we're doing a blocking read
-    
+
     return status;
 }
 
@@ -170,9 +189,15 @@ HAL_StatusTypeDef I2C_MemRead(uint16_t dev_addr, uint16_t mem_addr, uint8_t *dat
  * @retval HAL_ERROR HAL reported a peripheral error.
  * @retval other Current HAL_I2C_StateTypeDef value if the bus was not ready.
  */
-HAL_StatusTypeDef I2C_MemRead_IT(uint16_t dev_addr, uint16_t mem_addr, uint8_t *data, uint16_t size, I2C_Read_State state) {
+HAL_StatusTypeDef I2C_MemRead_IT(
+    uint16_t dev_addr,
+    uint16_t mem_addr,
+    uint8_t *data,
+    uint16_t size,
+    I2C_Read_State state) {
     if (HAL_I2C_GetState(hi2c) != HAL_I2C_STATE_READY) {
-        DEBUG_IO_print("I2C is not ready, cannot start new MemRead operation. I2C State: %02X\n\r", (uint8_t)HAL_I2C_GetState(hi2c));
+        DEBUG_IO_print("I2C is not ready, cannot start new MemRead operation. I2C State: %02X\n\r",
+                       (uint8_t)HAL_I2C_GetState(hi2c));
         return HAL_I2C_GetState(hi2c);
     }
 
@@ -205,7 +230,7 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *_hi2c) {
     if (_hi2c == hi2c) {
         switch (current_i2c_read_state) {
             case I2C_SHUNT_VOLTAGE:
-                Shunt_Process_Shunt_Voltage();
+                SHUNT_ProcessShuntVoltage();
                 break;
             default:
                 break;
@@ -220,6 +245,7 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *_hi2c) {
  * @param hi2c Pointer to the HAL I2C handle that encountered the error.
  */
 void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c){
-    DEBUG_IO_print("I2C Error Callback triggered. I2C State: %02X\n\r", (uint8_t)HAL_I2C_GetState(hi2c));
+    DEBUG_IO_print("I2C Error Callback triggered. I2C State: %02X\n\r",
+                   (uint8_t)HAL_I2C_GetState(hi2c));
     current_i2c_read_state = I2C_IDLE; // Reset state on error
 }

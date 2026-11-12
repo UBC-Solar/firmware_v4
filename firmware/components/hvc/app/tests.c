@@ -2,7 +2,7 @@
  * @file tests.c
  * @brief HVC hardware tests (run instead of the FSM) and bench override code (run with the FSM).
  *
- * Two separate features, each switched on in hvc_defs.h and explained in its banner below:
+ * Two separate features, each switched on in hvc_defs.h and explained in its section below:
  *   HARDWARE TESTS:  small programs that replace the FSM to check one part (HVC_TEST).
  *   BENCH OVERRIDES: let the real FSM run on the bench by faking missing boards (FAKE_*,
  *                    IGNORE_*).
@@ -10,6 +10,9 @@
  */
 
 #include "tests.h"
+
+// Standard library
+#include <stdbool.h>
 
 // HAL and CubeMX
 #include "main.h" // Pin names
@@ -27,15 +30,63 @@
 #include "fsm.h"
 #include "hvc_defs.h"
 
-/*==============================================================================
- * === HARDWARE TESTS ==========================================================
- * Code for the HARDWARE TESTS (hvc_defs.h): small programs that run INSTEAD of
- * the FSM. HVC_TEST picks one, and TestRunSelected() runs it. Grouped like
- * hvc_defs.h: unit tests, then integration tests. Each test is named after its
- * TEST_* value, and only the picked test is compiled. Every function here is
- * listed in tests.h; only TestRunSelected() is called from outside
- * (HVC_Main()).
- *============================================================================*/
+// True if any part of MST is faked
+#define FAKE_MST_ANY (FAKE_MST_FAULT_PIN || FAKE_MST_HEARTBEAT || FAKE_MST_PACK_VOLTAGE)
+
+// True if a fake measures time from the fake MST's start (TimeSince())
+#define USES_TIME_SINCE                                                                           \
+    (FAKE_MST_FAULT_PIN || (FAKE_MST_HEARTBEAT && (FAKE_MST_HEARTBEAT_STOP_AFTER_MS > 0)))
+
+// Hardware tests: only the picked test is compiled
+#if (HVC_TEST != TEST_NONE)
+static void PrintTestStart(const char *test_name);
+#endif // (HVC_TEST != TEST_NONE)
+#if (HVC_TEST == TEST_UNIT_SHUNT)
+static void TestUnitShunt(void);
+#endif // (HVC_TEST == TEST_UNIT_SHUNT)
+#if (HVC_TEST == TEST_INT_CAN)
+static void TestIntCan(void);
+static void SendDebugCanMessage(void);
+#endif // (HVC_TEST == TEST_INT_CAN)
+
+// Bench overrides: helpers
+#if USES_TIME_SINCE
+static uint32_t TimeSince(uint32_t start_tick);
+#endif // USES_TIME_SINCE
+
+// Bench overrides: MST fake parts, compiled only when switched on
+#if FAKE_MST_FAULT_PIN
+static GPIO_PinState FakeMstFaultPin(void);
+#if (FAKE_MST_FAULT_AFTER_MS > 0)
+static void FakeMstFaultCall(void);
+#endif // (FAKE_MST_FAULT_AFTER_MS > 0)
+#endif // FAKE_MST_FAULT_PIN
+#if FAKE_MST_HEARTBEAT
+static void FakeMstHeartbeat(void);
+#endif // FAKE_MST_HEARTBEAT
+#if FAKE_MST_PACK_VOLTAGE
+static void FakeMstPackVoltage(void);
+#endif // FAKE_MST_PACK_VOLTAGE
+
+// Bench overrides: MST hooks
+static bool IsFakedMstCanId(uint16_t id);
+static void BlockMstPinInterrupts(void);
+static void FakeMstInputs(void);
+static bool PrintMstOverrides(void);
+
+// Bench overrides: HVC fake parts and hooks
+#if FAKE_PRECHARGE_VOLTAGE
+static void FakePrechargeVoltage(void);
+#endif // FAKE_PRECHARGE_VOLTAGE
+static void FakeHvcInputs(void);
+static bool PrintHvcOverrides(void);
+
+// Hardware tests
+// Code for the hardware tests (hvc_defs.h): small programs that run INSTEAD of
+// the FSM. HVC_TEST picks one, and TESTS_RunSelected() runs it. Grouped like
+// hvc_defs.h: unit tests, then integration tests. Each test is named after its
+// TEST_* value, and only the picked test is compiled. Only TESTS_RunSelected()
+// is called from outside (HVC_Main()).
 
 // --- Entry point ---
 
@@ -44,8 +95,7 @@
  *
  * Does nothing with TEST_NONE: HVC_Main() runs the FSM instead.
  */
-void TestRunSelected(void)
-{
+void TESTS_RunSelected(void) {
     // To add a test: add its #elif branch, with its PrintTestStart() and its call
 #if (HVC_TEST == TEST_UNIT_SHUNT)
     PrintTestStart("TEST_UNIT_SHUNT");
@@ -58,23 +108,23 @@ void TestRunSelected(void)
 
 // --- Helpers ---
 
+#if (HVC_TEST != TEST_NONE)
 /**
  * @brief Prints which hardware test is running, on the first call only.
  *
- * Called by TestRunSelected() every pass, so the line prints once, on the first pass.
+ * Called by TESTS_RunSelected() every pass, so the line prints once, on the first pass.
  *
  * @param test_name The test's TEST_* name.
  */
-void PrintTestStart(const char* test_name)
-{
+static void PrintTestStart(const char *test_name) {
     static bool printed = false;
 
-    if (!printed)
-    {
+    if (!printed) {
         printed = true;
         PRINT_TEST("%s runs instead of the FSM", test_name);
     }
 }
+#endif // (HVC_TEST != TEST_NONE)
 
 // --- Unit tests ---
 
@@ -83,17 +133,15 @@ void PrintTestStart(const char* test_name)
  * @brief Shunt unit test (TEST_UNIT_SHUNT): reads the shunt voltage on a timer and prints it.
  *
  * The interval is TEST_UNIT_SHUNT_INTERVAL_MS. Prints the shunt voltage and current after each
- * read. Called by TestRunSelected().
+ * read. Called by TESTS_RunSelected().
  */
-void TestUnitShunt(void)
-{
+static void TestUnitShunt(void) {
     static uint32_t last_read_ms = 0;
 
-    if (TimerElapsed(TEST_UNIT_SHUNT_INTERVAL_MS, &last_read_ms))
-    {
-        Shunt_Read_Shunt_Voltage();
-        PRINT_TEST("shunt %ld nV, %ld mA", (long)Shunt_Get_Shunt_Voltage_nV(),
-                   (long)Shunt_Get_Shunt_Current_mA());
+    if (FSM_TimerElapsed(TEST_UNIT_SHUNT_INTERVAL_MS, &last_read_ms)) {
+        SHUNT_ReadShuntVoltage();
+        PRINT_TEST("shunt %ld nV, %ld mA", (long)SHUNT_GetShuntVoltage_nV(),
+                   (long)SHUNT_GetShuntCurrent_mA());
     }
 }
 #endif // (HVC_TEST == TEST_UNIT_SHUNT)
@@ -106,8 +154,7 @@ void TestUnitShunt(void)
  *
  * Uses ID 0x42, the same debug ID as MST and DIST. Called by TestIntCan().
  */
-void SendDebugCanMessage(void)
-{
+static void SendDebugCanMessage(void) {
     CAN_TxMessage_t tx_message = {0};
 
     tx_message.tx_header.StdId = 0x42U;
@@ -124,39 +171,34 @@ void SendDebugCanMessage(void)
  *        timer.
  *
  * The interval is TEST_INT_CAN_INTERVAL_MS. Does not block, so the main loop keeps refreshing
- * the watchdog. Called by TestRunSelected().
+ * the watchdog. Called by TESTS_RunSelected().
  */
-void TestIntCan(void)
-{
+static void TestIntCan(void) {
     static uint32_t last_send_ms = 0;
 
     GPIO_Write(DIST_CTRL_GPIO_Port, DIST_CTRL_Pin, GPIO_PIN_SET);
 
-    if (TimerElapsed(TEST_INT_CAN_INTERVAL_MS, &last_send_ms))
-    {
+    if (FSM_TimerElapsed(TEST_INT_CAN_INTERVAL_MS, &last_send_ms)) {
         SendDebugCanMessage();
     }
 }
 #endif // (HVC_TEST == TEST_INT_CAN)
 
-/*==============================================================================
- * === BENCH OVERRIDES =========================================================
- * Code for the BENCH OVERRIDES (hvc_defs.h). Runs with the FSM, and does
- * nothing during a hardware test. Only fakes inputs the FSM reads. Faking a
- * board part takes two steps:
- *   1. Block the real part, once at startup: its CAN IDs and pin interrupts
- *      arrive on their own, at any time.
- *   2. Write the fake into g_shared every pass, after the real reads.
- * Each board has up to 4 hooks, only the ones it needs, called by the entry
- * points:
- *   IsFaked<Board>CanId()           CAN IDs to block
- *   Block<Board>PinInterrupts()     pin interrupts to turn off
- *   Fake<Board>Inputs()             fake values to write this pass
- *   Print<Board>Overrides()         [BENCH] line for each override on, at startup
- * Grouped by board like hvc_defs.h: MST, TEL, DIST, HVC. Every function here
- * is listed in tests.h; only the entry points are called from outside
- * (HVC_Init(), HVC_Main(), and DebugOutputInit()).
- *============================================================================*/
+// Bench overrides
+// Code for the BENCH OVERRIDES (hvc_defs.h). Runs with the FSM, and does
+// nothing during a hardware test. Only fakes inputs the FSM reads. Faking a
+// board part takes two steps:
+//   1. Block the real part, once at startup: its CAN IDs and pin interrupts
+//      arrive on their own, at any time.
+//   2. Write the fake into g_shared every pass, after the real reads.
+// Each board has up to 4 hooks, only the ones it needs, called by the entry
+// points:
+//   IsFaked<Board>CanId()           CAN IDs to block
+//   Block<Board>PinInterrupts()     pin interrupts to turn off
+//   Fake<Board>Inputs()             fake values to write this pass
+//   Print<Board>Overrides()         [BENCH] line for each override on, at startup
+// Grouped by board like hvc_defs.h: MST, TEL, DIST, HVC. Only the entry points
+// are called from outside (HVC_Init(), HVC_Main(), and DEBUG_Output_Init()).
 
 // --- Entry points ---
 
@@ -173,18 +215,15 @@ void TestIntCan(void)
  * @param kept_ids Gets the IDs that are not faked. Must have room for count IDs.
  * @return Number of IDs written to kept_ids.
  */
-size_t BenchRemoveFakedCanIds(const uint16_t* ids, size_t count, uint16_t* kept_ids)
-{
+size_t TESTS_BenchRemoveFakedCanIds(const uint16_t *ids, size_t count, uint16_t *kept_ids) {
     size_t kept = 0U;
 
-    for (size_t i = 0U; i < count; i++)
-    {
+    for (size_t i = 0U; i < count; i++) {
         // Bench overrides do nothing during a hardware test
         bool faked = (HVC_TEST == TEST_NONE) &&
                      IsFakedMstCanId(ids[i]); // TODO: TEL, DIST
 
-        if (!faked)
-        {
+        if (!faked) {
             kept_ids[kept] = ids[i];
             kept++;
         }
@@ -199,10 +238,8 @@ size_t BenchRemoveFakedCanIds(const uint16_t* ids, size_t count, uint16_t* kept_
  * A pin interrupt sets its fault flag on its own, so a fake in g_shared.pins cannot stop it.
  * Turns off nothing during a hardware test.
  */
-void BenchBlockFakedPinInterrupts(void)
-{
-    if (HVC_TEST == TEST_NONE) // Bench overrides do nothing during a hardware test
-    {
+void TESTS_BenchBlockFakedPinInterrupts(void) {
+    if (HVC_TEST == TEST_NONE) { // Bench overrides do nothing during a hardware test
         BlockMstPinInterrupts();
         // TODO: HVC (IGNORE_ESTOP, IGNORE_IMD, ...)
     }
@@ -214,8 +251,7 @@ void BenchBlockFakedPinInterrupts(void)
  *
  * The fakes replace the real values in g_shared, so the FSM reads the fakes.
  */
-void BenchFakeInputs(void)
-{
+void TESTS_BenchFakeInputs(void) {
     FakeMstInputs();
     // TODO: FakeTelInputs(), FakeDistInputs()
     FakeHvcInputs();
@@ -223,15 +259,13 @@ void BenchFakeInputs(void)
 
 /**
  * @brief Prints a [BENCH] line for every bench override that is on, or that none are. Call
- *        once from DebugOutputInit().
+ *        once from DEBUG_Output_Init().
  *
  * Lets you check before flashing for real that every override is off. During a hardware test
  * only says that the overrides do nothing.
  */
-void BenchPrintOverrides(void)
-{
-    if (HVC_TEST != TEST_NONE)
-    {
+void TESTS_BenchPrintOverrides(void) {
+    if (HVC_TEST != TEST_NONE) {
         PRINT_BENCH("bench overrides do nothing during a hardware test");
         return;
     }
@@ -241,16 +275,16 @@ void BenchPrintOverrides(void)
     // TODO: PrintTelOverrides(), PrintDistOverrides()
     any_on = PrintHvcOverrides() || any_on;
 
-    if (!any_on)
-    {
+    if (!any_on) {
         PRINT_BENCH("no bench overrides on");
     }
 }
 
 // --- Helpers ---
 
+#if USES_TIME_SINCE
 /**
- * @brief Time since start_tick, in ms. Unlike TimerElapsed(), does not restart anything.
+ * @brief Time since start_tick, in ms. Unlike FSM_TimerElapsed(), does not restart anything.
  *
  * For checks that measure from one fixed start time, such as every fake MST part measuring
  * from mst_fake_start_ms: restarting that time would restart the whole fake MST.
@@ -258,17 +292,15 @@ void BenchPrintOverrides(void)
  * @param start_tick Timestamp (HAL_GetTick()) to measure from.
  * @return ms since start_tick.
  */
-uint32_t TimeSince(uint32_t start_tick)
-{
+static uint32_t TimeSince(uint32_t start_tick) {
     return HAL_GetTick() - start_tick;
 }
+#endif // USES_TIME_SINCE
 
 // --- MST ---
 // Fakes:   FAKE_MST_FAULT_PIN, FAKE_MST_HEARTBEAT, FAKE_MST_PACK_VOLTAGE
 // Ignores: IGNORE_MST_FAULT
 
-// True if any part of MST is faked
-#define FAKE_MST_ANY (FAKE_MST_FAULT_PIN || FAKE_MST_HEARTBEAT || FAKE_MST_PACK_VOLTAGE)
 
 #if FAKE_MST_ANY
 static bool     mst_fake_started  = false; // Set when the FSM first reaches STATE_MST_HANDSHAKE
@@ -286,22 +318,18 @@ static uint32_t mst_fake_start_ms = 0;     // When the fake MST started (its "po
  *
  * @return GPIO_PIN_SET (high) or GPIO_PIN_RESET (low).
  */
-GPIO_PinState FakeMstFaultPin(void)
-{
-    if (!mst_fake_started)
-    {
+static GPIO_PinState FakeMstFaultPin(void) {
+    if (!mst_fake_started) {
         return GPIO_PIN_RESET;
     }
 
     uint32_t elapsed_ms = TimeSince(mst_fake_start_ms);
 
-    if (elapsed_ms < FAKE_MST_INIT_HOLD_MS)
-    {
+    if (elapsed_ms < FAKE_MST_INIT_HOLD_MS) {
         return GPIO_PIN_SET;
     }
 #if (FAKE_MST_FAULT_AFTER_MS > 0)
-    if (elapsed_ms >= FAKE_MST_INIT_HOLD_MS + FAKE_MST_FAULT_AFTER_MS)
-    {
+    if (elapsed_ms >= FAKE_MST_INIT_HOLD_MS + FAKE_MST_FAULT_AFTER_MS) {
         return GPIO_PIN_SET;
     }
 #endif // (FAKE_MST_FAULT_AFTER_MS > 0)
@@ -312,25 +340,23 @@ GPIO_PinState FakeMstFaultPin(void)
 /**
  * @brief Makes the fault call once the fake pin goes high again (FAKE_MST_FAULT_AFTER_MS).
  *
- * Calls MstFaultCallback() once, the same call the GPIO interrupt makes for the real pin
+ * Calls FSM_MstFaultCallback() once, the same call the GPIO interrupt makes for the real pin
  * (that interrupt is turned off by BlockMstPinInterrupts()). With IGNORE_MST_FAULT, only
  * prints. Called by FakeMstInputs().
  *
  * Side effects: may set g_fault_flags.mst_fault.
  */
-void FakeMstFaultCall(void)
-{
+static void FakeMstFaultCall(void) {
     static bool fault_sent = false;
 
     if (!fault_sent &&
-        (TimeSince(mst_fake_start_ms) >= FAKE_MST_INIT_HOLD_MS + FAKE_MST_FAULT_AFTER_MS))
-    {
+        (TimeSince(mst_fake_start_ms) >= FAKE_MST_INIT_HOLD_MS + FAKE_MST_FAULT_AFTER_MS)) {
         fault_sent = true;
 #if IGNORE_MST_FAULT
         PRINT_BENCH("fake MST: fault pin high (ignored: IGNORE_MST_FAULT)");
 #else // !IGNORE_MST_FAULT
         PRINT_BENCH("fake MST: fault pin high");
-        MstFaultCallback(g_shared.mst_irq_armed);
+        FSM_MstFaultCallback(g_shared.mst_irq_armed);
 #endif // IGNORE_MST_FAULT
     }
 }
@@ -339,27 +365,24 @@ void FakeMstFaultCall(void)
 
 #if FAKE_MST_HEARTBEAT
 /**
- * @brief Passes a fake MST heartbeat to CanMessagesHandleRx() every FAKE_MST_HEARTBEAT_PERIOD_MS.
+ * @brief Passes a fake MST heartbeat to CAN_Messages_HandleRx() every FAKE_MST_HEARTBEAT_PERIOD_MS.
  *
  * Laid out like the real MST's heartbeat. Reports healthy, or a problem if FAKE_MST_UNHEALTHY.
  * Stops for good FAKE_MST_HEARTBEAT_STOP_AFTER_MS after the fake MST starts, if that is not 0.
  * Called by FakeMstInputs().
  *
- * Side effects: through CanMessagesHandleRx(), sets g_shared.mst_heartbeat_received and writes
+ * Side effects: through CAN_Messages_HandleRx(), sets g_shared.mst_heartbeat_received and writes
  * g_shared.mst_healthy.
  */
-void FakeMstHeartbeat(void)
-{
+static void FakeMstHeartbeat(void) {
     static uint32_t last_send_ms = 0;
     static uint32_t heartbeat_count = 0;
 
 #if (FAKE_MST_HEARTBEAT_STOP_AFTER_MS > 0)
     static bool stop_printed = false;
 
-    if (TimeSince(mst_fake_start_ms) >= FAKE_MST_HEARTBEAT_STOP_AFTER_MS)
-    {
-        if (!stop_printed)
-        {
+    if (TimeSince(mst_fake_start_ms) >= FAKE_MST_HEARTBEAT_STOP_AFTER_MS) {
+        if (!stop_printed) {
             stop_printed = true;
             PRINT_BENCH("fake MST: heartbeat stopped");
         }
@@ -367,8 +390,7 @@ void FakeMstHeartbeat(void)
     }
 #endif // (FAKE_MST_HEARTBEAT_STOP_AFTER_MS > 0)
 
-    if (!TimerElapsed(FAKE_MST_HEARTBEAT_PERIOD_MS, &last_send_ms))
-    {
+    if (!FSM_TimerElapsed(FAKE_MST_HEARTBEAT_PERIOD_MS, &last_send_ms)) {
         return;
     }
 
@@ -384,27 +406,25 @@ void FakeMstHeartbeat(void)
     heartbeat.data[4] = FAKE_MST_UNHEALTHY ? 1U : 0U;       // Status: 0 = healthy
     heartbeat.data[5] = 0;                                  // Status: 0 = healthy
     heartbeat.timestamp = HAL_GetTick();
-    CanMessagesHandleRx(&heartbeat);
+    CAN_Messages_HandleRx(&heartbeat);
     heartbeat_count++;
 }
 #endif // FAKE_MST_HEARTBEAT
 
 #if FAKE_MST_PACK_VOLTAGE
 /**
- * @brief Passes a fake MST voltage summary to CanMessagesHandleRx() every
+ * @brief Passes a fake MST voltage summary to CAN_Messages_HandleRx() every
  *        FAKE_MST_PACK_VOLTAGE_PERIOD_MS.
  *
  * Laid out like the real MST's voltage summary, with FAKE_MST_PACK_VOLTAGE_MV as the pack
  * voltage. Called by FakeMstInputs().
  *
- * Side effects: through CanMessagesHandleRx(), writes g_shared.mst_pack_voltage_mv.
+ * Side effects: through CAN_Messages_HandleRx(), writes g_shared.mst_pack_voltage_mv.
  */
-void FakeMstPackVoltage(void)
-{
+static void FakeMstPackVoltage(void) {
     static uint32_t last_send_ms = 0;
 
-    if (!TimerElapsed(FAKE_MST_PACK_VOLTAGE_PERIOD_MS, &last_send_ms))
-    {
+    if (!FSM_TimerElapsed(FAKE_MST_PACK_VOLTAGE_PERIOD_MS, &last_send_ms)) {
         return;
     }
 
@@ -421,29 +441,26 @@ void FakeMstPackVoltage(void)
     volt_summary.data[4] = 1;                               // Min cell number (not used by HVC)
     volt_summary.data[5] = 1;                               // Max cell number (not used by HVC)
     volt_summary.timestamp = HAL_GetTick();
-    CanMessagesHandleRx(&volt_summary);
+    CAN_Messages_HandleRx(&volt_summary);
 }
 #endif // FAKE_MST_PACK_VOLTAGE
 
 /**
  * @brief MST hook: true if id is the CAN ID of a faked MST part.
  *
- * Called by BenchRemoveFakedCanIds().
+ * Called by TESTS_BenchRemoveFakedCanIds().
  *
  * @param id CAN ID to check.
  * @return true if FAKE_MST_HEARTBEAT or FAKE_MST_PACK_VOLTAGE fakes this ID.
  */
-bool IsFakedMstCanId(uint16_t id)
-{
+static bool IsFakedMstCanId(uint16_t id) {
 #if FAKE_MST_HEARTBEAT
-    if (id == MST_HEARTBEAT_ID)
-    {
+    if (id == MST_HEARTBEAT_ID) {
         return true;
     }
 #endif // FAKE_MST_HEARTBEAT
 #if FAKE_MST_PACK_VOLTAGE
-    if (id == MST_VOLT_SUMMARY_ID)
-    {
+    if (id == MST_VOLT_SUMMARY_ID) {
         return true;
     }
 #endif // FAKE_MST_PACK_VOLTAGE
@@ -456,17 +473,16 @@ bool IsFakedMstCanId(uint16_t id)
  *
  * FAKE_MST_FAULT_PIN: only the fake pin counts. IGNORE_MST_FAULT: a real MST fault never reaches
  * the HVC; the startup handshake still reads the real pin, only the fault is lost.
- * Called by BenchBlockFakedPinInterrupts().
+ * Called by TESTS_BenchBlockFakedPinInterrupts().
  */
-void BlockMstPinInterrupts(void)
-{
+static void BlockMstPinInterrupts(void) {
 #if FAKE_MST_FAULT_PIN || IGNORE_MST_FAULT
     CLEAR_BIT(EXTI->IMR, MASTERBOARD_FAULT_Pin); // EXTI line n is pin n
 #endif // FAKE_MST_FAULT_PIN || IGNORE_MST_FAULT
 }
 
 /**
- * @brief MST hook: runs the fake MST parts switched on. Called by BenchFakeInputs().
+ * @brief MST hook: runs the fake MST parts switched on. Called by TESTS_BenchFakeInputs().
  *
  * The fake MST starts when the FSM first reaches STATE_MST_HANDSHAKE, close to when the real MST
  * would power up. All fake MST times are measured from then.
@@ -476,15 +492,13 @@ void BlockMstPinInterrupts(void)
  *   FAKE_MST_FAULT_PIN:    makes the fault call if the pin goes high again.
  *   FAKE_MST_HEARTBEAT:    sends the heartbeat when its period is up.
  *   FAKE_MST_PACK_VOLTAGE: sends the voltage summary when its period is up.
- * "Sends" means passed to CanMessagesHandleRx(): nothing goes on the real CAN bus.
+ * "Sends" means passed to CAN_Messages_HandleRx(): nothing goes on the real CAN bus.
  *
  * Side effects: may write g_shared.pins.mst_fault.
  */
-void FakeMstInputs(void)
-{
+static void FakeMstInputs(void) {
 #if FAKE_MST_ANY
-    if (!mst_fake_started && (g_state == STATE_MST_HANDSHAKE))
-    {
+    if (!mst_fake_started && (g_state == STATE_MST_HANDSHAKE)) {
         mst_fake_started = true;
         mst_fake_start_ms = HAL_GetTick();
         PRINT_BENCH("fake MST: started");
@@ -494,8 +508,7 @@ void FakeMstInputs(void)
     g_shared.pins.mst_fault = FakeMstFaultPin(); // Replaces the real pin's level
 #endif // FAKE_MST_FAULT_PIN
 
-    if (!mst_fake_started)
-    {
+    if (!mst_fake_started) {
         return;
     }
 
@@ -513,34 +526,29 @@ void FakeMstInputs(void)
 
 /**
  * @brief MST hook: prints a [BENCH] line, with its settings, for each MST override that is on.
- *        Called by BenchPrintOverrides().
+ *        Called by TESTS_BenchPrintOverrides().
  *
  * @return true if any MST override is on.
  */
-bool PrintMstOverrides(void)
-{
+static bool PrintMstOverrides(void) {
     bool any_on = false;
 
-    if (FAKE_MST_FAULT_PIN)
-    {
+    if (FAKE_MST_FAULT_PIN) {
         any_on = true;
         PRINT_BENCH("FAKE_MST_FAULT_PIN on (high %d ms at start, fault %d ms later, 0 = never)",
                     (int)FAKE_MST_INIT_HOLD_MS, (int)FAKE_MST_FAULT_AFTER_MS);
     }
-    if (FAKE_MST_HEARTBEAT)
-    {
+    if (FAKE_MST_HEARTBEAT) {
         any_on = true;
         PRINT_BENCH("FAKE_MST_HEARTBEAT on (%s, stops after %d ms, 0 = never)",
                     FAKE_MST_UNHEALTHY ? "unhealthy" : "healthy",
                     (int)FAKE_MST_HEARTBEAT_STOP_AFTER_MS);
     }
-    if (FAKE_MST_PACK_VOLTAGE)
-    {
+    if (FAKE_MST_PACK_VOLTAGE) {
         any_on = true;
         PRINT_BENCH("FAKE_MST_PACK_VOLTAGE on (%d mV)", (int)FAKE_MST_PACK_VOLTAGE_MV);
     }
-    if (IGNORE_MST_FAULT)
-    {
+    if (IGNORE_MST_FAULT) {
         any_on = true;
         PRINT_BENCH("IGNORE_MST_FAULT on");
     }
@@ -573,27 +581,23 @@ bool PrintMstOverrides(void)
  *
  * Side effects: may write g_shared.adc.motor_precharge_mv or mppt_precharge_mv.
  */
-void FakePrechargeVoltage(void)
-{
+static void FakePrechargeVoltage(void) {
     int32_t charged_mv =
         (int32_t)((int64_t)g_shared.mst_pack_voltage_mv * PRECHARGE_PCT_OF_PACK / 100);
 
-    if (g_state == STATE_MOTOR_PRECHARGE)
-    {
+    if (g_state == STATE_MOTOR_PRECHARGE) {
         g_shared.adc.motor_precharge_mv = charged_mv;
     }
-    if (g_state == STATE_MPPT_PRECHARGE)
-    {
+    if (g_state == STATE_MPPT_PRECHARGE) {
         g_shared.adc.mppt_precharge_mv = charged_mv;
     }
 }
 #endif // FAKE_PRECHARGE_VOLTAGE
 
 /**
- * @brief HVC hook: runs the fake HVC parts switched on. Called by BenchFakeInputs().
+ * @brief HVC hook: runs the fake HVC parts switched on. Called by TESTS_BenchFakeInputs().
  */
-void FakeHvcInputs(void)
-{
+static void FakeHvcInputs(void) {
 #if FAKE_PRECHARGE_VOLTAGE
     FakePrechargeVoltage();
 #endif // FAKE_PRECHARGE_VOLTAGE
@@ -601,16 +605,14 @@ void FakeHvcInputs(void)
 
 /**
  * @brief HVC hook: prints a [BENCH] line for each HVC override that is on. Called by
- *        BenchPrintOverrides().
+ *        TESTS_BenchPrintOverrides().
  *
  * @return true if any HVC override is on.
  */
-bool PrintHvcOverrides(void)
-{
+static bool PrintHvcOverrides(void) {
     bool any_on = false;
 
-    if (FAKE_PRECHARGE_VOLTAGE)
-    {
+    if (FAKE_PRECHARGE_VOLTAGE) {
         any_on = true;
         PRINT_BENCH("FAKE_PRECHARGE_VOLTAGE on");
     }

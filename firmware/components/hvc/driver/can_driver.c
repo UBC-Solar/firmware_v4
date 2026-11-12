@@ -9,51 +9,50 @@
 
 CAN_Driver_t CAN_driver;
 
-static void tryTransmitFromQueue()
-{
+static void tryTransmitFromQueue() {
     uint32_t mailbox;
 
-    if (HAL_CAN_GetTxMailboxesFreeLevel(CAN_driver.can_handle) == 0)
-    {
+    if (HAL_CAN_GetTxMailboxesFreeLevel(CAN_driver.can_handle) == 0) {
         return;
     }
 
-    CAN_TxMessage_t *next_message = (CAN_TxMessage_t *) &CAN_driver.tx_queue[CAN_driver.tx_queue_pop_index];
+    CAN_TxMessage_t *next_message =
+        (CAN_TxMessage_t*)&CAN_driver.tx_queue[CAN_driver.tx_queue_pop_index];
     HAL_StatusTypeDef canStatus = HAL_CAN_AddTxMessage(
-        CAN_driver.can_handle, 
-        &next_message->tx_header, 
-        next_message->data, 
+        CAN_driver.can_handle,
+        &next_message->tx_header,
+        next_message->data,
         &mailbox);
 
-    if (HAL_OK != canStatus)
-    {
+    if (HAL_OK != canStatus) {
         Error_Handler();
     }
     CAN_driver.tx_queue_pop_index = (CAN_driver.tx_queue_pop_index + 1U) % CAN_TX_QUEUE_CAPACITY;
 }
 
 /**
- * Queue a message to send over CAN. Commands will be sent in order of queuing as soon as bus is available after calling startTx().
+ * Queue a message to send over CAN. Commands will be sent in order of queuing as soon as bus is
+ * available after calling startTx().
  *
  * This function is non-blocking and commands will be transmitted asynchronously.
  * The message buffer is copied into a queue buffer before the function returns.
  *
  * @param message Pointer to buffer containing message to queue
  */
-void CAN_QueueTxMessage(CAN_TxMessage_t *message)
-{
-    // Start critical section - do not want a CAN TX complete interrupt to be serviced during this function call
+void CAN_QueueTxMessage(CAN_TxMessage_t *message) {
+    // Start critical section - do not want a CAN TX complete interrupt to be serviced during this
+    // function call
     HAL_NVIC_DisableIRQ(USB_HP_CAN1_TX_IRQn);
 
     uint32_t next_push_index = (CAN_driver.tx_queue_push_index + 1U) % CAN_TX_QUEUE_CAPACITY;
 
     // Check if there is space in queue
-    if (next_push_index == CAN_driver.tx_queue_pop_index)
-    {
+    if (next_push_index == CAN_driver.tx_queue_pop_index) {
         Error_Handler();
     }
 
-    volatile CAN_TxMessage_t *next_free_queue_slot = &CAN_driver.tx_queue[CAN_driver.tx_queue_push_index];
+    volatile CAN_TxMessage_t *next_free_queue_slot =
+        &CAN_driver.tx_queue[CAN_driver.tx_queue_push_index];
     memcpy((uint8_t *) next_free_queue_slot, (uint8_t *) message, sizeof(CAN_TxMessage_t));
     CAN_driver.tx_queue_push_index = next_push_index;
 
@@ -75,7 +74,8 @@ void CAN_QueueTxMessage(CAN_TxMessage_t *message)
  *               or four 16 bit filters registers
  * Filter mode: choose between mask and list mode
  *  - Mask mode:
- *      - Use FilterMask (first 32-bit reg) to mark each bit of CAN ID as "must match" or "don't care"
+ *      - Use FilterMask (first 32-bit reg) to mark each bit of CAN ID as "must match" or
+ *        "don't care"
  *      - Use FilterId (second 32-bit reg) to provide the bit pattern to "match" against
  *  - List mode (currently implemented):
  *      - incoming ID must match exactly to what is specified in the filters
@@ -91,12 +91,10 @@ void CAN_QueueTxMessage(CAN_TxMessage_t *message)
  * @param std_ids Array of standard 11-bit CAN IDs to accept.
  * @param count Number of IDs in std_ids.
  */
-void CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size_t count)
-{
+void CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size_t count) {
     const uint32_t max_ids = CAN_FILTER_NUM_BANKS * CAN_FILTER_NUM_ID_PER_BANK;
 
-    if ((handle == NULL) || (std_ids == NULL) || (count == 0U) || (count > max_ids))
-    {
+    if ((handle == NULL) || (std_ids == NULL) || (count == 0U) || (count > max_ids)) {
         Error_Handler();
     }
 
@@ -104,14 +102,12 @@ void CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size
     size_t id_index = 0U;
     uint32_t bank_index = 0U;
 
-    while ((id_index < count) && (bank_index < CAN_FILTER_NUM_BANKS))
-    {
+    while ((id_index < count) && (bank_index < CAN_FILTER_NUM_BANKS)) {
         // If even number of IDs, put each ID in a separate register
         // If odd number of IDs, the last bank will contain two duplicate IDs
         uint16_t id_first = std_ids[id_index];
         uint16_t id_second = id_first;
-        if ((id_index + 1U) < count)
-        {
+        if ((id_index + 1U) < count) {
             id_second = std_ids[id_index + 1U];
         }
 
@@ -125,7 +121,8 @@ void CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size
         filter_config.FilterMode = CAN_FILTERMODE_IDLIST;
         filter_config.FilterScale = CAN_FILTERSCALE_32BIT;
 
-        // Bitshift 5: the 11 most-significant-bits of the 16 bit integer are used as the ID to filter
+        // Bitshift 5: the 11 most-significant-bits of the 16 bit integer are used as the ID to
+        // filter
         filter_config.FilterIdHigh = (uint16_t)((id_first & 0x7FFU) << 5);
         filter_config.FilterIdLow = 0U;
 
@@ -133,8 +130,7 @@ void CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size
         filter_config.FilterMaskIdHigh = (uint16_t)((id_second & 0x7FFU) << 5);
         filter_config.FilterMaskIdLow = 0U;
 
-        if (HAL_CAN_ConfigFilter(handle, &filter_config) != HAL_OK)
-        {
+        if (HAL_CAN_ConfigFilter(handle, &filter_config) != HAL_OK) {
             Error_Handler();
         }
 
@@ -147,11 +143,10 @@ void CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size
 /**
  * @brief Initialize CAN data, configures interrupts, and starts the CAN hardware
  * NOTE: filters should be configured before calling this function
- * 
+ *
  * Call this function once before sending any CAN messages
  */
-void CAN_Init(CAN_HandleTypeDef *handle)
-{
+void CAN_Init(CAN_HandleTypeDef *handle) {
     memset((uint8_t *) &CAN_driver, 0, sizeof(CAN_driver));
 
     CAN_driver.can_handle = handle;
@@ -160,8 +155,7 @@ void CAN_Init(CAN_HandleTypeDef *handle)
     if (HAL_CAN_ActivateNotification(CAN_driver.can_handle,
                                       CAN_IT_TX_MAILBOX_EMPTY |
                                       CAN_IT_RX_FIFO0_MSG_PENDING |
-                                      CAN_IT_RX_FIFO1_MSG_PENDING) != HAL_OK)
-    {
+                                      CAN_IT_RX_FIFO1_MSG_PENDING) != HAL_OK) {
         Error_Handler();
     }
 
@@ -171,37 +165,33 @@ void CAN_Init(CAN_HandleTypeDef *handle)
 
 /**
  * @brief TEMPLATE function to be registered for receiving CAN messages
- * 
+ *
  * TODO: register this function to be called inside the appropriate "Rx FIFO pending callback"
  * as determined by the filter configuration. I.e. one of:
  *  - HAL_CAN_RxFifo0MsgPendingCallback()
  *  - HAL_CAN_RxFifo1MsgPendingCallback()
  */
-void CAN_RecievedMessageCallback(uint32_t fifo_num)
-{
+void CAN_RecievedMessageCallback(uint32_t fifo_num) {
     CAN_RxMessage_t new_rx_message;
     if (HAL_CAN_GetRxMessage(
-        CAN_driver.can_handle, 
-        fifo_num, 
-        (CAN_RxHeaderTypeDef *) &new_rx_message.rx_header, 
-        (uint8_t *) new_rx_message.data) != HAL_OK)
-    {
+        CAN_driver.can_handle,
+        fifo_num,
+        (CAN_RxHeaderTypeDef *) &new_rx_message.rx_header,
+        (uint8_t *) new_rx_message.data) != HAL_OK) {
         Error_Handler();
     }
 
     new_rx_message.timestamp = HAL_GetTick();
 
-    CanMessagesHandleRx(&new_rx_message);
+    CAN_Messages_HandleRx(&new_rx_message);
 }
 
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
-{
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
     CAN_RecievedMessageCallback(CAN_FILTER_FIFO0);
 }
 
 
-void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
-{
+void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan) {
     CAN_RecievedMessageCallback(CAN_FILTER_FIFO1);
 }
 
@@ -234,50 +224,46 @@ void HAL_CAN_TxMailbox2AbortCallback(CAN_HandleTypeDef *hcan) {
 
 /**
  * @brief Handle a CAN TX complete interrupt for any of the 3 CAN TX mailboxes
- * 
+ *
  * TODO: register this function to be called inside all of the following:
  *  - HAL_CAN_TxMailbox0CompleteCallback()
  *  - HAL_CAN_TxMailbox1CompleteCallback()
  *  - HAL_CAN_TxMailbox2CompleteCallback()
  */
-void CAN_TxCompleteCallback()
-{
+void CAN_TxCompleteCallback() {
     // Initiate next message transmission if possible
-    if (CAN_driver.tx_queue_pop_index != CAN_driver.tx_queue_push_index)
-    {
+    if (CAN_driver.tx_queue_pop_index != CAN_driver.tx_queue_push_index) {
         tryTransmitFromQueue();
     }
 }
 
 /**
  * @brief Handle a CAN TX complete interrupt with error for any of the 3 CAN TX mailboxes
- * 
+ *
  * TODO: register this function to be called from HAL_CAN_ErrorCallback()
- * 
+ *
  * @note This function assumes auto retransmission is ENABLED!
  */
-void CAN_ErrorCallback()
-{
-    // This callback is needed if automatic retransmission is DISABLED in the CAN peripheral's configuration
+void CAN_ErrorCallback() {
+    // This callback is needed if automatic retransmission is DISABLED in the CAN peripheral's
+    // configuration
     // If board is disconnected from CAN bus, TX requests will complete with error
     // due to lack of CAN message acknowledgement from another device.
     // Continue as if this was a clean transmission completion; note that multiple
     // TX mailboxes may need an error serviced in one interrupt
 
-    // With automatic retransmission ENABLED, and board is disconnected from CAN bus or no other devices on bus are active),
+    // With automatic retransmission ENABLED, and board is disconnected from CAN bus or no other
+    // devices on bus are active),
     // messages go unacknowledged, do not complete and are repeatedly sent indefinitely.
     // The CAN_driver.tx_queue will overflow and the firmware will fault
 
-    if (CAN_driver.can_handle->ErrorCode & (HAL_CAN_ERROR_TX_TERR0))
-    {
+    if (CAN_driver.can_handle->ErrorCode & (HAL_CAN_ERROR_TX_TERR0)) {
         CAN_TxCompleteCallback();
     }
-    if (CAN_driver.can_handle->ErrorCode & (HAL_CAN_ERROR_TX_TERR1))
-    {
+    if (CAN_driver.can_handle->ErrorCode & (HAL_CAN_ERROR_TX_TERR1)) {
         CAN_TxCompleteCallback();
     }
-    if (CAN_driver.can_handle->ErrorCode & (HAL_CAN_ERROR_TX_TERR2))
-    {
+    if (CAN_driver.can_handle->ErrorCode & (HAL_CAN_ERROR_TX_TERR2)) {
         CAN_TxCompleteCallback();
     }
 }

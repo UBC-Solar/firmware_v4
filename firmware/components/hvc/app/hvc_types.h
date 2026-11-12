@@ -24,8 +24,7 @@
  * SendState() sends the state's number, so adding or moving a state
  * changes a CAN message (see can_messages.h).
  */
-typedef enum
-{
+typedef enum {
     STATE_RESET = 0,
     STATE_TEL_STARTUP,
     STATE_MST_HANDSHAKE,
@@ -47,16 +46,15 @@ typedef enum
 /**
  * @brief Every condition that sends the HVC to STATE_FAULT, one bool each.
  *
- * FsmRun() goes to STATE_FAULT on the first pass that finds any flag true. Flags
+ * FSM_Run() goes to STATE_FAULT on the first pass that finds any flag true. Flags
  * are set by the FSM, the GPIO fault callbacks, and the CAN receive interrupt,
  * and are never cleared, so a flag stays set until the HVC resets.
  * SendFaults() sends them over CAN, one bit each in this order: adding or
  * moving a flag changes the CAN layout (see can_messages.h).
- * Every field must be a bool: AnyFaultActive() reads the struct as a list of
+ * Every field must be a bool: FSM_AnyFaultActive() reads the struct as a list of
  * bools.
  */
-typedef struct
-{
+typedef struct {
     // General faults
     bool estop;
     bool imd_fault;
@@ -92,12 +90,12 @@ typedef struct
  * Holds what other boards send over CAN, this pass's ADC measurements and pin
  * levels, and the flags the FSM sets as startup progresses to turn checks on.
  */
-typedef struct
-{
+typedef struct {
     // Received over CAN. Set by the CAN receive interrupt (or by a faked board in
-    // tests.c, through the same CanMessagesHandleRx()); read by the main loop,
+    // tests.c, through the same CAN_Messages_HandleRx()); read by the main loop,
     // which also clears the _received flags.
-    volatile bool     tel_heartbeat_received;           // Read by TelStartup(), then CheckHeartbeats()
+    // Read by TelStartup(), then CheckHeartbeats()
+    volatile bool     tel_heartbeat_received;
     volatile bool     dist_heartbeat_received;
     volatile bool     mst_heartbeat_received;
     volatile bool     lv_powerup_received;
@@ -122,11 +120,10 @@ typedef struct
 /**
  * @brief Start times (HAL_GetTick(), in ms) for every delay, timeout, and periodic task.
  *
- * Each one holds when its timer last started. TimerElapsed() compares it with the
+ * Each one holds when its timer last started. FSM_TimerElapsed() compares it with the
  * current time, and restarts it when the time is up.
  */
-typedef struct
-{
+typedef struct {
     // FSM timers. state_timeout and state_delay are both restarted on every state change.
     uint32_t state_timeout;    // State entry time, only for the state's timeout
     uint32_t state_delay;      // Start of the current wait inside a state (fans, contactors, ...)

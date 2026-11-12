@@ -17,11 +17,9 @@
 // Drivers
 #include "can_driver.h"
 
-/*==============================================================================
- * === TX CAN IDS ==============================================================
- * IDs of the messages the HVC sends. What each one carries is in its Send*()
- * function in can_messages.c.
- *============================================================================*/
+// TX CAN IDs
+// IDs of the messages the HVC sends. What each one carries is in its Send*()
+// function in can_messages.c.
 
 #define SHUNT_CURRENT_ID            0x320U
 #define FAULT_ID                    0x321U
@@ -35,12 +33,10 @@
 #define MPPT_PRECHARGE_ID           0x329U
 #define COMMIT_HASH_ID              0x32AU
 
-/*==============================================================================
- * === RX CAN IDS ==============================================================
- * IDs of the messages from other boards that the HVC acts on, grouped by board.
- * Each one must also be in CAN_RX_IDS (can_messages.c), or the RX filters drop
- * it.
- *============================================================================*/
+// RX CAN IDs
+// IDs of the messages from other boards that the HVC acts on, grouped by board.
+// Each one must also be in CAN_RX_IDS (can_messages.c), or the RX filters drop
+// it.
 
 // --- TEL ---
 #define TEL_HEARTBEAT_ID            0x750U
@@ -54,37 +50,18 @@
 #define MST_HEARTBEAT_ID            0x200U
 #define MST_VOLT_SUMMARY_ID         0x201U
 
-/*==============================================================================
- * === TX MESSAGES =============================================================
- * Implemented in can_messages.c. Entry points: CanMessagesSendAll() (from
- * FsmRun()) and CanMessagesSendLvPowerupRequest() (from LvPowerup()).
- *============================================================================*/
+// TX: CAN_Messages_SendAll() from FSM_Run(), CAN_Messages_SendLvPowerupRequest() from LvPowerup()
+void CAN_Messages_SendAll(void);
+void CAN_Messages_SendLvPowerupRequest(void);
 
-void CanMessagesSendAll(void);
-void SendHeartbeat(void);
-void SendCommitHash(void);
-void SendState(void);
-void SendFaults(void);
-void SendShuntCurrent(void);
-void SendLvCurrent(void);
-void SendSuppVoltage(void);
-void SendDcdcTemp(void);
-void SendMotorPrecharge(void);
-void SendMpptPrecharge(void);
-void CanMessagesSendLvPowerupRequest(void);
+// Not called: copy it to add a new TX message
+void CAN_Messages_SendMessageTemplate(void);
 
-// --- Template ---
-void SendMessageTemplate(void);
+// RX: CAN_Messages_HandleRx() from the CAN driver's receive interrupt
 
-/*==============================================================================
- * === RX MESSAGES =============================================================
- * Implemented in can_messages.c. Entry point: CanMessagesHandleRx() (from the
- * CAN driver's receive interrupt).
- *============================================================================*/
-
-// Every RX CAN ID above, the ones CanMessagesHandleRx() handles. HVC_Init() sets the RX filters
+// Every RX CAN ID above, the ones CAN_Messages_HandleRx() handles. HVC_Init() sets the RX filters
 // from it. Update CAN_RX_ID_COUNT with the list: a wrong count does not compile.
 #define CAN_RX_ID_COUNT 6U
 extern const uint16_t CAN_RX_IDS[CAN_RX_ID_COUNT];
 
-void CanMessagesHandleRx(const CAN_RxMessage_t* rx_message);
+void CAN_Messages_HandleRx(const CAN_RxMessage_t *rx_message);

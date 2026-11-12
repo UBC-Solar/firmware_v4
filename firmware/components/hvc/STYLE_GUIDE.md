@@ -50,7 +50,7 @@ CubeMX-generated).
 | Thing | Convention | Example |
 |---|---|---|
 | Public functions | `FILENAME_NameOfTheFunction` (see below) | `ADC_Init`, `GPIO_Read`, `HVC_Main` |
-| Private (static) functions | `MODULE#_PascalCase` or `MODULE_PascalCase`, declared at top of the file | `ADC1_ProcessReadings` |
+| Private functions | `static`, PascalCase, no prefix needed, declared at the top of the `.c` | `MstHandshake`, `SendHeartbeat` |
 | Types | `Module_PascalCase` for structs the module owns, or `snake_case_t` for plain data records | `ADC_Readings`, `thermistor_mapping_t` |
 | File-scope variables | `snake_case`, always `static` unless shared on purpose | `adc_buffer`, `adc1_readings` |
 | Local variables, struct fields | `snake_case` | `half`, `motor_precharge` |
@@ -68,9 +68,21 @@ The prefix is the file's name in caps, then an underscore, then the function nam
 | `driver/gpio_driver.c` | `GPIO_` | `GPIO_Read()`, `GPIO_Write()` |
 | `app/hvc_main.c` | `HVC_` | `HVC_Init()`, `HVC_Main()` |
 | `runtime/adc_runtime.c` | `ADC_Runtime_` | `ADC_Runtime_ProcessReadings()`, `ADC_Runtime_GetValues()` |
+| `runtime/gpio_runtime.c` | `GPIO_Runtime_` | `GPIO_Runtime_Read()` |
+| `runtime/shunt_runtime.c` | `SHUNT_` | `SHUNT_Init()`, `SHUNT_GetShuntCurrent_mA()` |
+| `app/fsm.c` | `FSM_` | `FSM_Init()`, `FSM_TimerElapsed()` |
+| `app/tests.c` | `TESTS_` | `TESTS_RunSelected()` |
+| `app/can_messages.c` | `CAN_Messages_` | `CAN_Messages_SendAll()`, `CAN_Messages_HandleRx()` |
+| `app/debug_output.c` | `DEBUG_Output_` | `DEBUG_Output_Init()` |
 
 A runtime file that sits on top of a driver of the same name adds `_Runtime` to the driver's
-prefix (`ADC_` → `ADC_Runtime_`), so the two never clash.
+prefix (`ADC_` → `ADC_Runtime_`), so the two never clash. A two-word filename puts the first word
+in caps and the rest in PascalCase (`can_messages.c` → `CAN_Messages_`).
+
+**Only functions called from another file are public.** Everything else is `static`, declared at
+the top of its `.c` (below the includes), and left out of the header. Private functions don't need
+the prefix. If a static function only compiles under a switch (`#if HVC_TEST == ...`, `FAKE_*`),
+its prototype goes under the same `#if`, so no configuration warns about unused functions.
 
 This means you can always tell from a call which file to open. No public function goes without a
 prefix (not `InitTemperatureReading()`, not `FsmRun()`).
@@ -109,18 +121,6 @@ Units go in names or the comment when they are not obvious: `voltage_uV`, `tempe
 - Multi-step functions are broken into commented steps (`// 1. Clamp ...`, `// 2. Iterate ...`).
 - **Do not leave commented-out code** in the tree.
 - Mark vendored or copied code with its source (`// COPIED FROM MST`).
-
-## What not to copy from `adc_driver`
-
-`adc_driver` is the reference for the conventions above, but a few things in it are not worth
-repeating:
-
-- Commented-out debug prints.
-- Prototypes with empty parentheses (`InitTemperatureReading()` should be `(void)`).
-- Trailing whitespace in struct member lists.
-- Lines far over 100 columns, and a missing newline at end of file.
-- Mixed-style comment markers (`//COPIED`, no space after `//`). Always write `// text`.
-- Function names with a trailing underscore (`ThermistorVoltToTemp_`).
 
 ## Layering
 

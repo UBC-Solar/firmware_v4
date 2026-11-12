@@ -2,11 +2,11 @@
  * @file fsm.c
  * @brief HVC FSM core: init and run, states, interrupt callbacks, and helpers
  *
- * The FSM takes the HVC from power-up to running. In state order, it: powers DIST and waits
- * for TEL, checks MST, starts the fans, connects the pack (NEG, POS), opens the discharge
- * relay, precharges the motor and MPPT sides, closes LLIM and HLIM, asks DIST to power up
- * the LV boards, then monitors. Any fault goes to STATE_FAULT, which opens every contactor
- * and stays there until the HVC is reset.
+ * The FSM takes the HVC from power-up to running.
+ * In state order, it: powers DIST and waits for TEL, checks MST, starts the fans, connects the pack
+ * (NEG, POS), opens the discharge relay, precharges the motor and MPPT sides, closes LLIM and HLIM,
+ * asks DIST to power up the LV boards, then monitors.
+ * Any fault goes to STATE_FAULT, which opens every contactor and stays there until a reset.
  *
  * Sections, in order:
  *   GLOBAL VARIABLES:    the HVC-wide variables (types in hvc_types.h).
@@ -55,10 +55,11 @@ static void CheckStartupFaultPins(void);
 static void CheckHeartbeats(void);
 static void CheckSuppVoltage(void);
 
-// Global variables
-// The one variable of each HVC-wide type (types in hvc_types.h). Any file that
-// includes fsm.h can use them. g_fault_flags is volatile because interrupts
-// write it. g_state stays volatile to be safe, but only the main loop writes it.
+// ==== Global variables ====
+// The one variable of each HVC-wide type (types in hvc_types.h).
+// Any file that includes fsm.h can use them.
+// g_fault_flags is volatile because interrupts write it.
+// g_state stays volatile to be safe, but only the main loop writes it.
 // g_shared marks its interrupt-written fields volatile.
 
 volatile FsmState   g_state;
@@ -66,7 +67,7 @@ volatile FaultFlags g_fault_flags;
 SharedData          g_shared;
 Ticks               g_ticks;
 
-// Public API
+// ==== Public API ====
 // Called from hvc_main.c: FSM_Init() once at startup, FSM_Run() every pass.
 
 /**
@@ -91,12 +92,13 @@ void FSM_Init(void) {
  * @brief Runs one pass of the FSM. Call from HVC_Main() every pass.
  *
  * In order: prints the debug output (DEBUG_Output_Run(), debug_output.c), checks heartbeat
- * timeouts, switches to STATE_FAULT if any fault flag is set, sends periodic CAN messages,
- * updates the supp-low LED, then runs the current state's function.
+ * timeouts, switches to STATE_FAULT if any fault flag is set, sends periodic CAN messages, updates
+ * the supp-low LED, then runs the current state's function.
  *
- * A fault reaches STATE_FAULT one of two ways. A state that finds a fault sets its flag and goes
- * to STATE_FAULT itself, in the same pass. An interrupt only sets a flag; the FSM_AnyFaultActive()
- * check here moves to STATE_FAULT on the next pass.
+ * A fault reaches STATE_FAULT one of two ways.
+ * A state that finds a fault sets its flag and goes to STATE_FAULT itself, in the same pass.
+ * An interrupt only sets a flag; the FSM_AnyFaultActive() check here then moves to STATE_FAULT
+ * on the next pass.
  *
  * Side effects: may set heartbeat timeout flags and change g_state.
  */
@@ -159,20 +161,22 @@ void FSM_Run(void) {
     }
 }
 
-// States
-// One function per FsmState, in state order. FSM_Run() calls the current state's
-// function every pass. Each state's doc lists its exit conditions and the state
-// each one goes to. Every state change restarts g_ticks.state_timeout and
-// g_ticks.state_delay, so the next state's timers start from zero.
+// ==== States ====
+// One function per FsmState, in state order.
+// FSM_Run() calls the current state's function every pass.
+// Each state's doc lists its exit conditions and the state each one goes to.
+// Every state change restarts g_ticks.state_timeout and g_ticks.state_delay, so the next state's
+// timers start from zero.
 
 /**
  * @brief Checks the fault inputs already active at power-up, then puts every output in its safe
  *        starting position.
  *
- * Runs once, on the first pass. CheckStartupFaultPins() runs first, before any output is set,
- * and reads this pass's pins, after TESTS_BenchFakeInputs(). Then opens all contactors, sets
- * DISCHARGE_TOGGLE_OFF low (the discharge relay stays closed, see OpenDischargeRelay()), turns
- * fans, MPPT, and DIST off, and sets IMD_CTRL.
+ * Runs once, on the first pass.
+ * CheckStartupFaultPins() runs first, before any output is set, and reads this pass's pins, after
+ * TESTS_BenchFakeInputs().
+ * Then opens all contactors, sets DISCHARGE_TOGGLE_OFF low (the discharge relay stays closed, see
+ * OpenDischargeRelay()), turns fans, MPPT, and DIST off, and sets IMD_CTRL.
  *
  * Exit Condition: no fault flag set (immediately).
  * Exit State: STATE_TEL_STARTUP
@@ -204,7 +208,8 @@ static void Reset(void) {
  *
  * Waiting for TEL is enough: DIST powers TEL, so a TEL heartbeat means DIST is up too.
  *
- * Exit Condition: TEL heartbeat received. Enables the TEL and DIST heartbeat checks.
+ * Exit Condition: TEL heartbeat received.
+ * Enables the TEL and DIST heartbeat checks.
  * Exit State: STATE_MST_HANDSHAKE
  *
  * Exit Condition: TEL_STARTUP_TIMEOUT_MS elapsed.
@@ -242,9 +247,11 @@ static void TelStartup(void) {
 /**
  * @brief MST handshake: waits for MST to pull MASTERBOARD_FAULT high, then low.
  *
- * MST holds the line high while it initializes, then pulls it low when it is done. Seeing both
- * proves MST started and finished. Once the line is low, arms the MASTERBOARD_FAULT interrupt
- * (mst_irq_armed) so a later high is treated as a real fault. MstStatusCheck() comes next.
+ * MST holds the line high while it initializes, then pulls it low when it is done.
+ * Seeing both proves MST started and finished.
+ * Once the line is low, arms the MASTERBOARD_FAULT interrupt (mst_irq_armed) so a later high is
+ * treated as a real fault.
+ * MstStatusCheck() comes next.
  *
  * Exit Condition: MASTERBOARD_FAULT seen high, then low.
  * Exit State: STATE_MST_STATUS_CHECK
@@ -281,10 +288,11 @@ static void MstHandshake(void) {
 /**
  * @brief Waits for MST's status message (its CAN heartbeat) to report a healthy pack.
  *
- * Proves MST's CAN works and its cells have no errors, faults, or warnings. Runs after
- * MstHandshake().
+ * Proves MST's CAN works and its cells have no errors, faults, or warnings.
+ * Runs after MstHandshake().
  *
- * Exit Condition: MST status reports healthy. Enables the MST heartbeat check.
+ * Exit Condition: MST status reports healthy.
+ * Enables the MST heartbeat check.
  * Exit State: STATE_FANS_POWERUP
  *
  * Exit Condition: MST_STATUS_CHECK_TIMEOUT_MS elapsed.
@@ -340,9 +348,10 @@ static void FansPowerup(void) {
 /**
  * @brief Closes the NEG then POS contactors, waiting CONTACTOR_SETTLE_MS before and after each.
  *
- * Once the contactors are closed, the power-path prioritizer switches the LV supply from the
- * supp battery to the DCDC. DCDC_ACTIVE and SUPP_ACTIVE are active-low: low = in use. On exit,
- * arms the DCDC_ACTIVE interrupt (dcdc_irq_armed) so a later high is treated as a real fault.
+ * Once the contactors are closed, the power-path prioritizer switches the LV supply from the supp
+ * battery to the DCDC.
+ * DCDC_ACTIVE and SUPP_ACTIVE are active-low: low = in use.
+ * On exit, arms the DCDC_ACTIVE interrupt (dcdc_irq_armed), so a later high counts as a fault.
  *
  * Exit Condition: POS closed at least CONTACTOR_SETTLE_MS ago, DCDC_ACTIVE low and SUPP_ACTIVE
  *                 high.
@@ -395,14 +404,15 @@ static void HvConnect(void) {
 /**
  * @brief Opens the discharge relay once the motor side reads discharged.
  *
- * The discharge relay is latching: it stays where it was last put, and it is closed
- * mechanically when the car turns on or off, which discharges the motor side. A
- * DISCHARGE_RELAY_PULSE_MS pulse on DISCHARGE_TOGGLE_OFF opens it, so the pack can charge the
- * motor side in STATE_MOTOR_PRECHARGE. The pin then goes back low, so the relay coil is not left
- * powered.
+ * The discharge relay is latching: it stays where it was last put, and it is closed mechanically
+ * when the car turns on or off, which discharges the motor side.
+ * A DISCHARGE_RELAY_PULSE_MS pulse on DISCHARGE_TOGGLE_OFF opens it, so the pack can charge the
+ * motor side in STATE_MOTOR_PRECHARGE.
+ * The pin then goes back low, so the relay coil is not left powered.
  *
  * Waits for the motor-side voltage (g_shared.adc.motor_precharge_mv) to be below
- * DISCHARGE_COMPLETE_MV before the pulse. Once started, the pulse always finishes.
+ * DISCHARGE_COMPLETE_MV before the pulse.
+ * Once started, the pulse always finishes.
  *
  * Exit Condition: pulse finished.
  * Exit State: STATE_MOTOR_PRECHARGE
@@ -560,8 +570,8 @@ static void CloseHlim(void) {
 /**
  * @brief Asks the rest of the LV systems to power up, now that the HV path is closed.
  *
- * Sends the LV power-up request every LV_POWERUP_RETRY_MS until it is acknowledged. DIST
- * answers with LV_POWERUP_ACK_ID once the boards it powers are on.
+ * Sends the LV power-up request every LV_POWERUP_RETRY_MS until it is acknowledged.
+ * DIST answers with LV_POWERUP_ACK_ID once the boards it powers are on.
  *
  * Exit Condition: LV_POWERUP_ACK_ID received.
  * Exit State: STATE_MONITORING
@@ -609,8 +619,9 @@ static void Monitoring(void) {
 /**
  * @brief Safe state. Opens all contactors, turns MPPT off, keeps DIST powered, blinks FAULT_LED.
  *
- * DIST stays powered so TEL stays on and can report the fault. The fans are left on to keep
- * cooling. Has no exit; the HVC stays here until it is reset.
+ * DIST stays powered so TEL stays on and can report the fault.
+ * The fans are left on to keep cooling.
+ * Has no exit; the HVC stays here until it is reset.
  *
  * Side effects: disarms the DCDC_ACTIVE interrupt (dcdc_irq_armed).
  */
@@ -627,13 +638,13 @@ static void Fault(void) {
     }
 }
 
-// Interrupt callbacks
-// Called from the fault pin interrupts (HAL_GPIO_EXTI_Callback() in
-// gpio_driver.c) when a fault input goes high, in fault flag order. Each one only
-// sets its fault flag (FSM_EstopCallback() also turns on ESTOP_LED): FSM_Run() sees
-// the flag and goes to STATE_FAULT on the next pass. Nothing prints here: the
-// fault is printed from the main loop (debug_output.c). FSM_MstFaultCallback() and
-// FSM_DcdcFaultCallback() do nothing until the FSM arms them.
+// ==== Interrupt callbacks ====
+// Called from the fault pin interrupts (HAL_GPIO_EXTI_Callback() in gpio_driver.c) when a fault
+// input goes high, in fault flag order.
+// Each one only sets its fault flag (FSM_EstopCallback() also turns on ESTOP_LED): FSM_Run() sees
+// the flag and goes to STATE_FAULT on the next pass.
+// Nothing prints here: the fault is printed from the main loop (debug_output.c).
+// FSM_MstFaultCallback() and FSM_DcdcFaultCallback() do nothing until the FSM arms them.
 
 /**
  * @brief Handles ESTOP going high: turns on ESTOP_LED and sets the estop fault.
@@ -693,8 +704,8 @@ void FSM_HvCurrentAlertCallback(void) {
 /**
  * @brief Handles DCDC_ACTIVE going high: sets the DCDC fault if it is armed.
  *
- * DCDC_ACTIVE is active-low and only goes low once the contactors close in HvConnect(), so
- * the GPIO interrupt passes g_shared.dcdc_irq_armed, which only becomes true in HvConnect().
+ * DCDC_ACTIVE is active-low and only goes low once the contactors close in HvConnect(), so the GPIO
+ * interrupt passes g_shared.dcdc_irq_armed, which only becomes true in HvConnect().
  *
  * Side effects: sets g_fault_flags.dcdc_fault.
  *
@@ -706,18 +717,19 @@ void FSM_DcdcFaultCallback(bool armed) {
     }
 }
 
-// Helpers
-// Small functions used by the states and FSM_Run(). Grouped by topic: general
-// ones first (Timing, Faults), then in hvc_defs.h order (Heartbeats,
-// Supplemental battery, Contactors). Debug output helpers are in debug_output.c.
+// ==== Helpers ====
+// Small functions used by the states and FSM_Run().
+// Grouped by topic: general ones first (Timing, Faults), then in hvc_defs.h order (Heartbeats,
+// Supplemental battery, Contactors).
+// Debug output helpers are in debug_output.c.
 
 // --- Timing ---
 
 /**
  * @brief Checks whether interval_ms have passed since *last_tick, and if so restarts the timer.
  *
- * In a condition with other checks, put it last: it restarts the timer when it returns true, so
- * it must only run once the other checks are already true.
+ * In a condition with other checks, put it last: it restarts the timer when it returns true, so it
+ * must only run once the other checks are already true.
  *
  * @param interval_ms Time to wait, in ms.
  * @param last_tick   Timestamp (HAL_GetTick()) the interval is measured from.
@@ -755,18 +767,19 @@ bool FSM_AnyFaultActive(void) {
 /**
  * @brief Sets the fault for each fault input that is already in its fault level at startup.
  *
- * Fault inputs only interrupt on a change, so one that is already high at power-up never
- * fires. Reads this pass's g_shared.pins. MASTERBOARD_FAULT is skipped: MST holds it high
- * during the startup handshake. DCDC_ACTIVE is skipped: it is high until HvConnect().
+ * Fault inputs only interrupt on a change, so one that is already high at power-up never fires.
+ * Reads this pass's g_shared.pins.
+ * MASTERBOARD_FAULT is skipped: MST holds it high during the startup handshake.
+ * DCDC_ACTIVE is skipped: it is high until HvConnect().
  * SUPP_ACTIVE (active-low) must be low: the supp battery powers the HVC until HvConnect().
  * Called once from Reset().
  *
- * Side effects: may set g_fault_flags.estop, imd_fault, overcurrent, reverse_current, or
- * supp_fault.
+ * Side effects: may set g_fault_flags.estop, imd_fault, overcurrent, reverse_current,
+ * or supp_fault.
  */
 static void CheckStartupFaultPins(void) {
-    // TODO: IMD will get a startup handshake like MST. Then skip it here and arm its interrupt
-    // like mst_irq_armed.
+    // TODO: IMD will get a startup handshake like MST.
+    // Then skip it here, and arm its interrupt like mst_irq_armed.
     if (g_shared.pins.estop == GPIO_PIN_SET) {
         FSM_EstopCallback();
     }
@@ -788,10 +801,12 @@ static void CheckStartupFaultPins(void) {
  *        mst_unhealthy if the MST heartbeat reports a problem.
  *
  * Each board's heartbeat timer (g_ticks) starts when its check is enabled: TEL and DIST in
- * STATE_TEL_STARTUP, MST in STATE_MST_STATUS_CHECK. Each heartbeat received (its _received
- * flag, set by the CAN receive interrupt) restarts the timer. A heartbeat is late when
- * HEARTBEAT_TIMEOUT_MS passes with none received. STATE_MST_STATUS_CHECK only exits on a
- * healthy MST, so after it, a heartbeat reporting a problem is a fault.
+ * STATE_TEL_STARTUP, MST in STATE_MST_STATUS_CHECK.
+ * Each heartbeat received restarts the timer (its _received flag, set by the CAN receive
+ * interrupt).
+ * A heartbeat is late when HEARTBEAT_TIMEOUT_MS passes with none received.
+ * STATE_MST_STATUS_CHECK only exits on a healthy MST, so after it, a heartbeat reporting a problem
+ * is a fault.
  *
  * Side effects: clears the checked boards' _heartbeat_received flags, restarts their g_ticks
  * heartbeat timers, and may set g_fault_flags.tel_heartbeat_timeout, dist_heartbeat_timeout,

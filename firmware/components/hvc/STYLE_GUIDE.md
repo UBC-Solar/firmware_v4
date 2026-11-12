@@ -29,8 +29,20 @@ CubeMX-generated).
 - **Switch:** `case` labels are indented one level inside `switch`, and `break;` is on the same
   line as nothing else, at the `case` label's indent. Separate cases with a blank line.
 - **Blank lines:** one between functions, and one between logical blocks inside a function.
-- **No banner comments** (`/*=====`, `=== SECTION ===`). Group code with blank lines and plain
-  comments instead.
+- **Sections:** no boxed banner comments (`/*=====...=====*/`). Mark sections with one-line
+  headers instead, in two levels:
+
+  ```c
+  // ==== Hardware tests ====
+  // What this section is for, if it needs explaining.
+
+  // --- Pick the test ---
+  #define HVC_TEST TEST_NONE
+  ```
+
+  `// ==== Name ====` starts a section; `// --- Name ---` starts a subsection inside one. Only
+  mark a section when it groups several items in a longer file (`hvc_defs.h`, `fsm.c`). Don't
+  mark single items: a struct or function already has its own `@brief` block.
 - **Preprocessor directives** (`#if`, `#elif`, `#else`, `#endif`) go at column 0 on their own
   line, even inside a function body. Label every `#endif` (and `#else`) with the condition it
   closes:
@@ -38,9 +50,9 @@ CubeMX-generated).
   ```c
   void HVC_Main(void) {
   #if (HVC_TEST != TEST_NONE)
-      TestRunSelected();
+      TESTS_RunSelected();
   #else
-      FsmRun();
+      FSM_Run();
   #endif // (HVC_TEST != TEST_NONE)
   }
   ```

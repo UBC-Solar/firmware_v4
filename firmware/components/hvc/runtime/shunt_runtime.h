@@ -6,23 +6,23 @@
 // SHUNT_MONITOR, SHUNT_ADCRANGE, SHUNT_RESISTANCE_NOHMS, and the fault limits
 #include "hvc_defs.h"
 
-// Shunt monitor chip selection
-// Chosen in hvc_defs.h. The INA237 and INA228 share a register map; only the
-// VSHUNT register (0x04) differs: INA228 is 24-bit (20-bit data), INA237 is
-// 16-bit.
+// --- Shunt monitor chip selection ---
+// Chosen in hvc_defs.h.
+// The INA237 and INA228 share a register map; only the VSHUNT register (0x04) differs: INA228 is
+// 24-bit (20-bit data), INA237 is 16-bit.
 
 #if !defined(SHUNT_MONITOR) ||                                                                     \
     (SHUNT_MONITOR != SHUNT_MONITOR_INA228 && SHUNT_MONITOR != SHUNT_MONITOR_INA237)
 #error "SHUNT_MONITOR must be SHUNT_MONITOR_INA228 or SHUNT_MONITOR_INA237"
 #endif // SHUNT_MONITOR validity check
 
-// I2c address
+// --- I2C address ---
 // INA228/INA237 7-bit address with A1=GND, A0=GND is 0b1000000 = 0x40.
 // HAL expects the 8-bit form (7-bit << 1).
 
 #define SHUNT_I2C_ADDRESS (0x40 << 1)
 
-// Register addresses
+// --- Register addresses ---
 // Table 7-3.
 
 #define SHUNT_REG_CONFIG       0x00  // Configuration (16-bit)

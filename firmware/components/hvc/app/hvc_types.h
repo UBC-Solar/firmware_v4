@@ -2,8 +2,8 @@
  * @file hvc_types.h
  * @brief HVC data types: FSM states, fault flags, shared data, timing ticks.
  *
- * Types only: fsm.c creates the one variable of each (g_state, g_fault_flags, g_shared,
- * g_ticks), and fsm.h shares them with the other files.
+ * Types only: fsm.c creates the one variable of each (g_state, g_fault_flags, g_shared, g_ticks),
+ * and fsm.h shares them with the other files.
  */
 
 #pragma once
@@ -19,10 +19,11 @@
 /**
  * @brief Every state of the HVC FSM.
  *
- * Listed in startup order: STATE_RESET runs first and STATE_MONITORING is the normal
- * running state once startup is done. Any state can go to STATE_FAULT.
- * SendState() sends the state's number, so adding or moving a state
- * changes a CAN message (see can_messages.h).
+ * Listed in startup order: STATE_RESET runs first and STATE_MONITORING is the normal running state
+ * once startup is done.
+ * Any state can go to STATE_FAULT.
+ * SendState() sends the state's number, so adding or moving a state changes a CAN message
+ * (see can_messages.h).
  */
 typedef enum {
     STATE_RESET = 0,
@@ -46,13 +47,12 @@ typedef enum {
 /**
  * @brief Every condition that sends the HVC to STATE_FAULT, one bool each.
  *
- * FSM_Run() goes to STATE_FAULT on the first pass that finds any flag true. Flags
- * are set by the FSM, the GPIO fault callbacks, and the CAN receive interrupt,
- * and are never cleared, so a flag stays set until the HVC resets.
- * SendFaults() sends them over CAN, one bit each in this order: adding or
- * moving a flag changes the CAN layout (see can_messages.h).
- * Every field must be a bool: FSM_AnyFaultActive() reads the struct as a list of
- * bools.
+ * FSM_Run() goes to STATE_FAULT on the first pass that finds any flag true.
+ * Flags are set by the FSM, the GPIO fault callbacks, and the CAN receive interrupt, and are never
+ * cleared, so a flag stays set until the HVC resets.
+ * SendFaults() sends them over CAN, one bit each in this order: adding or moving a flag changes the
+ * CAN layout (see can_messages.h).
+ * Every field must be a bool: FSM_AnyFaultActive() reads the struct as a list of bools.
  */
 typedef struct {
     // General faults
@@ -87,15 +87,14 @@ typedef struct {
 /**
  * @brief Values passed between the FSM and the interrupts.
  *
- * Holds what other boards send over CAN, this pass's ADC measurements and pin
- * levels, and the flags the FSM sets as startup progresses to turn checks on.
+ * Holds what other boards send over CAN, this pass's ADC measurements and pin levels, and the flags
+ * the FSM sets as startup progresses to turn checks on.
  */
 typedef struct {
-    // Received over CAN. Set by the CAN receive interrupt (or by a faked board in
-    // tests.c, through the same CAN_Messages_HandleRx()); read by the main loop,
-    // which also clears the _received flags.
-    // Read by TelStartup(), then CheckHeartbeats()
-    volatile bool     tel_heartbeat_received;
+    // Received over CAN.
+    // Set by the CAN receive interrupt (or by a faked board in tests.c, through the same
+    // CAN_Messages_HandleRx()); read by the main loop, which also clears the _received flags.
+    volatile bool     tel_heartbeat_received;           // Also read by TelStartup()
     volatile bool     dist_heartbeat_received;
     volatile bool     mst_heartbeat_received;
     volatile bool     lv_powerup_received;
@@ -103,8 +102,8 @@ typedef struct {
     volatile bool     mst_healthy;
     volatile int32_t  mst_pack_voltage_mv;              // From MST_VOLT_SUMMARY
 
-    // Read once per pass by HVC_Main(), before the FSM. Bench overrides (tests.c) may
-    // write fake values over them before the FSM reads them.
+    // Read once per pass by HVC_Main(), before the FSM.
+    // Bench overrides (tests.c) may write fake values over them before the FSM reads them.
     ADC_Values        adc;                              // This pass's ADC readings, in real units
     PinLevels         pins;                             // This pass's polled input pin levels
 
@@ -120,8 +119,8 @@ typedef struct {
 /**
  * @brief Start times (HAL_GetTick(), in ms) for every delay, timeout, and periodic task.
  *
- * Each one holds when its timer last started. FSM_TimerElapsed() compares it with the
- * current time, and restarts it when the time is up.
+ * Each one holds when its timer last started.
+ * FSM_TimerElapsed() compares it with the current time, and restarts it when the time is up.
  */
 typedef struct {
     // FSM timers. state_timeout and state_delay are both restarted on every state change.
@@ -130,8 +129,9 @@ typedef struct {
     uint32_t lv_powerup_retry; // LV power-up request resend
     uint32_t fault_led;        // FAULT_LED blink
 
-    // Heartbeat timeouts. Started when the board's check is enabled, then restarted by each
-    // heartbeat received (CheckHeartbeats()).
+    // Heartbeat timeouts.
+    // Started when the board's check is enabled, then restarted by each heartbeat received, in
+    // CheckHeartbeats().
     uint32_t tel_heartbeat;    // Last TEL heartbeat
     uint32_t dist_heartbeat;   // Last DIST heartbeat
     uint32_t mst_heartbeat;    // Last MST heartbeat

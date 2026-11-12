@@ -2,10 +2,9 @@
  * @file can_messages.c
  * @brief HVC CAN messages: builds and queues HVC TX messages, and handles received messages.
  *
- * TX MESSAGES fills each message the HVC sends (ID, length, data) and queues it on the CAN
- * driver. RX MESSAGES turns each received message into g_shared values and fault flags for
- * the FSM. The message IDs, and what else to update when a message changes, are in
- * can_messages.h.
+ * TX MESSAGES fills each message the HVC sends (ID, length, data) and queues it on the CAN driver.
+ * RX MESSAGES turns each received message into g_shared values and fault flags for the FSM.
+ * The message IDs, and what else to update when a message changes, are in can_messages.h.
  */
 
 #include "can_messages.h"
@@ -37,11 +36,12 @@ static void SendDcdcTemp(void);
 static void SendMotorPrecharge(void);
 static void SendMpptPrecharge(void);
 
-// TX messages
-// Every message the HVC sends. FSM_Run() calls CAN_Messages_SendAll() every pass,
-// which sends the periodic ones when their interval is up. LvPowerup() sends the
-// LV power-up request itself. Each Send*() function builds one message and
-// queues it; the CAN driver sends it from the queue.
+// ==== TX messages ====
+// Every message the HVC sends.
+// FSM_Run() calls CAN_Messages_SendAll() every pass, which sends the periodic ones when their
+// interval is up.
+// LvPowerup() sends the LV power-up request itself.
+// Each Send*() function builds one message and queues it; the CAN driver sends it from the queue.
 
 /**
  * @brief Sends every periodic HVC CAN message whose interval has elapsed.
@@ -94,7 +94,8 @@ static void SendHeartbeat(void) {
 /**
  * @brief Sends the git commit hash of this build (COMMIT_HASH_ID).
  *
- * Lets you confirm over CAN which firmware is flashed. Data is packed by GitVersionPackCan().
+ * Lets you confirm over CAN which firmware is flashed.
+ * Data is packed by GitVersionPackCan().
  */
 static void SendCommitHash(void) {
     CAN_TxMessage_t tx_message = {0};
@@ -164,8 +165,8 @@ static void SendFaults(void) {
 /**
  * @brief Sends the HV current measured by the shunt (SHUNT_CURRENT_ID).
  *
- * Sends the last finished reading. The new read finishes later in the I2C interrupt,
- * so the value sent is from the previous call.
+ * Sends the last finished reading.
+ * The new read finishes later in the I2C interrupt, so the value sent is from the previous call.
  * Current is in mA; negative means reverse current (charging the pack).
  *
  * Side effects: starts a new shunt read over I2C.
@@ -320,14 +321,15 @@ void CAN_Messages_SendMessageTemplate(void) {
     CAN_QueueTxMessage(&tx_message);
 }
 
-// RX messages
-// What the HVC does with each message it receives. The CAN driver calls
-// CAN_Messages_HandleRx() from the CAN receive interrupt, so it only writes
+// ==== RX messages ====
+// What the HVC does with each message it receives.
+// The CAN driver calls CAN_Messages_HandleRx() from the CAN receive interrupt, so it only writes
 // g_shared and g_fault_flags; the FSM acts on them in the main loop.
 // CAN_RX_IDS lists the IDs the RX filters let in.
 
-// Every ID CAN_Messages_HandleRx() handles, in RX CAN IDS order. Keep the two in sync: an ID
-// missing here is dropped by the RX filters and never reaches the handler.
+// Every ID CAN_Messages_HandleRx() handles, in RX CAN IDS order.
+// Keep the two in sync: an ID missing here is dropped by the RX filters, so the handler never
+// sees it.
 const uint16_t CAN_RX_IDS[] = {
     TEL_HEARTBEAT_ID,
     DIST_HEARTBEAT_ID,
@@ -343,8 +345,7 @@ const uint16_t CAN_RX_IDS[] = {
  * Called by the CAN driver from the RX FIFO interrupt, after the frame has been read from hardware.
  * Also called by the faked boards in tests.c (main loop).
  *
- * Side effects: writes g_shared (received flags, MST status and pack voltage) and
- * g_fault_flags.dist_fault.
+ * Side effects: writes g_shared (received flags, MST status, pack voltage) and g_fault_flags.
  *
  * @param rx_message The received message.
  */

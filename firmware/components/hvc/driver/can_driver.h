@@ -13,7 +13,6 @@
 
 #include "hvc_main.h"
 
-
 /**
  * CAN Protocol & STM32F103 constants
  */
@@ -27,7 +26,6 @@
  * Change as needed to accomodate all CAN messages transmitted around the same time
  */
 #define CAN_TX_QUEUE_CAPACITY 32U
-
 
 /** 
  * CAN types
@@ -50,8 +48,6 @@ typedef struct {
     volatile uint32_t tx_queue_pop_index;
     volatile CAN_RxMessage_t rx_message_0x450;
 } CAN_Driver_t;
-
-
 
 /** 
  * Functions

@@ -2,8 +2,8 @@
  * @file gpio_runtime.h
  * @brief Levels of the input pins the FSM checks itself, built on gpio_driver.
  *
- * GPIO_Runtime_Read() gives the level of every polled input pin (PinLevels). HVC_Main() calls
- * it once per pass and stores the result in g_shared.pins.
+ * GPIO_Runtime_Read() gives the level of every polled input pin (PinLevels).
+ * HVC_Main() calls it once per pass and stores the result in g_shared.pins.
  */
 
 #pragma once

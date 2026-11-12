@@ -2,8 +2,9 @@
  * @file tests.h
  * @brief HVC hardware tests (run instead of the FSM) and bench override code (run with the FSM).
  *
- * Only the entry points are public. Every other function is static in tests.c, and most only
- * compile when the switch they belong to (HVC_TEST, FAKE_*, IGNORE_*) is on.
+ * Only the entry points are public.
+ * Every other function is static in tests.c, and most only compile when the switch they belong to
+ * (HVC_TEST, FAKE_*, IGNORE_*) is on.
  */
 
 #pragma once

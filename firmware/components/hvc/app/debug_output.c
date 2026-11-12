@@ -73,17 +73,18 @@ static bool PrintNextDumpSection(void);
 static const char *StateToString(FsmState state);
 #endif // DEBUG
 
-// Public API
-// DEBUG_Output_Init() runs once, at the end of HVC_Init(). DEBUG_Output_Run()
-// runs first in every FSM_Run() pass (not during a hardware test). Without DEBUG
-// both do nothing.
+// ==== Public API ====
+// DEBUG_Output_Init() runs once, at the end of HVC_Init().
+// DEBUG_Output_Run() runs first in every FSM_Run() pass (not during a hardware test).
+// Without DEBUG both do nothing.
 
 /**
  * @brief Prints the startup lines. Call once, at the end of HVC_Init().
  *
  * In order: firmware version, reset cause, the bench overrides that are on
- * (TESTS_BenchPrintOverrides(), tests.c), then "done". Runs after FSM_Init(), which records a
- * watchdog reset. A hardware test prints its own name on its first pass (tests.c).
+ * (TESTS_BenchPrintOverrides(), tests.c), then "done".
+ * Runs after FSM_Init(), which records a watchdog reset.
+ * A hardware test prints its own name on its first pass (tests.c).
  */
 void DEBUG_Output_Init(void) {
 #ifdef DEBUG
@@ -99,10 +100,11 @@ void DEBUG_Output_Init(void) {
  * @brief Prints what happened since the last pass, then at most one report or dump line. Call
  *        first in FSM_Run(), every pass.
  *
- * Events first (state change, new faults, first heartbeats), so they are never delayed. Runs
- * before CheckHeartbeats() and the state functions, so it sees the _received flags before
- * the main loop clears them. Then starts a dump if one is due, and prints the next dump
- * section, or if no dump is running, the next report that is due.
+ * Events first (state change, new faults, first heartbeats), so they are never delayed.
+ * Runs before CheckHeartbeats() and the state functions, so it sees the _received flags before the
+ * main loop clears them.
+ * Then starts a dump if one is due, and prints the next dump section, or if no dump is running, the
+ * next report that is due.
  */
 void DEBUG_Output_Run(void) {
 #ifdef DEBUG
@@ -132,9 +134,9 @@ void DEBUG_Output_Run(void) {
 #endif // DEBUG
 }
 
-// Helpers
-// Used by the entry points above, grouped by what they print. Only compiled with
-// DEBUG: nothing calls them otherwise.
+// ==== Helpers ====
+// Used by the entry points above, grouped by what they print.
+// Only compiled with DEBUG: nothing calls them otherwise.
 
 #ifdef DEBUG
 
@@ -164,10 +166,11 @@ static void PrintStateChange(FsmState old_state, FsmState new_state) {
 /**
  * @brief Prints each fault flag that is set, once, with its cause and the value behind it.
  *
- * Waits until the FSM is in STATE_FAULT, so the causes always print right after "-> FAULT"
- * (a flag set by an interrupt reaches STATE_FAULT one pass later). A flag set after that
- * prints on the pass it is set. Then warns once if a set flag has no line in
- * PrintFaultLines(), so a new flag that was not given a line does not go unnoticed.
+ * Waits until the FSM is in STATE_FAULT, so the causes always print right after "-> FAULT" (a flag
+ * set by an interrupt reaches STATE_FAULT one pass later).
+ * A flag set after that prints on the pass it is set.
+ * Then warns once if a set flag has no line in PrintFaultLines(), so a new flag that was not given
+ * a line does not go unnoticed.
  */
 static void PrintNewFaults(void) {
     static bool missing_line_warned = false;
@@ -204,8 +207,9 @@ static void PrintNewFaults(void) {
 /**
  * @brief The one line per fault flag: its name, cause, and the value behind it.
  *
- * Used by PrintNewFaults() ([FAULT], each flag once) and by the dump ([DUMP], every flag
- * that is set). Values are read on the pass the line prints. In FaultFlags order.
+ * Used by PrintNewFaults() ([FAULT], each flag once) and by the dump ([DUMP], every set flag).
+ * Values are read on the pass the line prints.
+ * In FaultFlags order.
  * To add a fault flag: add its line here.
  *
  * @param in_dump true to print every set flag as a dump line, false to print only new ones.
@@ -260,8 +264,7 @@ static void PrintFaultLines(bool in_dump) {
 /**
  * @brief Counts the flags set in a FaultFlags.
  *
- * Reads it as an array of bools, like FSM_AnyFaultActive(), so new flags are counted
- * automatically.
+ * Reads it as an array of bools, like FSM_AnyFaultActive(), so new flags are counted automatically.
  *
  * @param flags Flags to count.
  * @return Number of flags that are true.
@@ -281,8 +284,9 @@ static uint32_t CountSetFlags(const volatile FaultFlags *flags) {
 /**
  * @brief Prints the first heartbeat received from TEL, DIST, and MST, once each.
  *
- * Reads the _received flags set by the CAN receive interrupt, without clearing them: they
- * belong to the FSM. DEBUG_Output_Run() runs before the FSM clears them.
+ * Reads the _received flags set by the CAN receive interrupt, but doesn't clear them.
+ * They belong to the FSM.
+ * DEBUG_Output_Run() runs before the FSM clears them.
  */
 static void PrintFirstHeartbeats(void) {
     static bool tel_printed = false;
@@ -427,8 +431,9 @@ static void StartDump(void) {
 /**
  * @brief Prints the next section of the running dump.
  *
- * Every value the HVC holds, as a last resort when the reports are not enough. One section per
- * pass, so a dump never holds up the main loop. Values are this pass's.
+ * Every value the HVC holds, as a last resort when the reports are not enough.
+ * One section per pass, so a dump never holds up the main loop.
+ * Values are this pass's.
  * To add a value: add it to the section it belongs to (or add a section to DumpSection).
  *
  * @return true if a section was printed, false if no dump is running.

@@ -120,9 +120,8 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
 /**
  * Thermistor voltage-to-temperature look-up table.
  * See https://www.vishay.com/docs/29050/ntclg100.pdf.
- * First value is temperature in milli-Celsius,
- * second value is resistance (computed at initialization time),
- * third value is thermistor resistance.
+ * First value is temperature in milli-Celsius, second value is resistance (computed at
+ * initialization time), third value is thermistor resistance.
  */
  // inverted table from MST code
 thermistor_mapping_t thermistor_temp_lut[THERMISTOR_LUT_TABLE_SIZE] = {
@@ -150,7 +149,8 @@ thermistor_mapping_t thermistor_temp_lut[THERMISTOR_LUT_TABLE_SIZE] = {
 // COPIED FROM MST
 void ADC_InitTemperatureReading(void) {
     for (int i = 0; i < THERMISTOR_LUT_TABLE_SIZE; i++) {
-        // V_T: thermistor voltage. R_T: thermistor resistance.
+        // V_T: thermistor voltage.
+        // R_T: thermistor resistance.
         // V_T = V_ref2 * (10,000)/(10,000 + R_T)  // (thermistor is in different place)
         // Vref2 = 3300000 uV
         uint64_t resistance_Ohm =
@@ -187,8 +187,8 @@ int32_t ADC_ThermistorVoltToTemp(uint32_t thermistor_uV) {
             int32_t t2   = thermistor_temp_lut[i + 1].temperature_mC;   // Higher Temp
 
             // 3. Linear interpolation between the two values
-            // Formula: T = T1 + ( (T2 - T1) * (ADC1 - thermistor_uV) ) / (ADC1 - ADC2)
-            // Note: We arrange the subtraction to keep values positive before division
+            // Formula: T = T1 + ( (T2 - T1) * (ADC1 - thermistor_uV) ) / (ADC1 - ADC2) Note: We
+            // arrange the subtraction to keep values positive before division
             int32_t temp_diff = t2 - t1;
             int32_t adc_diff = adc1 - adc2;
             int32_t meas_diff = adc1 - thermistor_uV;

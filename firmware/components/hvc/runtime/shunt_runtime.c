@@ -68,8 +68,8 @@ void SHUNT_Init(void) {
  * @brief Write the CONFIG register (0x00) to set the ADC range.
  */
 static void Shunt_Write_Config(void) {
-    // CONFIG register (0x00), 16-bit, reset = 0x0000
-    // Bit 4: ADCRANGE — set according to SHUNT_ADCRANGE define
+    // CONFIG register (0x00), 16-bit, reset = 0x0000 Bit 4: ADCRANGE — set according to
+    // SHUNT_ADCRANGE define
 
     uint16_t config = (uint16_t)SHUNT_ADCRANGE << 4;
 
@@ -110,8 +110,8 @@ static void Shunt_Write_ADC_Config(void) {
  * @brief Write the DIAG_ALRT register (0x0B) to configure alert latch and slow-alert behaviour.
  */
 static void Shunt_Write_Diagnostic_Flags(void) {
-    // DIAG_ALRT register (0x0B), 16-bit, reset = 0x0001
-    // Bit 15: ALATCH = 1 - Latches alert pin until read, we never read it so it's kept high until
+    // DIAG_ALRT register (0x0B), 16-bit, reset = 0x0001 Bit 15: ALATCH = 1 - Latches alert pin
+    // until read, we never read it so it's kept high until
     //         a power cycle
     // Bit 13: SLOWALERT = 1 - Internal alert is done after averaging, not before on every sample
     // Bit  0: MEMSTAT = 1 - reads 1 when trim memory is healthy (reset default).
@@ -185,8 +185,8 @@ void SHUNT_ProcessShuntVoltage(void) {
     // https://docs.google.com/document/d/1IN_0Pcg9eEbxtUkUSTO_Nc7S2LKmDKqyU20G1GsCJE0/edit?tab=t.i0huserxy3py
 
 #if SHUNT_MONITOR == SHUNT_MONITOR_INA228
-    // INA228 sends bytes big-endian: buf[0]=MSB, buf[1]=MID, buf[2]=LSB. Assemble the buf into an
-    // int32_t.
+    // INA228 sends bytes big-endian: buf[0]=MSB, buf[1]=MID, buf[2]=LSB.
+    // Assemble the buf into an int32_t.
     int32_t raw_value = ((int32_t)raw_shunt_voltage_buf[0] << 16)
                       | ((int32_t)raw_shunt_voltage_buf[1] << 8)
                       |  (int32_t)raw_shunt_voltage_buf[2];
@@ -200,8 +200,8 @@ void SHUNT_ProcessShuntVoltage(void) {
         raw_value |= 0xFFF00000;
     }
 #elif SHUNT_MONITOR == SHUNT_MONITOR_INA237
-    // INA237 sends bytes big-endian: buf[0]=MSB, buf[1]=LSB. VSHUNT bits 15:0 are the 16-bit
-    // measurement.
+    // INA237 sends bytes big-endian: buf[0]=MSB, buf[1]=LSB.
+    // VSHUNT bits 15:0 are the 16-bit measurement.
     // Casting to int16_t sign-extends the 16-bit two's complement value.
     int32_t raw_value = (int16_t)(((uint16_t)raw_shunt_voltage_buf[0] << 8)
                                  | (uint16_t)raw_shunt_voltage_buf[1]);

@@ -31,8 +31,8 @@ static void tryTransmitFromQueue() {
 }
 
 /**
- * Queue a message to send over CAN. Commands will be sent in order of queuing as soon as bus is
- * available after calling startTx().
+ * Queue a message to send over CAN.
+ * Commands will be sent in order of queuing as soon as bus is available after calling startTx().
  *
  * This function is non-blocking and commands will be transmitted asynchronously.
  * The message buffer is copied into a queue buffer before the function returns.
@@ -40,8 +40,7 @@ static void tryTransmitFromQueue() {
  * @param message Pointer to buffer containing message to queue
  */
 void CAN_QueueTxMessage(CAN_TxMessage_t *message) {
-    // Start critical section - do not want a CAN TX complete interrupt to be serviced during this
-    // function call
+    // Start critical section: a CAN TX complete interrupt must not run during this function
     HAL_NVIC_DisableIRQ(USB_HP_CAN1_TX_IRQn);
 
     uint32_t next_push_index = (CAN_driver.tx_queue_push_index + 1U) % CAN_TX_QUEUE_CAPACITY;
@@ -61,7 +60,6 @@ void CAN_QueueTxMessage(CAN_TxMessage_t *message) {
     HAL_NVIC_EnableIRQ(USB_HP_CAN1_TX_IRQn); // End critical section
 }
 
-
 /**
  * @brief Configure bxCAN filters for a list of standard 11-bit IDs.
  *
@@ -69,8 +67,8 @@ void CAN_QueueTxMessage(CAN_TxMessage_t *message) {
  *
  * In ARM, CAN subsystem known as bxCAN (basic-extended)
  * 14 configurable filter banks (STM32F103 has only one CAN interface)
- * Each filter bank consists of two, 32-bit registers, CAN_FxR0 and CAN_FxR1
- * Filter scale: a filter bank contains either two 32-bit filters registers (currently implemented),
+ * Each filter bank consists of two, 32-bit registers, CAN_FxR0 and CAN_FxR1 Filter scale: a filter
+ * bank contains either two 32-bit filters registers (currently implemented),
  *               or four 16 bit filters registers
  * Filter mode: choose between mask and list mode
  *  - Mask mode:
@@ -103,8 +101,8 @@ void CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size
     uint32_t bank_index = 0U;
 
     while ((id_index < count) && (bank_index < CAN_FILTER_NUM_BANKS)) {
-        // If even number of IDs, put each ID in a separate register
-        // If odd number of IDs, the last bank will contain two duplicate IDs
+        // If even number of IDs, put each ID in a separate register If odd number of IDs, the last
+        // bank will contain two duplicate IDs
         uint16_t id_first = std_ids[id_index];
         uint16_t id_second = id_first;
         if ((id_index + 1U) < count) {
@@ -121,8 +119,7 @@ void CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size
         filter_config.FilterMode = CAN_FILTERMODE_IDLIST;
         filter_config.FilterScale = CAN_FILTERSCALE_32BIT;
 
-        // Bitshift 5: the 11 most-significant-bits of the 16 bit integer are used as the ID to
-        // filter
+        // Bitshift 5: the filter uses the 11 most-significant bits of the 16-bit value as the ID
         filter_config.FilterIdHigh = (uint16_t)((id_first & 0x7FFU) << 5);
         filter_config.FilterIdLow = 0U;
 
@@ -138,7 +135,6 @@ void CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size
         bank_index += 1U;
     }
 }
-
 
 /**
  * @brief Initialize CAN data, configures interrupts, and starts the CAN hardware
@@ -162,12 +158,11 @@ void CAN_Init(CAN_HandleTypeDef *handle) {
     HAL_CAN_Start(CAN_driver.can_handle);
 }
 
-
 /**
  * @brief TEMPLATE function to be registered for receiving CAN messages
  *
- * TODO: register this function to be called inside the appropriate "Rx FIFO pending callback"
- * as determined by the filter configuration. I.e. one of:
+ * TODO: register this function to be called inside the appropriate "Rx FIFO pending callback",
+ * as determined by the filter configuration. That is, one of:
  *  - HAL_CAN_RxFifo0MsgPendingCallback()
  *  - HAL_CAN_RxFifo1MsgPendingCallback()
  */
@@ -190,21 +185,17 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
     CAN_RecievedMessageCallback(CAN_FILTER_FIFO0);
 }
 
-
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan) {
     CAN_RecievedMessageCallback(CAN_FILTER_FIFO1);
 }
-
 
 void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan) {
     CAN_TxCompleteCallback();
 }
 
-
 void HAL_CAN_TxMailbox1CompleteCallback(CAN_HandleTypeDef *hcan) {
     CAN_TxCompleteCallback();
 }
-
 
 void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan) {
     CAN_TxCompleteCallback();
@@ -245,16 +236,14 @@ void CAN_TxCompleteCallback() {
  * @note This function assumes auto retransmission is ENABLED!
  */
 void CAN_ErrorCallback() {
-    // This callback is needed if automatic retransmission is DISABLED in the CAN peripheral's
-    // configuration
-    // If board is disconnected from CAN bus, TX requests will complete with error
-    // due to lack of CAN message acknowledgement from another device.
-    // Continue as if this was a clean transmission completion; note that multiple
-    // TX mailboxes may need an error serviced in one interrupt
+    // This callback is needed if automatic retransmission is DISABLED in the CAN configuration.
+    // If board is disconnected from CAN bus, TX requests will complete with error due to lack of
+    // CAN message acknowledgement from another device.
+    // Continue as if this was a clean transmission completion; note that multiple TX mailboxes may
+    // need an error serviced in one interrupt
 
-    // With automatic retransmission ENABLED, and board is disconnected from CAN bus or no other
-    // devices on bus are active),
-    // messages go unacknowledged, do not complete and are repeatedly sent indefinitely.
+    // With automatic retransmission ENABLED, if the board is disconnected from the CAN bus (or no
+    // other devices on the bus are active), messages go unacknowledged and are resent forever.
     // The CAN_driver.tx_queue will overflow and the firmware will fault
 
     if (CAN_driver.can_handle->ErrorCode & (HAL_CAN_ERROR_TX_TERR0)) {

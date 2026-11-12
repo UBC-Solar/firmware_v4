@@ -3,7 +3,8 @@
  * @brief Public interface for the HVC finite state machine
  *
  * Include it to use the HVC-wide variables (g_state, g_fault_flags, g_shared, g_ticks) or the
- * public FSM functions. The states and internal checks are static in fsm.c.
+ * public FSM functions.
+ * The states and internal checks are static in fsm.c.
  */
 
 #pragma once

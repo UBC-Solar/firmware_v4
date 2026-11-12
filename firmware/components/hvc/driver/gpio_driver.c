@@ -36,14 +36,15 @@ void GPIO_Toggle(GPIO_TypeDef *port, uint16_t pin) {
 /**
  * @brief HAL callback for the fault input interrupts: calls the fault callback if the pin is high.
  *
- * Each fault input interrupts on both edges (rising and falling, set in cube gpio.c), so this
- * reads the pin to get its level now. High means fault, and the matching callback in fsm.c
- * sets the fault flag. Low does nothing: fault flags are never cleared.
+ * Each fault input interrupts on both edges (rising and falling, set in cube gpio.c), so this reads
+ * the pin to get its level now.
+ * High means fault, and the matching callback in fsm.c sets the fault flag.
+ * Low does nothing: fault flags are never cleared.
  * A pin interrupt turned off by the bench overrides (TESTS_BenchBlockFakedPinInterrupts(), tests.c)
  * never reaches here.
  *
- * Side effects: may set g_fault_flags.estop, imd_fault, mst_fault, overcurrent,
- * reverse_current, or dcdc_fault (through the fsm.c callbacks).
+ * Side effects: may set g_fault_flags.estop, imd_fault, mst_fault, overcurrent, reverse_current, or
+ * dcdc_fault (through the fsm.c callbacks).
  *
  * @param GPIO_Pin Pin that triggered the interrupt (for example, ESTOP_Pin).
  */
@@ -72,8 +73,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
             break;
 
         case HV_CURRENT_ALERT_Pin:
-            // Shunt monitor alert, pack current past a limit: the callback reads the shunt
-            // monitor and sets the overcurrent or reverse current fault
+            // Shunt monitor alert, pack current past a limit: the callback reads the shunt monitor
+            // and sets the overcurrent or reverse current fault
             if (HAL_GPIO_ReadPin(HV_CURRENT_ALERT_GPIO_Port, HV_CURRENT_ALERT_Pin) ==
                 GPIO_PIN_SET) {
                 FSM_HvCurrentAlertCallback();
@@ -88,8 +89,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
             break;
 
         default:
-            // Not a fault input. SUPP_ACTIVE also lands here: it is only checked by the FSM,
-            // at startup and in HvConnect()
+            // Not a fault input.
+            // SUPP_ACTIVE also lands here: it is only checked by the FSM, at startup and in
+            // HvConnect()
             break;
     }
 }

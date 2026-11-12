@@ -41,4 +41,19 @@ bool CanDriverSend(const CAN_TxHeaderTypeDef *header, const uint8_t *data);
  */
 void CanDriverRegisterRxCallback(CanDriverRxCallback callback);
 
+/**
+ * @brief  Reads the CAN transmit error counter (TEC) from the controller.
+ *         The hardware adds 8 per transmit error and subtracts 1 per successful transmit.
+ * @return TEC value (0–255). Above 127 the node is error passive.
+ */
+uint8_t CanDriverGetTec(void);
+
+/**
+ * @brief  Reads the CAN receive error counter (REC) from the controller.
+ *         The hardware adds 1 per receive error (up to 8) and subtracts 1 per
+ *         successful reception.
+ * @return REC value (0–255). Above 127 the node is error passive.
+ */
+uint8_t CanDriverGetRec(void);
+
 #endif /* __CAN_DRIVER_H__ */

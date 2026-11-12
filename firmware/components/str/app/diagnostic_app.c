@@ -64,13 +64,13 @@ void McuDiagnosticSendHealth() {
     DiagnosticsSetMcuUnderVoltageFlag(mcu_voltage_mv < MCU_VOLTAGE_THRESHOLD);
     DiagnosticsSetMcuOverTempFlag(mcu_temp_c > MCU_TEMP_THRESHOLD);
 
-
     CAN_comms_Tx_msg_t mcu_diagnostics_can_tx = {
     .data[0] = (mcu_voltage_mv & 0x00FFU),  // LE order so data[0] corresponds to least significant
     .data[1] = (mcu_voltage_mv & 0xFF00U) >> 8,
     .data[2] = (mcu_temp_c & 0x00FFU),
     .data[3] = (mcu_temp_c & 0xFF00U) >> 8,
-
+    .data[4] = (CAN_comms_get_tec()),
+    .data[5] = (CAN_comms_get_rec()),
     .header = str_mcu_health_can_header,
     };
 

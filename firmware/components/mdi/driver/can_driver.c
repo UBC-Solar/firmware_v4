@@ -75,3 +75,24 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *can_handle)
         s_rx_callback(&rx_header, rx_data);
     }
 }
+
+/**
+ * @brief  Reads the CAN transmit error counter (TEC) from the controller.
+ *         The hardware adds 8 per transmit error and subtracts 1 per successful transmit.
+ * @return TEC value (0–255). Above 127 the node is error passive.
+ */
+uint8_t CanDriverGetTec(void)
+{
+    return (hcan.Instance->ESR & CAN_ESR_TEC) >> CAN_ESR_TEC_Pos;
+}
+
+/**
+ * @brief  Reads the CAN receive error counter (REC) from the controller.
+ *         The hardware adds 1 per receive error (up to 8) and subtracts 1 per
+ *         successful reception.
+ * @return REC value (0–255). Above 127 the node is error passive.
+ */
+uint8_t CanDriverGetRec(void)
+{
+    return (hcan.Instance->ESR & CAN_ESR_REC) >> CAN_ESR_REC_Pos;
+}

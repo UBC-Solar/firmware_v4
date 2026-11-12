@@ -107,7 +107,7 @@
 
 #define OBC_STATUS_ID                       0x18FF50E5
 
-#define TEL_HEALTH_CAN_DATA_LENGTH                 4
+#define TEL_HEALTH_CAN_DATA_LENGTH                 6
 #define TEL_HEALTH_CAN_ID                          0x764      
 
 /* CAN Message Headers */

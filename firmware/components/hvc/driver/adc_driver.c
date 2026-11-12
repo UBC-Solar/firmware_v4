@@ -1,5 +1,7 @@
 #include "adc_driver.h"
 
+#include "hvc_defs.h"
+
 static void ADC1_ProcessReadings(int half);
 
 static ADC_HandleTypeDef *hadc1;
@@ -39,9 +41,18 @@ static void ADC1_ProcessReadings(int half) {
         }
     }
 
-    // Average readings (divide sum by SAMPLE_COUNT)
+    // Average readings (divide sum by SAMPLE_COUNT), then remove the ADC error bias
     for (int channel = 0; channel < ADC1_NUM_CHANNELS; channel++) {
-        results[channel] = sum[channel] / ADC1_SAMPLE_COUNT;
+        int32_t corrected = (int32_t)(sum[channel] / ADC1_SAMPLE_COUNT) - ADC_ERROR_BIAS;
+
+        // Keep the corrected reading inside the ADC's range
+        if (corrected < 0) {
+            corrected = 0;
+        } else if (corrected > ADC_RESOLUTION) {
+            corrected = ADC_RESOLUTION;
+        }
+
+        results[channel] = (uint16_t)corrected;
     }
 
     // Store readings and voltages

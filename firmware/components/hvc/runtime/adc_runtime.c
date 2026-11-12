@@ -1,50 +1,37 @@
-/**
- * @file adc_runtime.c
- * @brief ADC measurements in real units, built on adc_driver.
- *
- * adc_driver averages every ADC channel in the background (DMA) and gives each one in mV at
- * the ADC pin (ADC_GetVoltages()). This file converts those to what they measure, in real
- * units. The scaling constants are in hvc_defs.h. The thermistor table and its conversion,
- * ThermistorVoltToTemp_(), stay in adc_driver.c (set up by InitTemperatureReading()).
- */
-
 #include "adc_runtime.h"
 
-// Drivers
 #include "adc_driver.h"
-
-// HVC app
 #include "hvc_defs.h"
 
+static ADC_Values adc_values = {0};
+
 /**
- * @brief Reads the ADC once and converts every channel to real units.
- *
- * Call once per pass and keep the result (HVC_Main() stores it in g_shared.adc), so the
- * whole pass uses the same values: adc_driver updates its values in the background, so two
- * reads in one pass can differ.
- *
- * @return Every ADC measurement, in real units.
+ * @brief Read the ADC pin voltages from the ADC driver and convert them into engineering units
+ *        (eg. LV current, motor precharge voltage). Scaling constants are in hvc_defs.h.
  */
-AdcMeasurements AdcRuntimeRead(void)
-{
-    ADC_Voltages adc = ADC_GetVoltages(); // mV at the ADC pins
-    AdcMeasurements measurements;
+void ADC_Runtime_ProcessReadings(void) {
+    ADC_Voltages voltages = ADC_GetVoltages(); // mV at the ADC pins
 
-    // Supp battery: scaled back up through the sense divider
-    measurements.supp_mv =
-        (int32_t)((uint32_t)adc.supp_sense * SUPP_SENSE_DIVIDER_NUM / SUPP_SENSE_DIVIDER_DEN);
+    // Convert mV at the ADC pin to mV before the supp sense voltage divider
+    adc_values.supp_mv =
+        (int32_t)((uint32_t)voltages.supp_sense * SUPP_SENSE_DIVIDER_NUM / SUPP_SENSE_DIVIDER_DEN);
 
-    // Motor and MPPT precharge: scaled up to the HV side
-    measurements.motor_precharge_mv = (int32_t)adc.motor_precharge * PRECHARGE_SENSE_SCALE;
-    measurements.mppt_precharge_mv = (int32_t)adc.mppt_precharge * PRECHARGE_SENSE_SCALE;
+    // Convert mV at the ADC pin to mV on the HV side
+    adc_values.motor_precharge_mv = (int32_t)voltages.motor_precharge * PRECHARGE_SENSE_SCALE;
+    adc_values.mppt_precharge_mv = (int32_t)voltages.mppt_precharge * PRECHARGE_SENSE_SCALE;
 
-    // LV current: sensor offset removed, then mV to mA through the sensor sensitivity
-    measurements.lv_current_ma =
-        ((int32_t)adc.lv_curr_sense - LV_CURRENT_SENSOR_OFFSET_MV) * 1000 /
-        LV_CURRENT_SENSOR_MV_PER_A;
+    // Remove the zero-current offset, then convert mV at the ADC pin to mA of current
+    adc_values.lv_current_ma = ((int32_t)voltages.lv_curr_sense - LV_CURRENT_SENSOR_OFFSET_MV) *
+                               1000 / LV_CURRENT_SENSOR_MV_PER_A;
 
-    // DCDC temperature: thermistor voltage (mV to uV) to milli-degrees C
-    measurements.dcdc_temp_mc = ThermistorVoltToTemp_((uint32_t)adc.dcdc_thermistor * 1000U);
+    // Convert thermistor mV to uV, then to milli-degrees C through the lookup table
+    adc_values.dcdc_temp_mc = ThermistorVoltToTemp_((uint32_t)voltages.dcdc_thermistor * 1000U);
+}
 
-    return measurements;
+/**
+ * @brief Get the latest processed ADC values.
+ * @return The latest ADC values, in engineering units.
+ */
+ADC_Values ADC_Runtime_GetValues(void) {
+    return adc_values;
 }

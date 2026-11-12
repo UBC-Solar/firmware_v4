@@ -13,7 +13,7 @@
 #include <stdint.h>
 
 // Runtime
-#include "adc_runtime.h" // AdcMeasurements
+#include "adc_runtime.h" // ADC_Values
 #include "gpio_runtime.h" // PinLevels
 
 /**
@@ -107,7 +107,7 @@ typedef struct
 
     // Read once per pass by HVC_Main(), before the FSM. Bench overrides (tests.c) may
     // write fake values over them before the FSM reads them.
-    AdcMeasurements   adc;                              // This pass's ADC readings, in real units
+    ADC_Values        adc;                              // This pass's ADC readings, in real units
     PinLevels         pins;                             // This pass's polled input pin levels
 
     // FSM bookkeeping. Written by the main loop.

@@ -185,6 +185,11 @@
 #define SHUNT_OVERCURRENT_A             60U // Positive overcurrent limit (A)
 #define SHUNT_REVERSE_CURRENT_A         20U // Reverse current magnitude limit (A)
 
+// ADC offset error, measured during ADC characterization: the ADC reads this many bits off
+// from the true value (negative = reads low). adc_driver.c subtracts it from every averaged
+// reading, so every ADC channel is corrected before it is converted to engineering units.
+#define ADC_ERROR_BIAS                  -70 // ADC bits
+
 /*==============================================================================
  * === SUPPLEMENTAL BATTERY ====================================================
  * The supp battery powers the LV side until HV_CONNECT, when the DCDC takes

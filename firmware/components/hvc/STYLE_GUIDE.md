@@ -54,6 +54,10 @@ The prefix is the file's name in caps, then an underscore, then the function nam
 | `driver/adc_driver.c` | `ADC_` | `ADC_Init()`, `ADC_GetVoltages()` |
 | `driver/gpio_driver.c` | `GPIO_` | `GPIO_Read()`, `GPIO_Write()` |
 | `app/hvc_main.c` | `HVC_` | `HVC_Init()`, `HVC_Main()` |
+| `runtime/adc_runtime.c` | `ADC_Runtime_` | `ADC_Runtime_ProcessReadings()`, `ADC_Runtime_GetValues()` |
+
+A runtime file that sits on top of a driver of the same name adds `_Runtime` to the driver's
+prefix (`ADC_` → `ADC_Runtime_`), so the two never clash.
 
 This means you can always tell from a call which file to open. No public function goes without a
 prefix (not `InitTemperatureReading()`, not `FsmRun()`).

@@ -105,7 +105,7 @@ void HVC_Init(
  * deletes anything outside the USER CODE sections when it regenerates main.c.
  *
  * Runs the FSM, or the test HVC_TEST picks in hvc_defs.h instead (TestRunSelected(), tests.c).
- * With the FSM, in order: reads the ADC once into g_shared.adc and the input pins once into
+ * With the FSM, in order: converts the ADC once into g_shared.adc and the input pins once into
  * g_shared.pins, so the FSM and CAN use the same values all pass; BenchFakeInputs() (tests.c)
  * writes the BENCH OVERRIDES' fake inputs (hvc_defs.h) over those values; then the FSM runs.
  *
@@ -117,7 +117,8 @@ void HVC_Main(void)
 #if (HVC_TEST != TEST_NONE)
     TestRunSelected(); // Runs the test HVC_TEST picks, instead of the FSM
 #else
-    g_shared.adc = AdcRuntimeRead(); // Read once, so the FSM and CAN use the same values
+    ADC_Runtime_ProcessReadings();
+    g_shared.adc = ADC_Runtime_GetValues(); // Read once, so the FSM and CAN use the same values
     g_shared.pins = GpioRuntimeRead(); // Read once, so the FSM uses the same levels all pass
     BenchFakeInputs(); // Bench overrides replace this pass's inputs, before the FSM reads them
     FsmRun();

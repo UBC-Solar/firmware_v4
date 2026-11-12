@@ -63,10 +63,10 @@
 
 /* Commit hash each board's firmware was built from (payload in common/git_version/git_version.h) */
 #define MST_COMMIT_HASH_ID                  0x204
-#define HVC_COMMIT_HASH_ID                  0x32A
+#define HVC_COMMIT_HASH_ID                  0x32B
 #define DIST_COMMIT_HASH_ID                 0x3A5
 #define DRD_COMMIT_HASH_ID                  0x405
-#define MDI_COMMIT_HASH_ID                  0x503
+#define MDI_COMMIT_HASH_ID                  0x504
 #define STR_COMMIT_HASH_ID                  0x583
 
 #define ECU_STATUS_ID                       0x450
@@ -107,7 +107,7 @@
 
 #define OBC_STATUS_ID                       0x18FF50E5
 
-#define TEL_HEALTH_CAN_DATA_LENGTH                 4
+#define TEL_HEALTH_CAN_DATA_LENGTH                 6
 #define TEL_HEALTH_CAN_ID                          0x764      
 
 /* CAN Message Headers */

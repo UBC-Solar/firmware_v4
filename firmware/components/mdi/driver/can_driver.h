@@ -16,7 +16,7 @@ extern CAN_HandleTypeDef hcan;
 #define MDI_TIME_SINCE_BOOTUP_CAN_ID 0x500U
 #define MDI_DIAGNOSTIC_FLAGS_CAN_ID 0x501U
 #define MDI_MOTOR_TEMP_CAN_ID 0x502U
-#define MDI_COMMIT_HASH_CAN_ID 0x503U
+#define MDI_COMMIT_HASH_CAN_ID 0x504U
 #define STR_DRD_CONTROL_CAN_ID 0x580U
 
 typedef void (*CanDriverRxCallback)(const CAN_RxHeaderTypeDef *header, const uint8_t *data);
@@ -40,5 +40,20 @@ bool CanDriverSend(const CAN_TxHeaderTypeDef *header, const uint8_t *data);
  * @param callback Function pointer called for each RX frame.
  */
 void CanDriverRegisterRxCallback(CanDriverRxCallback callback);
+
+/**
+ * @brief  Reads the CAN transmit error counter (TEC) from the controller.
+ *         The hardware adds 8 per transmit error and subtracts 1 per successful transmit.
+ * @return TEC value (0–255). Above 127 the node is error passive.
+ */
+uint8_t CanDriverGetTec(void);
+
+/**
+ * @brief  Reads the CAN receive error counter (REC) from the controller.
+ *         The hardware adds 1 per receive error (up to 8) and subtracts 1 per
+ *         successful reception.
+ * @return REC value (0–255). Above 127 the node is error passive.
+ */
+uint8_t CanDriverGetRec(void);
 
 #endif /* __CAN_DRIVER_H__ */

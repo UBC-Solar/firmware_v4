@@ -31,7 +31,7 @@
 #define SUPP_VOLTAGE_ID             0x327U
 #define MOTOR_PRECHARGE_ID          0x328U
 #define MPPT_PRECHARGE_ID           0x329U
-#define COMMIT_HASH_ID              0x32AU
+#define COMMIT_HASH_ID              0x32BU
 
 // RX CAN IDs
 // IDs of the messages from other boards that the HVC acts on, grouped by board.

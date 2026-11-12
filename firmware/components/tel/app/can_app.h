@@ -78,6 +78,14 @@ static CanFilter_t filter_whitelist[]  __attribute__((unused)) = {
     { IMU_M_X_CAN_MESSAGE_ID,               1,     0               },
     { IMU_M_Y_CAN_MESSAGE_ID,               1,     0               },
     { IMU_M_Z_CAN_MESSAGE_ID,               1,     0               },
+
+    { COMMIT_HASH_CAN_ID,                   10,    0               },
+    { MST_COMMIT_HASH_ID,                   10,    0               },
+    { HVC_COMMIT_HASH_ID,                   10,    0               },
+    { DIST_COMMIT_HASH_ID,                  10,    0               },
+    { DRD_COMMIT_HASH_ID,                   10,    0               },
+    { MDI_COMMIT_HASH_ID,                   10,    0               },
+    { STR_COMMIT_HASH_ID,                   10,    0               },
 };
 
 /**

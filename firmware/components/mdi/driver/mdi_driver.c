@@ -9,6 +9,7 @@
 #include "mdi_driver.h"
 
 #include "main.h"
+#include "gpio_driver.h"
 
 extern I2C_HandleTypeDef hi2c1;
 extern I2C_HandleTypeDef hi2c2;
@@ -49,11 +50,11 @@ void MdiSetMotorCommand(const MdiMotorCommand *command)
 
     HAL_GPIO_WritePin(DIR_GPIO_Port, DIR_Pin,
                       command->direction_value ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(ECO_MCU_GPIO_Port, ECO_MCU_Pin,
-                      command->eco_mode_value ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(PWR_GPIO_Port, PWR_Pin,
+                      command->eco_mode_value ? GPIO_PIN_RESET : GPIO_PIN_SET);
 }
 
-void MdiParseMotorCommand(const uint8_t *buffer, MdiMotorCommand *command)
+void MdiParseMotorCommand(uint32_t msg_id, const uint8_t *buffer, MdiMotorCommand *command)
 {
     if (buffer == NULL || command == NULL)
     {

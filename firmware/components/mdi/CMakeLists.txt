@@ -51,6 +51,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/can_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/gpio_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/mdi_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/tick_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/tasks.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/debug_io/debug_io.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/iwdg/iwdg_common.c
@@ -71,6 +72,9 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined symbols
 )
+
+# Commit hash sent over CAN (generates git_version_generated.h each build)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../common/git_version/git_version.cmake)
 
 # Remove wrong libob.a library dependency when using cpp files
 list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)

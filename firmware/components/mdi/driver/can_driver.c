@@ -46,15 +46,18 @@ static void CanFilterInit(CAN_FilterTypeDef *filter)
         return;
     }
 
-    filter->FilterBank = 0;
-    filter->FilterMode = CAN_FILTERMODE_IDMASK;
-    filter->FilterScale = CAN_FILTERSCALE_32BIT;
-    filter->FilterIdHigh = (uint16_t)((DRD_MOTOR_COMMAND_CAN_ID << 5) >> 16);
-    filter->FilterIdLow = (uint16_t)((DRD_MOTOR_COMMAND_CAN_ID << 5) & 0xFFFFU);
-    filter->FilterMaskIdHigh = (uint16_t)((0x7FFU << 5) >> 16);
-    filter->FilterMaskIdLow = (uint16_t)((0x7FFU << 5) & 0xFFFFU);
+    uint32_t id1 = (uint32_t)DRD_MOTOR_COMMAND_CAN_ID << 21;  /* STID in bits 31:21 */
+    uint32_t id2 = (uint32_t)STR_DRD_CONTROL_CAN_ID   << 21;
+
+    filter->FilterBank           = 0;
+    filter->FilterMode           = CAN_FILTERMODE_IDLIST;
+    filter->FilterScale          = CAN_FILTERSCALE_32BIT;
+    filter->FilterIdHigh         = (uint16_t)(id1 >> 16);
+    filter->FilterIdLow          = (uint16_t)(id1 & 0xFFFFU);
+    filter->FilterMaskIdHigh     = (uint16_t)(id2 >> 16);     /* second ID, not a mask */
+    filter->FilterMaskIdLow      = (uint16_t)(id2 & 0xFFFFU);
     filter->FilterFIFOAssignment = CAN_FILTER_FIFO0;
-    filter->FilterActivation = ENABLE;
+    filter->FilterActivation     = ENABLE;
 }
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *can_handle)

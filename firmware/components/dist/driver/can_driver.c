@@ -1,5 +1,6 @@
 #include "can_driver.h"
 #include "debug_io.h"
+#include "git_version.h"
 
 #include "stm32f1xx_hal_def.h"
 
@@ -317,6 +318,17 @@ void CAN_Send_Branch_ID(void)
     msg.tx_header.RTR   = CAN_RTR_DATA;
     msg.tx_header.DLC   = 1U;
     msg.data[0]         = DIST_BRANCH_ID;
+    CAN_QueueTxMessage(&msg);
+}
+
+void CAN_Send_Commit_Hash(void)
+{
+    CAN_TxMessage_t msg = {0};
+    msg.tx_header.StdId = DIST_COMMIT_HASH_ID;
+    msg.tx_header.IDE   = CAN_ID_STD;
+    msg.tx_header.RTR   = CAN_RTR_DATA;
+    msg.tx_header.DLC   = GIT_VERSION_CAN_DLC;
+    GitVersionPackCan(msg.data);
     CAN_QueueTxMessage(&msg);
 }
 

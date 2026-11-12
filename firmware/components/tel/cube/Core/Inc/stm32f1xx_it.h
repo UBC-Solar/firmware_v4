@@ -56,6 +56,7 @@ void SysTick_Handler(void);
 void DMA1_Channel7_IRQHandler(void);
 void USB_HP_CAN1_TX_IRQHandler(void);
 void USB_LP_CAN1_RX0_IRQHandler(void);
+void CAN1_SCE_IRQHandler(void);
 void TIM2_IRQHandler(void);
 void I2C1_EV_IRQHandler(void);
 void USART2_IRQHandler(void);

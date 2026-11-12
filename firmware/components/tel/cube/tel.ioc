@@ -136,6 +136,7 @@ Mcu.UserName=STM32F103RCTx
 MxCube.Version=6.18.1
 MxDb.Version=DB.6.0.181
 NVIC.BusFault_IRQn=true\:0\:0\:false\:false\:true\:false\:false\:false\:false
+NVIC.CAN1_SCE_IRQn=true\:5\:0\:false\:false\:true\:true\:true\:true\:true
 NVIC.DMA1_Channel7_IRQn=true\:5\:0\:false\:false\:true\:true\:false\:true\:true
 NVIC.DMA2_Channel4_5_IRQn=true\:5\:0\:false\:false\:true\:true\:false\:true\:true
 NVIC.DebugMonitor_IRQn=true\:0\:0\:false\:false\:true\:false\:false\:false\:false

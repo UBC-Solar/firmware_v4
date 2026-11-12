@@ -111,7 +111,10 @@ void CAN_comms_init(CAN_comms_config_t* config)
     /* Activate notifications */
     HAL_CAN_ActivateNotification(CAN_comms_config.hcan, CAN_IT_RX_FIFO0_MSG_PENDING); // interrupt if CAN received a frame
     HAL_CAN_ActivateNotification(CAN_comms_config.hcan, CAN_IT_TX_MAILBOX_EMPTY); // interrupt if a mailbox slot has freed up
-    HAL_CAN_ActivateNotification(CAN_comms_config.hcan, CAN_IT_ERROR | CAN_IT_LAST_ERROR_CODE | CAN_IT_BUSOFF | CAN_IT_RX_FIFO0_OVERRUN); // interrupt if error on the bus
+    #ifndef DEBUG
+    HAL_CAN_ActivateNotification(CAN_comms_config.hcan, CAN_IT_ERROR | CAN_IT_LAST_ERROR_CODE | CAN_IT_BUSOFF | CAN_IT_ERROR_PASSIVE | CAN_IT_RX_FIFO0_OVERRUN); // interrupt if error on the bus
+    #endif
+    
     /* Kick start dequeing CAN Tx messages */
     taskENTER_CRITICAL();
     CAN_comms_Dequeue_Tx_message();
@@ -308,6 +311,10 @@ void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan)
   * @retval None
 */
 void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan) {
+    if (hcan->Instance != CAN_comms_config.hcan->Instance) {
+        break;
+    }
+
     uint32_t errmask = HAL_CAN_GetError(hcan);
     HAL_CAN_ResetError(hcan); 
 

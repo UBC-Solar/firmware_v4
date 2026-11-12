@@ -286,6 +286,18 @@ void CAN_Send_Currents(uint8_t drd_mA, uint8_t mdi_mA, uint8_t spare_ctrl_mA,
     CAN_QueueTxMessage(&msg);
 }
 
+void CAN_Send_TEL_Current(uint16_t current_mA)
+{
+    CAN_TxMessage_t msg = {0};
+    msg.tx_header.StdId = DIST_TEL_CURRENT_ID;
+    msg.tx_header.IDE   = CAN_ID_STD;
+    msg.tx_header.RTR   = CAN_RTR_DATA;
+    msg.tx_header.DLC   = 2U;
+    msg.data[0]         = (uint8_t)(current_mA >> 8);
+    msg.data[1]         = (uint8_t)(current_mA & 0xFFU);
+    CAN_QueueTxMessage(&msg);
+}
+
 void CAN_Send_Fault(void)
 {
     CAN_TxMessage_t msg = {0};

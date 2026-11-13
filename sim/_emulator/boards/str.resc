@@ -1,0 +1,10 @@
+# Steering wheel (STR) on a virtual STM32F103RCT6
+
+# Add a machine called str to the running Renode instance
+mach create "str"
+# Shared chip setup (Renode F103 model + our fixes)
+include $ORIGIN/../chip/stm32f103rct6.resc
+
+# Load the ELF to run in the sim (build first: make str)
+$elf ?= $ORIGIN/../../../firmware/components/str/build/Debug/str.elf
+sysbus LoadELF $elf

@@ -1,0 +1,20 @@
+# Telemetry (TEL) on a virtual STM32F103RCT6
+
+# Add a machine called tel to the running Renode instance
+mach create "tel"
+# Shared chip setup (Renode F103 model + our fixes)
+include $ORIGIN/../chip/stm32f103rct6.resc
+
+# No devices yet: the GPS (I2C2, 0x42) and IMU (I2C1, 0x4B) don't answer, so the firmware sets
+# gps_read_fail (0x751 bit 3) after ~0.5 s and the IMU task waits on I2C timeouts.
+
+# Load the ELF to run in the sim. Tests set $elf themselves (Debug or Release, picked from each
+# build folder's CMakeCache.txt). This default is only for running by hand: the Debug preset build.
+$elf ?= $ORIGIN/../../../firmware/components/tel/build/Debug/tel.elf
+sysbus LoadELF $elf
+
+# TEL sends radio/cellular frames with UART DMA
+include $ORIGIN/../chip/dma_fix.resc
+
+# Radio is UART4 (Renode: usart4), cellular is USART2; car_configs.h CAR_CONFIG_CELLULAR picks one.
+# To watch by hand: showAnalyzer usart4  /  showAnalyzer usart2

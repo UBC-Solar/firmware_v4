@@ -5,6 +5,7 @@ mach create "str"
 # Shared chip setup (Renode F103 model + our fixes)
 include $ORIGIN/../chip/stm32f103rct6.resc
 
-# Load the ELF to run in the sim (build first: make str)
+# Load the ELF to run in the sim. Tests set $elf themselves (Debug or Release, picked from each
+# build folder's CMakeCache.txt). This default is only for running by hand: the Debug preset build.
 $elf ?= $ORIGIN/../../../firmware/components/str/build/Debug/str.elf
 sysbus LoadELF $elf

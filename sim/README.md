@@ -19,7 +19,10 @@ sim/
 ## Setup (once)
 
 1. Install Renode (v1.16.1 used so far) and put `renode` on your `PATH`.
-2. Build the board: `make str`.
+2. Build the board, any way you normally do: `make str`, `make str release`, or the VS Code CMake
+   extension / `cmake --preset Debug` (→ `build/Debug/`, `build/Release/`). Tests find the ELF
+   themselves: they read `CMAKE_BUILD_TYPE` from each build folder's `CMakeCache.txt`, so the folder
+   name doesn't matter.
 3. Python environment, from the repo root:
    ```bash
    python -m venv sim/.venv
@@ -32,6 +35,7 @@ sim/
 sim/.venv/bin/pytest sim               # all boards
 sim/.venv/bin/pytest sim/str           # one board
 sim/.venv/bin/pytest sim/str -k boot   # one test
+sim/.venv/bin/pytest sim --build-type Release   # test the Release build (default: Debug)
 ```
 
 ## Write a test
@@ -70,7 +74,14 @@ only runs inside `board.run_for()` and `board.wait_for_*()`.
 | `can_frames_sent(id=None)` | Frames the board has sent so far (`CanFrame`: `can_id`, `data`, `extended`, `time_ms`) |
 | `wait_for_can(id, within_ms)` | Run until the board sends `id`; fail after `within_ms` |
 | `set_pin(port, pin, high)` | Drive an input pin, e.g. `set_pin("A", 2, False)` |
+| `uart_bytes(uart)` | Everything the board wrote to a UART so far, e.g. `uart_bytes("usart2")` |
+| `wait_for_uart(uart, data, within_ms)` | Run until `data` appears on the UART (each wait continues after the previous match) |
+| `rtos_task_loops()` | Loop count per FreeRTOS task, to catch tasks that never run, hang or starve |
 | `symbol_at_pc()` | Function the CPU is in, e.g. `"Error_Handler"` |
+
+Board-specific helpers (e.g. decoding TEL's radio frames) go in a non-test module in the board's
+folder, like `tel/radio.py`, imported as `from tel.radio import ...`. Test file names can repeat
+across boards (`str/test_boot.py`, `tel/test_boot.py`).
 
 If a test needs something this doesn't offer (a new helper, a fake device), that's an
 `_emulator/` change: make it its own PR.
@@ -102,11 +113,13 @@ How it fits together:
 Open question: whether Renode's virtual time stops while the CPU sits at a GDB breakpoint. If it
 doesn't, `Board` will pause the emulation on breakpoints; tests won't change.
 
-## Run the STR sim by hand
+## Run a board's sim by hand
 
 ```bash
-renode sim/_emulator/boards/str.resc
+make tel                         # or build with the CMake Debug preset; the default below is build/Debug
+renode sim/_emulator/boards/tel.resc
 # then in the Renode Monitor:
+showAnalyzer usart2              # TEL telemetry UART (usart4 if CAR_CONFIG_CELLULAR is 0)
 start
 pause
 sysbus FindSymbolAt `cpu PC`     # where is the CPU?

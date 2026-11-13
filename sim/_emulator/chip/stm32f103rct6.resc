@@ -1,6 +1,7 @@
 # Shared STM32F103RCT6 setup, used by every board.
 # Board files do:  mach create "<board>"  then  include $ORIGIN/../chip/stm32f103rct6.resc
 # $ORIGIN is the folder of this file, so paths work no matter where Renode is started from.
+# Boards using DMA also include dma_fix.resc after LoadELF (it hooks a HAL function by name).
 
 # Load the F103 chip that Renode defines
 machine LoadPlatformDescription @platforms/cpus/stm32f103.repl
@@ -8,3 +9,24 @@ machine LoadPlatformDescription @platforms/cpus/stm32f103.repl
 machine PyDevFromFile $ORIGIN/../peripherals/rcc.py 0x40021000 0x400 True "rcc"
 # Bit-banding, to match Cortex-M3 memory
 machine LoadPlatformDescriptionFromString "bitband: Miscellaneous.BitBanding @ sysbus <0x42000000, +0x2000000> { peripheralBase: 0x40000000 }"
+
+# PWR and the FLASH interface (ACR latency) aren't modelled: plain storage, so writes read back
+machine PyDevFromFile $ORIGIN/../peripherals/stub_regs.py 0x40007000 0x400 True "pwr"
+machine PyDevFromFile $ORIGIN/../peripherals/stub_regs.py 0x40022000 0x400 True "flash_if"
+
+# The F103 model has no CAN; borrow the bxCAN from the F4 model (same registers, same IRQs 19-22)
+machine LoadPlatformDescriptionFromString "can1: CAN.STMCAN @ sysbus <0x40006400, +0x400> { [0-3] -> nvic@[19-22] }"
+# Renode's bxCAN ignores INRQ while SLEEP is set (real silicon doesn't) -> start it awake
+sysbus WriteDoubleWord 0x40006400 0x00010000
+
+# On the F103xE, DMA2 ch4 and ch5 share IRQ 59 (DMA2_Channel4_5_IRQHandler), but the repl wires ch5
+# to 60, which is never enabled -> e.g. UART4 TX-complete never fires. Route ch5 to 59 and park
+# the unused ch4 on 60 so two channels don't drive one line.
+machine LoadPlatformDescriptionFromString "dma2: { 3 -> nvic@60; 4 -> nvic@59 }"
+
+# No ADC in the F103 model: calibration finishes instantly, conversions read 0x800 (mid-scale)
+machine PyDevFromFile $ORIGIN/../peripherals/adc.py 0x40012400 0x400 True "adc1"
+machine PyDevFromFile $ORIGIN/../peripherals/adc.py 0x40012800 0x400 True "adc2"
+
+# No RTC in the F103 model: registers stick, sync flags always set, counter doesn't tick
+machine PyDevFromFile $ORIGIN/../peripherals/rtc.py 0x40002800 0x400 True "rtc"

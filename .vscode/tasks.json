@@ -16,6 +16,97 @@
             "presentation": {
                 "showReuseMessage": false
             }
+        },
+        {
+            "label": "Build TEL (Debug)",
+            "type": "shell",
+            "command": "cmake --build firmware/components/tel/build/Debug",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            // Renode sims live next to this repo: ../renode (install) and ../renode_sims (tel.resc, tel.robot, .venv)
+            "label": "Renode: TEL robot test (wait for GDB)",
+            "type": "shell",
+            "dependsOn": "Build TEL (Debug)",
+            "isBackground": true,
+            "command": "mkdir -p firmware/components/tel/build/renode-test && cd firmware/components/tel/build/renode-test && ${workspaceFolder}/../renode/renode-test ${workspaceFolder}/../renode_sims/tel.robot -f \"${input:telTest}\" --variable GDB:True --variable TELEMETRY_UART:${input:telUart}",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "PATH": "${workspaceFolder}/../renode_sims/.venv/bin:${env:PATH}"
+                }
+            },
+            "problemMatcher": {
+                "owner": "renode",
+                "pattern": { "regexp": "^__never_matches__$" },
+                "background": {
+                    "activeBegin": true,
+                    "beginsPattern": "Starting test",
+                    "endsPattern": "Waiting for GDB"
+                }
+            }
+        },
+        {
+            "label": "Renode: stop TEL robot test",
+            "type": "shell",
+            "command": "for p in $(pgrep -f '[r]un_tests.py.*renode_sims/tel.robot'); do pkill -9 -P $p; kill -9 $p; done; true",
+            "problemMatcher": [],
+            "presentation": { "reveal": "never" }
+        },
+        {
+            "label": "Renode: TEL sim (wait for GDB)",
+            "type": "shell",
+            "dependsOn": "Build TEL (Debug)",
+            "isBackground": true,
+            "command": "${workspaceFolder}/../renode/renode --console --plain -e \"include @${workspaceFolder}/../renode_sims/tel.resc\"",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": {
+                "owner": "renode",
+                "pattern": { "regexp": "^__never_matches__$" },
+                "background": {
+                    "activeBegin": true,
+                    "beginsPattern": "Including script",
+                    "endsPattern": "GDB server with all CPUs started"
+                }
+            }
+        },
+        {
+            "label": "Renode: stop TEL sim",
+            "type": "shell",
+            "command": "pkill -f '[r]enode_sims/tel.resc'; true",
+            "problemMatcher": [],
+            "presentation": { "reveal": "never" }
+        }
+    ],
+    "inputs": [
+        {
+            "id": "telTest",
+            "type": "pickString",
+            "description": "TEL robot test to debug",
+            "options": [
+                "Should Boot Without Faulting",
+                "Should Send TEL Flags Every 100 ms",
+                "Should Flag GPS Read Failure When No GPS Is Attached",
+                "Should Send Incrementing Time Since Bootup",
+                "Should Transmit Diagnostics On CAN",
+                "Should Forward Received Standard CAN Frame To Telemetry",
+                "Should Forward Short CAN Frame With Its DLC",
+                "Should Forward Received Extended CAN Frame To Telemetry"
+            ]
+        },
+        {
+            "id": "telUart",
+            "type": "pickString",
+            "description": "Telemetry UART: must match CAR_CONFIG_CELLULAR in car_configs.h",
+            "options": [
+                { "label": "radio (CAR_CONFIG_CELLULAR 0) - usart4", "value": "sysbus.usart4" },
+                { "label": "cellular (CAR_CONFIG_CELLULAR 1) - usart2", "value": "sysbus.usart2" }
+            ]
         }
     ]
 }

@@ -58,6 +58,38 @@
           "imageFileName": "${command:cmake.launchTargetPath}",
         }
       ]
+    },
+    {
+      // Builds TEL, starts one renode_sims/tel.robot test in GDB mode and attaches to it.
+      // Stops at main; the test carries on when you continue (F5). Breakpoints don't trip its timeouts.
+      "name": "Renode: debug TEL robot test",
+      "type": "cortex-debug",
+      "request": "launch",
+      "servertype": "external",
+      "gdbTarget": "localhost:3334",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/firmware/components/tel/build/Debug/tel.elf",
+      // Renode already loaded the ELF and GDB connects halted at Reset_Handler: skip the default
+      // load + "monitor reset halt" (Renode has no such command) and run straight to main.
+      // runToEntryPoint only works with "launch", which is why this isn't "attach".
+      "overrideLaunchCommands": [],
+      "runToEntryPoint": "main",
+      "preLaunchTask": "Renode: TEL robot test (wait for GDB)",
+      "postDebugTask": "Renode: stop TEL robot test"
+    },
+    {
+      // Builds TEL and attaches to the interactive renode_sims/tel.resc sim (no test checks).
+      "name": "Renode: debug TEL sim",
+      "type": "cortex-debug",
+      "request": "launch",
+      "servertype": "external",
+      "gdbTarget": "localhost:3333",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/firmware/components/tel/build/Debug/tel.elf",
+      "overrideLaunchCommands": [],
+      "runToEntryPoint": "main",
+      "preLaunchTask": "Renode: TEL sim (wait for GDB)",
+      "postDebugTask": "Renode: stop TEL sim"
     }
   ]
 }

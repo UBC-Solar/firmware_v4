@@ -1,0 +1,2 @@
+pytest>=8
+# TODO: add pyrenode3 once Board uses it (fallback: Renode subprocess, no extra package)

@@ -1,0 +1,10 @@
+# Shared STM32F103RCT6 setup, used by every board.
+# Board files do:  mach create "<board>"  then  include $ORIGIN/../chip/stm32f103rct6.resc
+# $ORIGIN is the folder of this file, so paths work no matter where Renode is started from.
+
+# Load the F103 chip that Renode defines
+machine LoadPlatformDescription @platforms/cpus/stm32f103.repl
+# Attach the Python script that handles the RCC
+machine PyDevFromFile $ORIGIN/../peripherals/rcc.py 0x40021000 0x400 True "rcc"
+# Bit-banding, to match Cortex-M3 memory
+machine LoadPlatformDescriptionFromString "bitband: Miscellaneous.BitBanding @ sysbus <0x42000000, +0x2000000> { peripheralBase: 0x40000000 }"

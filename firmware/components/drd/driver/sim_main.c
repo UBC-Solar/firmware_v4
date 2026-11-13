@@ -1,3 +1,4 @@
+#include "lcd_app.h"
 #include "lcd_bitmap.h"
 #include "lcd_driver_sim.h"
 #include "lcd_sim_display.h"
@@ -46,11 +47,33 @@ int main(void)
     uint8_t pixels[EDITOR_HEIGHT][EDITOR_WIDTH] = {0};
     uint8_t bitmap[EDITOR_BITMAP_SIZE];
 
-    LcdBitmapEncode(&pixels[0][0], EDITOR_WIDTH, EDITOR_HEIGHT, bitmap);
+    uint32_t speed = 42;
+    uint32_t soc = 75;
+    uint8_t drive_mode = LCD_APP_DRIVE_MODE_ECO;
+    DriveStateStates drive_state = FORWARD;
+
+    LcdAppBattFaults batt_faults = {0};
+    LcdAppMotorFaults motor_faults = {0};
+    LcdAppWarnings warnings = {0};
 
     LcdDriverChangeScreen();
-    LcdDriverDrawBitmap(0, 0, EDITOR_WIDTH, EDITOR_HEIGHT, bitmap);
-    LcdDriverRefresh();
+
+    LcdAppDisplaySpeedDrivePage(&speed, LCD_APP_KPH);
+    LcdAppDisplaySocDrivePage(&soc);
+    LcdAppDisplayDriveModeDrivePage(drive_mode);
+    LcdAppDisplayDriveStateDrivePage(&drive_state);
+    LcdAppDisplayFaultIndicator(&batt_faults, &motor_faults);
+    LcdAppDisplayWarningIndicator(&warnings);
+
+    for (uint8_t y = 0; y < EDITOR_HEIGHT; y++)
+    {
+        for (uint8_t x = 0; x < EDITOR_WIDTH; x++)
+        {
+            pixels[y][x] = LcdDriverGetPixel(x, y);
+        }
+    }
+
+    LcdBitmapEncode(&pixels[0][0], EDITOR_WIDTH, EDITOR_HEIGHT, bitmap);
 
     SDL_Event event;
     int running = 1;

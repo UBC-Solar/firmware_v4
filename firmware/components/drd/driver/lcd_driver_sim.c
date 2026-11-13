@@ -20,6 +20,17 @@ void LcdDriverSetPixel(uint8_t x, uint8_t y, uint8_t color)
     }
 }
 
+uint8_t LcdDriverGetPixel(uint8_t x, uint8_t y)
+{
+    if (x >= LCD_DRIVER_SCREEN_WIDTH || y >= LCD_DRIVER_SCREEN_HEIGHT)
+    {
+        return 0;
+    }
+
+    uint16_t array_pos = x + ((y / 8) * LCD_DRIVER_SCREEN_WIDTH);
+    return (lcd_buffer[array_pos] >> (y % 8)) & 1;
+}
+
 void LcdDriverClearBoundingBox(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2)
 {
     if (x1 >= LCD_DRIVER_SCREEN_WIDTH ||

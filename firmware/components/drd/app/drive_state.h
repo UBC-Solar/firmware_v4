@@ -105,7 +105,7 @@ DriveStateStates DriveStateGetDriveState(void);
  * @brief Getter function for retrieving the current drive mode (eco mode).
  * @return The current drive mode (true if eco mode is on, false otherwise).
  */
-volatile bool DriveStateGetDriveMode(void);
+bool DriveStateGetDriveMode(void);
 
 #ifdef DEBUG
 /**

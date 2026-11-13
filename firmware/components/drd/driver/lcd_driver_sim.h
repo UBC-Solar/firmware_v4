@@ -44,6 +44,15 @@ typedef struct
 void LcdDriverSetPixel(uint8_t x, uint8_t y, uint8_t color);
 
 /**
+ * @brief Gets the current state of a pixel in the simulated LCD buffer.
+ *
+ * @param x Pixel x coordinate.
+ * @param y Pixel y coordinate.
+ * @return 1 if the pixel is on, 0 if it is off.
+ */
+uint8_t LcdDriverGetPixel(uint8_t x, uint8_t y);
+
+/**
  * @brief Clears a rectangular area in the internal display buffer.
  *
  * @param x1 Left coordinate (0-based).

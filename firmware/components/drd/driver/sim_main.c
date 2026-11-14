@@ -7,6 +7,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#ifdef LOAD_EXPORTED_BITMAP
+#include "lcd_bitmap_export.h"
+#endif
+
 enum
 {
     EDITOR_WIDTH = LCD_DRIVER_SCREEN_WIDTH,
@@ -53,7 +57,7 @@ static void SaveBitmap(const uint8_t* bitmap)
 
     fprintf(file, "#define LCD_BITMAP_EXPORT_WIDTH %d\n", EDITOR_WIDTH);
     fprintf(file, "#define LCD_BITMAP_EXPORT_HEIGHT %d\n\n", EDITOR_HEIGHT);
-    fprintf(file, "static const uint8_t lcd_bitmap_export[%d] = \n{\n,", EDITOR_BITMAP_SIZE);
+    fprintf(file, "static const uint8_t lcd_bitmap_export[%d] = \n{\n", EDITOR_BITMAP_SIZE);
 
     for (uint16_t i = 0; i < EDITOR_BITMAP_SIZE; i++)
     {
@@ -88,6 +92,15 @@ int main(void)
     uint8_t pixels[EDITOR_HEIGHT][EDITOR_WIDTH] = {0};
     uint8_t bitmap[EDITOR_BITMAP_SIZE];
 
+    LcdDriverChangeScreen();
+
+#ifdef LOAD_EXPORTED_BITMAP
+
+    LcdDriverDrawBitmap(0, 0, LCD_BITMAP_EXPORT_WIDTH, LCD_BITMAP_EXPORT_HEIGHT, lcd_bitmap_export);
+    LcdDriverRefresh();
+
+#else
+
     uint32_t speed = 42;
     uint32_t soc = 75;
     uint8_t drive_mode = LCD_APP_DRIVE_MODE_ECO;
@@ -97,14 +110,14 @@ int main(void)
     LcdAppMotorFaults motor_faults = {0};
     LcdAppWarnings warnings = {0};
 
-    LcdDriverChangeScreen();
-
     LcdAppDisplaySpeedDrivePage(&speed, LCD_APP_KPH);
     LcdAppDisplaySocDrivePage(&soc);
     LcdAppDisplayDriveModeDrivePage(drive_mode);
     LcdAppDisplayDriveStateDrivePage(&drive_state);
     LcdAppDisplayFaultIndicator(&batt_faults, &motor_faults);
     LcdAppDisplayWarningIndicator(&warnings);
+
+#endif
 
     for (uint8_t y = 0; y < EDITOR_HEIGHT; y++)
     {

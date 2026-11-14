@@ -148,10 +148,44 @@ register the firmware was using. Add the smallest stub that gets past it and run
 
 ## The Board API (`__init__.py`)
 
-Status: **skeleton**. Every method raises `NotImplementedError`, which the `board` fixture turns
-into a skipped test.
+Implemented with **pyrenode3**, which loads Renode (a .NET program) *inside* the pytest process via
+pythonnet. Python then holds the same objects a `.resc` uses (machine, CPU, CAN controller, UARTs):
+it calls their methods, reads their properties and subscribes to their events. Monitor commands
+(`include`, `emulation RunFor`, `Clear`) go through pyrenode3's `Monitor`.
 
-Rules any implementation must keep:
+What happens in `Board("tel")`:
+1. `find_elf()` picks the ELF (see "Which ELF" above).
+2. Renode is loaded, once per pytest run (`_load_renode()`). It's found through `PYRENODE_PATH`, or
+   the `renode` on `PATH`.
+3. `Clear` drops the previous test's machine; `logLevel 3` hides Renode's warnings.
+4. `$elf = @<elf>` then `include @boards/tel.resc` builds the machine. Nothing runs yet.
+5. Python subscribes to `can1.FrameSent` and every UART's `CharReceived`, storing each frame/byte with
+   the virtual time, and adds CPU hooks on `osThreadNew` and the RTOS wait functions.
+6. With `gdb=True`: `machine StartGdbServer 3333 false` (`false` = connecting doesn't start the
+   emulation), then wait until a debugger is attached.
+
+How time moves: `run_for(ms)` is `emulation RunFor "<seconds>"`, which blocks until that much virtual
+time has passed. `wait_for_*()` call `run_for(10)` repeatedly, checking the captured data after each
+step, until the event shows up or `within_ms` of virtual time has passed (then `SimTimeout`, an
+`AssertionError`, so pytest reports a failed test). The emulation may run up to 10 ms past the event;
+results carry their own timestamps, so timing checks stay exact.
+
+**Verified: virtual time stops while GDB holds the CPU at a breakpoint.** With GDB stopped in TEL's
+`TimeSinceStartup` for ~4.5 s of real time, virtual time stayed at 2.50 ms and `RunFor` just waited,
+then finished at exactly 1000 ms after GDB continued. So a firmware breakpoint pauses the test with
+no extra code.
+
+pythonnet gotchas (all handled in `__init__.py`):
+- Peripherals come back as interfaces (`IPeripheral`, `IBusController`); cast with
+  `interface_to_class` to see their real methods and events.
+- CPU hooks must be wrapped in `CpuAddressHook(...)` and the address in `UInt64(...)`; the hook gets a
+  generic CPU interface, so read registers from the `CortexM` object instead.
+- **An exception inside a Renode callback kills the whole process.** Every callback catches its
+  exceptions and stores them; `run_for()` re-raises the first one in the test.
+- `SystemBus` has no `GetSymbolAddress` from Python; use `GetAllSymbolAddresses(name)[0]`.
+- Symbol names at a function's first instruction end in ` (entry)`; `_symbol()` strips it.
+
+Rules the implementation keeps:
 - **Tests control time.** The emulation only runs inside `run_for()` and `wait_for_*()`; otherwise
   it is paused. A Python breakpoint then freezes the firmware, and a firmware breakpoint blocks the
   test.
@@ -166,20 +200,16 @@ Rules any implementation must keep:
   `osThreadFlagsWait`, `osEventFlagsWait`), counting calls per caller (from LR). Works as long as a
   task's loop calls a wait function directly.
 
-How to drive Renode, in order of preference:
-1. **pyrenode3**: Renode inside the Python process, same objects as the `.resc` (`machine`,
-   `sysbus`, CAN controller events). Not yet tested with our portable .NET Renode.
-2. **Subprocess**: run `renode --port <n>` and send Monitor commands over that port.
+Renode calls `Board` uses:
+- CAN TX: `can1.FrameSent += handler` (frame: `Id`, `Data`, `ExtendedFormat`).
+- CAN RX: `can1.OnFrameReceived(CANMessageFrame(id, Array[Byte](data), extended, False, False, False))`.
+- UART: `usartN.CharReceived += handler`.
+- Virtual time: `machine.ElapsedVirtualTime.TimeElapsed.TotalMilliseconds`.
+- GPIO input: `gpioPortX.OnGPIO(pin, level)`.
+- Current function: `sysbus.FindSymbolAt(cpu.PC.RawValue, cpu)`.
 
-Renode scripting that already works (from the TEL Robot prototype):
-- Capture CAN TX: `machine['sysbus.can1'].FrameSent += handler` (frame has `Id`, `Data`).
-- Inject CAN RX: `can1.OnFrameReceived(CANMessageFrame(id, Array[Byte](data), extended, False, False, False))`.
-- Capture UART: `machine['sysbus.usart2'].CharReceived += handler`.
-- Virtual time: `machine.ElapsedVirtualTime.TimeElapsed.TotalMilliseconds`; run: `emulation RunFor "<seconds>"`.
-- CPU hooks: `cpu AddHook <addr> "<python>"`. A Python error inside a hook silently disables it.
-
-Open question: does Renode's virtual time stop while the CPU is halted at a GDB breakpoint? If not,
-`Board` must pause the emulation when the CPU halts.
+Speed: TEL runs at roughly 1 s of firmware time per 5 s of real time (it busy-waits on the missing
+I2C devices); the 9 TEL tests take ~40 s.
 
 ## References
 - Renode docs: <https://renode.readthedocs.io>

@@ -18,7 +18,8 @@ sim/
 
 ## Setup (once)
 
-1. Install Renode (v1.16.1 used so far) and put `renode` on your `PATH`.
+1. Install Renode (v1.16.1 used so far) and put `renode` on your `PATH`, or set `PYRENODE_PATH` to
+   the Renode folder. The tests load Renode into Python with pyrenode3.
 2. Build the board, any way you normally do: `make str`, `make str release`, or the VS Code CMake
    extension / `cmake --preset Debug` (→ `build/Debug/`, `build/Release/`). Tests find the ELF
    themselves: they read `CMAKE_BUILD_TYPE` from each build folder's `CMakeCache.txt`, so the folder
@@ -26,7 +27,7 @@ sim/
 3. Python environment, from the repo root:
    ```bash
    python -m venv sim/.venv
-   sim/.venv/bin/pip install -r sim/requirements.txt
+   sim/.venv/bin/pip install -r sim/requirements.txt   # needs git: pyrenode3 comes from GitHub
    ```
 
 ## Run the tests
@@ -110,8 +111,8 @@ How it fits together:
 - You can't step from Python *into* C. `board.send_can()` hands the frame to Renode; put a
   breakpoint in the C code that receives it (e.g. `SteeringCanRxHandler` in `app/can_app.c`).
 
-Open question: whether Renode's virtual time stops while the CPU sits at a GDB breakpoint. If it
-doesn't, `Board` will pause the emulation on breakpoints; tests won't change.
+Verified: virtual time stops while GDB holds the CPU at a breakpoint, so the test really does wait
+and the firmware's timers don't run on behind your back.
 
 ## Run a board's sim by hand
 

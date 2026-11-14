@@ -1,2 +1,4 @@
-pytest>=8
-# TODO: add pyrenode3 once Board uses it (fallback: Renode subprocess, no extra package)
+pytest==9.2.0
+# Loads Renode inside Python (not on PyPI; pinned to the commit tested with Renode 1.16.1)
+pyrenode3 @ git+https://github.com/antmicro/pyrenode3.git@27362def38ce409b95c972ce494cd8517dac17a4
+pythonnet==3.2.1

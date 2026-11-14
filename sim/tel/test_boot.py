@@ -13,8 +13,9 @@ def test_boots_without_fault(board):
 
 
 @pytest.mark.xfail(
-    reason="Known firmware bugs: defaultTask isn't created (configTOTAL_HEAP_SIZE 3072 exhausted) "
-    "and the IMU task blocks on HAL_MAX_DELAY I2C calls with no IMU attached",
+    reason="Known firmware bugs: defaultTask isn't created (configTOTAL_HEAP_SIZE 3072 exhausted); "
+    "the IMU task busy-waits on HAL_MAX_DELAY I2C calls with no IMU attached, which also starves "
+    "TasksIWDG (osPriorityLow, below the IMU's Low1) so the watchdog is never refreshed",
     strict=False,
 )
 def test_every_rtos_task_runs(board):

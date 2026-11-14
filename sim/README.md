@@ -108,6 +108,15 @@ How it fits together:
   firmware, so boot can be debugged.
 - At a **Python** breakpoint the emulation isn't running, so the firmware is frozen.
 - At a **firmware** breakpoint `run_for()` doesn't return, so the test waits.
+- **Which test line is running?** With `--gdb` (or `--sim-trace` without it) every test step is
+  printed to the terminal before it runs; the last `[sim]` line is what the test is doing when a C
+  breakpoint hits:
+  ```
+  [sim      10.0 ms] tel/test_can_forwarding.py:22  wait_for_frame(board, 0x401, ...)
+                    -> wait_for_uart usart2 [23 00 00 04 01 ab cd ...] (up to 500 ms)
+                       found at 10.0 ms
+  ```
+- Only one debug session at a time: a second one fails with "Port 3333 is already in use".
 - You can't step from Python *into* C. `board.send_can()` hands the frame to Renode; put a
   breakpoint in the C code that receives it (e.g. `SteeringCanRxHandler` in `app/can_app.c`).
 

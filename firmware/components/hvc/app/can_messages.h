@@ -32,6 +32,7 @@
 #define MOTOR_PRECHARGE_ID          0x328U
 #define MPPT_PRECHARGE_ID           0x329U
 #define COMMIT_HASH_ID              0x32BU
+#define CHARGER_CONTROL_ID          0x1806E5F4U // Extended ID, to the HK-MF-103-32 charger
 
 // ==== RX CAN IDs ====
 // IDs of the messages from other boards that the HVC acts on, grouped by board.
@@ -49,9 +50,15 @@
 #define MST_HEARTBEAT_ID            0x200U
 #define MST_VOLT_SUMMARY_ID         0x201U
 
-// TX: CAN_Messages_SendAll() from FSM_Run(), CAN_Messages_SendLvPowerupRequest() from LvPowerup()
+// --- Charger (HK-MF-103-32) ---
+// Extended ID, so not in CAN_RX_IDS: HVC_Init() gives it its own filter bank (CAN_InitExtFilter())
+#define CHARGER_STATUS_ID           0x18FF50E5U
+
+// TX: CAN_Messages_SendAll() from FSM_Run(), CAN_Messages_SendLvPowerupRequest() from LvPowerup(),
+// CAN_Messages_SendChargerControl() from Monitoring() (CHARGE_BATTERY only)
 void CAN_Messages_SendAll(void);
 void CAN_Messages_SendLvPowerupRequest(void);
+void CAN_Messages_SendChargerControl(void);
 
 // Not called: copy it to add a new TX message
 void CAN_Messages_SendMessageTemplate(void);

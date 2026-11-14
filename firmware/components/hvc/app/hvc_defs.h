@@ -7,7 +7,7 @@
  *   Board-wide: CAN, heartbeats, HV current shunt, ADC, supplemental battery,
  *   LV current sensor, status LEDs.
  *   FSM, in state order: state timeouts, fans, contactors, discharge relay,
- *   precharge, DCDC.
+ *   precharge, DCDC, charging.
  */
 
 #pragma once
@@ -117,6 +117,7 @@
 #define SHOW_TESTS                      true  // [TEST]  Hardware test running, its results
 #define SHOW_STATES                     true  // [STATE] Every state change
 #define SHOW_FAULTS                     true  // [FAULT] Each fault once, with its cause and value
+#define SHOW_CHARGER                    true  // [CHRG]  Charger status frames (CHARGE_BATTERY only)
 
 // --- For debugging (off by default) ---
 #define SHOW_STEPS                      false // [STEP]  Steps inside each state (NEG closed, ...)
@@ -268,3 +269,20 @@
 // Its thermistor temperature is checked in STATE_MONITORING.
 
 #define DCDC_TEMP_MAX_MC                80000
+
+// ==== Charging ====
+// Build variant for charging the pack from the HK-MF-103-32 charger over CAN.
+// With CHARGE_BATTERY true, STATE_MONITORING answers each charger status message
+// (CHARGER_STATUS_ID, ~every 1 s) with a charger control message (CHARGER_CONTROL_ID).
+// The charger only outputs while it keeps receiving control messages.
+// Must be false for driving. Can also be set with -DCHARGE_BATTERY=1.
+// Message IDs and layouts are in can_messages.h / can_messages.c.
+
+#ifndef CHARGE_BATTERY
+#define CHARGE_BATTERY                  false
+#endif
+
+// Charger setpoints, sent in every charger control message.
+// Multiples of 100 (the charger takes 0.1 V / 0.1 A steps; anything finer is dropped).
+#define MAX_CHARGING_VOLTAGE_MV         134400U // 32s x 4.2 V
+#define MAX_CHARGING_CURRENT_MA         13700U  // Outlet limit is 15 A (breaker trips ~15 A)

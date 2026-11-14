@@ -134,6 +134,64 @@ void DEBUG_Output_Run(void) {
 #endif // DEBUG
 }
 
+/**
+ * @brief Prints a decoded charger status frame (CHARGER_STATUS_ID), and the HVC's own shunt
+ *        current to compare against the charger's output current.
+ *
+ * Layout from v3 brightside.dbc (OBCStatus). Voltage/current are big-endian like the command.
+ *
+ * [0:1] Output voltage, 0.1 V/bit. This is the charger's own output terminal voltage, so it
+ *       reads ~setpoint whenever the output is on, even with no battery connected.
+ * [2:3] Output current, 0.1 A/bit
+ * [4]   bit 0    Hardware protection         0 = normal, 1 = protection tripped
+ *       bit 1    Temperature protection      0 = normal, 1 = internal over-temperature
+ *       bits 2-3 Input (AC) voltage status   0 = normal, 1 = under, 2 = over, 3 = no input
+ *       bit 4    Output under-voltage        0 = normal, 1 = fault
+ *       bit 5    Output over-voltage         0 = normal, 1 = fault
+ *       bit 6    Output over-current         0 = normal, 1 = fault
+ *       bit 7    Output short circuit        0 = normal, 1 = fault
+ * [5]   bit 0    Communication status        0 = normal, 1 = timed out waiting for 0x1806E5F4
+ *       bits 1-2 Working status              0 = undefined, 1 = working (output on),
+ *                                            2 = stopped, 3 = stopped/standby
+ *       bit 3    Initialization complete     0 = not complete, 1 = complete
+ *       bit 4    Fan enable                  0 = off, 1 = on
+ *       bit 5    Cooling pump enable         0 = off, 1 = on
+ * [6]   Charge-gun/EVSE signals, all 0 unless charging through a J1772/GB-T style inlet
+ *       bits 0-1 CC (gun resistance)         0 = not connected, 1 = half, 2 = connected,
+ *                                            3 = resistance detection error
+ *       bit 2    CP pilot signal             0 = none, 1 = normal
+ *       bit 3    Charging socket over-temp   0 = normal, 1 = overheating
+ *       bits 4-6 Electronic lock             0 = judging, 1 = locked, 2 = unlocked,
+ *                                            3 = unlock fault, 4 = lock fault
+ *       bit 7    S2 switch                   0 = off, 1 = closed
+ * [7]   Temperature, 1 degC/bit, -40 offset (0x3B = 59 -> 19 degC)
+ *
+ * @param status The 8 raw bytes of the frame (g_shared.charger_status_data).
+ */
+void DEBUG_Output_ChargerStatus(const volatile uint8_t *status) {
+#ifdef DEBUG
+    uint8_t d[8];
+    for (size_t i = 0U; i < sizeof(d); i++) {
+        d[i] = status[i];
+    }
+    uint16_t out_dv = ((uint16_t)d[0] << 8) | d[1];
+    uint16_t out_da = ((uint16_t)d[2] << 8) | d[3];
+
+    PRINT_CHRG("status %u.%u V, %u.%u A, raw %02X %02X %02X %02X %02X %02X %02X %02X",
+               out_dv / 10U, out_dv % 10U, out_da / 10U, out_da % 10U,
+               d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7]);
+    PRINT_CHRG("  HW prot %u, temp prot %u, input V %u, out UV %u, OV %u, OC %u, short %u",
+               (d[4] >> 0) & 0x1U, (d[4] >> 1) & 0x1U, (d[4] >> 2) & 0x3U,
+               (d[4] >> 4) & 0x1U, (d[4] >> 5) & 0x1U, (d[4] >> 6) & 0x1U, (d[4] >> 7) & 0x1U);
+    PRINT_CHRG("  comm timeout %u, working status %u, init complete %u, temp %d degC",
+               (d[5] >> 0) & 0x1U, (d[5] >> 1) & 0x3U, (d[5] >> 3) & 0x1U, (int)d[7] - 40);
+    // Cached value, refreshed every CAN_TX_INTERVAL_MS by SendShuntCurrent() (no I2C here)
+    PRINT_CHRG("  HVC shunt current: %ld mA", (long)SHUNT_GetShuntCurrent_mA());
+#else
+    (void)status;
+#endif // DEBUG
+}
+
 // ==== Helpers ====
 // Used by the entry points above, grouped by what they print.
 // Only compiled with DEBUG: nothing calls them otherwise.

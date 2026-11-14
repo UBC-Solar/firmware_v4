@@ -52,7 +52,8 @@ typedef struct {
 /** 
  * Functions
  */
-void CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size_t count);
+uint32_t CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size_t count);
+void CAN_InitExtFilter(CAN_HandleTypeDef *handle, uint32_t ext_id, uint32_t filter_bank);
 void CAN_Init(CAN_HandleTypeDef *handle);
 
 void CAN_QueueTxMessage(CAN_TxMessage_t *message);

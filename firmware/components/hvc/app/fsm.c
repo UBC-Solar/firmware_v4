@@ -603,6 +603,9 @@ static void LvPowerup(void) {
 /**
  * @brief Normal driving state. Checks the DCDC temperature.
  *
+ * With CHARGE_BATTERY, also answers each charger status message with a charger control message,
+ * so the charger only outputs while it is connected and the HVC is in this state.
+ *
  * Other faults (ESTOP, IMD, MST, DIST, DCDC, current, heartbeats) are caught by FSM_Run().
  *
  * Exit Condition: DCDC temperature above DCDC_TEMP_MAX_MC.
@@ -614,6 +617,15 @@ static void Monitoring(void) {
         g_state = STATE_FAULT;
         return;
     }
+
+#if CHARGE_BATTERY
+    // Only send the charger control message while the charger is connected (status msg received)
+    if (g_shared.charger_status_received) {
+        g_shared.charger_status_received = false;
+        DEBUG_Output_ChargerStatus(g_shared.charger_status_data);
+        CAN_Messages_SendChargerControl();
+    }
+#endif // CHARGE_BATTERY
 }
 
 /**

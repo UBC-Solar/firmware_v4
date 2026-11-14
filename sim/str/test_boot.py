@@ -1,11 +1,12 @@
-def test_boots_without_fault(board):
+from _emulator import Board
+
+
+def test_boots_without_fault(board: Board):
     board.run_for(ms=1000)
     assert board.symbol_at_pc() not in ("Error_Handler", "HardFault_Handler")
 
 
-def test_every_rtos_task_runs(board):
-    """Every task the firmware creates must keep looping. Catches tasks that fail to be created,
-    hang (e.g. HAL_MAX_DELAY on a dead bus) or starve behind a busy higher-priority task."""
+def test_every_rtos_task_runs(board: Board):
     # The CAN Rx task only loops when a frame arrives
     for _ in range(3):
         board.send_can(0x123, bytes([0x11, 0x22]))

@@ -1,11 +1,12 @@
 import pytest
 
+from _emulator import Board
 from tel.radio import wait_for_frame
 
 TEL_FLAGS_ID = 0x751
 
 
-def test_boots_without_fault(board):
+def test_boots_without_fault(board: Board):
     # First flags frame proves the scheduler, clocks, CAN and UART init all made it through
     wait_for_frame(board, TEL_FLAGS_ID, bytes([0x00]), within_ms=3000)
     board.run_for(ms=2000)
@@ -18,7 +19,7 @@ def test_boots_without_fault(board):
     "TasksIWDG (osPriorityLow, below the IMU's Low1) so the watchdog is never refreshed",
     strict=False,
 )
-def test_every_rtos_task_runs(board):
+def test_every_rtos_task_runs(board: Board):
     """Every task the firmware creates must keep looping. Catches tasks that fail to be created
     (heap), hang (e.g. HAL_MAX_DELAY on a dead bus) or starve."""
     wait_for_frame(board, TEL_FLAGS_ID, bytes([0x00]))

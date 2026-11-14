@@ -1,3 +1,4 @@
+from _emulator import Board
 from tel.radio import wait_for_frame, wait_for_header
 
 TIME_SINCE_BOOTUP_ID = 0x750  # DLC 4, little-endian seconds counter, every 1 s
@@ -6,7 +7,7 @@ CAN_BUS_LOAD_ID = 0x763
 GPS_READ_FAIL = 0x08  # 0x751 bit 3
 
 
-def test_flags_sent_every_100ms(board):
+def test_flags_sent_every_100ms(board: Board):
     # Ten frames ~100 ms apart; would stall after one if the UART DMA TX-complete path broke
     times = [wait_for_header(board, TEL_FLAGS_ID, within_ms=1000)]  # first one includes boot
     times += [wait_for_header(board, TEL_FLAGS_ID, within_ms=200) for _ in range(9)]
@@ -14,19 +15,19 @@ def test_flags_sent_every_100ms(board):
     assert all(80 <= g <= 130 for g in gaps), gaps
 
 
-def test_flags_gps_read_failure_with_no_gps(board):
+def test_flags_gps_read_failure_with_no_gps(board: Board):
     # Nothing answers on I2C2 (u-blox at 0x42) in the sim -> gps_read_fail set in 0x751
     wait_for_frame(board, TEL_FLAGS_ID, bytes([GPS_READ_FAIL]), within_ms=3000)
     sent = [f.data for f in board.can_frames_sent(can_id=TEL_FLAGS_ID)]
     assert bytes([GPS_READ_FAIL]) in sent, sent
 
 
-def test_time_since_bootup_increments(board):
+def test_time_since_bootup_increments(board: Board):
     for seconds in (1, 2, 3):
         wait_for_frame(board, TIME_SINCE_BOOTUP_ID, seconds.to_bytes(4, "little"), within_ms=1500)
 
 
-def test_diagnostics_sent_on_can(board):
+def test_diagnostics_sent_on_can(board: Board):
     wait_for_frame(board, TIME_SINCE_BOOTUP_ID, (1).to_bytes(4, "little"), within_ms=1500)
     sent = board.can_frames_sent()
     ids = {f.can_id for f in sent}

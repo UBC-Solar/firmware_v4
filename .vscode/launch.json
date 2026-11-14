@@ -68,7 +68,7 @@
       "module": "pytest",
       "python": "${workspaceFolder}/sim/.venv/bin/python",
       "cwd": "${workspaceFolder}/sim",
-      "args": ["${file}", "--gdb", "-s"],
+      "args": ["${file}", "-k", "${input:silTest}", "--gdb", "-s"],
       "console": "integratedTerminal",
       "justMyCode": false
     },
@@ -95,6 +95,13 @@
       "name": "SIL: debug test + firmware",
       "configurations": ["SIL: debug test (Python)", "SIL: attach firmware (Renode)"],
       "stopAll": true
+    }
+  ],
+  "inputs": [
+    {
+      "id": "silTest",
+      "type": "promptString",
+      "description": "Test to debug: its function name (or a unique part of it), e.g. test_every_rtos_task_runs"
     }
   ]
 }

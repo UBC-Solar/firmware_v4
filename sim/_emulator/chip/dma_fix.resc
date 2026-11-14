@@ -1,0 +1,10 @@
+# DMA fix for boards whose firmware uses DMA (links HAL_DMA_IRQHandler), e.g. TEL.
+# Hooks a HAL function by name, so board files include this AFTER `sysbus LoadELF`.
+# Boards without DMA must not include it (GetSymbolAddress fails if the symbol is missing).
+#
+# Renode's DMA finishes a transfer instantly, so HTIF and TCIF are set together. HAL services HT
+# first and returns; real silicon re-raises the IRQ for TC, Renode doesn't -> UART TX-complete
+# never fires and DMA UART TX stalls after one transfer. (Renode's IFCR also clears every flag of
+# the channel, so HAL clearing HTIF loses TCIF too.) When a channel has both pending, clear its HTIE
+# so HAL skips the half-transfer branch and takes the transfer-complete one.
+cpu AddHook `sysbus GetSymbolAddress "HAL_DMA_IRQHandler"` "bus = machine.SystemBus; [bus.WriteDoubleWord(a + 8 + 20 * k, bus.ReadDoubleWord(a + 8 + 20 * k) & ~0x4) for a in (0x40020000, 0x40020400) for k in range(7) if (bus.ReadDoubleWord(a) >> (4 * k + 1)) & 3 == 3]"

@@ -58,6 +58,48 @@
           "imageFileName": "${command:cmake.launchTargetPath}",
         }
       ]
+    },
+    {
+      // SIL: runs the open test file with pytest --gdb. The test loads its board in Renode and
+      // waits for the firmware debugger before running any firmware.
+      "name": "SIL: debug test (Python)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "python": "${workspaceFolder}/sim/.venv/bin/python",
+      "cwd": "${workspaceFolder}/sim",
+      "args": ["${file}", "-k", "${input:silTest}", "--gdb", "-s"],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "presentation": { "hidden": true }
+    },
+    {
+      "name": "SIL: attach firmware (Renode)",
+      "type": "cortex-debug",
+      "request": "launch",
+      "servertype": "external",
+      "gdbTarget": "localhost:3333",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/sim/.gdb-target.elf",
+      "overrideLaunchCommands": [],
+      "runToEntryPoint": "main",
+      "preLaunchTask": "SIL: wait for Renode GDB server",
+      "presentation": { "hidden": true }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "SIL: Debug Test (current file)",
+      "configurations": ["SIL: debug test (Python)", "SIL: attach firmware (Renode)"],
+      "stopAll": true,
+      "presentation": { "group": "SIL", "order": 1 }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "silTest",
+      "type": "promptString",
+      "description": "Test to debug: its function name (or a unique part of it), e.g. test_every_rtos_task_runs"
     }
   ]
 }

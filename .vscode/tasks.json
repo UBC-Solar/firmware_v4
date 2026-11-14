@@ -16,6 +16,19 @@
             "presentation": {
                 "showReuseMessage": false
             }
+        },
+        {
+            // Runs before "SIL: attach firmware (Renode)". Waits (up to 60 s) until `pytest --gdb`
+            // has Renode's GDB server listening on 3333. Checks with ss instead of connecting:
+            // a connection would count as the debugger attaching.
+            "label": "SIL: wait for Renode GDB server",
+            "type": "shell",
+            "command": "timeout 60 sh -c 'until ss -ltn | grep -q \":3333 \"; do sleep 0.2; done'",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "silent",
+                "showReuseMessage": false
+            }
         }
     ]
 }

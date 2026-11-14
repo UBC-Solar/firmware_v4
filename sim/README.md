@@ -1,0 +1,139 @@
+# sim: software-in-the-loop (SIL) tests
+
+Runs board firmware (the same `.elf` we flash) on an emulated STM32F103RCT6 in
+[Renode](https://renode.io) and tests it with pytest. No board, probe or bench needed.
+
+```
+sim/
+  <board>/test_*.py   tests, one folder per board (the folder picks the board)
+  conftest.py         the `board` fixture and the --gdb option
+  pytest.ini  requirements.txt
+  _emulator/          emulator setup. Set up once; only touch it to fix or extend the emulator.
+    __init__.py         the test API (Board, CanFrame): the only thing tests use
+    chip/               STM32F103RCT6 setup shared by every board
+    peripherals/        Python stubs for peripherals Renode's F103 model lacks
+    devices/            fake external parts (GPS, IMU, displays ...)
+    boards/<board>.resc how each board is wired: chip + ELF + devices
+```
+
+## Setup (once)
+
+1. Install Renode (v1.16.1 used so far) and put `renode` on your `PATH`, or set `PYRENODE_PATH` to
+   the Renode folder. The tests load Renode into Python with pyrenode3.
+2. Build the board, any way you normally do: `make str`, `make str release`, or the VS Code CMake
+   extension / `cmake --preset Debug` (→ `build/Debug/`, `build/Release/`). Tests find the ELF
+   themselves: they read `CMAKE_BUILD_TYPE` from each build folder's `CMakeCache.txt`, so the folder
+   name doesn't matter.
+3. Python environment, from the repo root:
+   ```bash
+   python -m venv sim/.venv
+   sim/.venv/bin/pip install -r sim/requirements.txt   # needs git: pyrenode3 comes from GitHub
+   ```
+
+## Run the tests
+
+```bash
+sim/.venv/bin/pytest sim               # all boards
+sim/.venv/bin/pytest sim/str           # one board
+sim/.venv/bin/pytest sim/str -k boot   # one test
+sim/.venv/bin/pytest sim --build-type Release   # test the Release build (default: Debug)
+```
+
+## Write a test
+
+Add `test_<feature>.py` in the board's folder and take `board` as an argument. The folder decides
+which board you get, freshly booted for each test.
+
+```python
+def test_steering_state_sent_every_100ms(board):
+    board.run_for(ms=1000)
+    frames = board.can_frames_sent(can_id=0x580)
+    gaps = [b.time_ms - a.time_ms for a, b in zip(frames, frames[1:])]
+    assert all(90 <= g <= 110 for g in gaps), gaps
+```
+
+### Tests control time
+Renode has its own **virtual time**, which only moves while the emulation runs, and the emulation
+only runs inside `board.run_for()` and `board.wait_for_*()`.
+
+- Move time with `board.run_for(ms=...)`. Wait for events with `board.wait_for_can(id, within_ms=...)`:
+  the limit is in **firmware** time.
+- **Never use `time.sleep()` or wall-clock timeouts.** They have no relation to firmware time.
+- Every captured frame has `time_ms` (virtual time), so timing asserts give the same result on any
+  machine.
+- Timing is reliable for timer-driven behaviour (task periods, `osDelay`, CAN intervals, watchdog).
+  It is approximate for execution speed: Renode isn't cycle-accurate and its DMA/UART finish
+  instantly.
+
+### Board API
+
+| Call | Does |
+|---|---|
+| `run_for(ms)` | Run exactly `ms` of firmware time |
+| `time_ms` | Current virtual time |
+| `send_can(id, data, extended=False)` | Deliver a frame to the board, as if another board sent it |
+| `can_frames_sent(id=None)` | Frames the board has sent so far (`CanFrame`: `can_id`, `data`, `extended`, `time_ms`) |
+| `wait_for_can(id, within_ms)` | Run until the board sends `id`; fail after `within_ms` |
+| `set_pin(port, pin, high)` | Drive an input pin, e.g. `set_pin("A", 2, False)` |
+| `uart_bytes(uart)` | Everything the board wrote to a UART so far, e.g. `uart_bytes("usart2")` |
+| `wait_for_uart(uart, data, within_ms)` | Run until `data` appears on the UART (each wait continues after the previous match) |
+| `rtos_task_loops()` | Loop count per FreeRTOS task, to catch tasks that never run, hang or starve |
+| `symbol_at_pc()` | Function the CPU is in, e.g. `"Error_Handler"` |
+
+Board-specific helpers (e.g. decoding TEL's radio frames) go in a non-test module in the board's
+folder, like `tel/radio.py`, imported as `from tel.radio import ...`. Test file names can repeat
+across boards (`str/test_boot.py`, `tel/test_boot.py`).
+
+If a test needs something this doesn't offer (a new helper, a fake device), that's an
+`_emulator/` change: make it its own PR.
+
+## Debug a test and the firmware together
+
+Two debuggers run at once: **debugpy** for the Python test, **cortex-debug** attached to Renode's
+GDB server (`localhost:3333`) for the firmware.
+
+> Planned: VS Code launch configs that start both with one F5 are not in `.vscode/` yet.
+
+Until then, by hand:
+1. Start the test with the GDB server: `sim/.venv/bin/pytest sim/str/test_can.py --gdb -s`.
+   It waits for a debugger before running any firmware.
+2. Attach a cortex-debug session to `localhost:3333` with the board's ELF
+   (`"servertype": "external"`, `"request": "launch"`, `"overrideLaunchCommands": []`,
+   `"runToEntryPoint": "main"`. Renode doesn't understand cortex-debug's default
+   `monitor reset halt`).
+3. Breakpoints in STR's `.c` files work as with a J-Link.
+
+How it fits together:
+- `pytest --gdb` makes `Board` start the GDB server and **wait for the debugger** before running any
+  firmware, so boot can be debugged.
+- At a **Python** breakpoint the emulation isn't running, so the firmware is frozen.
+- At a **firmware** breakpoint `run_for()` doesn't return, so the test waits.
+- **Which test line is running?** With `--gdb` (or `--sim-trace` without it) every test step is
+  printed to the terminal before it runs; the last `[sim]` line is what the test is doing when a C
+  breakpoint hits:
+  ```
+  [sim      10.0 ms] tel/test_can_forwarding.py:22  wait_for_frame(board, 0x401, ...)
+                    -> wait_for_uart usart2 [23 00 00 04 01 ab cd ...] (up to 500 ms)
+                       found at 10.0 ms
+  ```
+- Only one debug session at a time: a second one fails with "Port 3333 is already in use".
+- **One test per debug session.** Each test boots a fresh machine with its own GDB server, and the
+  debugger's connection ends with the test. So `--gdb` refuses to run more than one test: use
+  `pytest <file>::<test_name> --gdb` or `-k <name>`. In VS Code, F5 asks for the test's name.
+- You can't step from Python *into* C. `board.send_can()` hands the frame to Renode; put a
+  breakpoint in the C code that receives it (e.g. `SteeringCanRxHandler` in `app/can_app.c`).
+
+Verified: virtual time stops while GDB holds the CPU at a breakpoint, so the test really does wait
+and the firmware's timers don't run on behind your back.
+
+## Run a board's sim by hand
+
+```bash
+make tel                         # or build with the CMake Debug preset; the default below is build/Debug
+renode sim/_emulator/boards/tel.resc
+# then in the Renode Monitor:
+showAnalyzer usart2              # TEL telemetry UART (usart4 if CAR_CONFIG_CELLULAR is 0)
+start
+pause
+sysbus FindSymbolAt `cpu PC`     # where is the CPU?
+```

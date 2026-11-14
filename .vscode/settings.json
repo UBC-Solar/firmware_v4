@@ -37,5 +37,7 @@
   },
   "stm32-for-vscode.openOCDPath": false,
   "stm32-for-vscode.makePath": false,
-  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+  "python.defaultInterpreterPath": "${workspaceFolder}/sim/.venv/bin/python",
+  "python.analysis.extraPaths": ["sim"]
 }

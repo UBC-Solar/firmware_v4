@@ -70,13 +70,10 @@
       "cwd": "${workspaceFolder}/sim",
       "args": ["${file}", "-k", "${input:silTest}", "--gdb", "-s"],
       "console": "integratedTerminal",
-      "justMyCode": false
+      "justMyCode": false,
+      "presentation": { "hidden": true }
     },
     {
-      // SIL: attaches to Renode's GDB server, started by `pytest --gdb`.
-      // sim/.gdb-target.elf is a link to the ELF that test loaded (any board, Debug or Release).
-      // Renode doesn't understand cortex-debug's default `monitor reset halt`, hence
-      // overrideLaunchCommands; "launch" (not "attach") so runToEntryPoint is honoured.
       "name": "SIL: attach firmware (Renode)",
       "type": "cortex-debug",
       "request": "launch",
@@ -86,15 +83,16 @@
       "executable": "${workspaceFolder}/sim/.gdb-target.elf",
       "overrideLaunchCommands": [],
       "runToEntryPoint": "main",
-      "preLaunchTask": "SIL: wait for Renode GDB server"
+      "preLaunchTask": "SIL: wait for Renode GDB server",
+      "presentation": { "hidden": true }
     }
   ],
   "compounds": [
     {
-      // Open a test file in sim/<board>/, pick this, F5: debugs the test and the board's firmware.
-      "name": "SIL: debug test + firmware",
+      "name": "SIL: Debug Test (current file)",
       "configurations": ["SIL: debug test (Python)", "SIL: attach firmware (Renode)"],
-      "stopAll": true
+      "stopAll": true,
+      "presentation": { "group": "SIL", "order": 1 }
     }
   ],
   "inputs": [

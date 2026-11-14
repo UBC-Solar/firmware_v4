@@ -8,6 +8,8 @@ The RTC stub doesn't tick, so the timestamp is constant: helpers match from '#' 
 import re
 from pathlib import Path
 
+from _emulator import Board
+
 CAR_CONFIGS = Path(__file__).resolve().parents[2] / "firmware/common/car_configs/car_configs.h"
 
 
@@ -28,12 +30,12 @@ def frame_header(can_id: int) -> bytes:
     return b"#" + can_id.to_bytes(4, "big")
 
 
-def wait_for_frame(board, can_id: int, data: bytes = b"", dlc: int | None = None,
+def wait_for_frame(board: Board, can_id: int, data: bytes = b"", dlc: int | None = None,
                    within_ms: float = 3000) -> float:
     """Run until TEL sends exactly this frame on the telemetry UART."""
     return board.wait_for_uart(telemetry_uart(), frame_bytes(can_id, data, dlc), within_ms)
 
 
-def wait_for_header(board, can_id: int, within_ms: float = 3000) -> float:
+def wait_for_header(board: Board, can_id: int, within_ms: float = 3000) -> float:
     """Run until TEL sends any frame with this ID on the telemetry UART."""
     return board.wait_for_uart(telemetry_uart(), frame_header(can_id), within_ms)

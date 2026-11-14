@@ -5,6 +5,13 @@ mach create "str"
 # Shared chip setup (Renode F103 model + our fixes)
 include $ORIGIN/../chip/stm32f103rct6.resc
 
+# I2C1 only talks to the AS1115 hex display driver (7-bit address 0x00), and only writes to it.
+# Renode's F1 I2C model never completes those writes, so the display task (Normal priority) would
+# busy-wait forever on HAL_MAX_DELAY and starve every Low task, including the CAN sender.
+# Swap it for a stub where every write succeeds.
+sysbus Unregister sysbus.i2c1
+machine PyDevFromFile $ORIGIN/../peripherals/i2c_write_ok.py 0x40005400 0x400 True "i2c1"
+
 # Load the ELF to run in the sim. Tests set $elf themselves (Debug or Release, picked from each
 # build folder's CMakeCache.txt). This default is only for running by hand: the Debug preset build.
 $elf ?= $ORIGIN/../../../firmware/components/str/build/Debug/str.elf

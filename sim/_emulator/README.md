@@ -17,6 +17,7 @@ _emulator/
     stub_regs.py         plain register storage (PWR, FLASH interface)
     adc.py               ADC: instant calibration, conversions read 0x800
     rtc.py               RTC: sync flags always set, counter doesn't tick
+    i2c_write_ok.py      I2C master where every write succeeds (STR's write-only display)
   devices/               fake external parts (GPS, IMU, displays ...), none yet
   boards/
     str.resc  tel.resc   one file per board: create machine + chip + ELF + devices
@@ -85,7 +86,14 @@ Renode bugs worked around (found while building the TEL sim):
 | Board | State in the sim |
 |---|---|
 | TEL | Boots into FreeRTOS, sends telemetry frames (~every 100 ms on the telemetry UART) and CAN 0x750/0x751/0x763/0x764. No GPS/IMU devices, so `gps_read_fail` gets set after ~0.5 s. |
-| STR | Gets through clock setup; then stuck in `I2C_WaitOnMasterAddressFlagUntilTimeout`: nothing answers on I2C1 (needs a device in `devices/`). No CAN yet. |
+| STR | Boots into FreeRTOS; every task loops; sends CAN 0x580 (every 100 ms), 0x581, 0x583, 0x591, 0x592. I2C1 is replaced by `i2c_write_ok.py` (see below). |
+
+**Renode's STM32F1 I2C doesn't complete a polled HAL write.** With no device at the address, it's
+never acked; with `Mocks.DummyI2CSlave` there, BTF never gets set. Either way
+`HAL_I2C_Master_Transmit(..., HAL_MAX_DELAY)` waits forever. STR's hex display task (Normal priority)
+did exactly that and starved every Low task, so STR sent no CAN at all. `boards/str.resc` swaps I2C1
+for `peripherals/i2c_write_ok.py`, which reports every step of a write as done. It's only right
+for boards that *write* over I2C; boards that read (TEL's GPS/IMU) need a real device model.
 
 Known TEL firmware bugs the sim exposes (tests mark them `xfail`): `defaultTask` isn't created
 (`configTOTAL_HEAP_SIZE` 3072 exhausted), and the IMU driver's I2C calls use `HAL_MAX_DELAY`, so the

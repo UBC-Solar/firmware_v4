@@ -5,7 +5,7 @@ TIME_SINCE_BOOTUP_DELAY_MS = 1000  # runtime/tasks.h
 
 
 def test_debug_led_toggles_every_second(board: Board):
-    board.run_for(ms=3500)
+    board.wait(ms=3500)
     edges = board.gpio.edges(*DEBUG_LED)
     assert len(edges) >= 3, edges
     gaps = [b.time_ms - a.time_ms for a, b in zip(edges, edges[1:])]

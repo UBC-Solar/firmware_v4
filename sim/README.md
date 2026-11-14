@@ -47,7 +47,7 @@ which board you get, freshly booted for each test.
 
 ```python
 def test_steering_state_sent_every_100ms(board):
-    board.run_for(ms=1000)
+    board.wait(ms=1000)
     frames = board.can.sent(can_id=0x580)
     gaps = [b.time_ms - a.time_ms for a, b in zip(frames, frames[1:])]
     assert all(90 <= g <= 110 for g in gaps), gaps
@@ -55,9 +55,9 @@ def test_steering_state_sent_every_100ms(board):
 
 ### Tests control time
 Renode has its own **virtual time**, which only moves while the emulation runs, and the emulation
-only runs inside `board.run_for()` and the `wait_for()` calls (`board.can.wait_for()`, ...).
+only runs inside `board.wait()` and the `wait_for()` calls (`board.can.wait_for()`, ...).
 
-- Move time with `board.run_for(ms=...)`. Wait for events with `board.can.wait_for(id, within_ms=...)`:
+- Move time with `board.wait(ms=...)`. Wait for events with `board.can.wait_for(id, within_ms=...)`:
   the limit is in **firmware** time.
 - **Never use `time.sleep()` or wall-clock timeouts.** They have no relation to firmware time.
 - Every captured frame has `time_ms` (virtual time), so timing asserts give the same result on any
@@ -75,7 +75,7 @@ Every `wait_for` fails the test (`SimTimeout`) if `within_ms` of firmware time p
 
 | Call | Does |
 |---|---|
-| `run_for(ms)` | Run exactly `ms` of firmware time |
+| `wait(ms)` | Run exactly `ms` of firmware time |
 | `time_ms` | Current virtual time |
 | `symbol_at_pc()` | Function the CPU is in, e.g. `"Error_Handler"` |
 
@@ -162,7 +162,7 @@ How it fits together:
 - `pytest --gdb` makes `Board` start the GDB server and **wait for the debugger** before running any
   firmware, so boot can be debugged.
 - At a **Python** breakpoint the emulation isn't running, so the firmware is frozen.
-- At a **firmware** breakpoint `run_for()` doesn't return, so the test waits.
+- At a **firmware** breakpoint `wait()` doesn't return, so the test waits.
 - **Which test line is running?** With `--gdb` (or `--sim-trace` without it) every test step is
   printed to the terminal before it runs; the last `[sim]` line is what the test is doing when a C
   breakpoint hits:

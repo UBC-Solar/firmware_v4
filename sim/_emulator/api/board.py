@@ -1,9 +1,9 @@
 """Test API for SIL tests. Tests use only what this module exposes.
 
 Design rule: tests control *virtual* time. Renode's clock only moves while the emulation runs, and
-the emulation only runs inside run_for() / *.wait_for(). So:
+the emulation only runs inside wait() / *.wait_for(). So:
 - at a Python breakpoint the firmware is frozen,
-- at a firmware (GDB) breakpoint run_for() doesn't return, so the test waits (verified: virtual time
+- at a firmware (GDB) breakpoint wait() doesn't return, so the test waits (verified: virtual time
   stops while GDB holds the CPU),
 - every captured event is timestamped in firmware time, so timing asserts are repeatable.
 Never use time.sleep() or wall-clock timeouts in tests.
@@ -148,9 +148,9 @@ class Board:
 
     # ---- time ----------------------------------------------------------------------------
 
-    def run_for(self, ms: float):
+    def wait(self, ms: float):
         """Run exactly `ms` of firmware (virtual) time, then pause."""
-        self._announce(f"run_for {ms} ms")
+        self._announce(f"wait {ms} ms")
         self._step(ms)
 
     def _step(self, ms: float):

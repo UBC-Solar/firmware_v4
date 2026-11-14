@@ -26,7 +26,7 @@ Tier 1 and the component split are done; the full table is in `sim/README.md` ("
 
 | Part | Calls |
 |---|---|
-| `board` | `run_for(ms)`, `time_ms`, `symbol_at_pc()` |
+| `board` | `wait(ms)`, `time_ms`, `symbol_at_pc()` |
 | `board.can` | `send`, `sent`, `wait_for` |
 | `board.uart` | `send`, `received`, `wait_for` |
 | `board.gpio` | `set`, `get`, `wait_for`, `edges` |
@@ -50,7 +50,7 @@ Checked against `Board("str")` after running it for 300 ms:
 Split `Board` into components while keeping a few top-level shortcuts:
 
 ```python
-board.run_for(ms)          # time stays on Board
+board.wait(ms)          # time stays on Board
 board.time_ms
 board.reset()
 

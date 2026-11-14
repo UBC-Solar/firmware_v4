@@ -57,7 +57,7 @@ boards/str.resc
   Debug). `Board` sets `$elf` before including the board file; the `$elf ?=` default in each `.resc`
   (the Debug preset build) is only for running by hand.
 - Peripherals must be added **before `LoadELF`**, and the emulation doesn't start until `start` (or
-  `Board.run_for()`).
+  `Board.wait()`).
 
 ## The chip: what we add to Renode's F103 model
 
@@ -180,7 +180,7 @@ What happens in `Board("tel")`:
 6. With `gdb=True`: `machine StartGdbServer 3333 false` (`false` = connecting doesn't start the
    emulation), then wait until a debugger is attached.
 
-How time moves: `run_for(ms)` is `emulation RunFor "<seconds>"`, which blocks until that much virtual
+How time moves: `wait(ms)` is `emulation RunFor "<seconds>"`, which blocks until that much virtual
 time has passed. The `wait_for()` calls run 10 ms steps repeatedly, checking the captured data after each
 step, until the event shows up or `within_ms` of virtual time has passed (then `SimTimeout`, an
 `AssertionError`, so pytest reports a failed test). The emulation may run up to 10 ms past the event;
@@ -197,7 +197,7 @@ pythonnet gotchas (all handled in the code):
 - CPU hooks must be wrapped in `CpuAddressHook(...)` and the address in `UInt64(...)`; the hook gets a
   generic CPU interface, so read registers from the `CortexM` object instead.
 - **An exception inside a Renode callback kills the whole process.** Every callback catches its
-  exceptions and stores them; `run_for()` re-raises the first one in the test.
+  exceptions and stores them; `wait()` re-raises the first one in the test.
 - `SystemBus` has no `GetSymbolAddress` from Python; use `GetAllSymbolAddresses(name)[0]`.
 - Symbol names at a function's first instruction end in ` (entry)`; `_symbol()` strips it.
 - .NET namespaces (`System`, `Antmicro.*`) can only be imported after pyrenode3 has loaded Renode, so
@@ -210,7 +210,7 @@ pythonnet gotchas (all handled in the code):
   variable's size.
 
 Rules the implementation keeps:
-- **Tests control time.** The emulation only runs inside `run_for()` and the `wait_for()` calls; otherwise
+- **Tests control time.** The emulation only runs inside `wait()` and the `wait_for()` calls; otherwise
   it is paused. A Python breakpoint then freezes the firmware, and a firmware breakpoint blocks the
   test.
 - **Timeouts are in virtual time** (`within_ms`), never wall clock.

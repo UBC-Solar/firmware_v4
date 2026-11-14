@@ -2,7 +2,7 @@
 
 Whole variables only (looked up in the ELF's symbol table). For a struct field, use read_bytes()
 with the field's offset; reading fields by name would need DWARF (pyelftools), not done yet.
-Read while the emulation is paused (between run_for() calls), so values don't change mid-read.
+Read while the emulation is paused (between wait() calls), so values don't change mid-read.
 """
 
 from . import _renode

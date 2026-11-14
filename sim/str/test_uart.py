@@ -7,9 +7,9 @@ from _emulator import Board
 
 
 def test_uart_send_reaches_emulation(board: Board):
-    board.run_for(ms=100)
+    board.wait(ms=100)
     board.uart.send("usart5", b"$GPGGA\r\n")
-    board.run_for(ms=100)
+    board.wait(ms=100)
     assert board.symbol_at_pc() not in ("Error_Handler", "HardFault_Handler")
 
 

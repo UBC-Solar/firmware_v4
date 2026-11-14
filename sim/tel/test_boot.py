@@ -9,7 +9,7 @@ TEL_FLAGS_ID = 0x751
 def test_boots_without_fault(board: Board):
     # First flags frame proves the scheduler, clocks, CAN and UART init all made it through
     wait_for_frame(board, TEL_FLAGS_ID, bytes([0x00]), within_ms=3000)
-    board.run_for(ms=2000)
+    board.wait(ms=2000)
     assert board.symbol_at_pc() not in ("Error_Handler", "HardFault_Handler")
 
 
@@ -28,7 +28,7 @@ def test_every_rtos_task_runs(board: Board):
         board.send_can(0x123, bytes([0x11, 0x22]))
         wait_for_frame(board, 0x123, bytes([0x11, 0x22]))
     # Slowest loops are TimeSinceStartup and GPS (~1 s; GPS slower with no device)
-    board.run_for(ms=3000)
+    board.wait(ms=3000)
     loops = board.rtos_task_loops()
     assert loops, "No osThreadNew calls seen"
     stuck = {task: n for task, n in loops.items() if n < 2}

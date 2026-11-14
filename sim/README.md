@@ -117,6 +117,9 @@ How it fits together:
                        found at 10.0 ms
   ```
 - Only one debug session at a time: a second one fails with "Port 3333 is already in use".
+- **One test per debug session.** Each test boots a fresh machine with its own GDB server, and the
+  debugger's connection ends with the test. So `--gdb` refuses to run more than one test: use
+  `pytest <file>::<test_name> --gdb` or `-k <name>`. In VS Code, F5 asks for the test's name.
 - You can't step from Python *into* C. `board.send_can()` hands the frame to Renode; put a
   breakpoint in the C code that receives it (e.g. `SteeringCanRxHandler` in `app/can_app.c`).
 

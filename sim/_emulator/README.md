@@ -1,21 +1,27 @@
 # _emulator: how the boards are emulated
 
 Everything that makes firmware_v4 run in [Renode](https://renode.io). Tests never touch this
-folder directly: they use the `Board` API in `__init__.py` through the `board` fixture.
+folder directly: they use the `Board` API in `api/` through the `board` fixture.
 
 Change things here only to **fix or extend the emulator**: a missing peripheral, a new board, a
 new fake device, a new `Board` method. Keep those changes in their own PR, separate from tests.
 
 ```
 _emulator/
-  __init__.py            Board + CanFrame: the API tests use
+  __init__.py            re-exports api/ so tests can `from _emulator import Board`
+  api/                   the test API (Python, runs in pytest)
+    board.py               Board: time, lifecycle, debugging; attaches the parts below
+    can.py uart.py gpio.py board.can, board.uart, board.gpio ...
+    adc.py mem.py rtos.py  ... board.adc, board.mem, board.rtos
+    results.py             CanFrame, PinEdge, SimTimeout (what the calls return)
+    _renode.py             loads Renode into Python once; Monitor commands
   chip/
     stm32f103rct6.resc   chip setup shared by every board
     dma_fix.resc         DMA workaround, included after LoadELF by boards that use DMA
   peripherals/           Python stubs for peripherals Renode's F103 model lacks
     rcc.py               clocks: ready bits follow enable bits
     stub_regs.py         plain register storage (PWR, FLASH interface)
-    adc.py               ADC: instant calibration, conversions read 0x800
+    adc.py               ADC: instant calibration, per-channel values (default 0x800)
     rtc.py               RTC: sync flags always set, counter doesn't tick
     i2c_write_ok.py      I2C master where every write succeeds (STR's write-only display)
   devices/               fake external parts (GPS, IMU, displays ...), none yet
@@ -46,7 +52,7 @@ boards/str.resc
   (e.g. `$elf = @/path/other.elf` before `include`).
 - **Which ELF:** a board can be built into `build/Debug/`, `build/Release/` (CMake presets, VS Code)
   or `build/` itself (`make <board>` and `make <board> release` both write there, so the folder name
-  doesn't say which). `find_elf()` in `__init__.py` reads `CMAKE_BUILD_TYPE` from each folder's
+  doesn't say which). `find_elf()` in `api/board.py` reads `CMAKE_BUILD_TYPE` from each folder's
   `CMakeCache.txt` and picks the newest ELF of the requested type (pytest `--build-type`, default
   Debug). `Board` sets `$elf` before including the board file; the `$elf ?=` default in each `.resc`
   (the Debug preset build) is only for running by hand.
@@ -66,7 +72,7 @@ DMA, but is missing peripherals our firmware uses. Each fix goes in `chip/stm32f
 | FLASH interface (ACR) | `0x40022000` | `stub_regs.py`: plain storage, so the latency HAL writes reads back | Done |
 | PWR | `0x40007000` | `stub_regs.py` | Done |
 | CAN (bxCAN) | `0x40006400` | Borrow `CAN.STMCAN` from the F4 model (same registers), IRQs 19–22; start it awake (it ignores INRQ while SLEEP is set) | Done |
-| ADC1/ADC2 | `0x40012400` / `0x40012800` | `adc.py`: calibration completes instantly, SR reports end-of-conversion, DR reads 0x800 | Done (fixed value for now) |
+| ADC1/ADC2 | `0x40012400` / `0x40012800` | `adc.py`: calibration completes instantly, SR reports end-of-conversion, DR reads the value set for the SQR3 rank-1 channel (default 0x800) | Done (single channel; no scan/DMA) |
 | RTC | `0x40002800` | `rtc.py`: sync flags always set; counter doesn't tick (TEL frame timestamps are constant) | Done (no ticking) |
 | IWDG | `0x40003000` | Stub; later a real countdown that resets the chip | To do |
 | SPI1/SPI2 | | Needed by drd, mdi, mst | To do |
@@ -154,7 +160,7 @@ register the firmware was using. Add the smallest stub that gets past it and run
    I2C/SPI timeouts.
 4. Create `sim/<board>/` for its tests. The folder name must match the `.resc` name.
 
-## The Board API (`__init__.py`)
+## The Board API (`api/`)
 
 Implemented with **pyrenode3**, which loads Renode (a .NET program) *inside* the pytest process via
 pythonnet. Python then holds the same objects a `.resc` uses (machine, CPU, CAN controller, UARTs):
@@ -163,17 +169,19 @@ it calls their methods, reads their properties and subscribes to their events. M
 
 What happens in `Board("tel")`:
 1. `find_elf()` picks the ELF (see "Which ELF" above).
-2. Renode is loaded, once per pytest run (`_load_renode()`). It's found through `PYRENODE_PATH`, or
+2. Renode is loaded, once per pytest run (`_renode.load()`). It's found through `PYRENODE_PATH`, or
    the `renode` on `PATH`.
 3. `Clear` drops the previous test's machine; `logLevel 3` hides Renode's warnings.
 4. `$elf = @<elf>` then `include @boards/tel.resc` builds the machine. Nothing runs yet.
-5. Python subscribes to `can1.FrameSent` and every UART's `CharReceived`, storing each frame/byte with
-   the virtual time, and adds CPU hooks on `osThreadNew` and the RTOS wait functions.
+5. The parts are created (`board.can`, `board.uart`, `board.gpio`, `board.adc`, `board.mem`,
+   `board.rtos`). Each subscribes to its Renode events now, before any firmware runs: `can1.FrameSent`,
+   every UART's `CharReceived`, a state-change hook on every GPIO pin (A–E × 16), CPU hooks on
+   `osThreadNew` and the RTOS wait functions. Every event is stored with its virtual time.
 6. With `gdb=True`: `machine StartGdbServer 3333 false` (`false` = connecting doesn't start the
    emulation), then wait until a debugger is attached.
 
 How time moves: `run_for(ms)` is `emulation RunFor "<seconds>"`, which blocks until that much virtual
-time has passed. `wait_for_*()` call `run_for(10)` repeatedly, checking the captured data after each
+time has passed. The `wait_for()` calls run 10 ms steps repeatedly, checking the captured data after each
 step, until the event shows up or `within_ms` of virtual time has passed (then `SimTimeout`, an
 `AssertionError`, so pytest reports a failed test). The emulation may run up to 10 ms past the event;
 results carry their own timestamps, so timing checks stay exact.
@@ -183,7 +191,7 @@ results carry their own timestamps, so timing checks stay exact.
 then finished at exactly 1000 ms after GDB continued. So a firmware breakpoint pauses the test with
 no extra code.
 
-pythonnet gotchas (all handled in `__init__.py`):
+pythonnet gotchas (all handled in the code):
 - Peripherals come back as interfaces (`IPeripheral`, `IBusController`); cast with
   `interface_to_class` to see their real methods and events.
 - CPU hooks must be wrapped in `CpuAddressHook(...)` and the address in `UInt64(...)`; the hook gets a
@@ -192,9 +200,17 @@ pythonnet gotchas (all handled in `__init__.py`):
   exceptions and stores them; `run_for()` re-raises the first one in the test.
 - `SystemBus` has no `GetSymbolAddress` from Python; use `GetAllSymbolAddresses(name)[0]`.
 - Symbol names at a function's first instruction end in ` (entry)`; `_symbol()` strips it.
+- .NET namespaces (`System`, `Antmicro.*`) can only be imported after pyrenode3 has loaded Renode, so
+  all those imports live inside `_renode.load()`.
+- `gpioPortX.Connections[pin]` comes back as `IGPIO`, which has no hook method: cast it, then
+  `AddStateChangedHook(Action[Boolean](fn))`. Inputs driven with `OnGPIO` show up there too (that's
+  how EXTI hears them), so `get`/`edges` work for inputs as well as outputs.
+- `TryFindSymbolAt(UInt64(addr), None, None, cpu, False)`: the two `out` parameters are passed as
+  `None` and come back in the result tuple `(found, name, symbol)`; `symbol.Length.RawValue` is the
+  variable's size.
 
 Rules the implementation keeps:
-- **Tests control time.** The emulation only runs inside `run_for()` and `wait_for_*()`; otherwise
+- **Tests control time.** The emulation only runs inside `run_for()` and the `wait_for()` calls; otherwise
   it is paused. A Python breakpoint then freezes the firmware, and a firmware breakpoint blocks the
   test.
 - **Timeouts are in virtual time** (`within_ms`), never wall clock.
@@ -202,8 +218,8 @@ Rules the implementation keeps:
 - **`gdb=True`** starts Renode's GDB server on `GDB_PORT` (3333) and waits for a debugger before any
   firmware runs.
 - **One fresh machine per `Board`**, fully released in `close()`.
-- **UART waits consume output**: each `wait_for_uart()` continues after the previous match.
-- **`rtos_task_loops()`** hooks `osThreadNew` (records each task function from R0) and the RTOS wait
+- **UART waits consume output**: each `uart.wait_for()` continues after the previous match.
+- **`rtos.task_loops()`** hooks `osThreadNew` (records each task function from R0) and the RTOS wait
   functions (`osDelay`, `osDelayUntil`, `osMessageQueueGet`, `osSemaphoreAcquire`,
   `osThreadFlagsWait`, `osEventFlagsWait`), counting calls per caller (from LR). Works as long as a
   task's loop calls a wait function directly.
@@ -211,7 +227,10 @@ Rules the implementation keeps:
 Renode calls `Board` uses:
 - CAN TX: `can1.FrameSent += handler` (frame: `Id`, `Data`, `ExtendedFormat`).
 - CAN RX: `can1.OnFrameReceived(CANMessageFrame(id, Array[Byte](data), extended, False, False, False))`.
-- UART: `usartN.CharReceived += handler`.
+- UART TX: `usartN.CharReceived += handler`. UART RX: `usartN.WriteChar(byte)` (no baud timing).
+- GPIO: `gpioPortX.OnGPIO(pin, level)` drives an input; `cast(Connections[pin]).IsSet` reads a pin.
+- ADC: `sysbus.WriteDoubleWord(adc_base + 0x100 + 4 * channel, raw)` writes the stub's backdoor.
+- Variables: `GetAllSymbolAddresses(name)`, `TryFindSymbolAt` for the size, `ReadBytes`/`WriteBytes`.
 - Virtual time: `machine.ElapsedVirtualTime.TimeElapsed.TotalMilliseconds`.
 - GPIO input: `gpioPortX.OnGPIO(pin, level)`.
 - Current function: `sysbus.FindSymbolAt(cpu.PC.RawValue, cpu)`.
@@ -225,3 +244,20 @@ I2C devices); the 9 TEL tests take ~40 s.
 - STM32F103 reference manual: RM0008
 - Original TEL prototype (Robot Framework): `renode_sims/` (outside this repo); its tests are ported
   to `sim/tel/`
+
+### Adding a part (`board.<thing>`)
+
+One file per peripheral in `api/`, a class taking `board`. Use only `board._peripheral`, `_run_until`,
+`_announce`/`_announce_done`, `time_ms`, `_hook_errors`, `_bus`, `_cpu`, `_address_of`, `_add_hook`.
+Subscribe to events in `__init__`; wrap every callback body in `try/except` into
+`board._hook_errors`; validate arguments with a `ValueError` that names the bad value; announce
+every call that changes the board or runs time, so `--sim-trace` shows it. Attach it in
+`Board.__init__` (`api/board.py`) and add the class annotation at the top of `Board` (autocomplete).
+
+### ADC backdoor
+
+`peripherals/adc.py` keeps a value per channel at offset `0x100 + 4 * channel` (channels 0–17), past
+the last real register (0x4C), so the firmware never touches it. A DR read returns the value of the
+channel in SQR3 bits 4:0 (rank 1, what `HAL_ADC_ConfigChannel` sets for a single conversion), or
+0x800 if none was set. Scan mode (several ranks + DMA, HVC) needs the stub to step through SQR1–3
+and a DMA path: not done yet.

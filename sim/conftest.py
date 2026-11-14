@@ -21,13 +21,10 @@ def pytest_addoption(parser):
 def board(request):
     """Fresh emulated board. The test's folder picks which: sim/str/test_x.py -> "str"."""
     name = request.path.parent.name
-    try:
-        b = Board(
-            name,
-            gdb=request.config.getoption("--gdb"),
-            build_type=request.config.getoption("--build-type"),
-        )
-    except NotImplementedError as e:
-        pytest.skip(f"Emulator not ready: {e}")
+    b = Board(
+        name,
+        gdb=request.config.getoption("--gdb"),
+        build_type=request.config.getoption("--build-type"),
+    )
     yield b
     b.close()

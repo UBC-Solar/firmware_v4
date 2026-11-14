@@ -37,6 +37,47 @@ static void PrintBitmap(const uint8_t* bitmap)
     printf("};\n\n");
 }
 
+static void SaveBitmap(const uint8_t* bitmap)
+{
+    FILE* file = fopen("lcd_bitmap_export.h", "w");
+
+    if (!file)
+    {
+        printf("Failed to save bitmap\n");
+        return;
+    }
+
+    fprintf(file, "#ifndef LCD_BITMAP_EXPORT_H\n");
+    fprintf(file, "#define LCD_BITMAP_EXPORT_H\n\n");
+    fprintf(file, "#include<stdint.h>\n\n");
+
+    fprintf(file, "#define LCD_BITMAP_EXPORT_WIDTH %d\n", EDITOR_WIDTH);
+    fprintf(file, "#define LCD_BITMAP_EXPORT_HEIGHT %d\n\n", EDITOR_HEIGHT);
+    fprintf(file, "static const uint8_t lcd_bitmap_export[%d] = \n{\n,", EDITOR_BITMAP_SIZE);
+
+    for (uint16_t i = 0; i < EDITOR_BITMAP_SIZE; i++)
+    {
+        fprintf(file, "0x%02X", bitmap[i]);
+
+        if (i < EDITOR_BITMAP_SIZE - 1)
+        {
+            fprintf(file, ", ");
+        }
+
+        if ((i + 1) % 16 == 0)
+        {
+            fprintf(file, "\n");
+        }
+    }
+
+    fprintf(file, "};\n\n");
+    fprintf(file, "#endif\n");
+
+    fclose(file);
+
+    printf("Saved bitmap to lcd_bitmap_export.h\n");
+}
+
 int main(void)
 {
     if (LcdSimDisplayInit() != 0)
@@ -108,6 +149,12 @@ int main(void)
             {
                 LcdBitmapEncode(&pixels[0][0], EDITOR_WIDTH, EDITOR_HEIGHT, bitmap);
                 PrintBitmap(bitmap);
+            }
+
+            if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_s)
+            {
+                LcdBitmapEncode(&pixels[0][0], EDITOR_WIDTH, EDITOR_HEIGHT, bitmap);
+                SaveBitmap(bitmap);
             }
         }
 

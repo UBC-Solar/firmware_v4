@@ -15,6 +15,7 @@ subscribe to their events. Monitor commands (`include`, `emulation RunFor`, ...)
 pyrenode3's Monitor.
 """
 
+import inspect
 import os
 import re
 import shutil
@@ -26,6 +27,8 @@ from pathlib import Path
 BOARDS_DIR = Path(__file__).parent / "boards"
 COMPONENTS_DIR = Path(__file__).resolve().parents[2] / "firmware" / "components"
 GDB_PORT = 3333
+SIM_DIR = Path(__file__).resolve().parents[1]
+GDB_ELF_LINK = SIM_DIR / ".gdb-target.elf"  # see _wait_for_gdb()
 STEP_MS = 10  # wait_for_*() runs the emulation in steps this long while checking for the event
 UARTS = ("usart1", "usart2", "usart3", "usart4", "usart5")  # names in Renode's stm32f103.repl
 RTOS_WAIT_FUNCTIONS = (
@@ -137,14 +140,20 @@ def _monitor(command: str) -> str:
 class Board:
     """One emulated board, freshly booted. `name` matches a file in boards/, e.g. "str"."""
 
-    def __init__(self, name: str, gdb: bool = False, build_type: str = "Debug"):
+    def __init__(self, name: str, gdb: bool = False, build_type: str = "Debug", trace: bool = False,
+                 say=None):
         """Load boards/<name>.resc with the right ELF. The emulation is not running yet.
 
         gdb=True: start Renode's GDB server on GDB_PORT and wait for a debugger to connect before
         any firmware runs, so boot can be debugged too.
         build_type: which firmware build to run ("Debug" or "Release"), see find_elf().
+        trace=True (always on with gdb): print each test step to the terminal, see _announce().
+        say: function that prints a line to the terminal. The pytest fixture passes one that gets
+        past pytest's output capture; the default prints to stderr.
         """
         self.name = name
+        self._trace = trace or gdb
+        self._say = say or (lambda line: print(line, file=sys.stderr, flush=True))
         self.resc = BOARDS_DIR / f"{name}.resc"
         if not self.resc.exists():
             raise FileNotFoundError(f"No emulator setup for board '{name}': {self.resc}")
@@ -188,6 +197,10 @@ class Board:
 
     def run_for(self, ms: float):
         """Run exactly `ms` of firmware (virtual) time, then pause."""
+        self._announce(f"run_for {ms} ms")
+        self._step(ms)
+
+    def _step(self, ms: float):
         # Blocks until the virtual time has passed. If GDB holds the CPU at a breakpoint, virtual
         # time stops too, so this simply waits until the debugger continues.
         _monitor(f'emulation RunFor "{ms / 1000:.6f}"')
@@ -212,7 +225,7 @@ class Board:
             remaining = deadline - self.time_ms
             if remaining <= 0:
                 raise SimTimeout(f"{what} not seen within {within_ms} ms (now at {self.time_ms:.1f} ms)")
-            self.run_for(min(STEP_MS, remaining))
+            self._step(min(STEP_MS, remaining))
 
     # ---- CAN -----------------------------------------------------------------------------
 
@@ -235,6 +248,7 @@ class Board:
 
     def send_can(self, can_id: int, data: bytes, extended: bool = False):
         """Deliver a frame to the board's CAN controller, as if another board sent it."""
+        self._announce(f"send_can 0x{can_id:X} [{bytes(data).hex(' ')}]")
         r = _renode
         frame = r.CANMessageFrame(can_id, r.Array[r.Byte](bytes(data)), extended, False, False, False)
         self._can.OnFrameReceived(frame)
@@ -255,7 +269,10 @@ class Board:
             return None
 
         self._can_seen = max(self._can_seen, len(self._can_frames))  # only new frames count
-        return self._run_until(find, within_ms, f"CAN 0x{can_id:X}")
+        self._announce(f"wait_for_can 0x{can_id:X} (up to {within_ms} ms)")
+        frame = self._run_until(find, within_ms, f"CAN 0x{can_id:X}")
+        self._announce_done(frame.time_ms)
+        return frame
 
     # ---- UART ----------------------------------------------------------------------------
 
@@ -303,7 +320,10 @@ class Board:
             self._uart_pos[uart] = end
             return self._uart_times[uart][end - 1]
 
-        return self._run_until(find, within_ms, f"{data.hex(' ')} on {uart}")
+        self._announce(f"wait_for_uart {uart} [{data.hex(' ')}] (up to {within_ms} ms)")
+        found_at = self._run_until(find, within_ms, f"{data.hex(' ')} on {uart}")
+        self._announce_done(found_at)
+        return found_at
 
     # ---- RTOS ----------------------------------------------------------------------------
 
@@ -366,6 +386,7 @@ class Board:
 
     def set_pin(self, port: str, pin: int, high: bool):
         """Drive an input pin from outside, e.g. set_pin("A", 2, False) for STR's NEXT_PAGE."""
+        self._announce(f"set_pin P{port.upper()}{pin} {'high' if high else 'low'}")
         gpio = self._peripheral(f"gpioPort{port.upper()}")
         if gpio is None:
             raise ValueError(f"No GPIO port {port}")
@@ -380,17 +401,53 @@ class Board:
     # ---- debugging -----------------------------------------------------------------------
 
     def _wait_for_gdb(self):
+        # Point sim/.gdb-target.elf at the ELF this test runs, so one VS Code debug config fits every
+        # board and build type. Written before the server starts: once port 3333 is open (what the
+        # VS Code pre-launch task waits for) the link is already right.
+        GDB_ELF_LINK.unlink(missing_ok=True)
+        GDB_ELF_LINK.symlink_to(self.elf)
         # `false`: don't start the emulation when GDB connects; tests still control time.
-        _monitor(f"machine StartGdbServer {GDB_PORT} false")
-        # sys.__stderr__ bypasses pytest's output capture, so this shows even without -s
-        print(f"\n[sim] {self.name}: waiting for GDB on localhost:{GDB_PORT} ({self.elf})",
-              file=sys.__stderr__, flush=True)
+        try:
+            _monitor(f"machine StartGdbServer {GDB_PORT} false")
+        except RuntimeError as e:
+            if "AddressAlreadyInUse" in str(e):
+                raise RuntimeError(
+                    f"Port {GDB_PORT} is already in use: another `pytest --gdb` run or VS Code SIL "
+                    "debug session is still open. Stop it (or find it: ss -ltnp | grep 3333)."
+                ) from None
+            raise
+        self._say(f"\n[sim] {self.name}: waiting for GDB on localhost:{GDB_PORT} ({self.elf})")
         while "True" not in _monitor(f"machine IsGdbConnectedToServer {GDB_PORT}"):
             time.sleep(0.2)  # waiting for a person to attach a debugger: real time is correct here
-        print(f"[sim] {self.name}: GDB connected", file=sys.__stderr__, flush=True)
+        self._say(f"[sim] {self.name}: GDB connected")
+
+    # ---- tracing: which test line is running ----------------------------------------------
+    #
+    # While the firmware sits at a GDB breakpoint, the test is blocked inside a Renode call and the
+    # Python debugger can't show where. So each test step is printed *before* it runs: the last
+    # [sim] line in the terminal is the step that's running when a C breakpoint hits.
+
+    def _announce(self, action: str):
+        if not self._trace:
+            return
+        self._say(f"[sim {self.time_ms:9.1f} ms] {_test_location()}\n{'':18}-> {action}")
+
+    def _announce_done(self, at_ms: float):
+        if self._trace:
+            self._say(f"{'':18}   found at {at_ms:.1f} ms")
 
     def _raise_hook_errors(self):
         if self._hook_errors:
             error = self._hook_errors[0]
             self._hook_errors.clear()
             raise RuntimeError(f"Error inside a Renode callback: {error!r}") from error
+
+
+def _test_location() -> str:
+    """'tel/test_boot.py:10  <source line>' of the innermost frame in a sim/<board>/test_*.py file."""
+    for frame in inspect.stack(context=1)[1:]:
+        path = Path(frame.filename)
+        if path.name.startswith("test_") and path.parent.parent == SIM_DIR:
+            source = frame.code_context[0].strip() if frame.code_context else ""
+            return f"{path.parent.name}/{path.name}:{frame.lineno}  {source}"
+    return "(not called from a test file)"

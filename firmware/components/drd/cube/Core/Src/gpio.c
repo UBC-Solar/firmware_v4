@@ -86,7 +86,7 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pin : BRK_IN_Pin */
   GPIO_InitStruct.Pin = BRK_IN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(BRK_IN_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : DRIVE_STATE_NEXT_Pin DRIVE_STATE_PREV_Pin */

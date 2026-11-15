@@ -181,14 +181,8 @@ How it fits together:
 Verified: virtual time stops while GDB holds the CPU at a breakpoint, so the test really does wait
 and the firmware's timers don't run on behind your back.
 
-## Run a board's sim by hand
+## Run a board without tests
 
-```bash
-make tel                         # or build with the CMake Debug preset; the default below is build/Debug
-renode sim/_emulator/boards/tel.resc
-# then in the Renode Monitor:
-showAnalyzer usart2              # TEL telemetry UART (usart4 if CAR_CONFIG_CELLULAR is 0)
-start
-pause
-sysbus FindSymbolAt `cpu PC`     # where is the CPU?
-```
+VS Code **"Renode: debug board"** (F5) runs the active CMake target (the board you'd flash) in
+Renode, attaches the debugger and stops at `main`. The Renode Monitor is in the terminal (`pause`,
+``sysbus FindSymbolAt `cpu PC` ``, `showAnalyzer usart2`). Renode quits when you stop debugging.

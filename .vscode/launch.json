@@ -85,6 +85,20 @@
       "runToEntryPoint": "main",
       "preLaunchTask": "SIL: wait for Renode GDB server",
       "presentation": { "hidden": true }
+    },
+    {
+      "name": "Renode: debug board",
+      "type": "cortex-debug",
+      "request": "launch",
+      "servertype": "external",
+      "gdbTarget": "localhost:3333",
+      "cwd": "${workspaceFolder}",
+      "executable": "${command:cmake.launchTargetPath}",
+      "overrideLaunchCommands": [],
+      "runToEntryPoint": "main",
+      "preLaunchTask": "Renode: start board",
+      "postDebugTask": "Renode: stop",
+      "presentation": { "group": "SIL", "order": 2 }
     }
   ],
   "compounds": [

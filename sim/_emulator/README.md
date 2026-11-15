@@ -93,6 +93,7 @@ Renode bugs worked around (found while building the TEL sim):
 |---|---|
 | TEL | Boots into FreeRTOS, sends telemetry frames (~every 100 ms on the telemetry UART) and CAN 0x750/0x751/0x763/0x764. No GPS/IMU devices, so `gps_read_fail` gets set after ~0.5 s. |
 | STR | Boots into FreeRTOS; every task loops; sends CAN 0x580 (every 100 ms), 0x581, 0x583, 0x591, 0x592. I2C1 is replaced by `i2c_write_ok.py` (see below). |
+| HVC | Bare-metal FSM runs: CAN every 200 ms (0x320–0x329), heartbeat 0x322 every 1 s; reacts to CAN (TEL heartbeat → MST handshake; none → FAULT after 3 s). I2C1 is `i2c_write_ok.py` (no INA237 model: shunt current 0x320 is garbage). ADC scan+DMA never completes, so every analog value (supp voltage, LV current, DCDC temp, precharge) is computed from zeros. |
 
 **Renode's STM32F1 I2C doesn't complete a polled HAL write.** With no device at the address, it's
 never acked; with `Mocks.DummyI2CSlave` there, BTF never gets set. Either way

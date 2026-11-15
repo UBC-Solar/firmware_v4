@@ -4,6 +4,7 @@
 #include "lcd_sim_display.h"
 
 #include <SDL.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -53,11 +54,11 @@ static void SaveBitmap(const uint8_t* bitmap)
 
     fprintf(file, "#ifndef LCD_BITMAP_EXPORT_H\n");
     fprintf(file, "#define LCD_BITMAP_EXPORT_H\n\n");
-    fprintf(file, "#include<stdint.h>\n\n");
+    fprintf(file, "#include <stdint.h>\n\n");
 
     fprintf(file, "#define LCD_BITMAP_EXPORT_WIDTH %d\n", EDITOR_WIDTH);
     fprintf(file, "#define LCD_BITMAP_EXPORT_HEIGHT %d\n\n", EDITOR_HEIGHT);
-    fprintf(file, "static const uint8_t lcd_bitmap_export[%d] = \n{\n", EDITOR_BITMAP_SIZE);
+    fprintf(file, "static const uint8_t lcd_bitmap_export[%d] =\n{\n", EDITOR_BITMAP_SIZE);
 
     for (uint16_t i = 0; i < EDITOR_BITMAP_SIZE; i++)
     {
@@ -82,6 +83,109 @@ static void SaveBitmap(const uint8_t* bitmap)
     printf("Saved bitmap to lcd_bitmap_export.h\n");
 }
 
+static void SyncEditorFromDisplay(uint8_t pixels[EDITOR_HEIGHT][EDITOR_WIDTH], uint8_t* bitmap)
+{
+    for (uint8_t y = 0; y < EDITOR_HEIGHT; y++)
+    {
+        for (uint8_t x = 0; x < EDITOR_WIDTH; x++)
+        {
+            pixels[y][x] = LcdDriverGetPixel(x, y);
+        }
+    }
+
+    LcdBitmapEncode(&pixels[0][0], EDITOR_WIDTH, EDITOR_HEIGHT, bitmap);
+}
+
+static void LoadDrivePage(void)
+{
+    uint32_t speed = 42;
+    uint32_t soc = 75;
+    uint8_t drive_mode = LCD_APP_DRIVE_MODE_ECO;
+    DriveStateStates drive_state = FORWARD;
+
+    LcdAppBattFaults batt_faults = {0};
+    LcdAppMotorFaults motor_faults = {0};
+    LcdAppWarnings warnings = {0};
+
+    LcdDriverChangeScreen();
+
+    LcdAppDisplaySpeedDrivePage(&speed, LCD_APP_KPH);
+    LcdAppDisplaySocDrivePage(&soc);
+    LcdAppDisplayDriveModeDrivePage(drive_mode);
+    LcdAppDisplayDriveStateDrivePage(&drive_state);
+    LcdAppDisplayFaultIndicator(&batt_faults, &motor_faults);
+    LcdAppDisplayWarningIndicator(&warnings);
+
+    printf("Loaded Drive page\n");
+}
+
+static void LoadFaultsPage(void)
+{
+    LcdAppBattFaults batt_faults = {0};
+    LcdAppMotorFaults motor_faults = {0};
+
+    batt_faults.battery_fault = true;
+    batt_faults.voltage_high = true;
+    batt_faults.overtemp_fault = true;
+
+    LcdDriverChangeScreen();
+    LcdAppDisplayFaults(&batt_faults, &motor_faults);
+
+    printf("Loaded Faults page\n");
+}
+
+static void LoadWarningsPage(void)
+{
+    LcdAppWarnings warnings = {0};
+
+    warnings.low_volt_warning = true;
+    warnings.high_temp_warning = true;
+    warnings.no_ecu_message = true;
+
+    LcdDriverChangeScreen();
+    LcdAppDisplayWarnings(&warnings);
+
+    printf("Loaded Warnings page\n");
+}
+
+static void LoadTemperaturePage(void)
+{
+    uint8_t temperatures[8] = {25, 30, 35, 40, 45, 50, 55, 60};
+
+    LcdDriverChangeScreen();
+
+    for (uint8_t i = 0; i < 8; i++)
+    {
+        LcdAppTemperature temperature_data =
+        {
+            .temperature = &temperatures[i],
+            .temp_label = i
+        };
+
+        LcdAppDisplayTemperature(temperature_data);
+    }
+
+    printf("Loaded Temperature page\n");
+}
+
+static void LoadDebugPage(void)
+{
+    uint32_t speed = 42;
+    uint32_t soc = 75;
+    DriveStateStates drive_state = FORWARD;
+    int16_t pack_current = 50;
+    uint16_t pack_voltage = 48;
+
+    LcdDriverChangeScreen();
+
+    LcdAppDisplaySpeedDebugPage(&speed, LCD_APP_KPH);
+    LcdAppDisplaySocDebugPage(&soc);
+    LcdAppDisplayDriveStateDebugPage(&drive_state);
+    LcdAppDisplayPowerBar(&pack_current, &pack_voltage);
+
+    printf("Loaded Debug page\n");
+}
+
 int main(void)
 {
     if (LcdSimDisplayInit() != 0)
@@ -92,42 +196,28 @@ int main(void)
     uint8_t pixels[EDITOR_HEIGHT][EDITOR_WIDTH] = {0};
     uint8_t bitmap[EDITOR_BITMAP_SIZE];
 
-    LcdDriverChangeScreen();
-
 #ifdef LOAD_EXPORTED_BITMAP
 
+    LcdDriverChangeScreen();
     LcdDriverDrawBitmap(0, 0, LCD_BITMAP_EXPORT_WIDTH, LCD_BITMAP_EXPORT_HEIGHT, lcd_bitmap_export);
     LcdDriverRefresh();
 
 #else
 
-    uint32_t speed = 42;
-    uint32_t soc = 75;
-    uint8_t drive_mode = LCD_APP_DRIVE_MODE_ECO;
-    DriveStateStates drive_state = FORWARD;
-
-    LcdAppBattFaults batt_faults = {0};
-    LcdAppMotorFaults motor_faults = {0};
-    LcdAppWarnings warnings = {0};
-
-    LcdAppDisplaySpeedDrivePage(&speed, LCD_APP_KPH);
-    LcdAppDisplaySocDrivePage(&soc);
-    LcdAppDisplayDriveModeDrivePage(drive_mode);
-    LcdAppDisplayDriveStateDrivePage(&drive_state);
-    LcdAppDisplayFaultIndicator(&batt_faults, &motor_faults);
-    LcdAppDisplayWarningIndicator(&warnings);
+    LoadDrivePage();
 
 #endif
 
-    for (uint8_t y = 0; y < EDITOR_HEIGHT; y++)
-    {
-        for (uint8_t x = 0; x < EDITOR_WIDTH; x++)
-        {
-            pixels[y][x] = LcdDriverGetPixel(x, y);
-        }
-    }
+    SyncEditorFromDisplay(pixels, bitmap);
 
-    LcdBitmapEncode(&pixels[0][0], EDITOR_WIDTH, EDITOR_HEIGHT, bitmap);
+    printf("Controls:\n");
+    printf("1 = Drive\n");
+    printf("2 = Faults\n");
+    printf("3 = Warnings\n");
+    printf("4 = Temperature\n");
+    printf("5 = Debug\n");
+    printf("E = Print bitmap\n");
+    printf("S = Save bitmap\n");
 
     SDL_Event event;
     int running = 1;
@@ -158,16 +248,48 @@ int main(void)
                 }
             }
 
-            if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_e)
+            if (event.type == SDL_KEYDOWN)
             {
-                LcdBitmapEncode(&pixels[0][0], EDITOR_WIDTH, EDITOR_HEIGHT, bitmap);
-                PrintBitmap(bitmap);
-            }
+                switch (event.key.keysym.sym)
+                {
+                case SDLK_1:
+                    LoadDrivePage();
+                    SyncEditorFromDisplay(pixels, bitmap);
+                    break;
 
-            if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_s)
-            {
-                LcdBitmapEncode(&pixels[0][0], EDITOR_WIDTH, EDITOR_HEIGHT, bitmap);
-                SaveBitmap(bitmap);
+                case SDLK_2:
+                    LoadFaultsPage();
+                    SyncEditorFromDisplay(pixels, bitmap);
+                    break;
+
+                case SDLK_3:
+                    LoadWarningsPage();
+                    SyncEditorFromDisplay(pixels, bitmap);
+                    break;
+
+                case SDLK_4:
+                    LoadTemperaturePage();
+                    SyncEditorFromDisplay(pixels, bitmap);
+                    break;
+
+                case SDLK_5:
+                    LoadDebugPage();
+                    SyncEditorFromDisplay(pixels, bitmap);
+                    break;
+
+                case SDLK_e:
+                    LcdBitmapEncode(&pixels[0][0], EDITOR_WIDTH, EDITOR_HEIGHT, bitmap);
+                    PrintBitmap(bitmap);
+                    break;
+
+                case SDLK_s:
+                    LcdBitmapEncode(&pixels[0][0], EDITOR_WIDTH, EDITOR_HEIGHT, bitmap);
+                    SaveBitmap(bitmap);
+                    break;
+
+                default:
+                    break;
+                }
             }
         }
 

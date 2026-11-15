@@ -185,7 +185,7 @@ void DEBUG_Output_ChargerStatus(const volatile uint8_t *status) {
                (d[4] >> 4) & 0x1U, (d[4] >> 5) & 0x1U, (d[4] >> 6) & 0x1U, (d[4] >> 7) & 0x1U);
     PRINT_CHRG("  comm timeout %u, working status %u, init complete %u, temp %d degC",
                (d[5] >> 0) & 0x1U, (d[5] >> 1) & 0x3U, (d[5] >> 3) & 0x1U, (int)d[7] - 40);
-    // Cached value, refreshed every CAN_TX_INTERVAL_MS by SendShuntCurrent() (no I2C here)
+    // Cached value, refreshed every SHUNT_CURRENT_TX_INTERVAL_MS by SendShuntCurrent() (no I2C)
     PRINT_CHRG("  HVC shunt current: %ld mA", (long)SHUNT_GetShuntCurrent_mA());
 #else
     (void)status;
@@ -545,7 +545,7 @@ static bool PrintNextDumpSection(void) {
             PRINT_DUMP("timers (ms since each one last started): state_timeout %lu, "
                        "state_delay %lu, lv_powerup_retry %lu, fault_led %lu, "
                        "tel_heartbeat %lu, dist_heartbeat %lu, mst_heartbeat %lu, can_tx %lu, "
-                       "hvc_heartbeat %lu",
+                       "shunt_current_tx %lu, hvc_heartbeat %lu",
                        (unsigned long)(now_ms - g_ticks.state_timeout),
                        (unsigned long)(now_ms - g_ticks.state_delay),
                        (unsigned long)(now_ms - g_ticks.lv_powerup_retry),
@@ -554,6 +554,7 @@ static bool PrintNextDumpSection(void) {
                        (unsigned long)(now_ms - g_ticks.dist_heartbeat),
                        (unsigned long)(now_ms - g_ticks.mst_heartbeat),
                        (unsigned long)(now_ms - g_ticks.can_tx),
+                       (unsigned long)(now_ms - g_ticks.shunt_current_tx),
                        (unsigned long)(now_ms - g_ticks.hvc_heartbeat));
             break;
         case DUMP_SHUNT:

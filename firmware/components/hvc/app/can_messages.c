@@ -48,10 +48,11 @@ static void SendMpptPrecharge(void);
  * @brief Sends every periodic HVC CAN message whose interval has elapsed.
  *
  * Heartbeat and commit hash every HVC_HEARTBEAT_INTERVAL_MS.
- * State, faults, and measurements every CAN_TX_INTERVAL_MS.
+ * Shunt current every SHUNT_CURRENT_TX_INTERVAL_MS.
+ * State, faults, and other measurements every CAN_TX_INTERVAL_MS.
  * Call from FSM_Run() every pass.
  *
- * Side effects: updates g_ticks.hvc_heartbeat and g_ticks.can_tx.
+ * Side effects: updates g_ticks.hvc_heartbeat, g_ticks.shunt_current_tx, and g_ticks.can_tx.
  */
 void CAN_Messages_SendAll(void) {
     if (FSM_TimerElapsed(HVC_HEARTBEAT_INTERVAL_MS, &g_ticks.hvc_heartbeat)) {
@@ -59,10 +60,13 @@ void CAN_Messages_SendAll(void) {
         SendCommitHash();
     }
 
+    if (FSM_TimerElapsed(SHUNT_CURRENT_TX_INTERVAL_MS, &g_ticks.shunt_current_tx)) {
+        SendShuntCurrent();
+    }
+
     if (FSM_TimerElapsed(CAN_TX_INTERVAL_MS, &g_ticks.can_tx)) {
         SendState();
         SendFaults();
-        SendShuntCurrent();
         SendLvCurrent();
         SendSuppVoltage();
         SendDcdcTemp();

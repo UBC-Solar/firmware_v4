@@ -141,6 +141,7 @@ typedef struct {
 
     // Periodic tasks. Run every pass, in any state.
     uint32_t can_tx;           // Periodic CAN transmit
+    uint32_t shunt_current_tx; // Shunt current read and transmit
     uint32_t hvc_heartbeat;    // HVC heartbeat and commit hash transmit
     uint32_t report;           // Debug output reports ([MEAS], [PINS], [HB])
     uint32_t dump;             // Periodic debug output dump

@@ -139,6 +139,7 @@
 // Message IDs are in can_messages.h.
 
 #define CAN_TX_INTERVAL_MS              200U // State, faults, measurements, precharge
+#define SHUNT_CURRENT_TX_INTERVAL_MS    10U  // HV shunt current read + send (100 Hz)
 #define LV_POWERUP_RETRY_MS             500U // LV power-up request resend interval
 
 // ==== Heartbeats ====

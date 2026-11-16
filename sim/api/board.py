@@ -290,10 +290,10 @@ class Board:
 
 
 def _test_location() -> str:
-    """'tel/test_boot.py:10  <source line>' of the innermost frame in a sim/<board>/test_*.py file."""
+    """'tel/test_boot.py:10  <source line>' of the innermost frame in a sim/tests/<board>/test_*.py file."""
     for frame in inspect.stack(context=1)[1:]:
         path = Path(frame.filename)
-        if path.name.startswith("test_") and path.parent.parent == SIM_DIR:
+        if path.name.startswith("test_") and path.parent.parent == SIM_DIR / "tests":
             source = frame.code_context[0].strip() if frame.code_context else ""
             return f"{path.parent.name}/{path.name}:{frame.lineno}  {source}"
     return "(not called from a test file)"

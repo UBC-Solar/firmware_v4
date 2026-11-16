@@ -18,10 +18,13 @@ emulation/
     stub_regs.py         plain register storage (PWR, FLASH interface)
     adc.py               ADC: instant calibration, per-channel values (default 0x800)
     rtc.py               RTC: sync flags always set, counter doesn't tick
-    i2c_write_ok.py      I2C master where every write succeeds (STR's write-only display)
-  devices/               fake external parts (GPS, IMU, displays ...), none yet
+    i2c_write_ok.py      I2C master where every write succeeds (STR/HVC/MDI write-only devices)
+    spi_no_device.py     SPI master with nothing on the bus (SPI1-3 on every board)
+  devices/               fake external parts
+    adbms1818.py         MST's 2x ADBMS1818 chain on SPI2 (cells 3.6 V, thermistors 25 degC)
   boards/
-    str.resc  tel.resc   one file per board: create machine + chip + ELF + devices
+    <board>.resc         one file per board: create machine + chip + ELF + devices
+                         (str tel hvc drd mdi mst dist)
 ```
 
 ## How a board is built
@@ -70,8 +73,8 @@ DMA, but is missing peripherals our firmware uses. Each fix goes in `chip/stm32f
 | ADC1/ADC2 | `0x40012400` / `0x40012800` | `adc.py`: calibration completes instantly, SR reports end-of-conversion, DR reads the value set for the SQR3 rank-1 channel (default 0x800) | Done (single channel; no scan/DMA) |
 | RTC | `0x40002800` | `rtc.py`: sync flags always set; counter doesn't tick (TEL frame timestamps are constant) | Done (no ticking) |
 | IWDG | `0x40003000` | Stub; later a real countdown that resets the chip | To do |
-| SPI1/SPI2 | | Needed by drd, mdi, mst | To do |
-| CRC | | Needed by mst | To do |
+| SPI1/SPI2/SPI3 | `0x40013000` / `0x40003800` / `0x40003C00` | `spi_no_device.py`: every byte sent instantly (TXE always set, RXNE until DR is read), MISO reads 0xFF. Boards with a real SPI device replace it (MST: `devices/adbms1818.py`) | Done |
+| CRC | | MST inits it but never uses it: unmapped, writes ignored | Not needed |
 | Memory sizes | | Renode maps 256 MB flash/RAM; real chip is 256 KB / 48 KB, so overflows don't fault | To do |
 
 Renode bugs worked around (found while building the TEL sim):
@@ -89,6 +92,10 @@ Renode bugs worked around (found while building the TEL sim):
 | TEL | Boots into FreeRTOS, sends telemetry frames (~every 100 ms on the telemetry UART) and CAN 0x750/0x751/0x763/0x764. No GPS/IMU devices, so `gps_read_fail` gets set after ~0.5 s. |
 | STR | Boots into FreeRTOS; every task loops; sends CAN 0x580 (every 100 ms), 0x581, 0x583, 0x591, 0x592. I2C1 is replaced by `i2c_write_ok.py` (see below). |
 | HVC | Bare-metal FSM runs: CAN every 200 ms (0x320–0x329), heartbeat 0x322 every 1 s; reacts to CAN (TEL heartbeat → MST handshake; none → FAULT after 3 s). I2C1 is `i2c_write_ok.py` (no INA237 model: shunt current 0x320 is garbage). ADC scan+DMA never completes, so every analog value (supp voltage, LV current, DCDC temp, precharge) is computed from zeros. |
+| DRD | Boots into FreeRTOS; sends 0x401 (every 25 ms), 0x403 (every 100 ms), 0x402/0x404/0x405 and the motor request 0x08F89540. LCD on SPI1 writes into `spi_no_device.py`. `defaultTask` isn't created (heap exhausted, same as TEL). |
+| MDI | Bare-metal loop runs: 0x500/0x501/0x502/0x504 every 1 s. Both DAC7571s (I2C1, I2C2) are `i2c_write_ok.py`; the RTD (SPI1) reads 0xFF, so motor temperature is garbage. |
+| MST | Holds FAULT for 2 s, then the main loop runs (~180 ms): 0x200-0x203, 0x210/0x220/0x230 module data. SPI2 is `devices/adbms1818.py`, so every module reads 3600 mV and 25 degC and no isoSPI errors occur. Its UART log (USART1 DMA) isn't captured yet. |
+| DIST | Bare-metal FSM runs in STARTUP (waits for CAN 0x303): heartbeat 0x3A0 every 500 ms, 0x3A2, 0x3A4/0x3A5. LED driver (I2C1) and ADC use the chip defaults. |
 
 **Renode's STM32F1 I2C doesn't complete a polled HAL write.** With no device at the address, it's
 never acked; with `Mocks.DummyI2CSlave` there, BTF never gets set. Either way

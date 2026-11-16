@@ -1,0 +1,15 @@
+# Motor drive interface (MDI) on a virtual STM32F103RCT6
+
+mach create "mdi"
+include $ORIGIN/../chip/stm32f103rct6.resc
+
+# The two DAC7571s (throttle / regen, I2C1 and I2C2) are write-only, but Renode's STM32F1 I2C never
+# finishes a HAL write (see emulation/README.md): every write succeeds instead.
+sysbus Unregister sysbus.i2c1
+machine PyDevFromFile $ORIGIN/../peripherals/i2c_write_ok.py 0x40005400 0x400 True "i2c1"
+sysbus Unregister sysbus.i2c2
+machine PyDevFromFile $ORIGIN/../peripherals/i2c_write_ok.py 0x40005800 0x400 True "i2c2"
+# SPI1 (RTD temperature sensor) has nothing on it: reads 0xFF
+
+$elf ?= $ORIGIN/../../../firmware/components/mdi/build/Debug/mdi.elf
+sysbus LoadELF $elf

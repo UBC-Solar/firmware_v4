@@ -30,3 +30,9 @@ machine PyDevFromFile $ORIGIN/../peripherals/adc.py 0x40012800 0x400 True "adc2"
 
 # No RTC in the F103 model: registers stick, sync flags always set, counter doesn't tick
 machine PyDevFromFile $ORIGIN/../peripherals/rtc.py 0x40002800 0x400 True "rtc"
+
+# No SPI in the F103 model: transfers finish instantly with nothing on the bus (MISO reads 0xFF).
+# A board with a real SPI device replaces one (sysbus Unregister sysbus.spiN, then its own model).
+machine PyDevFromFile $ORIGIN/../peripherals/spi_no_device.py 0x40013000 0x400 True "spi1"
+machine PyDevFromFile $ORIGIN/../peripherals/spi_no_device.py 0x40003800 0x400 True "spi2"
+machine PyDevFromFile $ORIGIN/../peripherals/spi_no_device.py 0x40003C00 0x400 True "spi3"

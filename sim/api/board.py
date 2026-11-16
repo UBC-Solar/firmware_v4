@@ -27,6 +27,8 @@ pyrenode3's Monitor.
 
 import inspect
 import re
+import socket
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -45,7 +47,9 @@ __all__ = ["Board", "CanFrame", "PinEdge", "SimTimeout", "find_elf"]
 SIM_DIR = Path(__file__).resolve().parents[1]  # sim/
 BOARDS_DIR = SIM_DIR / "emulation" / "boards"
 COMPONENTS_DIR = SIM_DIR.parent / "firmware" / "components"
-GDB_PORT = 3333
+GDB_PORT = 3333  # debuggers connect here, to gdb_relay.py, so cortex-debug's Live Watch works
+RENODE_GDB_PORT = 3334  # Renode's own GDB server, behind the relay
+GDB_RELAY = SIM_DIR / "emulation" / "gdb_relay.py"
 GDB_ELF_LINK = SIM_DIR / ".out" / "gdb-target.elf"  # see _wait_for_gdb()
 STEP_MS = 10  # wait_for() calls run the emulation in steps this long while checking for the event
 
@@ -92,8 +96,8 @@ class Board:
                  say=None):
         """Load boards/<name>.resc with the right ELF. The emulation is not running yet.
 
-        gdb=True: start Renode's GDB server on GDB_PORT and wait for a debugger to connect before
-        any firmware runs, so boot can be debugged too.
+        gdb=True: start Renode's GDB server (behind gdb_relay.py on GDB_PORT) and wait for a
+        debugger to connect before any firmware runs, so boot can be debugged too.
         build_type: which firmware build to run ("Debug" or "Release"), see find_elf().
         trace=True (always on with gdb): print each test step to the terminal, see _announce().
         say: function that prints a line to the terminal. The pytest fixture passes one that gets
@@ -130,6 +134,7 @@ class Board:
         self.mem = Mem(self)
         self.rtos = Rtos(self)
 
+        self._relay = None
         if gdb:
             self._wait_for_gdb()
 
@@ -143,6 +148,10 @@ class Board:
 
     def close(self):
         """Remove the machine. The next Board starts from a clean emulation."""
+        if self._relay is not None:
+            self._relay.terminate()
+            self._relay.wait(timeout=5)
+            self._relay = None
         renode.run("Clear")
 
     # ---- time ----------------------------------------------------------------------------
@@ -222,18 +231,34 @@ class Board:
         GDB_ELF_LINK.parent.mkdir(exist_ok=True)
         GDB_ELF_LINK.unlink(missing_ok=True)
         GDB_ELF_LINK.symlink_to(self.elf)
+        in_use = RuntimeError(
+            f"Port {GDB_PORT} or {RENODE_GDB_PORT} is already in use: another `pytest --gdb` run or "
+            "VS Code Renode/SIL debug session is still open. Stop it (or find it: ss -ltnp | grep 333)."
+        )
         # `false`: don't start the emulation when GDB connects; tests still control time.
         try:
-            renode.run(f"machine StartGdbServer {GDB_PORT} false")
+            renode.run(f"machine StartGdbServer {RENODE_GDB_PORT} false")
         except RuntimeError as e:
             if "AddressAlreadyInUse" in str(e):
-                raise RuntimeError(
-                    f"Port {GDB_PORT} is already in use: another `pytest --gdb` run or VS Code SIL "
-                    "debug session is still open. Stop it (or find it: ss -ltnp | grep 3333)."
-                ) from None
+                raise in_use from None
             raise
+        # Bind GDB_PORT here and hand the socket to the relay: a busy port fails right here, and the
+        # port only opens (what VS Code's pre-launch task waits for) once everything is ready.
+        try:
+            listener = socket.create_server(("127.0.0.1", GDB_PORT))
+        except OSError:
+            raise in_use from None
+        with listener:
+            self._relay = subprocess.Popen(
+                [sys.executable, str(GDB_RELAY), "--listen-fd", str(listener.fileno()),
+                 "--target", str(RENODE_GDB_PORT)],
+                pass_fds=[listener.fileno()],
+            )
         self._say(f"\n[sim] {self.name}: waiting for GDB on localhost:{GDB_PORT} ({self.elf})")
-        while "True" not in renode.run(f"machine IsGdbConnectedToServer {GDB_PORT}"):
+        # The relay connects to Renode when the debugger connects to it.
+        while "True" not in renode.run(f"machine IsGdbConnectedToServer {RENODE_GDB_PORT}"):
+            if self._relay.poll() is not None:
+                raise RuntimeError(f"gdb_relay.py exited (code {self._relay.returncode}), see above")
             time.sleep(0.2)  # waiting for a person to attach a debugger: real time is correct here
         self._say(f"[sim] {self.name}: GDB connected")
 

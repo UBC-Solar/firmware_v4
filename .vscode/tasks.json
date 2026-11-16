@@ -30,7 +30,7 @@
         {
             "label": "Renode: start board",
             "type": "shell",
-            "command": "elf=${command:cmake.launchTargetPath}; renode --console -e \"\\$elf = @$elf; include @sim/emulation/boards/$(basename $elf .elf).resc; machine StartGdbServer 3333\"",
+            "command": "elf=${command:cmake.launchTargetPath}; python3 sim/emulation/gdb_relay.py --listen 3333 --target 3334 & renode --console -e \"\\$elf = @$elf; include @sim/emulation/boards/$(basename $elf .elf).resc; machine StartGdbServer 3334\"",
             "isBackground": true,
             "problemMatcher": {
                 "owner": "renode",
@@ -47,7 +47,7 @@
         {
             "label": "Renode: stop",
             "type": "shell",
-            "command": "pkill -f 'include @.*sim/emulation/board[s]/' || true",
+            "command": "pkill -f 'include @.*sim/emulation/board[s]/'; pkill -f 'sim/emulation/gdb_rela[y].py'; true",
             "problemMatcher": [],
             "presentation": { "reveal": "never", "showReuseMessage": false },
             "hide": true

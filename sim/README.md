@@ -191,3 +191,13 @@ and the firmware's timers don't run on behind your back.
 VS Code **"Renode: debug board"** (F5) runs the active CMake target (the board you'd flash) in
 Renode, attaches the debugger and stops at `main`. The Renode Monitor is in the terminal (`pause`,
 ``sysbus FindSymbolAt `cpu PC` ``, `showAnalyzer usart2`). Renode quits when you stop debugging.
+
+**Live Watch works here**: in the Run and Debug sidebar, add variables under **Cortex Live Watch**
+and they update while the firmware runs (4 times a second).
+Renode's GDB server takes only one connection, and Live Watch is a second gdb, so the task starts
+`emulation/gdb_relay.py` on `:3333`, which shares Renode's connection (moved to `:3334`) between
+both. The Live Watch gdb can only read and write memory; the relay refuses anything that would run,
+stop or detach the target. `python3 sim/emulation/gdb_relay.py -v` prints every packet if the
+debugger misbehaves. `pytest --gdb` (the SIL debug configs) starts the same relay from `Board`, so
+Live Watch works there too. Live Watch evaluates expressions without a stack frame, so it shows
+globals and `static`s only: local variables read "not available" (use Watch/Variables while paused).

@@ -81,6 +81,7 @@
       "executable": "${workspaceFolder}/sim/.out/gdb-target.elf",
       "overrideLaunchCommands": [],
       "runToEntryPoint": "main",
+      "liveWatch": { "enabled": true, "samplesPerSecond": 4 },
       "preLaunchTask": "SIL: wait for Renode GDB server",
       "presentation": { "hidden": true }
     },
@@ -94,6 +95,7 @@
       "executable": "${command:cmake.launchTargetPath}",
       "overrideLaunchCommands": [],
       "runToEntryPoint": "main",
+      "liveWatch": { "enabled": true, "samplesPerSecond": 4 },
       "preLaunchTask": "Renode: start board",
       "postDebugTask": "Renode: stop",
       "presentation": { "group": "SIL", "order": 2 }

@@ -1,4 +1,4 @@
-from _emulator import Board
+from api import Board
 
 STATE_ID = 0x324  # app/can_messages.h, data[0] = g_state, every 200 ms
 FAULT_ID = 0x321  # 3 bytes of fault flags (SendFaults() in app/can_messages.c)

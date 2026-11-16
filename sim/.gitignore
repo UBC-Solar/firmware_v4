@@ -1,8 +1,8 @@
 .venv/
 __pycache__/
 .pytest_cache/
-# Link to the ELF of the test waiting for GDB (written by `pytest --gdb`)
-.gdb-target.elf
+# Scratch output: .out/gdb-target.elf links to the ELF of the test waiting for GDB (`pytest --gdb`)
+.out/
 # Renode test output
 logs/
 snapshots/

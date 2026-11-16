@@ -1,5 +1,5 @@
-from _emulator import Board
-from tel.radio import wait_for_frame, wait_for_header
+from api import Board
+from tests.tel.radio import wait_for_frame, wait_for_header
 
 TIME_SINCE_BOOTUP_ID = 0x750  # DLC 4, little-endian seconds counter, every 1 s
 TEL_FLAGS_ID = 0x751  # DLC 1, every ~100 ms

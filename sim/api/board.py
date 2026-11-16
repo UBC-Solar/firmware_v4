@@ -19,7 +19,7 @@ autocomplete on `board.gpio.` shows only GPIO calls:
 The older flat names (send_can, set_pin, ...) still work: see "Aliases" at the end of Board.
 
 How it talks to Renode: pyrenode3 loads Renode (a .NET program) *inside* this Python process via
-pythonnet (_renode.py). Python then gets the same objects a .resc script uses (the machine, the CPU,
+pythonnet (emulation/renode.py). Python then gets the same objects a .resc script uses (the machine, the CPU,
 the CAN controller, the UARTs) as Python objects: it can call their methods, read their properties
 and subscribe to their events. Monitor commands (`include`, `emulation RunFor`, ...) go through
 pyrenode3's Monitor.
@@ -31,7 +31,7 @@ import sys
 import time
 from pathlib import Path
 
-from . import _renode
+from emulation import renode
 from .adc import Adc
 from .can import Can
 from .gpio import Gpio
@@ -42,12 +42,11 @@ from .uart import Uart
 
 __all__ = ["Board", "CanFrame", "PinEdge", "SimTimeout", "find_elf"]
 
-EMULATOR_DIR = Path(__file__).resolve().parents[1]  # sim/_emulator
-BOARDS_DIR = EMULATOR_DIR / "boards"
-COMPONENTS_DIR = EMULATOR_DIR.parents[1] / "firmware" / "components"
+SIM_DIR = Path(__file__).resolve().parents[1]  # sim/
+BOARDS_DIR = SIM_DIR / "emulation" / "boards"
+COMPONENTS_DIR = SIM_DIR.parent / "firmware" / "components"
 GDB_PORT = 3333
-SIM_DIR = EMULATOR_DIR.parent
-GDB_ELF_LINK = SIM_DIR / ".gdb-target.elf"  # see _wait_for_gdb()
+GDB_ELF_LINK = SIM_DIR / ".out" / "gdb-target.elf"  # see _wait_for_gdb()
 STEP_MS = 10  # wait_for() calls run the emulation in steps this long while checking for the event
 
 
@@ -108,18 +107,18 @@ class Board:
             raise FileNotFoundError(f"No emulator setup for board '{name}': {self.resc}")
         self.elf = find_elf(name, build_type)
 
-        _renode.load()
-        _renode.run("Clear")  # drop any machine left over from a previous test
-        _renode.run(f"logLevel {_renode.RENODE_LOG_LEVEL}")
+        renode.load()
+        renode.run("Clear")  # drop any machine left over from a previous test
+        renode.run(f"logLevel {renode.RENODE_LOG_LEVEL}")
         # Set $elf first: the board file's `$elf ?= ...` only applies when $elf isn't set yet.
-        _renode.run(f"$elf = @{self.elf}")
-        _renode.run(f"include @{self.resc}")
+        renode.run(f"$elf = @{self.elf}")
+        renode.run(f"include @{self.resc}")
 
-        found, machine = _renode.manager.CurrentEmulation.TryGetMachineByName(name, None)
+        found, machine = renode.manager.CurrentEmulation.TryGetMachineByName(name, None)
         if not found:
             raise RuntimeError(f"{self.resc} didn't create a machine called '{name}'")
-        self._machine = _renode.cast(machine)
-        self._bus = _renode.cast(self._machine.SystemBus)
+        self._machine = renode.cast(machine)
+        self._bus = renode.cast(self._machine.SystemBus)
         self._cpu = self._peripheral("cpu")
         self._hook_errors = []  # exceptions raised inside Renode callbacks, re-raised in the test
 
@@ -140,11 +139,11 @@ class Board:
             peripheral = self._machine[f"sysbus.{name}"]
         except Exception:
             return None
-        return _renode.cast(peripheral) if peripheral is not None else None
+        return renode.cast(peripheral) if peripheral is not None else None
 
     def close(self):
         """Remove the machine. The next Board starts from a clean emulation."""
-        _renode.run("Clear")
+        renode.run("Clear")
 
     # ---- time ----------------------------------------------------------------------------
 
@@ -156,7 +155,7 @@ class Board:
     def _step(self, ms: float):
         # Blocks until the virtual time has passed. If GDB holds the CPU at a breakpoint, virtual
         # time stops too, so this simply waits until the debugger continues.
-        _renode.run(f'emulation RunFor "{ms / 1000:.6f}"')
+        renode.run(f'emulation RunFor "{ms / 1000:.6f}"')
         self._raise_hook_errors()
 
     @property
@@ -211,20 +210,21 @@ class Board:
             except Exception as e:  # an exception escaping into Renode would kill the process
                 self._hook_errors.append(e)
 
-        self._cpu.AddHook(_renode.UInt64(address), _renode.CpuAddressHook(hook))
+        self._cpu.AddHook(renode.UInt64(address), renode.CpuAddressHook(hook))
         return True
 
     # ---- debugging -----------------------------------------------------------------------
 
     def _wait_for_gdb(self):
-        # Point sim/.gdb-target.elf at the ELF this test runs, so one VS Code debug config fits every
+        # Point sim/.out/gdb-target.elf at the ELF this test runs, so one VS Code debug config fits every
         # board and build type. Written before the server starts: once port 3333 is open (what the
         # VS Code pre-launch task waits for) the link is already right.
+        GDB_ELF_LINK.parent.mkdir(exist_ok=True)
         GDB_ELF_LINK.unlink(missing_ok=True)
         GDB_ELF_LINK.symlink_to(self.elf)
         # `false`: don't start the emulation when GDB connects; tests still control time.
         try:
-            _renode.run(f"machine StartGdbServer {GDB_PORT} false")
+            renode.run(f"machine StartGdbServer {GDB_PORT} false")
         except RuntimeError as e:
             if "AddressAlreadyInUse" in str(e):
                 raise RuntimeError(
@@ -233,7 +233,7 @@ class Board:
                 ) from None
             raise
         self._say(f"\n[sim] {self.name}: waiting for GDB on localhost:{GDB_PORT} ({self.elf})")
-        while "True" not in _renode.run(f"machine IsGdbConnectedToServer {GDB_PORT}"):
+        while "True" not in renode.run(f"machine IsGdbConnectedToServer {GDB_PORT}"):
             time.sleep(0.2)  # waiting for a person to attach a debugger: real time is correct here
         self._say(f"[sim] {self.name}: GDB connected")
 

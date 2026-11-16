@@ -1,6 +1,6 @@
 """board.can: inject CAN frames and watch the ones the board sends."""
 
-from . import _renode
+from emulation import renode
 from .results import CanFrame
 
 
@@ -29,7 +29,7 @@ class Can:
         self._board._announce(f"can.send 0x{can_id:X} [{bytes(data).hex(' ')}]")
         if self._can is None:
             raise ValueError(f"Board '{self._board.name}' has no CAN controller (can1)")
-        r = _renode
+        r = renode
         frame = r.CANMessageFrame(can_id, r.Array[r.Byte](bytes(data)), extended, False, False, False)
         self._can.OnFrameReceived(frame)
 

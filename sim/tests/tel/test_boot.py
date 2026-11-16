@@ -1,7 +1,7 @@
 import pytest
 
-from _emulator import Board
-from tel.radio import wait_for_frame
+from api import Board
+from tests.tel.radio import wait_for_frame
 
 TEL_FLAGS_ID = 0x751
 

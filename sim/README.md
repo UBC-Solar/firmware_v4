@@ -5,16 +5,19 @@ Runs board firmware (the same `.elf` we flash) on an emulated STM32F103RCT6 in
 
 ```
 sim/
-  <board>/test_*.py   tests, one folder per board (the folder picks the board)
-  conftest.py         the `board` fixture and the --gdb option
-  pytest.ini  requirements.txt
-  _emulator/          emulator setup. Set up once; only touch it to fix or extend the emulator.
-    __init__.py         `from _emulator import Board`: the only thing tests import
-    api/                the test API: board.py (Board) + its parts can.py, uart.py, gpio.py, adc.py, mem.py, rtos.py
+  tests/              WRITE TESTS HERE
+    <board>/test_*.py   one folder per board (the folder picks the board)
+    conftest.py         the `board` fixture, --gdb / --build-type / --sim-trace
+  api/                WHAT TESTS CAN USE: `from api import Board, ...` (see api/README.md)
+    board.py            Board + its parts can.py, uart.py, gpio.py, adc.py, mem.py, rtos.py
+    ROADMAP.md          what's missing and what's next
+  emulation/          HOW BOARDS ARE EMULATED. Don't touch unless fixing the emulator (see emulation/README.md)
+    renode.py           the pyrenode3 bridge (only api/ uses it)
     chip/               STM32F103RCT6 setup shared by every board
     peripherals/        Python stubs for peripherals Renode's F103 model lacks
     devices/            fake external parts (GPS, IMU, displays ...)
     boards/<board>.resc how each board is wired: chip + ELF + devices
+  pytest.ini  requirements.txt
 ```
 
 ## Setup (once)
@@ -35,8 +38,8 @@ sim/
 
 ```bash
 sim/.venv/bin/pytest sim               # all boards
-sim/.venv/bin/pytest sim/str           # one board
-sim/.venv/bin/pytest sim/str -k boot   # one test
+sim/.venv/bin/pytest sim/tests/str     # one board
+sim/.venv/bin/pytest sim/tests/str -k boot   # one test
 sim/.venv/bin/pytest sim --build-type Release   # test the Release build (default: Debug)
 ```
 
@@ -136,11 +139,13 @@ Struct fields by name aren't supported: use `read_bytes` with the field's offset
 `uart.wait_for`, `set_pin` = `gpio.set`, `rtos_task_loops` = `rtos.task_loops`.
 
 Board-specific helpers (e.g. decoding TEL's radio frames) go in a non-test module in the board's
-folder, like `tel/radio.py`, imported as `from tel.radio import ...`. Test file names can repeat
-across boards (`str/test_boot.py`, `tel/test_boot.py`).
+folder, like `tests/tel/radio.py`, imported as `from tests.tel.radio import ...`. Test file names
+can repeat across boards (`tests/str/test_boot.py`, `tests/tel/test_boot.py`).
 
-If a test needs something this doesn't offer (a new helper, a fake device), that's an
-`_emulator/` change: make it its own PR.
+Tests import from `api` only, never `emulation`: collection fails if one does.
+
+If a test needs something this doesn't offer, that's an `api/` change (a new call) or an
+`emulation/` change (a fake device, a missing peripheral): make it its own PR.
 
 ## Debug a test and the firmware together
 
@@ -150,7 +155,7 @@ GDB server (`localhost:3333`) for the firmware.
 > Planned: VS Code launch configs that start both with one F5 are not in `.vscode/` yet.
 
 Until then, by hand:
-1. Start the test with the GDB server: `sim/.venv/bin/pytest sim/str/test_can.py --gdb -s`.
+1. Start the test with the GDB server: `sim/.venv/bin/pytest sim/tests/str/test_can.py --gdb -s`.
    It waits for a debugger before running any firmware.
 2. Attach a cortex-debug session to `localhost:3333` with the board's ELF
    (`"servertype": "external"`, `"request": "launch"`, `"overrideLaunchCommands": []`,

@@ -33,7 +33,7 @@
         {
             "label": "Renode: start board",
             "type": "shell",
-            "command": "elf=${command:cmake.launchTargetPath}; renode --console -e \"\\$elf = @$elf; include @sim/_emulator/boards/$(basename $elf .elf).resc; machine StartGdbServer 3333\"",
+            "command": "elf=${command:cmake.launchTargetPath}; renode --console -e \"\\$elf = @$elf; include @sim/emulation/boards/$(basename $elf .elf).resc; machine StartGdbServer 3333\"",
             "isBackground": true,
             "problemMatcher": {
                 "owner": "renode",
@@ -50,7 +50,7 @@
         {
             "label": "Renode: stop",
             "type": "shell",
-            "command": "pkill -f 'include @.*sim/_emulator/board[s]/' || true",
+            "command": "pkill -f 'include @.*sim/emulation/board[s]/' || true",
             "problemMatcher": [],
             "presentation": { "reveal": "never", "showReuseMessage": false },
             "hide": true

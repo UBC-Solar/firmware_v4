@@ -1,6 +1,8 @@
+import re
+
 import pytest
 
-from _emulator import Board
+from api import Board
 
 
 def pytest_addoption(parser):
@@ -22,6 +24,20 @@ def pytest_addoption(parser):
     )
 
 
+def pytest_collectstart(collector):
+    """Tests use only `api`. `emulation` is the backend behind it: importing it from a test (or a
+    helper next to the tests) would tie the test to Renode, so it's refused at collection."""
+    path = getattr(collector, "path", None)
+    if path is None or path.suffix != ".py" or path.name == "conftest.py":
+        return
+    source = path.read_text()
+    if re.search(r"^\s*(from|import)\s+emulation\b", source, re.MULTILINE):
+        raise pytest.UsageError(
+            f"{path}: tests import from `api` only, not `emulation`. "
+            "If the test needs something api doesn't have yet, add it to api/."
+        )
+
+
 @pytest.hookimpl(trylast=True)  # after -k / -m have removed the deselected tests
 def pytest_collection_modifyitems(config, items):
     """--gdb debugs one test at a time: every test boots a fresh machine with its own GDB server,
@@ -37,7 +53,7 @@ def pytest_collection_modifyitems(config, items):
 
 @pytest.fixture
 def board(request):
-    """Fresh emulated board. The test's folder picks which: sim/str/test_x.py -> "str"."""
+    """Fresh emulated board. The test's folder picks which: sim/tests/str/test_x.py -> "str"."""
     name = request.path.parent.name
     capture = request.config.pluginmanager.getplugin("capturemanager")
 

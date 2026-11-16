@@ -1,6 +1,6 @@
 # SIL feature roadmap
 
-What the `Board` test API (`sim/_emulator/api/`) can do today, what's missing, and the order to add it in.
+What the `Board` test API (`sim/api/`) can do today, what's missing, and the order to add it in.
 
 ## How industry does it
 
@@ -88,7 +88,7 @@ The old flat methods (`send_can`, `set_pin`, ...) stay as aliases so existing te
 ## Tier 3: bigger infrastructure
 
 - **Multi-board tests:** several machines on a shared Renode CAN hub, e.g. STR presses next-page and DRD changes page. This is where SIL beats unit tests.
-- **Device models** in `_emulator/devices/`: AS1115 display, GPS, IMU, ADBMS. They replace write-only stubs like `peripherals/i2c_write_ok.py`, so tests can assert "the display shows 42".
+- **Device models** in `emulation/devices/`: AS1115 display, GPS, IMU, ADBMS. They replace write-only stubs like `emulation/peripherals/i2c_write_ok.py`, so tests can assert "the display shows 42".
 - **Firmware log capture:** printf/ITM output saved to `logs/` and attached to failing tests.
 - **HIL backend:** a second implementation of the same interface (PCAN plus a GPIO box) for `suntest/`.
 
@@ -105,7 +105,7 @@ The old flat methods (`send_can`, `set_pin`, ...) stay as aliases so existing te
 
 | Item | Status |
 |---|---|
-| Component split | Done: `_emulator/api/{can,uart,gpio,adc,mem,rtos}.py`, old names kept as aliases |
+| Component split | Done: `api/{can,uart,gpio,adc,mem,rtos}.py`, old names kept as aliases |
 | Tier 1 | Done. Example tests: `str/test_gpio.py` (DEBUG_LED period), `str/test_mem.py` (button press in `gpio_pin_state`, write), `str/test_adc.py` (VREFINT → Vdd on CAN 0x591, under-voltage flag), `str/test_uart.py` |
 | Tier 2 | Not started |
 | Tier 3 | Not started |

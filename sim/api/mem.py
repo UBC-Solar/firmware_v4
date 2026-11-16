@@ -5,7 +5,7 @@ with the field's offset; reading fields by name would need DWARF (pyelftools), n
 Read while the emulation is paused (between wait() calls), so values don't change mid-read.
 """
 
-from . import _renode
+from emulation import renode
 
 MAX_INT_SIZE = 8
 
@@ -21,7 +21,7 @@ class Mem:
         if address is None:
             raise ValueError(f"No symbol '{name}' in {board.elf.name}")
         # Out-parameters (name, symbol) are passed as None and come back in the result tuple
-        found, _, symbol = board._bus.TryFindSymbolAt(_renode.UInt64(address), None, None,
+        found, _, symbol = board._bus.TryFindSymbolAt(renode.UInt64(address), None, None,
                                                        board._cpu, False)
         if not found or symbol is None:
             raise ValueError(f"Can't find the size of '{name}' at 0x{address:08x}")
@@ -34,7 +34,7 @@ class Mem:
             size = length - offset
         if offset < 0 or size < 0 or offset + size > length:
             raise ValueError(f"'{name}' is {length} bytes; can't read {size} at offset {offset}")
-        return bytes(self._board._bus.ReadBytes(_renode.UInt64(address + offset), size))
+        return bytes(self._board._bus.ReadBytes(renode.UInt64(address + offset), size))
 
     def read(self, name: str, size: int | None = None, signed: bool = False) -> int:
         """A variable as a little-endian integer, e.g. read("g_time_since_bootup").
@@ -57,5 +57,5 @@ class Mem:
             raise ValueError(f"'{name}' is {length} bytes; can't write {size}")
         data = value.to_bytes(size, "little", signed=value < 0)
         self._board._announce(f"mem.write {name} = {value} ({data.hex(' ')})")
-        r = _renode
+        r = renode
         self._board._bus.WriteBytes(r.Array[r.Byte](data), r.UInt64(address), False, self._board._cpu)

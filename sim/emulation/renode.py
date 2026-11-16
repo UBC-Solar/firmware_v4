@@ -1,7 +1,7 @@
 """Loading Renode into this process (once), and running Monitor commands.
 
 After load() the Renode classes we use are attributes of this module, so every other file does
-`from . import _renode` and calls e.g. `_renode.cast(peripheral)`. Before load() they don't exist:
+`from emulation import renode` and calls e.g. `renode.cast(peripheral)`. Before load() they don't exist:
 .NET namespaces (Antmicro.*, System) can only be imported after pyrenode3 has loaded Renode.
 """
 

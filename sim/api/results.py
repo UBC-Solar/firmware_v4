@@ -1,4 +1,4 @@
-"""Small result types the Board API returns. Tests import them from `_emulator`."""
+"""Small result types the Board API returns. Tests import them from `api`."""
 
 from dataclasses import dataclass
 

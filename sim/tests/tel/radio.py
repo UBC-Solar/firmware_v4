@@ -8,9 +8,9 @@ The RTC stub doesn't tick, so the timestamp is constant: helpers match from '#' 
 import re
 from pathlib import Path
 
-from _emulator import Board
+from api import Board
 
-CAR_CONFIGS = Path(__file__).resolve().parents[2] / "firmware/common/car_configs/car_configs.h"
+CAR_CONFIGS = Path(__file__).resolve().parents[3] / "firmware/common/car_configs/car_configs.h"
 
 
 def telemetry_uart() -> str:

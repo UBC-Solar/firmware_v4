@@ -1,4 +1,4 @@
-from _emulator import Board
+from api import Board
 
 
 def test_boots_without_fault(board: Board):

@@ -1,6 +1,6 @@
 """board.gpio: drive input pins, read any pin, and see every pin change with its time."""
 
-from . import _renode
+from emulation import renode
 from .results import PinEdge
 
 PORTS = ("A", "B", "C", "D", "E")
@@ -24,7 +24,7 @@ class Gpio:
         # Connections[pin] is the pin's level as the rest of the chip sees it: the output the
         # firmware drives, or the input set() drives (that's how EXTI hears it). It comes back as
         # IGPIO, which has no hook method: cast it to the real GPIO class first.
-        connection = _renode.cast(self._ports[port].Connections[pin])
+        connection = renode.cast(self._ports[port].Connections[pin])
         board = self._board
 
         def on_change(high, port=port, pin=pin):
@@ -33,7 +33,7 @@ class Gpio:
             except Exception as e:  # an exception escaping into Renode would kill the process
                 board._hook_errors.append(e)
 
-        connection.AddStateChangedHook(_renode.Action[_renode.Boolean](on_change))
+        connection.AddStateChangedHook(renode.Action[renode.Boolean](on_change))
 
     def _port(self, port: str, pin: int):
         port = port.upper()
@@ -56,7 +56,7 @@ class Gpio:
     def get(self, port: str, pin: int) -> bool:
         """Current level of a pin: an output the firmware drives (LED, contactor) or an input."""
         port, gpio = self._port(port, pin)
-        return bool(_renode.cast(gpio.Connections[pin]).IsSet)
+        return bool(renode.cast(gpio.Connections[pin]).IsSet)
 
     def edges(self, port: str, pin: int) -> list[PinEdge]:
         """Every change of this pin since boot, oldest first (`PinEdge`: high, time_ms)."""

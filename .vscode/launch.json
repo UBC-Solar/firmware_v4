@@ -80,7 +80,7 @@
       "servertype": "external",
       "gdbTarget": "localhost:3333",
       "cwd": "${workspaceFolder}",
-      "executable": "${workspaceFolder}/sim/.gdb-target.elf",
+      "executable": "${workspaceFolder}/sim/.out/gdb-target.elf",
       "overrideLaunchCommands": [],
       "runToEntryPoint": "main",
       "preLaunchTask": "SIL: wait for Renode GDB server",

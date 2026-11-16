@@ -1,4 +1,4 @@
-from _emulator import Board
+from api import Board
 
 STR_DIAGNOSTICS_CAN_ID = 0x591  # driver/can_driver.h: [Vdd mV LE][temp C LE][TEC][REC], every 100 ms
 STR_FLAGS_CAN_ID = 0x592  # [flags]: bit 0 mcu_under_voltage, bit 1 mcu_over_temp

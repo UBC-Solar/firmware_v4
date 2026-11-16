@@ -83,12 +83,13 @@ The old flat methods (`send_can`, `set_pin`, ...) stay as aliases so existing te
 | DBC-aware CAN | `can.send_signal("STR_State", next_page=1)`, `can.wait_for_signal("STR_State", "next_page", 1)` | Uses cantools with sunlink `dbc/`. No hardcoded bit positions; DBC changes break tests loudly. |
 | Reset and watchdog | `reset()`, `reset_count`, IWDG model that resets the CPU | Would turn TEL's TasksIWDG starvation into a real "board reboots" failure instead of an xfail |
 | Fault injection | stop a heartbeat, I2C NACK mode, CAN bus-off | Tests what happens when something on the car dies |
-| Timing helper | `assert_periodic(frames, period_ms=100, tolerance_ms=10)` | Every board repeats the gap check in `str/test_can.py` |
+| Timing helper | `assert_periodic(frames, period_ms=100, tolerance_ms=10)` | DRD, MDI and DIST `test_boot.py` each repeat the same gap check |
 
 ## Tier 3: bigger infrastructure
 
 - **Multi-board tests:** several machines on a shared Renode CAN hub, e.g. STR presses next-page and DRD changes page. This is where SIL beats unit tests.
 - **Device models** in `emulation/devices/`: AS1115 display, GPS, IMU, ADBMS. They replace write-only stubs like `emulation/peripherals/i2c_write_ok.py`, so tests can assert "the display shows 42".
+- **HVC shunt monitor (INA237 @ 0x40, I2C1): needed before any HVC current test.** HVC reads it (VSHUNT for CAN 0x320, DIAG_ALRT when `HV_CURRENT_ALERT` goes high), but `hvc.resc` uses `i2c_write_ok.py`, whose reads return the last byte written. Today that only makes 0x320 garbage (no test reads it, and no test drives the alert pin). A test of 0x320 or of overcurrent vs reverse current would get a random answer. Model: return the selected register from test-settable values, like `adc.py`'s backdoor.
 - **Firmware log capture:** printf/ITM output saved to `logs/` and attached to failing tests.
 - **HIL backend:** a second implementation of the same interface (PCAN plus a GPIO box) for `suntest/`.
 
@@ -106,7 +107,7 @@ The old flat methods (`send_can`, `set_pin`, ...) stay as aliases so existing te
 | Item | Status |
 |---|---|
 | Component split | Done: `api/{can,uart,gpio,adc,mem,rtos}.py`, old names kept as aliases |
-| Tier 1 | Done. Example tests: `str/test_gpio.py` (DEBUG_LED period), `str/test_mem.py` (button press in `gpio_pin_state`, write), `str/test_adc.py` (VREFINT → Vdd on CAN 0x591, under-voltage flag), `str/test_uart.py` |
+| Tier 1 | Implemented. Used by tests: `can.*`, `adc.set` (`str/test_adc.py`: VREFINT → Vdd on CAN 0x591, under-voltage flag), `uart.received`/`uart.wait_for` (TEL radio helpers), `rtos.task_loops`. **No test uses yet:** `gpio.*`, `mem.*`, `uart.send` (the STR example tests for them were removed in 8916226) |
 | Tier 2 | Not started |
 | Tier 3 | Not started |
 | pytest plugins | Not started |

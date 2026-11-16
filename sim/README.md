@@ -155,7 +155,7 @@ GDB server (`localhost:3333`) for the firmware.
 > Planned: VS Code launch configs that start both with one F5 are not in `.vscode/` yet.
 
 Until then, by hand:
-1. Start the test with the GDB server: `sim/.venv/bin/pytest sim/tests/str/test_can.py --gdb -s`.
+1. Start the test with the GDB server: `sim/.venv/bin/pytest sim/tests/str/test_boot.py::test_boots_without_fault --gdb -s`.
    It waits for a debugger before running any firmware.
 2. Attach a cortex-debug session to `localhost:3333` with the board's ELF
    (`"servertype": "external"`, `"request": "launch"`, `"overrideLaunchCommands": []`,

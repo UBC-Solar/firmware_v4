@@ -60,8 +60,6 @@
       ]
     },
     {
-      // SIL: runs the open test file with pytest --gdb. The test loads its board in Renode and
-      // waits for the firmware debugger before running any firmware.
       "name": "SIL: debug test (Python)",
       "type": "debugpy",
       "request": "launch",

@@ -16,6 +16,41 @@
             "presentation": {
                 "showReuseMessage": false
             }
+        },
+        {
+            "label": "SIL: wait for Renode GDB server",
+            "type": "shell",
+            "command": "timeout 60 sh -c 'until ss -ltn | grep -q \":3333 \"; do sleep 0.2; done'",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "silent",
+                "showReuseMessage": false
+            }
+        },
+        {
+            "label": "Renode: start board",
+            "type": "shell",
+            "command": "elf=${command:cmake.launchTargetPath}; python3 sim/emulation/gdb_relay.py --listen 3333 --target 3334 & renode --console -e \"\\$elf = @$elf; include @sim/emulation/boards/$(basename $elf .elf).resc; machine StartGdbServer 3334\"",
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "renode",
+                "pattern": { "regexp": "^__never_matches__$" },
+                "background": {
+                    "activeBegins": true,
+                    "beginsPattern": "Renode, version",
+                    "endsPattern": "GDB server with all CPUs started on port"
+                }
+            },
+            "presentation": { "panel": "dedicated", "showReuseMessage": false },
+            "hide": true
+        },
+        {
+            "label": "Renode: stop",
+            "type": "shell",
+            "command": "pkill -f 'include @.*sim/emulation/board[s]/'; pkill -f 'sim/emulation/gdb_rela[y].py'; true",
+            "problemMatcher": [],
+            "presentation": { "reveal": "never", "showReuseMessage": false },
+            "hide": true
         }
     ]
 }

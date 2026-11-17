@@ -1,0 +1,15 @@
+# Steering wheel (STR) on a virtual STM32F103RCT6
+
+# Add a machine called str to the running Renode instance
+mach create "str"
+# Shared chip setup (Renode F103 model + our fixes)
+include $ORIGIN/../chip/stm32f103rct6.resc
+
+# I2C Peripheral is being used by the hex display. We are not simulating the hex display atm. Hardcode the I2C peripheral
+sysbus Unregister sysbus.i2c1
+machine PyDevFromFile $ORIGIN/../peripherals/i2c_write_ok.py 0x40005400 0x400 True "i2c1"
+
+# Load the ELF to run in the sim. Tests set $elf themselves (Debug or Release, picked from each
+# build folder's CMakeCache.txt). This default is only for running by hand: the Debug preset build.
+$elf ?= $ORIGIN/../../../firmware/components/str/build/Debug/str.elf
+sysbus LoadELF $elf

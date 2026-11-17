@@ -7,6 +7,7 @@ ADC_CHANNEL_VREFINT = 17  # Vdd_mV = 4095 * 1200 / raw (driver/mcu_health_driver
 
 
 def vdd_mv(frame) -> int:
+    # first 2 bytes of the can frame
     return int.from_bytes(frame.data[0:2], "little")
 
 

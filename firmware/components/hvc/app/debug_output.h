@@ -47,6 +47,7 @@
 #define PRINT_TEST(fmt, ...)  PRINT_TAGGED(SHOW_TESTS,        "[TEST]",  fmt, ##__VA_ARGS__)
 #define PRINT_STATE(fmt, ...) PRINT_TAGGED(SHOW_STATES,       "[STATE]", fmt, ##__VA_ARGS__)
 #define PRINT_FAULT(fmt, ...) PRINT_TAGGED(SHOW_FAULTS,       "[FAULT]", fmt, ##__VA_ARGS__)
+#define PRINT_CHRG(fmt, ...)  PRINT_TAGGED(SHOW_CHARGER,      "[CHRG]",  fmt, ##__VA_ARGS__)
 
 // --- For debugging (off by default) ---
 #define PRINT_STEP(fmt, ...)  PRINT_TAGGED(SHOW_STEPS,        "[STEP]",  fmt, ##__VA_ARGS__)
@@ -62,3 +63,6 @@
 // DEBUG_Output_Init() from HVC_Init(), DEBUG_Output_Run() from FSM_Run()
 void DEBUG_Output_Init(void);
 void DEBUG_Output_Run(void);
+
+// From Monitoring() with CHARGE_BATTERY, once per charger status message
+void DEBUG_Output_ChargerStatus(const volatile uint8_t *status);

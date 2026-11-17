@@ -12,6 +12,7 @@
 // Standard library
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 
 // Common
 #include "git_version.h"
@@ -47,10 +48,11 @@ static void SendMpptPrecharge(void);
  * @brief Sends every periodic HVC CAN message whose interval has elapsed.
  *
  * Heartbeat and commit hash every HVC_HEARTBEAT_INTERVAL_MS.
- * State, faults, and measurements every CAN_TX_INTERVAL_MS.
+ * Shunt current every SHUNT_CURRENT_TX_INTERVAL_MS.
+ * State, faults, and other measurements every CAN_TX_INTERVAL_MS.
  * Call from FSM_Run() every pass.
  *
- * Side effects: updates g_ticks.hvc_heartbeat and g_ticks.can_tx.
+ * Side effects: updates g_ticks.hvc_heartbeat, g_ticks.shunt_current_tx, and g_ticks.can_tx.
  */
 void CAN_Messages_SendAll(void) {
     if (FSM_TimerElapsed(HVC_HEARTBEAT_INTERVAL_MS, &g_ticks.hvc_heartbeat)) {
@@ -58,10 +60,13 @@ void CAN_Messages_SendAll(void) {
         SendCommitHash();
     }
 
+    if (FSM_TimerElapsed(SHUNT_CURRENT_TX_INTERVAL_MS, &g_ticks.shunt_current_tx)) {
+        SendShuntCurrent();
+    }
+
     if (FSM_TimerElapsed(CAN_TX_INTERVAL_MS, &g_ticks.can_tx)) {
         SendState();
         SendFaults();
-        SendShuntCurrent();
         SendLvCurrent();
         SendSuppVoltage();
         SendDcdcTemp();
@@ -304,6 +309,50 @@ void CAN_Messages_SendLvPowerupRequest(void) {
     PRINT_CAN("LV power-up request sent (try %lu)", (unsigned long)request_count);
 }
 
+/**
+ * @brief Sends the charger control message (CHARGER_CONTROL_ID, extended) to the HK-MF-103-32.
+ *
+ * Monitoring() sends this once per charger status message, only with CHARGE_BATTERY.
+ *
+ * Byte layout (big-endian, 0.1 unit/bit):
+ *  - [0:1] max charging voltage, 0.1 V/bit (MAX_CHARGING_VOLTAGE_MV / 100)
+ *  - [2:3] max charging current, 0.1 A/bit (MAX_CHARGING_CURRENT_MA / 100)
+ *  - [4]   charger switch: 0 = close output (charge), 1 = open output (output ramps down to 0)
+ *  - [5]   charger enable: 0 = standby, ignore byte 4; 1 = act on byte 4
+ *  - [6:7] reserved, not sent (DLC = 6, same as v3 ECU)
+ *
+ * @warning The byte 4/5 meanings above are from the v3 ECU code. v3's brightside.dbc says instead:
+ *          byte 4 = 0 start, 1 close output, 2 stop (sleep); byte 5 = 0 charging mode, 1 heating
+ *          mode (output on without sensing the battery). Confirm against the charger datasheet.
+ *
+ * @note Ported from firmware_v3 ECU. The first message is sent with enable = 0 and every message
+ *       after that with enable = 1, matching the v3 start-up sequence.
+ */
+void CAN_Messages_SendChargerControl(void) {
+    static uint8_t charger_enable = 0U;
+    const uint8_t charger_switch = 0U; // For now the charger is always outputting
+    CAN_TxMessage_t tx_message = {0};
+
+    tx_message.tx_header.ExtId = CHARGER_CONTROL_ID;
+    tx_message.tx_header.IDE = CAN_ID_EXT;
+    tx_message.tx_header.RTR = CAN_RTR_DATA;
+    tx_message.tx_header.DLC = 6;
+
+    // The charger takes 0.1 V and 0.1 A per bit: mV / 100 and mA / 100
+    const uint16_t voltage_dv = (uint16_t)(MAX_CHARGING_VOLTAGE_MV / 100U);
+    const uint16_t current_da = (uint16_t)(MAX_CHARGING_CURRENT_MA / 100U);
+
+    tx_message.data[0] = (voltage_dv >> 8) & 0xFF;
+    tx_message.data[1] = (voltage_dv)      & 0xFF;
+    tx_message.data[2] = (current_da >> 8) & 0xFF;
+    tx_message.data[3] = (current_da)      & 0xFF;
+    tx_message.data[4] = charger_switch;
+    tx_message.data[5] = charger_enable;
+
+    CAN_QueueTxMessage(&tx_message);
+    charger_enable = 1U;
+}
+
 // --- Template ---
 
 /**
@@ -345,11 +394,23 @@ const uint16_t CAN_RX_IDS[] = {
  * Called by the CAN driver from the RX FIFO interrupt, after the frame has been read from hardware.
  * Also called by the faked boards in tests.c (main loop).
  *
- * Side effects: writes g_shared (received flags, MST status, pack voltage) and g_fault_flags.
+ * Side effects: writes g_shared (received flags, MST status, pack voltage, charger status) and
+ * g_fault_flags.
  *
  * @param rx_message The received message.
  */
 void CAN_Messages_HandleRx(const CAN_RxMessage_t *rx_message) {
+    // HAL only fills StdId for standard frames and ExtId for extended frames; the other is garbage
+    if (rx_message->rx_header.IDE == CAN_ID_EXT) {
+        if (rx_message->rx_header.ExtId == CHARGER_STATUS_ID) {
+            // Layout in DEBUG_Output_ChargerStatus() (debug_output.c)
+            memcpy((uint8_t *)g_shared.charger_status_data, rx_message->data,
+                   sizeof(g_shared.charger_status_data));
+            g_shared.charger_status_received = true;
+        }
+        return;
+    }
+
     switch (rx_message->rx_header.StdId) {
         case TEL_HEARTBEAT_ID:
             g_shared.tel_heartbeat_received = true;

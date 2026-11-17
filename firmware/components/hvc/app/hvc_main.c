@@ -42,7 +42,8 @@
  * lines (DEBUG_Output_Init(), debug_output.c).
  * The startup fault checks run in the FSM's first state (Reset()).
  *
- * The RX filters let in every ID in CAN_RX_IDS (can_messages.c).
+ * The RX filters let in every ID in CAN_RX_IDS (can_messages.c), plus the charger's extended
+ * CHARGER_STATUS_ID in the next free bank.
  * For each board part faked in the bench overrides, also blocks that part of the real board
  * (tests.c): TESTS_BenchRemoveFakedCanIds() drops its CAN IDs from the RX filters, and
  * TESTS_BenchBlockFakedPinInterrupts() turns off its pin interrupts.
@@ -74,7 +75,8 @@ void HVC_Init(
     // overrides), so a connected real board's messages are not received
     uint16_t filter_ids[CAN_RX_ID_COUNT];
     size_t filter_count = TESTS_BenchRemoveFakedCanIds(CAN_RX_IDS, CAN_RX_ID_COUNT, filter_ids);
-    CAN_InitFilterList(can, filter_ids, filter_count);
+    uint32_t num_std_banks = CAN_InitFilterList(can, filter_ids, filter_count);
+    CAN_InitExtFilter(can, CHARGER_STATUS_ID, num_std_banks); // Extended ID, for the pack charger
     CAN_Init(can);
 
     TESTS_BenchBlockFakedPinInterrupts(); // Bench overrides: turns off faked boards' pin interrupts

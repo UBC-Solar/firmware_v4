@@ -88,8 +88,9 @@ void CAN_QueueTxMessage(CAN_TxMessage_t *message) {
  * @param handle CAN handle for the peripheral being configured.
  * @param std_ids Array of standard 11-bit CAN IDs to accept.
  * @param count Number of IDs in std_ids.
+ * @return Number of filter banks used, which is also the first free bank for CAN_InitExtFilter().
  */
-void CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size_t count) {
+uint32_t CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size_t count) {
     const uint32_t max_ids = CAN_FILTER_NUM_BANKS * CAN_FILTER_NUM_ID_PER_BANK;
 
     if ((handle == NULL) || (std_ids == NULL) || (count == 0U) || (count > max_ids)) {
@@ -133,6 +134,42 @@ void CAN_InitFilterList(CAN_HandleTypeDef *handle, const uint16_t *std_ids, size
 
         id_index += CAN_FILTER_NUM_ID_PER_BANK;
         bank_index += 1U;
+    }
+
+    return bank_index;
+}
+
+/**
+ * @brief Configure one bxCAN filter bank to accept a single extended 29-bit ID.
+ *
+ * 32-bit list mode register layout: [31:21] STID[10:0] / EXID[28:18], [20:3] EXID[17:0],
+ * [2] IDE, [1] RTR, [0] 0. The ID is placed in both list slots of the bank.
+ *
+ * @param handle CAN handle for the peripheral being configured.
+ * @param ext_id Extended 29-bit CAN ID to accept (data frames only).
+ * @param filter_bank Filter bank to use; must not overlap the banks used by CAN_InitFilterList().
+ */
+void CAN_InitExtFilter(CAN_HandleTypeDef *handle, uint32_t ext_id, uint32_t filter_bank) {
+    if ((handle == NULL) || (filter_bank >= CAN_FILTER_NUM_BANKS) || (ext_id > 0x1FFFFFFFU)) {
+        Error_Handler();
+    }
+
+    CAN_FilterTypeDef filter_config;
+    uint32_t filter_reg = (ext_id << 3) | CAN_ID_EXT | CAN_RTR_DATA;
+
+    filter_config.FilterActivation = CAN_FILTER_ENABLE;
+    filter_config.SlaveStartFilterBank = CAN_FILTER_NUM_BANKS;
+    filter_config.FilterBank = filter_bank;
+    filter_config.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+    filter_config.FilterMode = CAN_FILTERMODE_IDLIST;
+    filter_config.FilterScale = CAN_FILTERSCALE_32BIT;
+    filter_config.FilterIdHigh = (filter_reg >> 16) & 0xFFFFU;
+    filter_config.FilterIdLow = filter_reg & 0xFFFFU;
+    filter_config.FilterMaskIdHigh = (filter_reg >> 16) & 0xFFFFU;
+    filter_config.FilterMaskIdLow = filter_reg & 0xFFFFU;
+
+    if (HAL_CAN_ConfigFilter(handle, &filter_config) != HAL_OK) {
+        Error_Handler();
     }
 }
 

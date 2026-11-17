@@ -101,6 +101,9 @@ typedef struct {
     // MST heartbeat reports no errors, faults, or warnings
     volatile bool     mst_healthy;
     volatile int32_t  mst_pack_voltage_mv;              // From MST_VOLT_SUMMARY
+    // Charger status frame (CHARGER_STATUS_ID), only acted on with CHARGE_BATTERY
+    volatile bool     charger_status_received;          // Cleared by Monitoring()
+    volatile uint8_t  charger_status_data[8];           // Raw frame, layout in can_messages.c
 
     // Read once per pass by HVC_Main(), before the FSM.
     // Bench overrides (tests.c) may write fake values over them before the FSM reads them.
@@ -138,6 +141,7 @@ typedef struct {
 
     // Periodic tasks. Run every pass, in any state.
     uint32_t can_tx;           // Periodic CAN transmit
+    uint32_t shunt_current_tx; // Shunt current read and transmit
     uint32_t hvc_heartbeat;    // HVC heartbeat and commit hash transmit
     uint32_t report;           // Debug output reports ([MEAS], [PINS], [HB])
     uint32_t dump;             // Periodic debug output dump

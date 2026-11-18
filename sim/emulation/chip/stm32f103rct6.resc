@@ -3,8 +3,12 @@
 # $ORIGIN is the folder of this file, so paths work no matter where Renode is started from.
 # Boards using DMA also include dma_fix.resc after LoadELF (it hooks a HAL function by name).
 
-# Load the F103 chip that Renode defines
-machine LoadPlatformDescription @platforms/cpus/stm32f103.repl
+# Load the F103 chip. stm32f103rct6.repl is an UNMODIFIED copy of Renode's
+# platforms/cpus/stm32f103.repl from the pinned build (../../setup_renode.sh), kept here so another
+# Renode install can't change the chip under us. Never edit it: every fix goes in this file, so a
+# Renode upgrade is just re-copying it (`cmp` against sim/.renode/platforms/cpus/stm32f103.repl
+# must show no difference).
+machine LoadPlatformDescription $ORIGIN/stm32f103rct6.repl
 # Attach the Python script that handles the RCC
 machine PyDevFromFile $ORIGIN/../peripherals/rcc.py 0x40021000 0x400 True "rcc"
 # Bit-banding, to match Cortex-M3 memory

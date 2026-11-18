@@ -22,8 +22,11 @@ sim/
 
 ## Setup (once)
 
-1. Install Renode (v1.16.1 used so far) and put `renode` on your `PATH`, or set `PYRENODE_PATH` to
-   the Renode folder. The tests load Renode into Python with pyrenode3.
+1. Install the pinned Renode build: `sim/setup_renode.sh`. It downloads one exact nightly
+   (checksum-verified) into `sim/.renode/`, which pytest and the VS Code "Renode:" tasks use. A
+   `renode` on your `PATH` is ignored: the chip model (`emulation/chip/stm32f103rct6.repl`) needs
+   this build (the tagged 1.16.1 release has no F103 DMA). Re-run the script after pulling if
+   `RENODE_BUILD` in it changed. `PYRENODE_PATH=<Renode folder>` overrides it, at your own risk.
 2. Build the board, any way you normally do: `make str`, `make str release`, or the VS Code CMake
    extension / `cmake --preset Debug` (→ `build/Debug/`, `build/Release/`). Tests find the ELF
    themselves: they read `CMAKE_BUILD_TYPE` from each build folder's `CMakeCache.txt`, so the folder

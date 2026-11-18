@@ -6,10 +6,12 @@ After load() the Renode classes we use are attributes of this module, so every o
 """
 
 import os
-import shutil
 from pathlib import Path
 
 RENODE_LOG_LEVEL = 3  # 3 = errors only. Renode warns on every unmodelled register bit (very noisy)
+
+# The pinned Renode build, installed by sim/setup_renode.sh
+PINNED_RENODE_DIR = Path(__file__).resolve().parent.parent / ".renode"
 
 loaded = False
 
@@ -17,8 +19,9 @@ loaded = False
 def load():
     """Load Renode the first time a Board is created.
 
-    pyrenode3 finds Renode through PYRENODE_PATH. If that isn't set, use the `renode` on PATH (the
-    portable install is a folder with a `renode` script in it).
+    pyrenode3 finds Renode through PYRENODE_PATH. If that isn't set, use the pinned build in
+    sim/.renode/. Not the `renode` on PATH: the chip model needs that exact build (see
+    sim/setup_renode.sh), and another version fails in confusing ways (e.g. no firmware loaded).
     """
     global loaded, monitor, manager, cast, CANMessageFrame, CpuAddressHook
     global Array, Byte, UInt64, Action, Boolean
@@ -26,12 +29,11 @@ def load():
         return
 
     if "PYRENODE_PATH" not in os.environ:
-        renode_bin = shutil.which("renode")
-        if renode_bin is None:
+        if not (PINNED_RENODE_DIR / "renode").exists():
             raise RuntimeError(
-                "Renode not found: put `renode` on PATH or set PYRENODE_PATH to the Renode folder"
+                "Renode not installed: run sim/setup_renode.sh (or set PYRENODE_PATH to a Renode folder)"
             )
-        os.environ["PYRENODE_PATH"] = str(Path(renode_bin).resolve().parent)
+        os.environ["PYRENODE_PATH"] = str(PINNED_RENODE_DIR)
 
     # These imports load Renode's .NET assemblies; they only work after pyrenode3 is imported.
     from pyrenode3.conversion import interface_to_class

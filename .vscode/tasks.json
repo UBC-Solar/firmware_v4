@@ -21,6 +21,9 @@
             "label": "SIL: wait for Renode GDB server",
             "type": "shell",
             "command": "timeout 60 sh -c 'until ss -ltn | grep -q \":3333 \"; do sleep 0.2; done'",
+            "windows": {
+                "command": "$d = (Get-Date).AddSeconds(60); while (-not (Get-NetTCPConnection -State Listen -LocalPort 3333 -ErrorAction SilentlyContinue)) { if ((Get-Date) -gt $d) { exit 1 }; Start-Sleep -Milliseconds 200 }"
+            },
             "problemMatcher": [],
             "presentation": {
                 "reveal": "silent",
@@ -31,6 +34,9 @@
             "label": "Renode: start board",
             "type": "shell",
             "command": "elf=${command:cmake.launchTargetPath}; python3 sim/emulation/gdb_relay.py --listen 3333 --target 3334 & sim/.renode/renode --console -e \"\\$elf = @$elf; include @sim/emulation/boards/$(basename $elf .elf).resc; machine StartGdbServer 3334\"",
+            "windows": {
+                "command": "$elf = '${command:cmake.launchTargetPath}' -replace '\\\\', '/'; $board = [IO.Path]::GetFileNameWithoutExtension($elf); Start-Process -NoNewWindow -FilePath sim/.venv/Scripts/python.exe -ArgumentList 'sim/emulation/gdb_relay.py', '--listen', '3333', '--target', '3334'; & sim/.renode/renode.exe --console -e \"`$elf = @$elf; include @sim/emulation/boards/$board.resc; machine StartGdbServer 3334\""
+            },
             "isBackground": true,
             "problemMatcher": {
                 "owner": "renode",
@@ -48,6 +54,9 @@
             "label": "Renode: stop",
             "type": "shell",
             "command": "pkill -f 'include @.*sim/emulation/board[s]/'; pkill -f 'sim/emulation/gdb_rela[y].py'; true",
+            "windows": {
+                "command": "Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -match 'include @.*sim/emulation/board[s]/|sim/emulation/gdb_rela[y]\\.py' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }; exit 0"
+            },
             "problemMatcher": [],
             "presentation": { "reveal": "never", "showReuseMessage": false },
             "hide": true

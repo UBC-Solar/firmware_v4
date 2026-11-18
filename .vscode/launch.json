@@ -65,6 +65,7 @@
       "request": "launch",
       "module": "pytest",
       "python": "${workspaceFolder}/sim/.venv/bin/python",
+      "windows": { "python": "${workspaceFolder}/sim/.venv/Scripts/python.exe" },
       "cwd": "${workspaceFolder}/sim",
       "args": ["${file}", "-k", "${input:silTest}", "--gdb", "-s"],
       "console": "integratedTerminal",

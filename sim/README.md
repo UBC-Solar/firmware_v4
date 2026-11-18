@@ -22,18 +22,30 @@ sim/
 
 ## Setup (once)
 
-1. From the repo root: `sim/setup.sh`. It installs everything the sim needs into gitignored folders:
+1. From the repo root, run the setup script for your OS:
+   ```bash
+   sim/setup/setup.sh                                                  # Linux
+   powershell -ExecutionPolicy Bypass -File sim\setup\setup.ps1          # Windows
+   ```
+   It installs everything the sim needs into gitignored folders:
    - **Renode** in `sim/.renode/`: one exact nightly build, checksum-verified. pytest and the VS Code
      "Renode:" tasks use it; a `renode` on your `PATH` is ignored, because the chip model
      (`emulation/chip/stm32f103rct6.repl`) needs this build (the tagged 1.16.1 release has no F103
      DMA). `PYRENODE_PATH=<Renode folder>` overrides it, at your own risk.
-   - **Python packages** in `sim/.venv/` (pytest, pyrenode3 ...). Needs `git` and `python3-venv`.
+   - **Python packages** in `sim/.venv/` (pytest, pyrenode3 ...). Needs `git` and Python 3.11-3.15
+     (Linux: plus `python3-venv`; Windows: from python.org). Pick the interpreter with
+     `PYTHON=python3.12 sim/setup/setup.sh` or `setup.ps1 -Python C:\Python312\python.exe`.
 
    Re-run it after pulling: it only does work when the pinned Renode or `requirements.txt` changed.
 2. Build the board, any way you normally do: `make str`, `make str release`, or the VS Code CMake
    extension / `cmake --preset Debug` (→ `build/Debug/`, `build/Release/`). Tests find the ELF
    themselves: they read `CMAKE_BUILD_TYPE` from each build folder's `CMakeCache.txt`, so the folder
    name doesn't matter.
+
+**Windows status:** the setup script is written for Windows, but the sim hasn't been run there yet.
+Two parts are Linux-only for now: the VS Code "Renode:" tasks (bash commands), and `pytest --gdb`
+(it symlinks `sim/.out/gdb-target.elf`, which Windows only allows in Developer Mode). On Windows the
+test runner is `sim\.venv\Scripts\pytest sim`.
 
 ## Run the tests
 

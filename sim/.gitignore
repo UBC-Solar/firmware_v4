@@ -6,5 +6,5 @@ __pycache__/
 # Renode test output
 logs/
 snapshots/
-# Pinned Renode install (sim/setup.sh)
+# Pinned Renode install (sim/setup/)
 .renode/

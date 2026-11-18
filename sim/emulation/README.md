@@ -60,14 +60,15 @@ boards/str.resc
 ## The chip: what we add to Renode's F103 model
 
 `chip/stm32f103rct6.repl` is an **unmodified** copy of Renode's `platforms/cpus/stm32f103.repl` from
-the pinned Renode build (`../setup.sh`), so a different Renode install can't change the chip
+the pinned Renode build (`../setup/`), so a different Renode install can't change the chip
 under us. It has the CPU, NVIC, GPIO, EXTI, USART1–5, I2C1–2, timers and DMA, but is missing
 peripherals our firmware uses. The peripheral classes it names are compiled into Renode, so it only
 works with that build.
 
 **Never edit the repl.** Every fix goes in `chip/stm32f103rct6.resc` (and `peripherals/` if it needs
 Python), so every board gets it and the repl stays byte-identical to upstream. To move to a newer
-Renode: bump `RENODE_BUILD`/`RENODE_SHA256` in `setup.sh`, run it, copy
+Renode: bump the build name and checksum in both `setup/setup.sh` and `setup/setup.ps1` (each has
+its own checksum: Linux `.tar.gz`, Windows `.zip`), run one, copy
 `sim/.renode/platforms/cpus/stm32f103.repl` over ours, run the tests, and drop any `.resc` fix
 upstream now does itself.
 

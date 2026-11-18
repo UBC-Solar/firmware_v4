@@ -22,20 +22,18 @@ sim/
 
 ## Setup (once)
 
-1. Install the pinned Renode build: `sim/setup_renode.sh`. It downloads one exact nightly
-   (checksum-verified) into `sim/.renode/`, which pytest and the VS Code "Renode:" tasks use. A
-   `renode` on your `PATH` is ignored: the chip model (`emulation/chip/stm32f103rct6.repl`) needs
-   this build (the tagged 1.16.1 release has no F103 DMA). Re-run the script after pulling if
-   `RENODE_BUILD` in it changed. `PYRENODE_PATH=<Renode folder>` overrides it, at your own risk.
+1. From the repo root: `sim/setup.sh`. It installs everything the sim needs into gitignored folders:
+   - **Renode** in `sim/.renode/`: one exact nightly build, checksum-verified. pytest and the VS Code
+     "Renode:" tasks use it; a `renode` on your `PATH` is ignored, because the chip model
+     (`emulation/chip/stm32f103rct6.repl`) needs this build (the tagged 1.16.1 release has no F103
+     DMA). `PYRENODE_PATH=<Renode folder>` overrides it, at your own risk.
+   - **Python packages** in `sim/.venv/` (pytest, pyrenode3 ...). Needs `git` and `python3-venv`.
+
+   Re-run it after pulling: it only does work when the pinned Renode or `requirements.txt` changed.
 2. Build the board, any way you normally do: `make str`, `make str release`, or the VS Code CMake
    extension / `cmake --preset Debug` (→ `build/Debug/`, `build/Release/`). Tests find the ELF
    themselves: they read `CMAKE_BUILD_TYPE` from each build folder's `CMakeCache.txt`, so the folder
    name doesn't matter.
-3. Python environment, from the repo root:
-   ```bash
-   python -m venv sim/.venv
-   sim/.venv/bin/pip install -r sim/requirements.txt   # needs git: pyrenode3 comes from GitHub
-   ```
 
 ## Run the tests
 

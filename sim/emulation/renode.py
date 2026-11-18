@@ -10,7 +10,7 @@ from pathlib import Path
 
 RENODE_LOG_LEVEL = 3  # 3 = errors only. Renode warns on every unmodelled register bit (very noisy)
 
-# The pinned Renode build, installed by sim/setup_renode.sh
+# The pinned Renode build, installed by sim/setup.sh
 PINNED_RENODE_DIR = Path(__file__).resolve().parent.parent / ".renode"
 
 loaded = False
@@ -21,7 +21,7 @@ def load():
 
     pyrenode3 finds Renode through PYRENODE_PATH. If that isn't set, use the pinned build in
     sim/.renode/. Not the `renode` on PATH: the chip model needs that exact build (see
-    sim/setup_renode.sh), and another version fails in confusing ways (e.g. no firmware loaded).
+    sim/setup.sh), and another version fails in confusing ways (e.g. no firmware loaded).
     """
     global loaded, monitor, manager, cast, CANMessageFrame, CpuAddressHook
     global Array, Byte, UInt64, Action, Boolean
@@ -31,7 +31,7 @@ def load():
     if "PYRENODE_PATH" not in os.environ:
         if not (PINNED_RENODE_DIR / "renode").exists():
             raise RuntimeError(
-                "Renode not installed: run sim/setup_renode.sh (or set PYRENODE_PATH to a Renode folder)"
+                "Renode not installed: run sim/setup.sh (or set PYRENODE_PATH to a Renode folder)"
             )
         os.environ["PYRENODE_PATH"] = str(PINNED_RENODE_DIR)
 

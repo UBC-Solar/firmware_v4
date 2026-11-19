@@ -3,15 +3,17 @@
 #include "adc.h"
 #include <stdint.h>
 
-/** Load current in amperes for all five eFuse output channels.
- *  Derived from the ILM pin voltage using GIMON = 657 µA/A (typ) and
- *  the per-channel RILM resistor values. */
+/** Load current in amperes. The first five fields correspond to the five eFuse 
+ *  output channels, derived from the ILM pin voltage using GIMON = 657 µA/A (typ) and
+ *  the per-channel RILM resistor values. 'tel' is the current through the TEL 
+ *  current sensor (U3.2) on the 12V mux path.*/
 typedef struct {
     float drd;
     float mdi;
     float spare_ctrl;
     float spare_mux;
     float spare;
+    float tel;
 } AdcCurrentReadings;
 
 /**

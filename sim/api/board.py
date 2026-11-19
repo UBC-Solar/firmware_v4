@@ -26,7 +26,9 @@ pyrenode3's Monitor.
 """
 
 import inspect
+import os
 import re
+import shutil
 import socket
 import subprocess
 import sys
@@ -115,8 +117,11 @@ class Board:
         renode.run("Clear")  # drop any machine left over from a previous test
         renode.run(f"logLevel {renode.RENODE_LOG_LEVEL}")
         # Set $elf first: the board file's `$elf ?= ...` only applies when $elf isn't set yet.
-        renode.run(f"$elf = @{self.elf}")
-        renode.run(f"include @{self.resc}")
+        # Paths as quoted strings: Renode's `@path` form ends at the first space (e.g.
+        # "C:/.../UBC Solar/...": "Could not tokenize here"). Forward slashes so a Windows
+        # backslash can't be read as an escape inside the quotes; .NET accepts them on Windows.
+        renode.run(f'$elf = "{self.elf.as_posix()}"')
+        renode.run(f'include "{self.resc.as_posix()}"')
 
         found, machine = renode.manager.CurrentEmulation.TryGetMachineByName(name, None)
         if not found:
@@ -230,7 +235,11 @@ class Board:
         # VS Code pre-launch task waits for) the link is already right.
         GDB_ELF_LINK.parent.mkdir(exist_ok=True)
         GDB_ELF_LINK.unlink(missing_ok=True)
-        GDB_ELF_LINK.symlink_to(self.elf)
+        try:
+            GDB_ELF_LINK.symlink_to(self.elf)
+        except OSError:
+            # Windows only allows symlinks with admin rights or Developer Mode: copy instead
+            shutil.copyfile(self.elf, GDB_ELF_LINK)
         in_use = RuntimeError(
             f"Port {GDB_PORT} or {RENODE_GDB_PORT} is already in use: another `pytest --gdb` run or "
             "VS Code Renode/SIL debug session is still open. Stop it (or find it: ss -ltnp | grep 333)."
@@ -249,10 +258,18 @@ class Board:
         except OSError:
             raise in_use from None
         with listener:
+            if os.name == "nt":
+                # Windows can't hand a socket to a child process (no pass_fds): free the port and
+                # let the relay bind it itself, right after the check above
+                listener.close()
+                relay_args = ["--listen", str(GDB_PORT)]
+                pass_fds = ()
+            else:
+                relay_args = ["--listen-fd", str(listener.fileno())]
+                pass_fds = [listener.fileno()]
             self._relay = subprocess.Popen(
-                [sys.executable, str(GDB_RELAY), "--listen-fd", str(listener.fileno()),
-                 "--target", str(RENODE_GDB_PORT)],
-                pass_fds=[listener.fileno()],
+                [sys.executable, str(GDB_RELAY), *relay_args, "--target", str(RENODE_GDB_PORT)],
+                pass_fds=pass_fds,
             )
         self._say(f"\n[sim] {self.name}: waiting for GDB on localhost:{GDB_PORT} ({self.elf})")
         # The relay connects to Renode when the debugger connects to it.

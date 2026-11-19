@@ -19,6 +19,7 @@ def test_boots_without_fault(board: Board):
     "TasksIWDG (osPriorityLow, below the IMU's Low1) so the watchdog is never refreshed",
     strict=False,
 )
+@pytest.mark.rtos_trace
 def test_every_rtos_task_runs(board: Board):
     """Every task the firmware creates must keep looping. Catches tasks that fail to be created
     (heap), hang (e.g. HAL_MAX_DELAY on a dead bus) or starve."""

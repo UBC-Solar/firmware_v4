@@ -8,6 +8,11 @@ the emulation only runs inside wait() / *.wait_for(). So:
 - every captured event is timestamped in firmware time, so timing asserts are repeatable.
 Never use time.sleep() or wall-clock timeouts in tests.
 
+Speed: by default virtual time runs as fast as the host can emulate (Renode's AdvanceImmediately),
+usually many times faster than real time. With gdb=True or realtime=True it is held to wall-clock
+pace instead, so a person watching (debugger, Live Watch) sees the firmware at its real speed. Test
+results don't depend on it: everything is timestamped in virtual time.
+
 Board holds time, lifecycle and debugging. Everything else is grouped by peripheral, so
 autocomplete on `board.gpio.` shows only GPIO calls:
     board.can   send, sent, wait_for              (can.py)
@@ -95,7 +100,7 @@ class Board:
     rtos: Rtos
 
     def __init__(self, name: str, gdb: bool = False, build_type: str = "Debug", trace: bool = False,
-                 say=None):
+                 say=None, realtime: bool = False, rtos_trace: bool = False):
         """Load boards/<name>.resc with the right ELF. The emulation is not running yet.
 
         gdb=True: start Renode's GDB server (behind gdb_relay.py on GDB_PORT) and wait for a
@@ -104,6 +109,10 @@ class Board:
         trace=True (always on with gdb): print each test step to the terminal, see _announce().
         say: function that prints a line to the terminal. The pytest fixture passes one that gets
         past pytest's output capture; the default prints to stderr.
+        realtime=True (always on with gdb): hold virtual time to wall-clock pace. Off, the emulation
+        runs as fast as it can, which is what CI wants.
+        rtos_trace=True: count RTOS task loops for rtos.task_loops(). Off by default: it hooks every
+        osDelay/queue wait, which costs a few ms of wall time per call (several x slower overall).
         """
         self.name = name
         self._trace = trace or gdb
@@ -122,6 +131,10 @@ class Board:
         # backslash can't be read as an escape inside the quotes; .NET accepts them on Windows.
         renode.run(f'$elf = "{self.elf.as_posix()}"')
         renode.run(f'include "{self.resc.as_posix()}"')
+        # Off: virtual time may not run ahead of the host clock (Renode's default). On: it runs as
+        # fast as the host emulates it. Set every time: the setting outlives `Clear`.
+        fast = not (realtime or gdb)
+        renode.run(f"emulation SetGlobalAdvanceImmediately {str(fast).lower()}")
 
         found, machine = renode.manager.CurrentEmulation.TryGetMachineByName(name, None)
         if not found:
@@ -137,7 +150,7 @@ class Board:
         self.gpio = Gpio(self)
         self.adc = Adc(self)
         self.mem = Mem(self)
-        self.rtos = Rtos(self)
+        self.rtos = Rtos(self, trace_loops=rtos_trace)
 
         self._relay = None
         if gdb:

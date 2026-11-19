@@ -22,6 +22,7 @@ def test_diagnostic_sent_every_100ms(board: Board):
     "64 bytes left after CAN_comms)",
     strict=False,
 )
+@pytest.mark.rtos_trace
 def test_every_rtos_task_runs(board: Board):
     # The CAN Rx task only loops when a frame arrives
     for _ in range(3):

@@ -17,6 +17,7 @@
 #define MDI_DIAGNOSTICS_DELAY 1000U
 #define IWDG_REFRESH_DELAY 100
 #define MDI_DAC7571_WRITE_ADDR (0x4Cu << 1U)
+#define MDI_I2C_TIMEOUT_MS 2U
 
 typedef enum {
     MDI_DAC_REGEN = (0b0001101u << 1),

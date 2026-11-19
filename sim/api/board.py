@@ -117,8 +117,11 @@ class Board:
         renode.run("Clear")  # drop any machine left over from a previous test
         renode.run(f"logLevel {renode.RENODE_LOG_LEVEL}")
         # Set $elf first: the board file's `$elf ?= ...` only applies when $elf isn't set yet.
-        renode.run(f"$elf = @{self.elf}")
-        renode.run(f"include @{self.resc}")
+        # Paths as quoted strings: Renode's `@path` form ends at the first space (e.g.
+        # "C:/.../UBC Solar/...": "Could not tokenize here"). Forward slashes so a Windows
+        # backslash can't be read as an escape inside the quotes; .NET accepts them on Windows.
+        renode.run(f'$elf = "{self.elf.as_posix()}"')
+        renode.run(f'include "{self.resc.as_posix()}"')
 
         found, machine = renode.manager.CurrentEmulation.TryGetMachineByName(name, None)
         if not found:

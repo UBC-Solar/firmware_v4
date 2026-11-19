@@ -1,0 +1,81 @@
+name: SIL tests (Renode)
+
+# Runs sim/ (pytest on emulated boards, see sim/README.md) for each board's Debug build.
+# Virtual time runs as fast as the runner can emulate (Board's default), not real time.
+
+on:
+  push:
+    paths:
+      - 'firmware/**'
+      - 'sim/**'
+      - '.github/workflows/sim.yml'
+  pull_request:
+    paths:
+      - 'firmware/**'
+      - 'sim/**'
+      - '.github/workflows/sim.yml'
+  workflow_dispatch:
+
+jobs:
+  sil:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        # One job per board: each gets its own Renode, so boards run in parallel
+        board: [dist, drd, hvc, mdi, mst, str, tel]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install build tools
+        timeout-minutes: 15
+        run: |
+          for attempt in 1 2 3; do
+            if sudo timeout 240 apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update &&
+               sudo timeout 240 apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y \
+                 cmake ninja-build gcc-arm-none-eabi libnewlib-arm-none-eabi; then
+              exit 0
+            fi
+            echo "apt attempt $attempt failed or stalled, retrying"
+            sleep 10
+          done
+          exit 1
+
+      - name: Build ${{ matrix.board }} (Debug)
+        # Same as `make <board>`; called directly because dist has no Makefile target
+        run: |
+          cmake --preset Debug -S firmware/components/${{ matrix.board }} -B firmware/components/${{ matrix.board }}/build
+          cmake --build firmware/components/${{ matrix.board }}/build
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # setup.sh pins the Renode build (and its checksum), so its hash changes exactly when Renode does
+      - name: Cache Renode
+        uses: actions/cache@v4
+        with:
+          path: sim/.renode
+          key: renode-${{ runner.os }}-${{ hashFiles('sim/setup/setup.sh') }}
+
+      - name: Cache Python environment
+        uses: actions/cache@v4
+        with:
+          path: sim/.venv
+          key: sim-venv-${{ runner.os }}-py3.12-${{ hashFiles('sim/requirements.txt') }}
+
+      - name: Set up sim (Renode + Python packages)
+        run: sim/setup/setup.sh
+
+      - name: Run SIL tests (${{ matrix.board }})
+        run: sim/.venv/bin/pytest sim/tests/${{ matrix.board }} -p no:cacheprovider --durations=10 --junitxml=sim-results-${{ matrix.board }}.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sim-results-${{ matrix.board }}
+          path: sim-results-${{ matrix.board }}.xml

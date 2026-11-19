@@ -104,6 +104,17 @@ void LcdDriverRefresh();
 void LcdDriverDrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t color);
 
 /**
+ * @brief Draws a bitmap using the LCD vertical-column bitmap format.
+ *
+ * @param x Starting x coordinate.
+ * @param y Starting y coordinate.
+ * @param width Bitmap width in pixels.
+ * @param height Bitmap height in pixels.
+ * @param bitmap Pointer to the bitmap data.
+ */
+void LcdDriverDrawBitmap(uint8_t x, uint8_t y, uint8_t width, uint8_t height, const uint8_t* bitmap);
+
+/**
  * @brief Forces a clear a rectangular area in the internal display buffer.
  *
  * @param x1 Left coordinate (0-based).

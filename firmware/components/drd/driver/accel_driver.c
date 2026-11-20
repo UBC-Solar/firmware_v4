@@ -12,10 +12,6 @@
 #include "adc.h"
 #include <stdbool.h>
 
-#ifdef DEBUG
-    extern int accel_adc;
-#endif
-
 /* DEFINES */
 #define ADC_2_ACTIVE 0 // activate if adc2 is used
 #define ADC_READ_TIMEOUT 10 // ms

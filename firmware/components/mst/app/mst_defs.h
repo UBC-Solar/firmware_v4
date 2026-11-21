@@ -21,7 +21,7 @@
 #define ISOSPI_CONNECTED true
 
 // If false, MST will not attempt to send CAN messages.
-#define CAN_CONNECTED true
+#define CAN_CONNECTED false
 
 // Temperature strategy: true = measure all mux channels every main loop,
 // false = measure one multiplexer setting per main loop (round-robin).
@@ -53,7 +53,7 @@
 #define NUM_CELLS_PER_MODULE 13U
 
 // Number of ADBMS1818 ICs daisy-chained on the isoSPI bus.
-#define SLAVE_NUM_DEVICES 2U
+#define SLAVE_NUM_DEVICES 1U
 
 // Slaveboard hardware revision, starting from 1.
 // e.g. a value of 1 corresponds to slavebord rev 2.0. 

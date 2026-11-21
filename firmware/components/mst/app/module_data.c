@@ -70,11 +70,11 @@ void Module_Init(
             // Cell Voltage Register Group C (...)
             { 6,  7,  8}, 
             // Cell Voltage Register Group D
-            { 9, 10, 11}, 
+            { 9, 10, -1}, 
             // Cell Voltage Register Group E
-            {12, 13, 14}, 
+            {11, 12, 13}, 
             // Cell Voltage Register Group F
-            {15, -1, -1}
+            {14, 15, -1}
         },
         // 2 bytes per value, each value can hold data for one of 4 modules at any point.
         // So each register group holds data for 12 modules.

@@ -14,6 +14,7 @@
 #include "lcd_driver.h"
 #include "cyclic_data_handler.h"
 #include <stdbool.h>
+#include "lcd_bitmap_export.h"
 
 /* STATIC VARIABLES */
 static LcdAppData g_lcd_data = {0};
@@ -51,6 +52,19 @@ void LcdHandlerInit(SPI_HandleTypeDef* hspi, volatile uint8_t speed_units)
 
 void LcdHandlerPageController(void)
 {
+    static bool bitmap_test_drawn = false;
+
+    if (!bitmap_test_drawn)
+    {
+        LcdDriverChangeScreen();
+        LcdDriverDrawBitmap(0, 0, LCD_BITMAP_EXPORT_WIDTH, LCD_BITMAP_EXPORT_HEIGHT, lcd_bitmap_export);
+        LcdDriverRefresh();
+
+        bitmap_test_drawn = true;
+    }
+
+    return;
+
     // Get the latest data for the LCD
     LcdHandlerGetData();
 

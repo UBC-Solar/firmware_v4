@@ -10,9 +10,7 @@
 
 #include "main.h"
 #include "gpio_driver.h"
-
-extern I2C_HandleTypeDef hi2c1;
-extern I2C_HandleTypeDef hi2c2;
+#include "i2c.h"
 
 /* At least 5 us at 72 MHz. Running I2C slower than spec is fine. */
 static void MdiI2cHalfBitDelay(void)

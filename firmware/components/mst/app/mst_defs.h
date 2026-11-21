@@ -59,7 +59,7 @@
 // e.g. a value of 1 corresponds to slavebord rev 2.0. 
 // a value of 2 corresponds to slaveboard rev 2.1
 // a value of 3 for rev 2.2, and so on...
-#define SLAVEBOARD_REV 1
+#define SLAVEBOARD_REV 2
 
 
 /*==============================================================================

@@ -16,6 +16,8 @@
 #define ADC_2_ACTIVE 0 // activate if adc2 is used
 #define ADC_READ_TIMEOUT 10 // ms
 
+#define ADC_1_THROTTLE ADC_CHANNEL_8
+
 /* GLOBAL VARIABLES */
 static AdcError g_last_error = ADC_FAULT_NONE;
 
@@ -44,7 +46,16 @@ static uint16_t NormalizeToDac(uint16_t adc1, uint16_t adc2);
 /* ADC DRIVER FUNCTIONALITY */
 static uint16_t ReadAdc(ADC_HandleTypeDef* hadc)
 {
-    HAL_ADC_Start(hadc);
+    ADC_ChannelConfTypeDef config = {
+        .Channel = ADC_1_THROTTLE,
+        .Rank = ADC_REGULAR_RANK_1,
+        .SamplingTime = ADC_SAMPLETIME_239CYCLES_5,
+    };
+
+    HAL_ADC_ConfigChannel(&hadc1, &config);
+    HAL_ADC_Start(&hadc1);
+    HAL_ADC_PollForConversion(&hadc1, 10);
+    
     if (HAL_ADC_PollForConversion(hadc, ADC_READ_TIMEOUT) != HAL_OK)
     {
         // Set the appropriate diagnostic flag for ADC timeout

@@ -47,23 +47,30 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     ${CMAKE_CURRENT_SOURCE_DIR}/app/dist_main.c
     ${CMAKE_CURRENT_SOURCE_DIR}/app/fsm.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/debug_io/debug_io.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/can_messages.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/debug_output.c
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/adc_runtime.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/gpio_runtime.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/led_runtime.c
+
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/adc_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/can_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/gpio_driver.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/faulting_runtime.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/led_runtime.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/i2c_driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/is31fl3236_driver.c
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/debug_io/debug_io.c
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     ${CMAKE_CURRENT_SOURCE_DIR}/app
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/debug_io
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/car_configs
     ${CMAKE_CURRENT_SOURCE_DIR}/driver
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/debug_io
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/car_configs
 )
 
 # Add project symbols (macros)

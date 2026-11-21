@@ -1,104 +1,88 @@
+/**
+ * @file gpio_driver.c
+ * @brief GPIO pin access and the eFuse FAULT pin interrupts.
+ */
+
 #include "gpio_driver.h"
-#include "dist_main.h"
-#include "stm32f1xx_hal_gpio.h"
-#include "main.h"
 
-/*============================================================================*/
-/* GENERIC GPIO */
+// HAL and CubeMX
+#include "main.h" // Pin names
 
+// DIST app
+#include "fsm.h" // FSM_EfuseFaultCallback()
+
+/**
+ * @brief Read the current logic state of a GPIO pin.
+ * @param port GPIO port instance (for example, ESTOP_GPIO_GPIO_Port).
+ * @param pin GPIO pin mask (for example, ESTOP_GPIO_Pin).
+ * @return GPIO pin state as GPIO_PIN_SET or GPIO_PIN_RESET.
+ */
 GPIO_PinState GPIO_Read(GPIO_TypeDef *port, uint16_t pin) {
     return HAL_GPIO_ReadPin(port, pin);
 }
 
+/**
+ * @brief Write a logic state to a GPIO pin.
+ * @param port GPIO port instance (for example, DRD_CTRL_GPIO_Port).
+ * @param pin GPIO pin mask (for example, DRD_CTRL_Pin).
+ * @param state Output state to write: GPIO_PIN_SET or GPIO_PIN_RESET.
+ */
 void GPIO_Write(GPIO_TypeDef *port, uint16_t pin, GPIO_PinState state) {
     HAL_GPIO_WritePin(port, pin, state);
 }
 
-void GPIO_TogglePin(GPIO_TypeDef *port, uint16_t pin) {
+/**
+ * @brief Toggle the output state of a GPIO pin.
+ * @param port GPIO port instance (for example, DEBUG_GPIO_Port).
+ * @param pin GPIO pin mask (for example, DEBUG_Pin).
+ */
+void GPIO_Toggle(GPIO_TypeDef *port, uint16_t pin) {
     HAL_GPIO_TogglePin(port, pin);
 }
 
-/*============================================================================*/
-/* EFUSE CONTROL
+/**
+ * @brief Turns the eFuse FAULT pins into falling-edge interrupts. Call once from DIST_Init().
  *
- * Each CTRL signal drives the EN pin of a TPS259631 eFuse. Driving high
- * enables the eFuse (output on); driving low disables it (output off).
- */
-
-void SPARE_MUX_CTRL_Toggle(void) {
-    GPIO_TogglePin(SPARE_MUX_CTRL_GPIO_Port, SPARE_MUX_CTRL_Pin);
-}
-
-void SPARE_CTRL_Toggle(void) {
-    GPIO_TogglePin(SPARE_CTRL_GPIO_Port, SPARE_CTRL_Pin);
-}
-
-void DRD_Toggle(void) {
-    GPIO_TogglePin(DRD_CTRL_GPIO_Port, DRD_CTRL_Pin);
-}
-
-void MDI_CTRL_Toggle(void) {
-    GPIO_TogglePin(MDI_CTRL_GPIO_Port, MDI_CTRL_Pin);
-}
-
-void CTRL_Enable_All(void) {
-    GPIO_Write(SPARE_CTRL_GPIO_Port, SPARE_CTRL_Pin, GPIO_PIN_SET);
-    GPIO_Write(MDI_CTRL_GPIO_Port,   MDI_CTRL_Pin,   GPIO_PIN_SET);
-    GPIO_Write(DRD_CTRL_GPIO_Port,   DRD_CTRL_Pin,   GPIO_PIN_SET);
-#ifndef SPARE_MUX_BENCHTOP
-    GPIO_Write(SPARE_MUX_CTRL_GPIO_Port, SPARE_MUX_CTRL_Pin, GPIO_PIN_SET);
-#endif // SPARE_MUX_BENCHTOP
-}
-
-void CTRL_Disable_All(void) {
-    GPIO_Write(SPARE_CTRL_GPIO_Port, SPARE_CTRL_Pin, GPIO_PIN_RESET);
-    GPIO_Write(MDI_CTRL_GPIO_Port,   MDI_CTRL_Pin,   GPIO_PIN_RESET);
-    GPIO_Write(DRD_CTRL_GPIO_Port,   DRD_CTRL_Pin,   GPIO_PIN_RESET);
-#ifndef SPARE_MUX_BENCHTOP
-    GPIO_Write(SPARE_MUX_CTRL_GPIO_Port, SPARE_MUX_CTRL_Pin, GPIO_PIN_RESET);
-#endif // SPARE_MUX_BENCHTOP
-}
-
-/*============================================================================*/
-/* EFUSE FAULT SENSE
+ * The TPS259631 FAULT pin is open-drain and active-low (pulled up on the board), so a falling edge
+ * means the eFuse shut its output off.
+ * All four pins are on GPIOB (PB12-PB15), which share EXTI15_10_IRQn; its handler is in the
+ * USER CODE section of cube stm32f1xx_it.c.
+ * Edges are ignored until the FSM arms them (FSM_EfuseFaultCallback()).
  *
- * The TPS259631 FAULT pin is open-drain active-low. It asserts (goes low)
- * when the eFuse shuts off due to overcurrent or thermal protection.
- * Pins are configured as GPIO_NOPULL — bias is provided externally.
+ * TODO: set these pins up as EXTI in dist.ioc instead, so cube gpio.c and stm32f1xx_it.c generate
+ * this (as the HVC does).
  */
+void GPIO_InitEfuseFaultInterrupts(void) {
+    GPIO_InitTypeDef gpio_init = {0};
 
-GPIO_PinState DRD_FUSE_Read(void) {
-    return GPIO_Read(DRD_FUSE_GPIO_Port, DRD_FUSE_Pin);
+    gpio_init.Pin = DRD_FUSE_Pin | MDI_FUSE_Pin | SPARE_CTRL_FUSE_Pin | SPARE_FUSE_Pin;
+    gpio_init.Mode = GPIO_MODE_IT_FALLING;
+    gpio_init.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(DRD_FUSE_GPIO_Port, &gpio_init);
+
+    HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 }
 
-GPIO_PinState MDI_FUSE_Read(void) {
-    return GPIO_Read(MDI_FUSE_GPIO_Port, MDI_FUSE_Pin);
+/**
+ * @brief HAL callback for the pin interrupts: passes an eFuse FAULT edge on to the FSM.
+ *
+ * Only the eFuse FAULT pins interrupt (falling edge, GPIO_InitEfuseFaultInterrupts()).
+ *
+ * Side effects: may set one of the g_shared *_fuse_tripped flags (through FSM_EfuseFaultCallback()).
+ *
+ * @param GPIO_Pin Pin that triggered the interrupt (for example, DRD_FUSE_Pin).
+ */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+    switch (GPIO_Pin) {
+        case DRD_FUSE_Pin:
+        case MDI_FUSE_Pin:
+        case SPARE_FUSE_Pin:
+        case SPARE_CTRL_FUSE_Pin:
+            FSM_EfuseFaultCallback(GPIO_Pin);
+            break;
+
+        default:
+            break;
+    }
 }
-
-GPIO_PinState SPARE_FUSE_Read(void) {
-    return GPIO_Read(SPARE_FUSE_GPIO_Port, SPARE_FUSE_Pin);
-}
-
-GPIO_PinState SPARE_CTRL_FUSE_Read(void) {
-    return GPIO_Read(SPARE_CTRL_FUSE_GPIO_Port, SPARE_CTRL_FUSE_Pin);
-}
-
-GPIO_PinState MUX_STATUS_Read(void) {
-    return GPIO_Read(MUX_STATUS_GPIO_Port, MUX_STATUS_Pin);
-}
-
-GPIO_PinState ESTOP_Read(void) {
-    return GPIO_Read(ESTOP_GPIO_GPIO_Port, ESTOP_GPIO_Pin);
-}
-
-/*============================================================================*/
-/* DEBUG */
-
-void DEBUG_LED_Set(uint8_t on) {
-    GPIO_Write(DEBUG_GPIO_Port, DEBUG_Pin, on ? GPIO_PIN_SET : GPIO_PIN_RESET);
-}
-
-void DEBUG_LED_Toggle(void) {
-    GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
-}
-

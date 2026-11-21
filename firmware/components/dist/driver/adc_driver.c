@@ -1,93 +1,71 @@
+/**
+ * @file adc_driver.c
+ * @brief ADC1 raw readings for the DIST's current sense inputs.
+ *
+ * Each channel is read with one blocking, software-triggered conversion.
+ */
+
 #include "adc_driver.h"
 
-/* TPS2596 current monitor gain: IILM/IOUT = 657 µA/A (typical, datasheet Eq. 6) */
-#define GIMON              (653e-6f)
+// Standard library
+#include <stddef.h>
 
-/* RILM resistor values per channel — sets both the current limit and monitor scale */
-#define RILM_DRD           910.0f
-#define RILM_MDI           7500.0f
-#define RILM_SPARE_CTRL    910.0f
-#define RILM_SPARE_MUX     910.0f
-#define RILM_SPARE         910.0f
+#define ADC_CONVERSION_TIMEOUT_MS   10U
 
-/* TEL current sensor ACS70331 data sheet (pg. 13) equation: 
- * VIOUT = SENS * IOUT + VZERO
- * Rearranged: IOUT(A) = (VIOUT(V) - VZERO(V)) / SENS(V/A) */
-#define TEL_SENSE_V_PER_A  0.400f /* TEL current sense U3.2: 0.400 V/A typical */
-#define TEL_VIOUT_ZERO_A   0.250f /* output at 0 A typical (25 degrees C) */
+static uint16_t ReadChannel(uint32_t channel);
 
-#define ADC_VREF           3.3f
-#define ADC_COUNTS         4095.0f
+static ADC_HandleTypeDef *hadc1 = NULL;
 
-#define EFUSE_CORRECTION_SLOPE 0.961085f
-#define EFUSE_CORRECTION_OFFSET 0.00328378f
-
-void ADC_Driver_Init(void)
-{
-    /* STM32F1 ADC requires a calibration run after init — skipping this causes
-     * readings to drift by several LSBs from the true value. */
-    HAL_ADCEx_Calibration_Start(&hadc1);
+/**
+ * @brief Stores the ADC handle and calibrates the ADC. Call once from DIST_Init().
+ *
+ * The STM32F1 ADC reads several counts off without a calibration run after power-up.
+ *
+ * @param _hadc1 HAL ADC handle (hadc1), already set up by MX_ADC1_Init().
+ */
+void ADC_Init(ADC_HandleTypeDef *_hadc1) {
+    hadc1 = _hadc1;
+    HAL_ADCEx_Calibration_Start(hadc1);
 }
 
 /**
- * @brief Reconfigure hadc1 to the given channel, perform one software-triggered
- *        conversion, and return the raw 12-bit result.
+ * @brief Reads every current sense channel once.
+ *
+ * Blocking: one conversion per channel, one after the other.
+ *
+ * @return Raw counts of every channel.
  */
-static uint16_t adc_read_channel(uint32_t channel)
-{
-    ADC_ChannelConfTypeDef sConfig = {0};
+ADC_Readings ADC_GetReadings(void) {
+    ADC_Readings readings;
+
+    readings.drd_ilm = ReadChannel(ADC_CHANNEL_14);
+    readings.mdi_ilm = ReadChannel(ADC_CHANNEL_7);
+    readings.spare_ilm = ReadChannel(ADC_CHANNEL_4);
+    readings.spare_mux_ilm = ReadChannel(ADC_CHANNEL_5);
+    readings.spare_ctrl_ilm = ReadChannel(ADC_CHANNEL_6);
+    readings.tel_sense = ReadChannel(ADC_CHANNEL_15);
+
+    return readings;
+}
+
+/**
+ * @brief Points ADC1 at one channel, runs one conversion, and returns the result.
+ * @param channel HAL channel (ADC_CHANNEL_x).
+ * @return Raw 12-bit reading.
+ */
+static uint16_t ReadChannel(uint32_t channel) {
+    ADC_ChannelConfTypeDef channel_config = {0};
     uint16_t value;
 
-    sConfig.Channel      = channel;
-    sConfig.Rank         = ADC_REGULAR_RANK_1;
-    sConfig.SamplingTime = ADC_SAMPLETIME_28CYCLES_5;
-    HAL_ADC_ConfigChannel(&hadc1, &sConfig);
+    channel_config.Channel = channel;
+    channel_config.Rank = ADC_REGULAR_RANK_1;
+    channel_config.SamplingTime = ADC_SAMPLETIME_28CYCLES_5;
+    HAL_ADC_ConfigChannel(hadc1, &channel_config);
 
-    HAL_ADC_Start(&hadc1);
-    HAL_ADC_PollForConversion(&hadc1, 10);
-    value = (uint16_t)HAL_ADC_GetValue(&hadc1);
-    HAL_ADC_Stop(&hadc1);
+    HAL_ADC_Start(hadc1);
+    HAL_ADC_PollForConversion(hadc1, ADC_CONVERSION_TIMEOUT_MS);
+    value = (uint16_t)HAL_ADC_GetValue(hadc1);
+    HAL_ADC_Stop(hadc1);
 
     return value;
-}
-
-/* IOUT(A) = VILM / (GIMON × RILM),  VILM = (raw / 4095) × 3.3V  (Eq. 6) */
-static float ilm_to_amps(uint16_t raw, float rilm)
-{
-    float vilm = ((float)raw / ADC_COUNTS) * ADC_VREF;
-    return vilm / (GIMON * rilm);
-}
-
-/* Correction for 910Ω channels from tests: measured = 0.961085×actual - 3.28378 mA
- * Inverted: actual = (measured + 3.28378 mA) / 0.961085 
- See BMS testing / DIST / efuse on monday*/
-static float correct_910(float amps)
-{
-    return (amps + EFUSE_CORRECTION_OFFSET) / EFUSE_CORRECTION_SLOPE;
-}
-
-/* Apply ADC: VIOUT = (raw / 4095) * 3.3V and rearranged equation for IOUT */
-static float tel_sense_to_amps(uint16_t raw)
-{
-    float vout = ((float)raw / ADC_COUNTS) * ADC_VREF;
-    return (vout - TEL_VIOUT_ZERO_A) / TEL_SENSE_V_PER_A;
-}
-
-uint16_t ADC_Read_ESTOP(void)
-{
-    return adc_read_channel(ADC_CHANNEL_10); /* PC0 */
-}
-
-AdcCurrentReadings ADC_Read_Currents(void)
-{
-    AdcCurrentReadings readings;
-
-    readings.drd        = correct_910(ilm_to_amps(adc_read_channel(ADC_CHANNEL_14), RILM_DRD));        /* PC4 */
-    readings.mdi        = ilm_to_amps(adc_read_channel(ADC_CHANNEL_7),  RILM_MDI);        /* PA7 */
-    readings.spare      = correct_910(ilm_to_amps(adc_read_channel(ADC_CHANNEL_4),  RILM_SPARE));      /* PA4 */
-    readings.spare_mux  = correct_910(ilm_to_amps(adc_read_channel(ADC_CHANNEL_5),  RILM_SPARE_MUX));  /* PA5 */
-    readings.spare_ctrl = correct_910(ilm_to_amps(adc_read_channel(ADC_CHANNEL_6),  RILM_SPARE_CTRL)); /* PA6 */
-    readings.tel        = tel_sense_to_amps(adc_read_channel(ADC_CHANNEL_15)); /* PC5 */
-    
-    return readings;
 }

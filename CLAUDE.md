@@ -162,12 +162,16 @@ CAN, CRC, DMA, SPI2, USART1. Configured for **32 modules × 13 cells**.
   `0x203`, per-module voltage from `0x210`, temp from `0x220`, status from `0x230`.
 
 ### `dist` — Power Distribution · **bare-metal FSM**
-ADC1, CAN, I2C1. `main()` calls `AppMain()`. Not built by `make all` — configure it directly.
-- **Peripherals:** per-rail control and current/fuse monitoring for MDI, DRD, and spare rails
-  (`*_CTRL`, `*_CURRENT`, `*_FUSE` pins); `SUPP_ADC` supply monitoring; `ESTOP_GPIO`;
-  IS31FL3236 36-channel LED driver over I2C (`runtime/led_runtime.c`); `LED_TOGGLE`, `DEBUG`.
-- **FSM** (`app/fsm.c`): `FSM_STATE_STARTUP → FSM_STATE_ACTIVATE_CTRL → FSM_STATE_NORMAL`,
-  plus `FSM_STATE_FAULT`. Fault reporting in `runtime/faulting_runtime.c`.
+ADC1, CAN, I2C1. `main()` calls `DIST_Init()` once and `DIST_Main()` every loop pass
+(`app/dist_main.c`). Not built by `make all` — configure it directly. Laid out like `hvc`
+(`dist_defs.h` for tunables and bench overrides, `dist_types.h`, `fsm.c`, `can_messages.c`,
+`debug_output.c`) and follows `hvc/STYLE_GUIDE.md`.
+- **Peripherals:** TPS259631 eFuse control and current/fault monitoring for MDI, DRD, and spare
+  rails (`*_CTRL`, `*_CURRENT`, `*_FUSE` pins; FAULT pins are falling-edge EXTI); TEL rail current
+  sensor; `ESTOP_GPIO`; IS31FL3236 36-channel LED panel over I2C (`runtime/led_runtime.c`);
+  `LED_TOGGLE`, `DEBUG`.
+- **FSM** (`app/fsm.c`): `STATE_STARTUP → STATE_ENABLE_EFUSES → STATE_NORMAL`, plus
+  `STATE_FAULT`. Faults are bools in `FaultFlags` (`app/dist_types.h`).
 
 ### `aerosensor`
 Empty placeholder directory — no firmware yet.

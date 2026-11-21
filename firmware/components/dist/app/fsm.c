@@ -1,321 +1,360 @@
+/**
+ * @file fsm.c
+ * @brief DIST FSM core: init and run, states, interrupt callbacks, and helpers
+ *
+ * The FSM turns the LV boards' power on once the HVC asks for it, then watches for faults.
+ * In state order, it: waits for the HVC's LV power-up request, turns every eFuse on, then
+ * monitors ESTOP, the HVC fault message, and the eFuse FAULT pins.
+ * Any fault goes to STATE_FAULT, which turns every eFuse off and stays there until a reset.
+ *
+ * Sections, in order:
+ *   GLOBAL VARIABLES:    the DIST-wide variables (types in dist_types.h).
+ *   PUBLIC API:          FSM_Init() and FSM_Run(), called from dist_main.c.
+ *   STATES:              one function per FsmState, in state order.
+ *   INTERRUPT CALLBACKS: called from the eFuse FAULT pin interrupts.
+ *   HELPERS:             small functions used by the states and FSM_Run().
+ */
+
 #include "fsm.h"
-#include "dist_main.h"
-#include "faulting_runtime.h"
-#include "gpio_driver.h"
-#include "led_runtime.h"
-#include "adc_driver.h"
-#include "can_driver.h"
+
+// HAL and CubeMX
 #include "stm32f1xx_hal.h"
-#include "debug_io.h"
-#include <stdbool.h>
+#include "main.h" // Pin names
 
-/*============================================================================*/
-/* PRIVATE TYPE DEFS */
+// Drivers
+#include "gpio_driver.h"
 
-typedef struct {
-    uint32_t blink_tick;
-    uint32_t state_tick;
-} dist_ticks_t;
+// Runtime
+#include "led_runtime.h"
 
-/*============================================================================*/
-/* PRIVATE VARIABLES */
+// DIST app
+#include "can_messages.h"
+#include "debug_output.h"
+#include "dist_defs.h"
 
-static volatile FsmState_t FSM_state;
-static dist_ticks_t ticks;
-static uint8_t led_driver_ready;
+// States, in state order
+static void Startup(void);
+static void EnableEfuses(void);
+static void Normal(void);
+static void Fault(void);
 
-/*============================================================================*/
-/* PRIVATE FUNCTION PROTOTYPES */
+// Fault checks
+static void CheckEstop(void);
+static void CheckEfuseTrips(void);
 
-static bool timer_check(uint32_t interval, uint32_t *last_tick);
-static void send_heartbeat_if_due(void);
-static void send_lv_on_if_due(void);
-static void send_currents_if_due(void);
-static void send_branch_id_if_due(void);
-static bool check_critical_faults(FaultSource_t faults);
-static bool check_efuse_faults(FaultSource_t faults);
-static void print_currents(void);
+// ==== Global variables ====
+// The one variable of each DIST-wide type (types in dist_types.h).
+// Any file that includes fsm.h can use them.
+// g_fault_flags is volatile because the CAN interrupt writes it.
+// g_state stays volatile to be safe, but only the main loop writes it.
+// g_shared marks its interrupt-written fields volatile.
 
-static void state_startup(void);
-static void state_activate_ctrl(void);
-static void state_normal(void);
-static void state_fault(void);
-static uint16_t amps_to_ma_u16(float amps);
+volatile FsmState   g_state;
+volatile FaultFlags g_fault_flags;
+SharedData          g_shared;
+Ticks               g_ticks;
 
-/*============================================================================*/
-/* STATE TABLE */
-
-static void (*FSM_state_table[])(void) = {
-    state_startup,
-    state_activate_ctrl,
-    state_normal,
-    state_fault,
-};
-
-/*============================================================================*/
-/* PUBLIC FUNCTION IMPLEMENTATIONS */
-
-void FSM_Init(uint8_t led_driver_available)
-{
-    led_driver_ready = led_driver_available;
-    ticks.blink_tick = HAL_GetTick();
-    ticks.state_tick = HAL_GetTick();
-    FSM_state        = FSM_STATE_STARTUP;
-}
-
-void FSM_Run(void)
-{
-    static FsmState_t prev_state = FSM_STATE_STARTUP;
-
-    if (FSM_state != prev_state)
-    {
-        static const char *state_names[] = {
-            "STARTUP",
-            "ACTIVATE_CTRL",
-            "NORMAL",
-            "FAULT",
-        };
-        ticks.state_tick = HAL_GetTick();
-        DEBUG_IO_PRINT("FSM -> %s\r\n", state_names[FSM_state]);
-        if (FSM_state == FSM_STATE_NORMAL)
-        {
-            CAN_Send_LV_ON();
-        }
-        prev_state = FSM_state;
-    }
-
-    FSM_state_table[FSM_state]();
-
-    send_heartbeat_if_due();
-    send_lv_on_if_due();
-    send_currents_if_due();
-    send_branch_id_if_due();
-}
-
-/*============================================================================*/
-/* STATE FUNCTION IMPLEMENTATIONS */
+// ==== Public API ====
+// Called from dist_main.c: FSM_Init() once at startup, FSM_Run() every pass.
 
 /**
- * @brief Startup state. Waits for CAN authorisation before enabling outputs.
- *        ESTOP is monitored throughout; eFuse FAULT pins are not yet active.
+ * @brief Sets the starting FSM state. Call once from DIST_Init().
  *
- * Exit: CAN 0x303 bit 0 → ACTIVATE_CTRL. ESTOP asserted → FAULT.
+ * Side effects: writes g_state and g_ticks.state_entry.
  */
-static void state_startup(void)
-{
-    if (timer_check(100, &ticks.blink_tick))
-    {
-        DEBUG_LED_Toggle();
-    }
-
-    if (CAN_ExtFault_Received())
-    {
-        DEBUG_IO_PRINT("FAULT: HVC fault received during STARTUP\r\n");
-        FSM_state = FSM_STATE_FAULT;
-    }
-#ifndef BENCHTOP_TESTING
-    else if (Fault_Get() & FAULT_ESTOP)
-    {
-        DEBUG_IO_PRINT("FAULT: ESTOP asserted during STARTUP\r\n");
-        FSM_state = FSM_STATE_FAULT;
-    }
-#endif // BENCHTOP_TESTING
-    else if (CAN_Startup_Received())
-    {
-        DEBUG_IO_PRINT("CAN 0x303 received, exiting STARTUP\r\n");
-        FSM_state = FSM_STATE_ACTIVATE_CTRL;
-    }
+void FSM_Init(void) {
+    g_ticks.state_entry = HAL_GetTick();
+    g_state = STATE_STARTUP;
 }
 
 /**
- * @brief Activate control state. Enables all eFuse CTRL signals.
- *        Single-cycle action state — transitions immediately to NORMAL.
+ * @brief Runs one pass of the FSM. Call from DIST_Main() every pass.
  *
- * Exit: Immediate → NORMAL.
+ * In order: prints the debug output (DEBUG_Output_Run(), debug_output.c), checks ESTOP, switches to
+ * STATE_FAULT if any fault flag is set, sends periodic CAN messages, then runs the current state's
+ * function.
+ *
+ * A fault reaches STATE_FAULT one of two ways.
+ * A state that finds a fault sets its flag and goes to STATE_FAULT itself, in the same pass.
+ * The CAN interrupt only sets a flag; the FSM_AnyFaultActive() check here then moves to STATE_FAULT
+ * on the next pass.
+ *
+ * Side effects: may set g_fault_flags.estop and change g_state.
  */
-static void state_activate_ctrl(void)
-{
-    CTRL_Enable_All();
+void FSM_Run(void) {
+    DEBUG_Output_Run(); // First, so it sees this pass's state and flags
 
-    // Discard any eFuse FAULT bits latched while the fuses were still
-    // disabled (their sense lines have no defined level until powered).
-    // Real faults from this point on, including power-up transients, are
-    // still caught by the EXTI handler and checked after NORMAL's
-    // stabilisation window.
-    Fault_Clear();
+    CheckEstop();
 
-    DEBUG_LED_Set(1);
-    DEBUG_IO_PRINT("CTRL signals enabled, exiting ACTIVATE_CTRL\r\n");
-    FSM_state = FSM_STATE_NORMAL;
+    if (FSM_AnyFaultActive()) {
+        g_state = STATE_FAULT;
+    }
+
+    CAN_Messages_SendAll();
+
+    switch (g_state) {
+        case STATE_STARTUP:
+            Startup();
+            break;
+
+        case STATE_ENABLE_EFUSES:
+            EnableEfuses();
+            break;
+
+        case STATE_NORMAL:
+            Normal();
+            break;
+
+        case STATE_FAULT:
+        default:
+            Fault();
+            break;
+    }
+}
+
+// ==== States ====
+// One function per FsmState, in state order.
+// FSM_Run() calls the current state's function every pass.
+// Each state's doc lists its exit conditions and the state each one goes to.
+
+/**
+ * @brief Waits for the HVC to ask for LV power, with every eFuse still off.
+ *
+ * Blinks DEBUG_LED every STARTUP_LED_BLINK_MS while waiting.
+ * ESTOP and the HVC fault message are checked by FSM_Run(); the eFuse FAULT pins are not armed yet.
+ *
+ * Exit Condition: LV power-up request received from the HVC.
+ * Exit State: STATE_ENABLE_EFUSES
+ */
+static void Startup(void) {
+    if (FSM_TimerElapsed(STARTUP_LED_BLINK_MS, &g_ticks.debug_led)) {
+        GPIO_Toggle(DEBUG_GPIO_Port, DEBUG_Pin);
+    }
+
+    if (g_shared.lv_powerup_received) {
+        PRINT_STEP("LV power-up request received");
+        g_ticks.state_entry = HAL_GetTick();
+        g_state = STATE_ENABLE_EFUSES;
+        return;
+    }
 }
 
 /**
- * @brief Normal monitoring state. All eFuses are enabled. ESTOP and CAN ext
- *        faults are checked every cycle; eFuse FAULT lines are not acted on
- *        until 200 ms after entry to allow outputs to stabilise.
+ * @brief Turns every eFuse on, then arms the eFuse FAULT pin interrupts.
  *
- * Exit: ESTOP, 0x304 non-zero, or any eFuse FAULT asserted → FAULT.
+ * Runs once, for one pass.
+ * The interrupts are armed only after the eFuses are on: a FAULT pin has no defined level while
+ * its eFuse is off, so an edge before then means nothing.
+ * Every trip from here on is recorded, including power-up transients; Normal() acts on them once
+ * the outputs have settled.
+ * Also sends the LV power-up acknowledge straight away, so the HVC does not wait for the periodic
+ * one, and turns DEBUG_LED on.
+ *
+ * Exit Condition: none (immediately).
+ * Exit State: STATE_NORMAL
  */
-static void state_normal(void)
-{
-    FaultSource_t faults = Fault_Get();
+static void EnableEfuses(void) {
+    FSM_EnableAllEfuses();
+    g_shared.efuse_irq_armed = true;
 
-    if (check_critical_faults(faults))
-    {
-        FSM_state = FSM_STATE_FAULT;
+    GPIO_Write(DEBUG_GPIO_Port, DEBUG_Pin, GPIO_PIN_SET);
+    CAN_Messages_SendLvPowerupAck();
+    PRINT_STEP("eFuses on, eFuse fault check armed");
+
+    g_ticks.state_entry = HAL_GetTick();
+    g_state = STATE_NORMAL;
+}
+
+/**
+ * @brief Normal running state: every eFuse is on. Watches for eFuse trips.
+ *
+ * eFuse trips are only acted on once EFUSE_SETTLE_MS have passed since entering this state, to let
+ * the outputs settle; a trip recorded during that time still faults once it is over.
+ * ESTOP and the HVC fault message are checked by FSM_Run().
+ *
+ * Exit Condition: an eFuse trip recorded, after EFUSE_SETTLE_MS.
+ * Exit State: STATE_FAULT
+ */
+static void Normal(void) {
+    if ((HAL_GetTick() - g_ticks.state_entry) < EFUSE_SETTLE_MS) {
         return;
     }
 
-    // Allow eFuses time to stabilise before monitoring their FAULT lines
-    if (HAL_GetTick() - ticks.state_tick < 200)
-    {
+    CheckEfuseTrips();
+
+    if (FSM_AnyFaultActive()) {
+        g_state = STATE_FAULT;
         return;
-    }
-
-    if (timer_check(500, &ticks.blink_tick))
-    {
-        DEBUG_IO_PRINT("MUX_STATUS: %d\r\n", MUX_STATUS_Read());
-        print_currents();
-    }
-
-    if (check_efuse_faults(faults))
-    {
-        FSM_state = FSM_STATE_FAULT;
     }
 }
 
 /**
- * @brief Fault state. Disables all eFuse outputs and broadcasts a fault CAN frame.
- *        Latching — requires a board reset to clear.
+ * @brief Safe state. Turns every eFuse off and blinks DEBUG_LED and the panel fault LED.
  *
- * Exit: None.
+ * The DIST fault CAN message is sent from CAN_Messages_SendAll() while in this state.
+ * Has no exit; the DIST stays here until it is reset.
  */
-static void state_fault(void)
-{
-    CTRL_Disable_All();
+static void Fault(void) {
+    FSM_DisableAllEfuses();
 
-    if (timer_check(200, &ticks.blink_tick))
-    {
-        DEBUG_LED_Toggle();
-        CAN_Send_Fault();
-        DEBUG_IO_PRINT("MUX_STATUS: %d\r\n", MUX_STATUS_Read());
-
-        if (led_driver_ready)
-        {
-            IS31FL3236A_DIST_FAULT_Toggle();
-        }
+    if (FSM_TimerElapsed(FAULT_LED_BLINK_MS, &g_ticks.debug_led)) {
+        GPIO_Toggle(DEBUG_GPIO_Port, DEBUG_Pin);
+        LED_Toggle(LED_OUT_DIST_FAULT); // Does nothing if the LED panel was not found
     }
 }
 
-/*============================================================================*/
-/* HELPER FUNCTIONS */
+// ==== Interrupt callbacks ====
+// Called from the eFuse FAULT pin interrupts (HAL_GPIO_EXTI_Callback() in gpio_driver.c).
+// Only records the trip in g_shared: Normal() turns it into a fault flag once the eFuses have
+// settled.
+// Nothing prints here: the fault is printed from the main loop (debug_output.c).
 
-static void send_lv_on_if_due(void)
-{
-    static uint32_t lv_on_tick = 0U;
-    if (timer_check(500, &lv_on_tick))
-    {
-        CAN_Send_LV_ON();
+/**
+ * @brief Records an eFuse trip, if the eFuse FAULT interrupts are armed.
+ *
+ * The TPS259631 FAULT pin is open-drain and active-low: it falls when the eFuse shuts its output
+ * off (overcurrent or overtemperature), which fires this interrupt.
+ * Ignored until EnableEfuses() arms it (g_shared.efuse_irq_armed).
+ *
+ * Side effects: may set one of the g_shared *_fuse_tripped flags.
+ *
+ * @param fuse_pin FAULT pin that fell (DRD_FUSE_Pin, MDI_FUSE_Pin, SPARE_FUSE_Pin or
+ *                 SPARE_CTRL_FUSE_Pin).
+ */
+void FSM_EfuseFaultCallback(uint16_t fuse_pin) {
+    if (!g_shared.efuse_irq_armed) {
+        return;
+    }
+
+    switch (fuse_pin) {
+        case DRD_FUSE_Pin:
+            g_shared.drd_fuse_tripped = true;
+            break;
+
+        case MDI_FUSE_Pin:
+            g_shared.mdi_fuse_tripped = true;
+            break;
+
+        case SPARE_FUSE_Pin:
+            g_shared.spare_fuse_tripped = true;
+            break;
+
+        case SPARE_CTRL_FUSE_Pin:
+            g_shared.spare_ctrl_fuse_tripped = true;
+            break;
+
+        default:
+            break;
     }
 }
 
-static void send_heartbeat_if_due(void)
-{
-    static uint32_t heartbeat_tick = 0U;
-    if (timer_check(500, &heartbeat_tick))
-    {
-        CAN_Send_Heartbeat();
-    }
-}
+// ==== Helpers ====
+// Small functions used by the states and FSM_Run().
+// Grouped by topic: Timing, Faults, eFuses.
+// Debug output helpers are in debug_output.c.
 
-// Converts amps to whole mA for CAN. Clamps to 0..65535 because a slightly
-// negative reading (sensor zero-offset) is undefined behaviour when cast to unsigned.
-static uint16_t amps_to_ma_u16(float amps)
-{
-    float ma = (amps * 1000.0f) + 0.5f;   // +0.5 rounds to nearest mA
-    if (ma < 0.0f)     { return 0U; }
-    if (ma > 65535.0f) { return 65535U; }
-    return (uint16_t)ma;
-}
+// --- Timing ---
 
-static void send_currents_if_due(void)
-{
-    static uint32_t currents_tick = 0U;
-    if (timer_check(1000, &currents_tick))
-    {
-        AdcCurrentReadings c = ADC_Read_Currents();
-#define TO_MA_U8(x) ((uint8_t)(((x) * 1000.0f / 5.0f) > 255.0f ? 255U : (unsigned int)((x) * 1000.0f / 5.0f)))
-        CAN_Send_Currents(TO_MA_U8(c.drd), TO_MA_U8(c.mdi), TO_MA_U8(c.spare_ctrl),
-                          TO_MA_U8(c.spare_mux), TO_MA_U8(c.spare));
-
-#undef TO_MA_U8
-        CAN_Send_TEL_Current(amps_to_ma_u16(c.tel));
-
-#undef TO_MA_U8
-        print_currents();
-    }
-}
-
-static void send_branch_id_if_due(void)
-{
-    static uint32_t branch_id_tick = 0U;
-    if (timer_check(1000, &branch_id_tick))
-    {
-        CAN_Send_Branch_ID();
-        CAN_Send_Commit_Hash();
-    }
-}
-
-// Returns true and prints the fault if ESTOP is asserted or 0x304 is non-zero.
-static bool check_critical_faults(FaultSource_t faults)
-{
-#ifndef BENCHTOP_TESTING
-    if (faults & FAULT_ESTOP)
-    {
-        DEBUG_IO_PRINT("FAULT: ESTOP asserted\r\n");
-        return true;
-    }
-#endif // BENCHTOP_TESTING
-    if (CAN_ExtFault_Received())
-    {
-        DEBUG_IO_PRINT("FAULT: non-zero 0x304 received\r\n");
+/**
+ * @brief Checks whether interval_ms have passed since *last_tick, and if so restarts the timer.
+ *
+ * In a condition with other checks, put it last: it restarts the timer when it returns true, so it
+ * must only run once the other checks are already true.
+ *
+ * @param interval_ms Time to wait, in ms.
+ * @param last_tick   Timestamp (HAL_GetTick()) the interval is measured from.
+ *                    Set to now when it returns true.
+ * @return true if the interval has elapsed.
+ */
+bool FSM_TimerElapsed(uint32_t interval_ms, uint32_t *last_tick) {
+    if (HAL_GetTick() - *last_tick >= interval_ms) {
+        *last_tick = HAL_GetTick();
         return true;
     }
     return false;
 }
 
-// Returns true and prints each tripped eFuse FAULT line.
-static bool check_efuse_faults(FaultSource_t faults)
-{
-    if (!(faults & (FAULT_DRD_FUSE | FAULT_MDI_FUSE | FAULT_SPARE_FUSE | FAULT_SPARE_CTRL_FUSE)))
-    {
-        return false;
-    }
-    if (faults & FAULT_DRD_FUSE)        DEBUG_IO_PRINT("FAULT: DRD_FUSE tripped\r\n");
-    if (faults & FAULT_MDI_FUSE)        DEBUG_IO_PRINT("FAULT: MDI_FUSE tripped\r\n");
-    if (faults & FAULT_SPARE_FUSE)      DEBUG_IO_PRINT("FAULT: SPARE_FUSE tripped\r\n");
-    if (faults & FAULT_SPARE_CTRL_FUSE) DEBUG_IO_PRINT("FAULT: SPARE_CTRL_FUSE tripped\r\n");
-    return true;
-}
+// --- Faults ---
 
-static void print_currents(void)
-{
-    AdcCurrentReadings currents = ADC_Read_Currents();
-    DEBUG_IO_PRINT("CURRENTS: DRD=%umA MDI=%umA SPARE_CTRL=%umA SPARE_MUX=%umA SPARE=%umA\r\n",
-                   (unsigned int)(currents.drd        * 1000.0f),
-                   (unsigned int)(currents.mdi        * 1000.0f),
-                   (unsigned int)(currents.spare_ctrl * 1000.0f),
-                   (unsigned int)(currents.spare_mux  * 1000.0f),
-                   (unsigned int)(currents.spare      * 1000.0f));
-}
+/**
+ * @brief Checks whether any fault flag is set.
+ *
+ * Reads g_fault_flags as an array of bools, so new flags are checked automatically.
+ *
+ * @return true if at least one fault flag is set.
+ */
+bool FSM_AnyFaultActive(void) {
+    const volatile bool *flag = (const volatile bool*)&g_fault_flags;
 
-static bool timer_check(uint32_t interval, uint32_t *last_tick)
-{
-    uint32_t now = HAL_GetTick();
-    if (now - *last_tick >= interval)
-    {
-        *last_tick = now;
-        return true;
+    for (uint32_t i = 0U; i < sizeof(g_fault_flags); i++) {
+        if (flag[i]) {
+            return true;
+        }
     }
     return false;
+}
+
+/**
+ * @brief Sets the ESTOP fault while ESTOP is pressed, unless IGNORE_ESTOP is on.
+ *
+ * ESTOP is active-low and polled every pass (g_shared.pins), in every state.
+ *
+ * Side effects: may set g_fault_flags.estop.
+ */
+static void CheckEstop(void) {
+    if (!IGNORE_ESTOP && (g_shared.pins.estop == GPIO_PIN_RESET)) {
+        g_fault_flags.estop = true;
+    }
+}
+
+/**
+ * @brief Turns each eFuse trip the pin interrupts recorded into its fault flag.
+ *
+ * Called by Normal() once the eFuses have settled.
+ *
+ * Side effects: may set g_fault_flags.drd_fuse, mdi_fuse, spare_fuse, or spare_ctrl_fuse.
+ */
+static void CheckEfuseTrips(void) {
+    if (g_shared.drd_fuse_tripped) {
+        g_fault_flags.drd_fuse = true;
+    }
+    if (g_shared.mdi_fuse_tripped) {
+        g_fault_flags.mdi_fuse = true;
+    }
+    if (g_shared.spare_fuse_tripped) {
+        g_fault_flags.spare_fuse = true;
+    }
+    if (g_shared.spare_ctrl_fuse_tripped) {
+        g_fault_flags.spare_ctrl_fuse = true;
+    }
+}
+
+// --- eFuses ---
+// Each CTRL pin drives the EN pin of a TPS259631 eFuse: high turns its output on, low turns it off.
+
+/**
+ * @brief Turns every eFuse output on: SPARE_CTRL, MDI, DRD, and SPARE_MUX.
+ *
+ * SPARE_MUX stays off with KEEP_SPARE_MUX_OFF (dist_defs.h).
+ * Used by EnableEfuses().
+ */
+void FSM_EnableAllEfuses(void) {
+    GPIO_Write(SPARE_CTRL_GPIO_Port, SPARE_CTRL_Pin, GPIO_PIN_SET);
+    GPIO_Write(MDI_CTRL_GPIO_Port,   MDI_CTRL_Pin,   GPIO_PIN_SET);
+    GPIO_Write(DRD_CTRL_GPIO_Port,   DRD_CTRL_Pin,   GPIO_PIN_SET);
+    if (!KEEP_SPARE_MUX_OFF) {
+        GPIO_Write(SPARE_MUX_CTRL_GPIO_Port, SPARE_MUX_CTRL_Pin, GPIO_PIN_SET);
+    }
+}
+
+/**
+ * @brief Turns every eFuse output off: SPARE_CTRL, MDI, DRD, and SPARE_MUX.
+ *
+ * Used by Fault().
+ */
+void FSM_DisableAllEfuses(void) {
+    GPIO_Write(SPARE_CTRL_GPIO_Port,     SPARE_CTRL_Pin,     GPIO_PIN_RESET);
+    GPIO_Write(MDI_CTRL_GPIO_Port,       MDI_CTRL_Pin,       GPIO_PIN_RESET);
+    GPIO_Write(DRD_CTRL_GPIO_Port,       DRD_CTRL_Pin,       GPIO_PIN_RESET);
+    GPIO_Write(SPARE_MUX_CTRL_GPIO_Port, SPARE_MUX_CTRL_Pin, GPIO_PIN_RESET);
 }

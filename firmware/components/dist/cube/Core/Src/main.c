@@ -94,7 +94,9 @@ int main(void)
   MX_I2C1_Init();
   MX_CAN_Init();
   /* USER CODE BEGIN 2 */
-  AppMain();
+
+  DIST_Init(&hadc1, &hi2c1, &hcan);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -104,6 +106,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+    DIST_Main();
   }
   /* USER CODE END 3 */
 }

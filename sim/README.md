@@ -20,6 +20,12 @@ sim/
   pytest.ini  requirements.txt
 ```
 
+## Open the Python Environment
+```
+python -m venv sim/.venv
+```
+Creates an isolated Python environment in `sim/.venv/`, to install pytest and pyrenode3 packages
+
 ## Setup (once)
 
 1. From the repo root, run the setup script for your OS:

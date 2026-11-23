@@ -360,7 +360,6 @@ uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* moto
         sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_BATT_CURR_SENSOR_ADJUST_FLT_CHARS);
         fault_count++;
     }
-    return fault_count;
     if (motor_faults->motor_current_sensor_adjust_error)
     {
         sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_CURR_SENSOR_ADJUST_FLT_CHARS);
@@ -406,6 +405,8 @@ uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* moto
         sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_CTRL_OVERHEAT_FLT_CHARS);
         fault_count++;
     }
+
+    return fault_count;
 }
 
 /**

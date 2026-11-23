@@ -63,10 +63,10 @@ sim/.venv/bin/pytest sim --build-type Release   # test the Release build (defaul
 sim/.venv/bin/pytest sim --realtime   # firmware at wall-clock speed (on with --gdb)
 ```
 
-By default the firmware runs **as fast as the host can emulate it**, often several times faster than
-real time (Renode's AdvanceImmediately). Results don't change: every check uses firmware time. With
-`--gdb` or `--realtime` it is held to wall-clock speed, so Live Watch and LEDs look natural. The VS
-Code "Renode: debug board" launch doesn't use pytest and always runs in real time.
+By default the firmware runs **as fast as the host can emulate it**, not limited to real time (Renode's
+AdvanceImmediately). Actual speed depends on the board and PC, and can be slower than real time.
+Results don't change: every check uses firmware time. With `--gdb` or `--realtime` it is held to
+wall-clock speed, so Live Watch and LEDs look natural. The VS Code "Renode: debug board" launch doesn't use pytest and always runs in real time.
 
 ## Write a test
 

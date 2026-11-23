@@ -9,7 +9,8 @@ the emulation only runs inside wait() / *.wait_for(). So:
 Never use time.sleep() or wall-clock timeouts in tests.
 
 Speed: by default virtual time runs as fast as the host can emulate (Renode's AdvanceImmediately),
-usually many times faster than real time. With gdb=True or realtime=True it is held to wall-clock
+not limited to real time. Actual speed depends on the board and PC, and can be slower than real
+time. With gdb=True or realtime=True it is held to wall-clock
 pace instead, so a person watching (debugger, Live Watch) sees the firmware at its real speed. Test
 results don't depend on it: everything is timestamped in virtual time.
 

@@ -12,6 +12,10 @@
 #include "lcd_bitmap_export.h"
 #endif
 
+#ifndef LCD_BITMAP_EXPORT_PATH
+#define LCD_BITMAP_EXPORT_PATH "app/lcd_bitmap_export.h"
+#endif
+
 enum
 {
     EDITOR_WIDTH = LCD_DRIVER_SCREEN_WIDTH,
@@ -44,7 +48,7 @@ static void PrintBitmap(const uint8_t* bitmap)
 
 static void SaveBitmap(const uint8_t* bitmap)
 {
-    FILE* file = fopen("lcd_bitmap_export.h", "w");
+    FILE* file = fopen(LCD_BITMAP_EXPORT_PATH, "w");
 
     if (!file)
     {
@@ -80,7 +84,7 @@ static void SaveBitmap(const uint8_t* bitmap)
 
     fclose(file);
 
-    printf("Saved bitmap to lcd_bitmap_export.h\n");
+    printf("Saved bitmap to %s\n", LCD_BITMAP_EXPORT_PATH);
 }
 
 static void SyncEditorFromDisplay(uint8_t pixels[EDITOR_HEIGHT][EDITOR_WIDTH], uint8_t* bitmap)

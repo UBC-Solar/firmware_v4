@@ -96,25 +96,25 @@ void FaultHandlerParsePackVoltageFaults(uint8_t* can_rx_data){
 }
 
 void FaultHandlerParseMotorFaults(uint8_t* can_rx_data){
-    LcdHandlerSetAnalogSensorError(GETBIT(can_rx_data[0], 0));    //TODO                
-    LcdHandlerSetMotorCurrSensorUError(GETBIT(can_rx_data[0], 1));    //TODO                
-    LcdHandlerSetMotorCurrSensorWError(GETBIT(can_rx_data[0], 2));    //TODO            
+    LcdHandlerSetAnalogSensorError(GETBIT(can_rx_data[0], 0));                
+    LcdHandlerSetMotorCurrSensorUError(GETBIT(can_rx_data[0], 1));                    
+    LcdHandlerSetMotorCurrSensorWError(GETBIT(can_rx_data[0], 2));                
     LcdHandlerSetMotorFetThermistorError(GETBIT(can_rx_data[0], 3));
-    LcdHandlerSetBattVoltageSensorError(GETBIT(can_rx_data[0], 5));    //TODO        
-    LcdHandlerSetBattCurrentSensorError(GETBIT(can_rx_data[0], 6));    //TODO    
-    LcdHandlerSetBattCurrentSensorAdjustError(GETBIT(can_rx_data[0], 7));    //TODO
-    LcdHandlerSetMotorCurrentSensorAdjustError(GETBIT(can_rx_data[1], 0));    //TODO
-    LcdHandlerSetAcceleratorPositionError(GETBIT(can_rx_data[1], 1));    //TODO
-    LcdHandlerSetControllerVoltageSensorError(GETBIT(can_rx_data[1], 3));   //TODO
-    LcdHandlerSetPowerSystemFault(GETBIT(can_rx_data[2], 0));   //TODO
+    LcdHandlerSetBattVoltageSensorError(GETBIT(can_rx_data[0], 5));            
+    LcdHandlerSetBattCurrentSensorError(GETBIT(can_rx_data[0], 6));        
+    LcdHandlerSetBattCurrentSensorAdjustError(GETBIT(can_rx_data[0], 7));    
+    LcdHandlerSetMotorCurrentSensorAdjustError(GETBIT(can_rx_data[1], 0));    
+    LcdHandlerSetAcceleratorPositionError(GETBIT(can_rx_data[1], 1));  
+    LcdHandlerSetControllerVoltageSensorError(GETBIT(can_rx_data[1], 3));   
+    LcdHandlerSetPowerSystemFault(GETBIT(can_rx_data[2], 0));   
     LcdHandlerSetMotorOvercurrentFault(GETBIT(can_rx_data[2], 1));
     LcdHandlerSetMotorOvervoltageFault(GETBIT(can_rx_data[2], 3));
-    LcdHandlerSetMotorOvercurrentLimit(GETBIT(can_rx_data[2], 5));   //TODO
+    LcdHandlerSetMotorOvercurrentLimit(GETBIT(can_rx_data[2], 5));   
     LcdHandlerSetMotorSystemFault(GETBIT(can_rx_data[3], 0));
-    LcdHandlerSetMotorLock(GETBIT(can_rx_data[3], 1));   //TODO
-    LcdHandlerSetHallSensorShort(GETBIT(can_rx_data[3], 2));   //TODO
-    LcdHandlerSetHallSensorOpen(GETBIT(can_rx_data[3], 3));   //TODO
-    LcdHandlerSetMotorControllerOverHeat(can_rx_data[4] & 0x03);   //TODO
+    LcdHandlerSetMotorLock(GETBIT(can_rx_data[3], 1));   
+    LcdHandlerSetHallSensorShort(GETBIT(can_rx_data[3], 2));   
+    LcdHandlerSetHallSensorOpen(GETBIT(can_rx_data[3], 3));   
+    LcdHandlerSetMotorControllerOverHeat(can_rx_data[4] & 0x03);
 
     g_motor_fault = GETBIT(can_rx_data[0], 3) || GETBIT(can_rx_data[2], 1) 
                 || GETBIT(can_rx_data[2], 3) || GETBIT(can_rx_data[3], 0);

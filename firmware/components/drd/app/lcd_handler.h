@@ -76,6 +76,21 @@ typedef struct
     volatile bool overvoltage_fault;
     volatile bool fet_thermistor_error;
     volatile bool motor_comm_fault;
+    volatile bool analog_sensor_error;   
+    volatile bool motor_curr_sensor_u_error; 
+    volatile bool motor_curr_sensor_w_error;   
+    volatile bool batt_voltage_sensor_error;   
+    volatile bool batt_current_sensor_error;   
+    volatile bool batt_current_sensor_adjust_error;  
+    volatile bool motor_current_sensor_adjust_error;   
+    volatile bool accelerator_position_error;   
+    volatile bool controller_voltage_sensor_error;  
+    volatile bool power_system_fault;   
+    volatile bool motor_overcurrent_limit; 
+    volatile bool motor_lock;   
+    volatile bool hall_sensor_short;  
+    volatile bool hall_sensor_open;   
+    volatile uint8_t motor_controller_overheat;   
 } LcdAppMotorFaults;
 
 typedef struct
@@ -144,6 +159,21 @@ void LcdHandlerSetMotorOvercurrentFault(bool fault);
 void LcdHandlerSetMotorOvervoltageFault(bool fault);
 void LcdHandlerSetMotorFetThermistorError(bool fault);
 void LcdHandlerSetMotorCommFault(bool fault);
+void LcdHandlerSetAnalogSensorError(bool fault);
+void LcdHandlerSetMotorCurrSensorUError(bool fault);
+void LcdHandlerSetMotorCurrSensorWError(bool fault);
+void LcdHandlerSetBattVoltageSensorError(bool fault);
+void LcdHandlerSetBattCurrentSensorError(bool fault);
+void LcdHandlerSetBattCurrentSensorAdjustError(bool fault);
+void LcdHandlerSetMotorCurrentSensorAdjustError(bool fault);
+void LcdHandlerSetAcceleratorPositionError(bool fault);
+void LcdHandlerSetControllerVoltageSensorError(bool fault);
+void LcdHandlerSetPowerSystemFault(bool fault);
+void LcdHandlerSetMotorOvercurrentLimit(bool fault);
+void LcdHandlerSetMotorLock(bool fault);
+void LcdHandlerSetHallSensorShort(bool fault);
+void LcdHandlerSetHallSensorOpen(bool fault);
+void LcdHandlerSetMotorControllerOverHeat(uint8_t fault);
 
 /* LCD HANDLER WARNING DATA SETTERS */
 void LcdHandlerSetLowVoltWarning(bool warning);

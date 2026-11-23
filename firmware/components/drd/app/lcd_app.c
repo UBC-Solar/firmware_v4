@@ -330,8 +330,82 @@ uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* moto
         sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_COMM_FLT_CHARS);
         fault_count++;
     }
-
+    if (motor_faults->analog_sensor_error)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_ANALOG_SENSOR_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->motor_curr_sensor_u_error)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_CURR_SENSOR_U_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->motor_curr_sensor_w_error)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_CURR_SENSOR_W_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->batt_voltage_sensor_error)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_BATT_VOLT_SENSOR_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->batt_current_sensor_error)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_BATT_CURR_SENSOR_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->batt_current_sensor_adjust_error)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_BATT_CURR_SENSOR_ADJUST_FLT_CHARS);
+        fault_count++;
+    }
     return fault_count;
+    if (motor_faults->motor_current_sensor_adjust_error)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_CURR_SENSOR_ADJUST_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->accelerator_position_error)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_ACCEL_POS_SENSOR_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->controller_voltage_sensor_error)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_CTRL_VOLT_SENSOR_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->power_system_fault)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_PWR_SYS_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->motor_overcurrent_limit)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_OVERCURR_LIMIT_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->motor_lock)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_LOCK_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->hall_sensor_short)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_HALL_SHORT_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->hall_sensor_open)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_HALL_OPEN_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->motor_controller_overheat)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_CTRL_OVERHEAT_FLT_CHARS);
+        fault_count++;
+    }
 }
 
 /**

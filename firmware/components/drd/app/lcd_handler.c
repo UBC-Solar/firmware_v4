@@ -171,6 +171,21 @@ void LcdHandlerSetMotorOvercurrentFault(bool fault) { g_lcd_motor_faults.overcur
 void LcdHandlerSetMotorOvervoltageFault(bool fault) { g_lcd_motor_faults.overvoltage_fault = fault; }
 void LcdHandlerSetMotorFetThermistorError(bool fault) { g_lcd_motor_faults.fet_thermistor_error = fault; }
 void LcdHandlerSetMotorCommFault(bool fault) { g_lcd_motor_faults.motor_comm_fault = fault; }
+void LcdHandlerSetAnalogSensorError(bool fault) { g_lcd_motor_faults.analog_sensor_error = fault; }    
+void LcdHandlerSetMotorCurrSensorUError(bool fault) { g_lcd_motor_faults.motor_curr_sensor_u_error = fault; }   
+void LcdHandlerSetMotorCurrSensorWError(bool fault) { g_lcd_motor_faults.motor_curr_sensor_w_error = fault; }   
+void LcdHandlerSetBattVoltageSensorError(bool fault) { g_lcd_motor_faults.batt_voltage_sensor_error = fault; }  
+void LcdHandlerSetBattCurrentSensorError(bool fault) { g_lcd_motor_faults.batt_current_sensor_error = fault; }  
+void LcdHandlerSetBattCurrentSensorAdjustError(bool fault) { g_lcd_motor_faults.batt_current_sensor_adjust_error = fault; } 
+void LcdHandlerSetMotorCurrentSensorAdjustError(bool fault) { g_lcd_motor_faults.motor_current_sensor_adjust_error = fault; } 
+void LcdHandlerSetAcceleratorPositionError(bool fault) { g_lcd_motor_faults.accelerator_position_error = fault; }  
+void LcdHandlerSetControllerVoltageSensorError(bool fault) { g_lcd_motor_faults.controller_voltage_sensor_error = fault; } 
+void LcdHandlerSetPowerSystemFault(bool fault) { g_lcd_motor_faults.power_system_fault = fault; }   
+void LcdHandlerSetMotorOvercurrentLimit(bool fault) { g_lcd_motor_faults.motor_overcurrent_limit = fault; } 
+void LcdHandlerSetMotorLock(bool fault) { g_lcd_motor_faults.motor_lock = fault; }   
+void LcdHandlerSetHallSensorShort(bool fault) { g_lcd_motor_faults.hall_sensor_short = fault; } 
+void LcdHandlerSetHallSensorOpen(bool fault) { g_lcd_motor_faults.hall_sensor_open = fault; }   
+void LcdHandlerSetMotorControllerOverHeat(uint8_t fault) { g_lcd_motor_faults.motor_controller_overheat = fault; } 
 
 /* LCD HANDLER WARNING DATA SETTERS */
 void LcdHandlerSetLowVoltWarning(bool warning) { g_lcd_warnings.low_volt_warning = warning; }

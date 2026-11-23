@@ -41,7 +41,7 @@
 #define STR_CAN_MSG_ID 0x580
 
 #define DRD_MCU_HEALTH_CAN_ID               0x402
-#define DRD_MCU_HEALTH_CAN_DATA_LENGTH      4
+#define DRD_MCU_HEALTH_CAN_DATA_LENGTH      6
 
 
 /* CAN HEADERS */

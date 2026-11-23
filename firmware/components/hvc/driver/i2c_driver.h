@@ -83,10 +83,15 @@ HAL_StatusTypeDef I2C_MemWrite(uint16_t dev_addr, uint16_t mem_addr, uint8_t *da
  * @retval HAL_ERROR HAL reported a peripheral error.
  * @retval other Current HAL_I2C_StateTypeDef value if the bus was not ready.
  */
-HAL_StatusTypeDef I2C_MemWrite_IT(uint16_t dev_addr, uint16_t mem_addr, uint8_t *data, uint16_t size);
+HAL_StatusTypeDef I2C_MemWrite_IT(
+    uint16_t dev_addr,
+    uint16_t mem_addr,
+    uint8_t *data,
+    uint16_t size);
 
 /**
- * @brief Blocking memory read — reads bytes from a device register and immediately calls the RxCplt callback.
+ * @brief Blocking memory read — reads bytes from a device register and immediately calls the
+ *        RxCplt callback.
  * @param dev_addr 8-bit I2C device address (7-bit address shifted left by one).
  * @param mem_addr Register address on the target device.
  * @param data Pointer to the buffer to store received bytes.
@@ -96,7 +101,12 @@ HAL_StatusTypeDef I2C_MemWrite_IT(uint16_t dev_addr, uint16_t mem_addr, uint8_t 
  * @retval HAL_ERROR HAL reported a peripheral error.
  * @retval other Current HAL_I2C_StateTypeDef value if the bus was not ready.
  */
-HAL_StatusTypeDef I2C_MemRead(uint16_t dev_addr, uint16_t mem_addr, uint8_t *data, uint16_t size, I2C_Read_State state);
+HAL_StatusTypeDef I2C_MemRead(
+    uint16_t dev_addr,
+    uint16_t mem_addr,
+    uint8_t *data,
+    uint16_t size,
+    I2C_Read_State state);
 
 /**
  * @brief Interrupt-driven memory read — starts the register read and returns immediately.
@@ -109,7 +119,12 @@ HAL_StatusTypeDef I2C_MemRead(uint16_t dev_addr, uint16_t mem_addr, uint8_t *dat
  * @retval HAL_ERROR HAL reported a peripheral error.
  * @retval other Current HAL_I2C_StateTypeDef value if the bus was not ready.
  */
-HAL_StatusTypeDef I2C_MemRead_IT(uint16_t dev_addr, uint16_t mem_addr, uint8_t *data, uint16_t size, I2C_Read_State state);
+HAL_StatusTypeDef I2C_MemRead_IT(
+    uint16_t dev_addr,
+    uint16_t mem_addr,
+    uint8_t *data,
+    uint16_t size,
+    I2C_Read_State state);
 
 /**
  * @brief Return the current HAL I2C peripheral state.

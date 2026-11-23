@@ -1,0 +1,15 @@
+# Battery master (MST) on a virtual STM32F103RCT6
+
+mach create "mst"
+include $ORIGIN/../chip/stm32f103rct6.resc
+
+# isoSPI to the two ADBMS1818s on the slave board: SPI2 is replaced by a model of the chain
+# (every cell 3.6 V, every thermistor 25 degC). Without it MST's isoSPI fault handler trips.
+sysbus Unregister sysbus.spi2
+machine PyDevFromFile $ORIGIN/../devices/adbms1818.py 0x40003800 0x400 True "spi2"
+
+$elf ?= $ORIGIN/../../../firmware/components/mst/build/Debug/mst.elf
+sysbus LoadELF $elf
+
+# MST's debug UART (USART1) transmits with DMA
+include $ORIGIN/../chip/dma_fix.resc

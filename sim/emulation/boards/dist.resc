@@ -1,0 +1,7 @@
+# DIST on a virtual STM32F103RCT6
+
+mach create "dist"
+include $ORIGIN/../chip/stm32f103rct6.resc
+
+$elf ?= $ORIGIN/../../../firmware/components/dist/build/Debug/dist.elf
+sysbus LoadELF $elf

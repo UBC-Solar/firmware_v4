@@ -1,39 +1,23 @@
+/**
+ * @file hvc_main.h
+ * @brief HVC entry points for cube main.c: init and one pass of the main loop.
+ *
+ * Everything the HVC does starts from these two: cube main.c calls HVC_Init() once before its main
+ * loop, then HVC_Main() every pass of it.
+ */
+
 #pragma once
 
-#include "stm32f1xx_hal.h"
+// HAL and CubeMX
+#include "stm32f1xx_hal.h" // The peripheral handle types (UART_HandleTypeDef, ...)
 
-/**
- * Tests. 
- */
-//These hold no meaning outside the context of hardware unit tests and integration.
-#define RUN 1
-#define SKIP 0
-
-// Hardware unit tests (UNIT_...) to verify that the hardware works properly.
-// Integration tests (INT_...) to verify functionality with rest of MST.
-// A test is either set to RUN or SKIP.
-#define UNIT_TEST_SHUNT SKIP
-#define INT_TEST_CAN SKIP
-// Integration test June 11th, 2026: TEL and MST will not be connected.
-// relevant TEL and MST input data must be faked
-#define INT_TEST_JUNE_11TH SKIP
-#define INT_TEST_PRECHARGE SKIP
-
-
+// Called from cube main.c
 
 void HVC_Init(
-    UART_HandleTypeDef *_huart2, 
-    ADC_HandleTypeDef *_hadc1, 
-    TIM_HandleTypeDef *_htim3, 
-    TIM_HandleTypeDef *_htim4, 
-    I2C_HandleTypeDef *_hi2c1, 
-    CAN_HandleTypeDef *_hcan);
+    UART_HandleTypeDef *uart2,
+    ADC_HandleTypeDef *adc1,
+    TIM_HandleTypeDef *adc_trigger_tim3,
+    TIM_HandleTypeDef *fan_pwm_tim4,
+    I2C_HandleTypeDef *shunt_i2c1,
+    CAN_HandleTypeDef *can);
 void HVC_Main(void);
-
-#if (UNIT_TEST_SHUNT == RUN)
-void HVC_TestShuntCycle();
-#endif // (UNIT_TEST_SHUNT == RUN)
-
-#if (INT_TEST_CAN == RUN)
-void HVC_TestCanCycle();
-#endif // (INT_TEST_CAN == RUN)

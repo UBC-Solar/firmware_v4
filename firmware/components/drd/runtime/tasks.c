@@ -108,13 +108,13 @@ void TasksLcdUpdate(void *argument)
 /* DRD HEARTBEAT TASK */
 void TasksTimeSinceStartup(void *argument)
 {   
-    McuHealthDriverInit();
+    // McuHealthDriverInit();
     for (;;)
     {
         // Transmit DRD heartbeat over CAN
         DiagnosticTimeSinceBootup();
         DiagnosticSendCommitHash();
-        DiagnosticMcuHealth();
+        // DiagnosticMcuHealth();
         osDelay(TIME_SINCE_STARTUP_TASK_DELAY);
     }
 }

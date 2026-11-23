@@ -1,0 +1,7 @@
+# DRD on a virtual STM32F103RCT6
+
+mach create "drd"
+include $ORIGIN/../chip/stm32f103rct6.resc
+
+$elf ?= $ORIGIN/../../../firmware/components/drd/build/Debug/drd.elf
+sysbus LoadELF $elf

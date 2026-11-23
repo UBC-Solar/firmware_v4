@@ -1,0 +1,19 @@
+# High Voltage Controller (HVC) on a virtual STM32F103RCT6
+
+# Add a machine called hvc to the running Renode instance
+mach create "hvc"
+# Shared chip setup (Renode F103 model + our fixes)
+include $ORIGIN/../chip/stm32f103rct6.resc
+
+# Renode's STM32F1 I2C never ACKs/NACKs a HAL transfer, so SHUNT_Init() (INA237 @ 0x40) waits
+# forever. Temporary: STR's stub, where every step of every transfer reports done.
+sysbus Unregister sysbus.i2c1
+machine PyDevFromFile $ORIGIN/../peripherals/i2c_write_ok.py 0x40005400 0x400 True "i2c1"
+
+# Load the ELF to run in the sim. Tests set $elf themselves (Debug or Release, picked from each
+# build folder's CMakeCache.txt). This default is only for running by hand: the Debug preset build.
+$elf ?= $ORIGIN/../../../firmware/components/hvc/build/Debug/hvc.elf
+sysbus LoadELF $elf
+
+# HVC's ADC uses DMA
+include $ORIGIN/../chip/dma_fix.resc

@@ -20,6 +20,7 @@ static LcdAppData g_lcd_data = {0};
 static LcdAppBattFaults g_lcd_batt_faults = {0};
 static LcdAppMotorFaults g_lcd_motor_faults = {0};
 static LcdAppDrdFaults g_lcd_drd_faults = {0};
+static LcdAppHvcFaults g_lcd_hvc_faults = {0};
 static LcdAppWarnings g_lcd_warnings = {0};
 static LcdAppTemperature g_lcd_temperatures[8] = {0};
 static uint8_t g_lcd_page = 1;
@@ -56,7 +57,7 @@ void LcdHandlerPageController(void)
     LcdHandlerGetData();
 
     // Fault Logic - Trigger Page Change on rising edge of fault detection
-    bool check_fault = LcdAppCheckFaults(&g_lcd_batt_faults, &g_lcd_motor_faults, &g_lcd_drd_faults);
+    bool check_fault = LcdAppCheckFaults(&g_lcd_batt_faults, &g_lcd_motor_faults, &g_lcd_drd_faults, &g_lcd_hvc_faults);
     // Page Logic - Trigger Page Change on flag set by CAN message
     if(g_str_change_page_flag){
         // Check if page is above 5 pages
@@ -89,11 +90,11 @@ void LcdHandlerPageController(void)
         LcdAppDisplaySocDrivePage((volatile uint32_t*)g_lcd_data.soc);
         LcdAppDisplayDriveModeDrivePage(g_lcd_data.drive_mode);
         LcdAppDisplayDriveStateDrivePage((volatile DriveStateStates*) g_lcd_data.drive_state);
-        LcdAppDisplayFaultIndicator(&g_lcd_batt_faults, &g_lcd_motor_faults, &g_lcd_drd_faults);
+        LcdAppDisplayFaultIndicator(&g_lcd_batt_faults, &g_lcd_motor_faults, &g_lcd_drd_faults, &g_lcd_hvc_faults);
         LcdAppDisplayWarningIndicator(&g_lcd_warnings);
         break;
     case FAULTS_PAGE:
-        LcdAppDisplayFaults(&g_lcd_batt_faults, &g_lcd_motor_faults, &g_lcd_drd_faults);
+        LcdAppDisplayFaults(&g_lcd_batt_faults, &g_lcd_motor_faults, &g_lcd_drd_faults, &g_lcd_hvc_faults);
         break;
     case WARNINGS_PAGE:
         LcdAppDisplayWarnings(&g_lcd_warnings);
@@ -192,6 +193,30 @@ void LcdHandlerSetMotorControllerOverHeat(uint8_t fault) { g_lcd_motor_faults.mo
 void LcdHandlerSetDrdWatchdogReset(bool fault) { g_lcd_drd_faults.drd_watchdog_reset = fault; }
 void LcdHandlerSetDrdMcuOvertemp(bool fault) { g_lcd_drd_faults.drd_mcu_overtemp = fault; }
 void LcdHandlerSetDrdMcuUndervolt(bool fault) { g_lcd_drd_faults.drd_mcu_undervolt = fault; }
+
+/* LCD HANDLER HVC FAULT DATA SETTERS */
+void LcdHandlerSetHvcEstop(bool fault) { g_lcd_hvc_faults.estop = fault; }
+void LcdHandlerSetHvcImdFault(bool fault) { g_lcd_hvc_faults.imd_fault = fault; }
+void LcdHandlerSetHvcMstFault(bool fault) { g_lcd_hvc_faults.mst_fault = fault; }
+void LcdHandlerSetHvcMstUnhealthy(bool fault) { g_lcd_hvc_faults.mst_unhealthy = fault; }
+void LcdHandlerSetHvcOvercurrent(bool fault) { g_lcd_hvc_faults.overcurrent = fault; }
+void LcdHandlerSetHvcReverseCurrent(bool fault) { g_lcd_hvc_faults.reverse_current = fault; }
+void LcdHandlerSetHvcDistFault(bool fault) { g_lcd_hvc_faults.dist_fault = fault; }
+void LcdHandlerSetHvcDcdcFault(bool fault) { g_lcd_hvc_faults.dcdc_fault = fault; }
+void LcdHandlerSetHvcSuppFault(bool fault) { g_lcd_hvc_faults.supp_fault = fault; }
+void LcdHandlerSetHvcWatchdogReset(bool fault) { g_lcd_hvc_faults.watchdog_reset = fault; }
+void LcdHandlerSetHvcDcdcOvertemp(bool fault) { g_lcd_hvc_faults.dcdc_overtemp = fault; }
+void LcdHandlerSetHvcTelStartupTimeout(bool fault) { g_lcd_hvc_faults.tel_startup_timeout = fault; }
+void LcdHandlerSetHvcMstHandshakeTimeout(bool fault) { g_lcd_hvc_faults.mst_handshake_timeout = fault; }
+void LcdHandlerSetHvcMstStatusCheckTimeout(bool fault) { g_lcd_hvc_faults.mst_status_check_timeout = fault; }
+void LcdHandlerSetHvcHvConnectTimeout(bool fault) { g_lcd_hvc_faults.hv_connect_timeout = fault; }
+void LcdHandlerSetHvcOpenDischargeRelayTimeout(bool fault) { g_lcd_hvc_faults.open_discharge_relay_timeout = fault; }
+void LcdHandlerSetHvcMotorPrechargeTimeout(bool fault) { g_lcd_hvc_faults.motor_precharge_timeout = fault; }
+void LcdHandlerSetHvcMpptPrechargeTimeout(bool fault) { g_lcd_hvc_faults.mppt_precharge_timeout = fault; }
+void LcdHandlerSetHvcLvPowerupTimeout(bool fault) { g_lcd_hvc_faults.lv_powerup_timeout = fault; }
+void LcdHandlerSetHvcTelHeartbeatTimeout(bool fault) { g_lcd_hvc_faults.tel_heartbeat_timeout = fault; }
+void LcdHandlerSetHvcMstHeartbeatTimeout(bool fault) { g_lcd_hvc_faults.mst_heartbeat_timeout = fault; }
+void LcdHandlerSetHvcDistHeartbeatTimeout(bool fault) { g_lcd_hvc_faults.dist_heartbeat_timeout = fault; }
 
 /* LCD HANDLER WARNING DATA SETTERS */
 void LcdHandlerSetLowVoltWarning(bool warning) { g_lcd_warnings.low_volt_warning = warning; }

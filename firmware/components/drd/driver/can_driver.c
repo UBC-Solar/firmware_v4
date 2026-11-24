@@ -84,7 +84,7 @@ void CanFilterInit(CAN_FilterTypeDef* can_filter) {
     can_filter1.FilterIdHigh = (STR_CAN_MSG_ID << 5); // Set up filter for steering CAN messages
     can_filter1.FilterMaskIdHigh = (BMS_TEMPERATURES_CAN_ID << 5);
     can_filter1.FilterIdLow = (BMS_TEMPERATURES_CAN_ID << 5);
-    can_filter1.FilterMaskIdLow = (BMS_TEMPERATURES_CAN_ID << 5);
+    can_filter1.FilterMaskIdLow = (CAN_ID_HVC_FAULTS << 5); // HVC fault flags
     can_filter1.FilterFIFOAssignment = CAN_FILTER_FIFO0; // Route accepted messages to FIFO0
     can_filter1.FilterBank = 4;
     can_filter1.FilterMode = CAN_FILTERMODE_IDLIST; // Use identifier list mode (not mask)

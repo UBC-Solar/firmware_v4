@@ -100,6 +100,32 @@ typedef struct
     volatile bool drd_mcu_undervolt;
 } LcdAppDrdFaults;
 
+typedef struct
+{
+    volatile bool estop;
+    volatile bool imd_fault;
+    volatile bool mst_fault;
+    volatile bool mst_unhealthy;
+    volatile bool overcurrent;
+    volatile bool reverse_current;
+    volatile bool dist_fault;
+    volatile bool dcdc_fault;
+    volatile bool supp_fault;
+    volatile bool watchdog_reset;
+    volatile bool dcdc_overtemp;
+    volatile bool tel_startup_timeout;
+    volatile bool mst_handshake_timeout;
+    volatile bool mst_status_check_timeout;
+    volatile bool hv_connect_timeout;
+    volatile bool open_discharge_relay_timeout;
+    volatile bool motor_precharge_timeout;
+    volatile bool mppt_precharge_timeout;
+    volatile bool lv_powerup_timeout;
+    volatile bool tel_heartbeat_timeout;
+    volatile bool mst_heartbeat_timeout;
+    volatile bool dist_heartbeat_timeout;
+} LcdAppHvcFaults;
+
 typedef struct 
 {
     volatile bool low_volt_warning;
@@ -186,6 +212,30 @@ void LcdHandlerSetMotorControllerOverHeat(uint8_t fault);
 void LcdHandlerSetDrdWatchdogReset(bool fault);
 void LcdHandlerSetDrdMcuOvertemp(bool fault);
 void LcdHandlerSetDrdMcuUndervolt(bool fault);
+
+/* LCD HANDLER HVC FAULT DATA SETTERS */
+void LcdHandlerSetHvcEstop(bool fault);
+void LcdHandlerSetHvcImdFault(bool fault);
+void LcdHandlerSetHvcMstFault(bool fault);
+void LcdHandlerSetHvcMstUnhealthy(bool fault);
+void LcdHandlerSetHvcOvercurrent(bool fault);
+void LcdHandlerSetHvcReverseCurrent(bool fault);
+void LcdHandlerSetHvcDistFault(bool fault);
+void LcdHandlerSetHvcDcdcFault(bool fault);
+void LcdHandlerSetHvcSuppFault(bool fault);
+void LcdHandlerSetHvcWatchdogReset(bool fault);
+void LcdHandlerSetHvcDcdcOvertemp(bool fault);
+void LcdHandlerSetHvcTelStartupTimeout(bool fault);
+void LcdHandlerSetHvcMstHandshakeTimeout(bool fault);
+void LcdHandlerSetHvcMstStatusCheckTimeout(bool fault);
+void LcdHandlerSetHvcHvConnectTimeout(bool fault);
+void LcdHandlerSetHvcOpenDischargeRelayTimeout(bool fault);
+void LcdHandlerSetHvcMotorPrechargeTimeout(bool fault);
+void LcdHandlerSetHvcMpptPrechargeTimeout(bool fault);
+void LcdHandlerSetHvcLvPowerupTimeout(bool fault);
+void LcdHandlerSetHvcTelHeartbeatTimeout(bool fault);
+void LcdHandlerSetHvcMstHeartbeatTimeout(bool fault);
+void LcdHandlerSetHvcDistHeartbeatTimeout(bool fault);
 
 /* LCD HANDLER WARNING DATA SETTERS */
 void LcdHandlerSetLowVoltWarning(bool warning);

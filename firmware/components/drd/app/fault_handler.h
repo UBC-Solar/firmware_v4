@@ -53,6 +53,12 @@ void FaultHandlerParsePackVoltageFaults(uint8_t* can_rx_data);
  * @param can_rx_data Pointer to the received CAN message data containing the temperature information.
  */
 void FaultHandlerParseMotorFaults(uint8_t* can_rx_data);
+
+/**
+ * @brief Parses  HVC fault flags nd updates the LCD
+ * @param can_rx_data Pointer to the received CAN data message data containing the HVC fault information.
+ */
+void FaultHandlerParseHvcFaults(uint8_t* can_rx_data);
 /**
  * @brief Parses battery warning data from received CAN messages and updates the cyclic data handler with the latest battery warning information.
  *

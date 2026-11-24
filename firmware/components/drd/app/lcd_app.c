@@ -199,11 +199,11 @@ void LcdAppDisplayDriveStateDrivePage(volatile DriveStateStates* state)
  *
  * @param fault_indicator A general indicator to signal a fault to prompt the driver to change pages
  */
-void LcdAppDisplayFaultIndicator(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults)
+void LcdAppDisplayFaultIndicator(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults, LcdAppHvcFaults* hvc_faults)
 {
     LcdDriverClearBoundingBox(old_bb_fault_indicator.x1,old_bb_fault_indicator.y1,old_bb_fault_indicator.x2,old_bb_fault_indicator.y2);
 
-    uint8_t fault_count = LcdAppCheckFaults(batt_faults, motor_faults, drd_faults);
+    uint8_t fault_count = LcdAppCheckFaults(batt_faults, motor_faults, drd_faults, hvc_faults);
 
     // Check if there is an existing fault
     if (fault_count > 0)
@@ -237,7 +237,7 @@ void LcdAppDisplayWarningIndicator(LcdAppWarnings* warnings)
   PAGE 2 (FAULT PAGE) FUNCTIONS
 --------------------------------------------------------------------------*/
 
-uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults)
+uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults, LcdAppHvcFaults* hvc_faults)
 {
     // This clears the faults so we parse faults every time
     memset(g_faults, 0, sizeof(g_faults));  
@@ -420,6 +420,116 @@ uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* moto
         sprintf(g_faults[fault_count], "%s", LCD_APP_DRD_MCU_OVERVOLT_FLT_CHARS);
         fault_count++;   
     }
+    if (hvc_faults->estop)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_ESTP_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->imd_fault)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_IMD_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->mst_fault)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_MSTF_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->mst_unhealthy)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_MSTU_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->overcurrent)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_OCUR_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->reverse_current)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_RCUR_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->dist_fault)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_DIST_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->dcdc_fault)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_DCDC_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->supp_fault)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_SUPP_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->watchdog_reset)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_WDOG_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->dcdc_overtemp)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_DCOT_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->tel_startup_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_TLST_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->mst_handshake_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_MSHK_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->mst_status_check_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_MSCK_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->hv_connect_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_HVCT_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->open_discharge_relay_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_DSCG_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->motor_precharge_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_MPRE_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->mppt_precharge_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_PPRE_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->lv_powerup_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_LVPU_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->tel_heartbeat_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_TLHB_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->mst_heartbeat_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_MSHB_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->dist_heartbeat_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_DSHB_FLT_CHARS);
+        fault_count++;
+    }
     return fault_count;
 }
 
@@ -429,9 +539,9 @@ uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* moto
  * @param batt_faults The battery faults to be displayed on the LCD
  * @param motor_faults The motor faults to be displayed on the LCD
  */
-void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults)
+void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults, LcdAppHvcFaults* hvc_faults)
 {
-    uint8_t fault_count = LcdAppCheckFaults(batt_faults, motor_faults, drd_faults);
+    uint8_t fault_count = LcdAppCheckFaults(batt_faults, motor_faults, drd_faults, hvc_faults);
 
     // This forces the screen to clear given no faults (clear doesn't update dirty pages)
     if(fault_count == 0 || fault_count < g_prev_fault_count){

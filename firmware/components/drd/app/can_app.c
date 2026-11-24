@@ -176,6 +176,9 @@ void FaultHandlerCanRxHandler(uint32_t msg_id, uint8_t* data)
     case CAN_ID_PACK_VOLTAGE:
         FaultHandlerParsePackVoltageFaults(data);
         break;
+    case CAN_ID_HVC_FAULTS:
+        FaultHandlerParseHvcFaults(data);
+        break;
     case CAN_ID_MTR_FAULTS:
         FaultHandlerParseMotorFaults(data);
         break;

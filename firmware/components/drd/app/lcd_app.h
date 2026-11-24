@@ -160,6 +160,29 @@
 #define LCD_APP_DRD_MCU_OVERTEMP_FLT_CHARS "DRD_MCOT"
 #define LCD_APP_DRD_MCU_OVERVOLT_FLT_CHARS "DRD_MCOV"
 
+#define LCD_APP_HVC_ESTP_FLT_CHARS "HVC_ESTP"
+#define LCD_APP_HVC_IMD_FLT_CHARS "HVC_IMD"
+#define LCD_APP_HVC_MSTF_FLT_CHARS "HVC_MSTF"
+#define LCD_APP_HVC_MSTU_FLT_CHARS "HVC_MSTU"
+#define LCD_APP_HVC_OCUR_FLT_CHARS "HVC_OCUR"
+#define LCD_APP_HVC_RCUR_FLT_CHARS "HVC_RCUR"
+#define LCD_APP_HVC_DIST_FLT_CHARS "HVC_DIST"
+#define LCD_APP_HVC_DCDC_FLT_CHARS "HVC_DCDC"
+#define LCD_APP_HVC_SUPP_FLT_CHARS "HVC_SUPP"
+#define LCD_APP_HVC_WDOG_FLT_CHARS "HVC_WDOG"
+#define LCD_APP_HVC_DCOT_FLT_CHARS "HVC_DCOT"
+#define LCD_APP_HVC_TLST_FLT_CHARS "HVC_TLST"
+#define LCD_APP_HVC_MSHK_FLT_CHARS "HVC_MSHK"
+#define LCD_APP_HVC_MSCK_FLT_CHARS "HVC_MSCK"
+#define LCD_APP_HVC_HVCT_FLT_CHARS "HVC_HVCT"
+#define LCD_APP_HVC_DSCG_FLT_CHARS "HVC_DSCG"
+#define LCD_APP_HVC_MPRE_FLT_CHARS "HVC_MPRE"
+#define LCD_APP_HVC_PPRE_FLT_CHARS "HVC_PPRE"
+#define LCD_APP_HVC_LVPU_FLT_CHARS "HVC_LVPU"
+#define LCD_APP_HVC_TLHB_FLT_CHARS "HVC_TLHB"
+#define LCD_APP_HVC_MSHB_FLT_CHARS "HVC_MSHB"
+#define LCD_APP_HVC_DSHB_FLT_CHARS "HVC_DSHB"
+
 /** Warning Page */
 #define LCD_APP_WARNING_SPACING 1
 
@@ -304,7 +327,7 @@
  * @param motor_faults A struct containing the motor faults.
  * @return The count of faults.
  */
-uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults);
+uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults, LcdAppHvcFaults* hvc_faults);
 /**
  * @brief Checks and updates the warnings.
  *
@@ -362,7 +385,7 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data);
  *
  * @param fault_indicator A general indicator to signal a fault to prompt the driver to change pages
  */
-void LcdAppDisplayFaultIndicator(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults);
+void LcdAppDisplayFaultIndicator(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults, LcdAppHvcFaults* hvc_faults);
 
 /**
  * @brief Displays a warning indicator on the LCD Drive Page
@@ -378,7 +401,7 @@ void LcdAppDisplayWarningIndicator(LcdAppWarnings* warnings);
  * @param batt_faults The battery faults to be displayed on the LCD
  * @param motor_faults The motor faults to be displayed on the LCD
  */
-void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults);
+void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults, LcdAppHvcFaults* hvc_faults);
 
 /**
  * @brief Dynamically displays car warnings on the LCD

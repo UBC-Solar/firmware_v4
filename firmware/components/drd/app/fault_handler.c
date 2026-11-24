@@ -120,6 +120,31 @@ void FaultHandlerParseMotorFaults(uint8_t* can_rx_data){
                 || GETBIT(can_rx_data[2], 3) || GETBIT(can_rx_data[3], 0);
 }
 
+void FaultHandlerParseHvcFaults(uint8_t* can_rx_data){
+    LcdHandlerSetHvcEstop(GETBIT(can_rx_data[0], 7));
+    LcdHandlerSetHvcImdFault(GETBIT(can_rx_data[0], 6));
+    LcdHandlerSetHvcMstFault(GETBIT(can_rx_data[0], 5));
+    LcdHandlerSetHvcMstUnhealthy(GETBIT(can_rx_data[0], 4));
+    LcdHandlerSetHvcOvercurrent(GETBIT(can_rx_data[0], 3));
+    LcdHandlerSetHvcReverseCurrent(GETBIT(can_rx_data[0], 2));
+    LcdHandlerSetHvcDistFault(GETBIT(can_rx_data[0], 1));
+    LcdHandlerSetHvcDcdcFault(GETBIT(can_rx_data[0], 0));
+    LcdHandlerSetHvcSuppFault(GETBIT(can_rx_data[1], 7));
+    LcdHandlerSetHvcWatchdogReset(GETBIT(can_rx_data[1], 6));
+    LcdHandlerSetHvcDcdcOvertemp(GETBIT(can_rx_data[1], 5));
+    LcdHandlerSetHvcTelStartupTimeout(GETBIT(can_rx_data[1], 4));
+    LcdHandlerSetHvcMstHandshakeTimeout(GETBIT(can_rx_data[1], 3));
+    LcdHandlerSetHvcMstStatusCheckTimeout(GETBIT(can_rx_data[1], 2));
+    LcdHandlerSetHvcHvConnectTimeout(GETBIT(can_rx_data[1], 1));
+    LcdHandlerSetHvcOpenDischargeRelayTimeout(GETBIT(can_rx_data[1], 0));
+    LcdHandlerSetHvcMotorPrechargeTimeout(GETBIT(can_rx_data[2], 7));
+    LcdHandlerSetHvcMpptPrechargeTimeout(GETBIT(can_rx_data[2], 6));
+    LcdHandlerSetHvcLvPowerupTimeout(GETBIT(can_rx_data[2], 5));
+    LcdHandlerSetHvcTelHeartbeatTimeout(GETBIT(can_rx_data[2], 4));
+    LcdHandlerSetHvcMstHeartbeatTimeout(GETBIT(can_rx_data[2], 3));
+    LcdHandlerSetHvcDistHeartbeatTimeout(GETBIT(can_rx_data[2], 2));
+}
+
 void FaultHandlerParseBatteryWarnings(uint8_t* can_rx_data) {
     LcdHandlerSetLowVoltWarning(GETBIT(can_rx_data[1], 5));
     LcdHandlerSetHighVoltWarning(GETBIT(can_rx_data[1], 6));

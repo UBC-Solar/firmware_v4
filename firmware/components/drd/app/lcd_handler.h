@@ -126,6 +126,15 @@ typedef struct
     volatile bool dist_heartbeat_timeout;
 } LcdAppHvcFaults;
 
+typedef struct
+{
+    volatile bool watchdog_reset;
+    volatile bool overvoltage;
+    volatile bool motor_overtemp;
+    volatile bool rtd_sensor_fault;
+    volatile bool rtd_comm_error;
+} LcdAppMdiFaults;
+
 typedef struct 
 {
     volatile bool low_volt_warning;
@@ -236,6 +245,13 @@ void LcdHandlerSetHvcLvPowerupTimeout(bool fault);
 void LcdHandlerSetHvcTelHeartbeatTimeout(bool fault);
 void LcdHandlerSetHvcMstHeartbeatTimeout(bool fault);
 void LcdHandlerSetHvcDistHeartbeatTimeout(bool fault);
+
+/* LCD HANDLER MDI FAULT DATA SETTERS */
+void LcdHandlerSetMdiWatchdogReset(bool fault);
+void LcdHandlerSetMdiOvervoltage(bool fault);
+void LcdHandlerSetMdiMotorOvertemp(bool fault);
+void LcdHandlerSetMdiRtdSensorFault(bool fault);
+void LcdHandlerSetMdiRtdCommError(bool fault);
 
 /* LCD HANDLER WARNING DATA SETTERS */
 void LcdHandlerSetLowVoltWarning(bool warning);

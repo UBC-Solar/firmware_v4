@@ -55,10 +55,16 @@ void FaultHandlerParsePackVoltageFaults(uint8_t* can_rx_data);
 void FaultHandlerParseMotorFaults(uint8_t* can_rx_data);
 
 /**
- * @brief Parses  HVC fault flags nd updates the LCD
- * @param can_rx_data Pointer to the received CAN data message data containing the HVC fault information.
+ * @brief Parses  HVC fault flags and updates the LCD
+ * @param can_rx_data Pointer to the received CAN message data containing the HVC fault information.
  */
 void FaultHandlerParseHvcFaults(uint8_t* can_rx_data);
+
+/**
+ * @brief Parses the MDI fault flags and updates the LCD
+ * @param can_rx_data Pointer to the received CAN message data containing the MDI fault information.
+ */
+void FaultHandlerParseMdiFaults(uint8_t* can_rx_data);
 /**
  * @brief Parses battery warning data from received CAN messages and updates the cyclic data handler with the latest battery warning information.
  *

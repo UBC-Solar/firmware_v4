@@ -183,6 +183,12 @@
 #define LCD_APP_HVC_MSHB_FLT_CHARS "HVC_MSHB"
 #define LCD_APP_HVC_DSHB_FLT_CHARS "HVC_DSHB"
 
+#define LCD_APP_MDI_WDOG_FLT_CHARS "MDI_WDOG"
+#define LCD_APP_MDI_OVLT_FLT_CHARS "MDI_OVLT"
+#define LCD_APP_MDI_OTMP_FLT_CHARS "MDI_OTMP"
+#define LCD_APP_MDI_RTDF_FLT_CHARS "MDI_RTDF"
+#define LCD_APP_MDI_RTDC_FLT_CHARS "MDI_RTDC"
+
 /** Warning Page */
 #define LCD_APP_WARNING_SPACING 1
 
@@ -327,7 +333,7 @@
  * @param motor_faults A struct containing the motor faults.
  * @return The count of faults.
  */
-uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults, LcdAppHvcFaults* hvc_faults);
+uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults, LcdAppHvcFaults* hvc_faults, LcdAppMdiFaults* mdi_faults);
 /**
  * @brief Checks and updates the warnings.
  *
@@ -385,7 +391,7 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data);
  *
  * @param fault_indicator A general indicator to signal a fault to prompt the driver to change pages
  */
-void LcdAppDisplayFaultIndicator(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults, LcdAppHvcFaults* hvc_faults);
+void LcdAppDisplayFaultIndicator(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults, LcdAppHvcFaults* hvc_faults, LcdAppMdiFaults* mdi_faults);
 
 /**
  * @brief Displays a warning indicator on the LCD Drive Page
@@ -401,7 +407,7 @@ void LcdAppDisplayWarningIndicator(LcdAppWarnings* warnings);
  * @param batt_faults The battery faults to be displayed on the LCD
  * @param motor_faults The motor faults to be displayed on the LCD
  */
-void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults, LcdAppHvcFaults* hvc_faults);
+void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults, LcdAppHvcFaults* hvc_faults, LcdAppMdiFaults* mdi_faults);
 
 /**
  * @brief Dynamically displays car warnings on the LCD

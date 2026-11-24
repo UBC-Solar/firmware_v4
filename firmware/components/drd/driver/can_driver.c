@@ -68,7 +68,7 @@ void CanFilterInit(CAN_FilterTypeDef* can_filter) {
     can_filter->FilterActivation = ENABLE;
     HAL_CAN_ConfigFilter(&hcan, can_filter);
 
-    // ---- Filter Bank 1 ----
+    // ---- Filter Bank 3 ----
     can_filter3.FilterIdHigh = (MPPTA_TEMPERATURE_CAN_ID << 5);
     can_filter3.FilterMaskIdHigh = (MPPTB_TEMPERATURE_CAN_ID << 5);
     can_filter3.FilterIdLow = (MPPTC_TEMPERATURE_CAN_ID << 5);
@@ -83,8 +83,8 @@ void CanFilterInit(CAN_FilterTypeDef* can_filter) {
     // ---- Filter Bank 4 ----
     can_filter1.FilterIdHigh = (STR_CAN_MSG_ID << 5); // Set up filter for steering CAN messages
     can_filter1.FilterMaskIdHigh = (BMS_TEMPERATURES_CAN_ID << 5);
-    can_filter1.FilterIdLow = (BMS_TEMPERATURES_CAN_ID << 5);
-    can_filter1.FilterMaskIdLow = (CAN_ID_HVC_FAULTS << 5); // HVC fault flags
+    can_filter1.FilterIdLow = (CAN_ID_HVC_FAULTS << 5); // HVC fault flags
+    can_filter1.FilterMaskIdLow = (CAN_ID_MDI_FAULTS << 5); // MDI fault flags
     can_filter1.FilterFIFOAssignment = CAN_FILTER_FIFO0; // Route accepted messages to FIFO0
     can_filter1.FilterBank = 4;
     can_filter1.FilterMode = CAN_FILTERMODE_IDLIST; // Use identifier list mode (not mask)

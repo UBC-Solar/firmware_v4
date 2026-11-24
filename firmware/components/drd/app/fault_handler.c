@@ -145,6 +145,14 @@ void FaultHandlerParseHvcFaults(uint8_t* can_rx_data){
     LcdHandlerSetHvcDistHeartbeatTimeout(GETBIT(can_rx_data[2], 2));
 }
 
+void FaultHandlerParseMdiFaults(uint8_t* can_rx_data){
+    LcdHandlerSetMdiWatchdogReset(GETBIT(can_rx_data[0], 0));
+    LcdHandlerSetMdiOvervoltage(GETBIT(can_rx_data[0], 1));
+    LcdHandlerSetMdiMotorOvertemp(GETBIT(can_rx_data[0], 2));
+    LcdHandlerSetMdiRtdSensorFault(GETBIT(can_rx_data[0], 3));
+    LcdHandlerSetMdiRtdCommError(GETBIT(can_rx_data[0], 4));
+}
+
 void FaultHandlerParseBatteryWarnings(uint8_t* can_rx_data) {
     LcdHandlerSetLowVoltWarning(GETBIT(can_rx_data[1], 5));
     LcdHandlerSetHighVoltWarning(GETBIT(can_rx_data[1], 6));

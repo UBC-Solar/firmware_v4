@@ -199,11 +199,11 @@ void LcdAppDisplayDriveStateDrivePage(volatile DriveStateStates* state)
  *
  * @param fault_indicator A general indicator to signal a fault to prompt the driver to change pages
  */
-void LcdAppDisplayFaultIndicator(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults)
+void LcdAppDisplayFaultIndicator(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults)
 {
     LcdDriverClearBoundingBox(old_bb_fault_indicator.x1,old_bb_fault_indicator.y1,old_bb_fault_indicator.x2,old_bb_fault_indicator.y2);
 
-    uint8_t fault_count = LcdAppCheckFaults(batt_faults, motor_faults);
+    uint8_t fault_count = LcdAppCheckFaults(batt_faults, motor_faults, drd_faults);
 
     // Check if there is an existing fault
     if (fault_count > 0)
@@ -237,7 +237,7 @@ void LcdAppDisplayWarningIndicator(LcdAppWarnings* warnings)
   PAGE 2 (FAULT PAGE) FUNCTIONS
 --------------------------------------------------------------------------*/
 
-uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults)
+uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults)
 {
     // This clears the faults so we parse faults every time
     memset(g_faults, 0, sizeof(g_faults));  
@@ -405,7 +405,21 @@ uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* moto
         sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_CTRL_OVERHEAT_FLT_CHARS);
         fault_count++;
     }
-
+    if (drd_faults->drd_watchdog_reset)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_DRD_WDOG_RESET_FLT__CHARS);
+        fault_count++;   
+    }
+    if (drd_faults->drd_mcu_overtemp)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_DRD_MCU_OVERTEMP_FLT_CHARS);
+        fault_count++;   
+    }
+    if (drd_faults->drd_mcu_undervolt)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_DRD_MCU_OVERVOLT_FLT_CHARS);
+        fault_count++;   
+    }
     return fault_count;
 }
 
@@ -415,9 +429,9 @@ uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* moto
  * @param batt_faults The battery faults to be displayed on the LCD
  * @param motor_faults The motor faults to be displayed on the LCD
  */
-void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults)
+void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults)
 {
-    uint8_t fault_count = LcdAppCheckFaults(batt_faults, motor_faults);
+    uint8_t fault_count = LcdAppCheckFaults(batt_faults, motor_faults, drd_faults);
 
     // This forces the screen to clear given no faults (clear doesn't update dirty pages)
     if(fault_count == 0 || fault_count < g_prev_fault_count){

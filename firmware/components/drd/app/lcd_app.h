@@ -156,6 +156,10 @@
 #define LCD_APP_MTR_HALL_OPEN_FLT_CHARS "MTR_HOPN"
 #define LCD_APP_MTR_CTRL_OVERHEAT_FLT_CHARS "MTR_OVHT"
 
+#define LCD_APP_DRD_WDOG_RESET_FLT__CHARS "DRD_WDOG"
+#define LCD_APP_DRD_MCU_OVERTEMP_FLT_CHARS "DRD_MCOT"
+#define LCD_APP_DRD_MCU_OVERVOLT_FLT_CHARS "DRD_MCOV"
+
 /** Warning Page */
 #define LCD_APP_WARNING_SPACING 1
 
@@ -300,7 +304,7 @@
  * @param motor_faults A struct containing the motor faults.
  * @return The count of faults.
  */
-uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults);
+uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults);
 /**
  * @brief Checks and updates the warnings.
  *
@@ -358,7 +362,7 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data);
  *
  * @param fault_indicator A general indicator to signal a fault to prompt the driver to change pages
  */
-void LcdAppDisplayFaultIndicator(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults);
+void LcdAppDisplayFaultIndicator(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults);
 
 /**
  * @brief Displays a warning indicator on the LCD Drive Page
@@ -374,7 +378,7 @@ void LcdAppDisplayWarningIndicator(LcdAppWarnings* warnings);
  * @param batt_faults The battery faults to be displayed on the LCD
  * @param motor_faults The motor faults to be displayed on the LCD
  */
-void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults);
+void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults, LcdAppDrdFaults* drd_faults);
 
 /**
  * @brief Dynamically displays car warnings on the LCD

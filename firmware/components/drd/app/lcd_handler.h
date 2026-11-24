@@ -94,6 +94,13 @@ typedef struct
 } LcdAppMotorFaults;
 
 typedef struct
+{   
+    volatile bool drd_watchdog_reset;
+    volatile bool drd_mcu_overtemp;
+    volatile bool drd_mcu_undervolt;
+} LcdAppDrdFaults;
+
+typedef struct 
 {
     volatile bool low_volt_warning;
     volatile bool high_volt_warning;
@@ -174,6 +181,11 @@ void LcdHandlerSetMotorLock(bool fault);
 void LcdHandlerSetHallSensorShort(bool fault);
 void LcdHandlerSetHallSensorOpen(bool fault);
 void LcdHandlerSetMotorControllerOverHeat(uint8_t fault);
+
+/* LCD HANDLER DRD FAULT DATA SETTERS */
+void LcdHandlerSetDrdWatchdogReset(bool fault);
+void LcdHandlerSetDrdMcuOvertemp(bool fault);
+void LcdHandlerSetDrdMcuUndervolt(bool fault);
 
 /* LCD HANDLER WARNING DATA SETTERS */
 void LcdHandlerSetLowVoltWarning(bool warning);

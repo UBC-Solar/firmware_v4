@@ -46,7 +46,7 @@ typedef struct {
 /**
 * @brief Initialize the IMU driver and enable accelerometer, gyroscope, and magnetometer.
 *
-* @return None
+* @return none
 */
 void ImuAppInit(void);
 

@@ -16,6 +16,7 @@
 #include "CAN_comms.h"
 #include "telemetry_app.h"
 #include "can_driver.h"
+#include <stdbool.h>
 
 #define IMU_RESET_PULSE_MS      10
 #define IMU_BOOT_WAIT_MS        200
@@ -54,34 +55,32 @@ bool ImuDriverDataReady(void)
     return HAL_GPIO_ReadPin(I_INTN_GPIO_Port, I_INTN_Pin) == GPIO_PIN_RESET;
 }
 
-void ImuDriverInit(void)
+bool ImuDriverInit(void)
 {
     uint32_t start;
-    uint8_t header[IMU_SHTP_HEADER_LEN];
-    uint16_t packet_len;
 
     HAL_GPIO_WritePin(I_NRST_GPIO_Port, I_NRST_Pin, GPIO_PIN_RESET);
     HAL_Delay(IMU_RESET_PULSE_MS);
     HAL_GPIO_WritePin(I_NRST_GPIO_Port, I_NRST_Pin, GPIO_PIN_SET);
 
     start = HAL_GetTick();
-    while (!ImuDriverDataReady()) {
-        if ((HAL_GetTick() - start) > IMU_BOOT_WAIT_MS) {
-            return;
+    bool reset_done = false, init_done = false;
+
+    while (!init_done && (HAL_GetTick() - start) < IMU_BOOT_WAIT_MS) {
+        if (!ImuDriverDataReady() || !ImuDriverReadPacket()){
+            continue;
+        }
+        
+        uint8_t ch = g_IMU_DRIVER_rx_buffer[2];
+        uint8_t *p = &g_IMU_DRIVER_rx_buffer[IMU_SHTP_HEADER_LEN];
+        if (ch == 1 && p[0] == 0x01) {
+            reset_done = true;
+        }
+        if (ch == SHTP_CHANNEL_CONTROL && p[0] == 0xF1 && (p[2] & 0x7F) == 0x04) {
+            init_done = true;
         }
     }
-
-    if (HAL_I2C_Master_Receive(&hi2c1, IMU_ADDRESS, header, IMU_SHTP_HEADER_LEN, HAL_MAX_DELAY) != HAL_OK) {
-        return;
-    }
-
-    packet_len = ((header[1] << 8) | header[0]) & IMU_SHTP_LENGTH_MASK;
-    if (packet_len == 0) {
-        return;
-    }
-
-    g_IMU_DRIVER_rx_len = (packet_len > IMU_RX_BUFFER_LEN) ? IMU_RX_BUFFER_LEN : packet_len;
-    HAL_I2C_Master_Receive(&hi2c1, IMU_ADDRESS, g_IMU_DRIVER_rx_buffer, g_IMU_DRIVER_rx_len, HAL_MAX_DELAY);
+    return init_done;
 }
 
 void ImuDriverEnableAccel(void)

@@ -9,18 +9,28 @@
 */
 
 #include "imu_app.h"
+#include "cmsis_os2.h"
 #include "imu_driver.h"
 #include "can_driver.h"
 #include "main.h"
+
+#define IMU_INIT_TRIES 5
+#define IMU_INIT_DELAY_MS 100
 
 static ImuAppData g_IMU_APP_data;
 
 void ImuAppInit(void)
 {
-    ImuDriverInit();
-    ImuDriverEnableAccel();
-    ImuDriverEnableGyro();
-    ImuDriverEnableMag();
+    for(int attempt = 0; attempt < IMU_INIT_TRIES; attempt++){
+        if(ImuDriverInit()){
+            ImuDriverEnableAccel();
+            ImuDriverEnableGyro();
+            ImuDriverEnableMag();
+            return;
+        }
+        osDelay( 100); 
+    }
+    return;
 }
 
 void ImuAppTask(void)

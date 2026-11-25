@@ -16,11 +16,11 @@
 #include "can_driver.h"
 
 /**
- * @brief Reset the BNO086 and read its power-on SHTP advertisement packet.
+ * @brief Reset the BNO086 and read its SHTP packets until init is complete.
  *
- * @return None
+ * @return bool true if init was successful
  */
-void ImuDriverInit(void);
+bool ImuDriverInit(void);
 
 /**
  * @brief Send the SH2 Set Feature command to enable accelerometer reports.

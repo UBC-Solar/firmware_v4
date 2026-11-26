@@ -16,6 +16,10 @@ on:
       - '.github/workflows/sim.yml'
   workflow_dispatch:
 
+env:
+  ARM_TOOLCHAIN: arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi
+  ARM_TOOLCHAIN_SHA256: 6cd1bbc1d9ae57312bcd169ae283153a9572bd6a8e4eeae2fedfbc33b115fdbb
+
 jobs:
   sil:
     runs-on: ubuntu-latest
@@ -30,29 +34,43 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Install build tools
-        timeout-minutes: 15
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache ARM toolchain
+        id: arm-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/arm-toolchain.tar.xz
+          key: arm-gnu-toolchain-${{ env.ARM_TOOLCHAIN }}
+
+      - name: Download ARM toolchain
+        if: steps.arm-cache.outputs.cache-hit != 'true'
+        timeout-minutes: 10
         run: |
-          for attempt in 1 2 3; do
-            if sudo timeout 240 apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update &&
-               sudo timeout 240 apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y \
-                 cmake ninja-build gcc-arm-none-eabi libnewlib-arm-none-eabi; then
-              exit 0
-            fi
-            echo "apt attempt $attempt failed or stalled, retrying"
-            sleep 10
-          done
-          exit 1
+          curl -fsSL --retry 5 --retry-delay 10 --retry-all-errors --connect-timeout 30 --max-time 300 \
+            -o ~/arm-toolchain.tar.xz \
+            "https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/${ARM_TOOLCHAIN}.tar.xz"
+          echo "${ARM_TOOLCHAIN_SHA256}  $HOME/arm-toolchain.tar.xz" | sha256sum --check
+
+      - name: Install build tools
+        timeout-minutes: 5
+        run: |
+          echo "${ARM_TOOLCHAIN_SHA256}  $HOME/arm-toolchain.tar.xz" | sha256sum --check
+          mkdir -p ~/arm-toolchain
+          tar -xJf ~/arm-toolchain.tar.xz -C ~/arm-toolchain --strip-components=1
+          echo "$HOME/arm-toolchain/bin" >> "$GITHUB_PATH"
+          python -m pip install --disable-pip-version-check --retries 5 --timeout 30 ninja
+          cmake --version | head -1
+          ninja --version
+          ~/arm-toolchain/bin/arm-none-eabi-gcc --version | head -1
 
       - name: Build ${{ matrix.board }} (Debug)
         # Same as `make <board>`; called directly because dist has no Makefile target
         run: |
           cmake --preset Debug -S firmware/components/${{ matrix.board }} -B firmware/components/${{ matrix.board }}/build
           cmake --build firmware/components/${{ matrix.board }}/build
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
 
       # setup.sh pins the Renode build (and its checksum), so its hash changes exactly when Renode does
       - name: Cache Renode
@@ -68,6 +86,7 @@ jobs:
           key: sim-venv-${{ runner.os }}-py3.12-${{ hashFiles('sim/requirements.txt') }}
 
       - name: Set up sim (Renode + Python packages)
+        timeout-minutes: 10
         run: sim/setup/setup.sh
 
       - name: Run SIL tests (${{ matrix.board }})

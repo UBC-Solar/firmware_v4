@@ -49,6 +49,11 @@ typedef struct {
 void MdiSetDacVoltage(MdiDacAddr dac_addr, uint16_t voltage_value);
 
 /**
+ * @brief Returns true if any DAC I2C write failed since the last call, then clears it.
+ */
+bool MdiTakeDacI2cError(void);
+
+/**
  * @brief Applies a parsed motor command to DAC and GPIO outputs.
  * @param command Pointer to the motor command to apply.
  */

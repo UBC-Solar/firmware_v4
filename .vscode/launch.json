@@ -66,11 +66,24 @@
       "module": "pytest",
       "python": "${workspaceFolder}/sim/.venv/bin/python",
       "windows": { "python": "${workspaceFolder}/sim/.venv/Scripts/python.exe" },
-      "cwd": "${workspaceFolder}/sim",
-      "args": ["${file}", "-k", "${input:silTest}", "--gdb", "-s"],
+      "cwd": "${workspaceFolder}",
+      "args": ["-c", "sim/pytest.ini", "${file}", "-k", "${input:silTest}", "--gdb", "-s"],
       "console": "integratedTerminal",
       "justMyCode": false,
       "presentation": { "hidden": true }
+    },
+    {
+      "name": "SIL: Run Tests (current file, no GDB)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "python": "${workspaceFolder}/sim/.venv/bin/python",
+      "windows": { "python": "${workspaceFolder}/sim/.venv/Scripts/python.exe" },
+      "cwd": "${workspaceFolder}",
+      "args": ["-c", "sim/pytest.ini", "${file}", "-v"],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "presentation": { "group": "SIL", "order": 3 }
     },
     {
       "name": "SIL: attach firmware (Renode)",

@@ -425,7 +425,7 @@ uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults,
     }
     if (drd_faults->drd_watchdog_reset)
     {
-        sprintf(g_faults[fault_count], "%s", LCD_APP_DRD_WDOG_RESET_FLT__CHARS);
+        sprintf(g_faults[fault_count], "%s", LCD_APP_DRD_WDOG_RESET_FLT_CHARS);
         fault_count++;   
     }
     if (drd_faults->drd_mcu_overtemp)

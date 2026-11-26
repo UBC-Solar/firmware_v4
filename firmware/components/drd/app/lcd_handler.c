@@ -280,3 +280,12 @@ void LcdHandlerSetPackOverdischargeWarning(bool warning) { g_lcd_warnings.pack_o
 void LcdHandlerSetPackOverchargeWarning(bool warning) { g_lcd_warnings.pack_overcharge = warning; }
 void LcdHandlerSetMotorThrottleAdcOutOfRange(bool warning) { g_lcd_warnings.throttle_adc_outofrange = warning; }
 void LcdHandlerSetMotorThrottleAdcMismatch(bool warning) { g_lcd_warnings.throttle_adc_mismatch = warning; }
+void LcdHandlerSetMstCellVoltHighWarning(bool warning) { g_lcd_warnings.mst_cell_volt_high = warning; }
+void LcdHandlerSetMstCellVoltLowWarning(bool warning) { g_lcd_warnings.mst_cell_volt_low = warning; }
+void LcdHandlerSetMstCellTempHighWarning(bool warning) { g_lcd_warnings.mst_cell_temp_high = warning; }
+void LcdHandlerSetDrdSpeedTimeoutWarning(bool warning) { g_lcd_warnings.drd_speed_timeout = warning; }
+void LcdHandlerSetDrdDriveStateTimeoutWarning(bool warning) { g_lcd_warnings.drd_drive_state_timeout = warning; }
+void LcdHandlerSetDrdSocTimeoutWarning(bool warning) { g_lcd_warnings.drd_soc_timeout = warning; }
+void LcdHandlerSetDrdPackVoltageTimeoutWarning(bool warning) { g_lcd_warnings.drd_pack_voltage_timeout = warning; }
+void LcdHandlerSetDrdCurrentTimeoutWarning(bool warning) { g_lcd_warnings.drd_current_timeout = warning; }
+void LcdHandlerSetDrdAccelTimeoutWarning(bool warning) { g_lcd_warnings.drd_accel_timeout = warning; }

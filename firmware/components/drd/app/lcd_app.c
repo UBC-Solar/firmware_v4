@@ -893,6 +893,51 @@ uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings)
         sprintf(g_warning_char[warning_count], "%s", LCD_APP_MTR_THROT_ADC_MISMATCH_WARN_CHARS);
         warning_count++;
     }
+    if (warnings->mst_cell_volt_high)
+    {
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_MST_WVHI_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->mst_cell_volt_low)
+    {
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_MST_WVLO_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->mst_cell_temp_high)
+    {
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_MST_WTHI_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->drd_speed_timeout)
+    {
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_DRD_SPTO_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->drd_drive_state_timeout)
+    {
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_DRD_DSTO_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->drd_soc_timeout)
+    {
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_DRD_SCTO_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->drd_pack_voltage_timeout)
+    {
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_DRD_PVTO_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->drd_current_timeout)
+    {
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_DRD_CUTO_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->drd_accel_timeout)
+    {
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_DRD_ACTO_WARN_CHARS);
+        warning_count++;
+    }
 
     return warning_count;
 }

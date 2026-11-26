@@ -167,6 +167,9 @@ void FaultHandlerParseMstFaults(uint8_t* can_rx_data){
     LcdHandlerSetMstCellVoltLow(GETBIT(can_rx_data[4], 3));
     LcdHandlerSetMstCellTempHigh(GETBIT(can_rx_data[4], 4));
     LcdHandlerSetMstCellTempLow(GETBIT(can_rx_data[4], 5));
+    LcdHandlerSetMstCellVoltHighWarning(GETBIT(can_rx_data[4], 6));
+    LcdHandlerSetMstCellVoltLowWarning(GETBIT(can_rx_data[4], 7));
+    LcdHandlerSetMstCellTempHighWarning(GETBIT(can_rx_data[5], 0));
 }
 
 void FaultHandlerParseStrFaults(uint8_t* can_rx_data){

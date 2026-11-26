@@ -202,6 +202,15 @@ typedef struct
     volatile bool pack_overcharge;
     volatile bool throttle_adc_outofrange;
     volatile bool throttle_adc_mismatch;
+    volatile bool mst_cell_volt_high;
+    volatile bool mst_cell_volt_low;
+    volatile bool mst_cell_temp_high;
+    volatile bool drd_speed_timeout;
+    volatile bool drd_drive_state_timeout;
+    volatile bool drd_soc_timeout;
+    volatile bool drd_pack_voltage_timeout;
+    volatile bool drd_current_timeout;
+    volatile bool drd_accel_timeout;
 } LcdAppWarnings;
 
 typedef enum
@@ -358,6 +367,15 @@ void LcdHandlerSetPackOverdischargeWarning(bool warning);
 void LcdHandlerSetPackOverchargeWarning(bool warning);  
 void LcdHandlerSetMotorThrottleAdcOutOfRange(bool warning);
 void LcdHandlerSetMotorThrottleAdcMismatch(bool warning);
+void LcdHandlerSetMstCellVoltHighWarning(bool warning);
+void LcdHandlerSetMstCellVoltLowWarning(bool warning);
+void LcdHandlerSetMstCellTempHighWarning(bool warning);
+void LcdHandlerSetDrdSpeedTimeoutWarning(bool warning);
+void LcdHandlerSetDrdDriveStateTimeoutWarning(bool warning);
+void LcdHandlerSetDrdSocTimeoutWarning(bool warning);
+void LcdHandlerSetDrdPackVoltageTimeoutWarning(bool warning);
+void LcdHandlerSetDrdCurrentTimeoutWarning(bool warning);
+void LcdHandlerSetDrdAccelTimeoutWarning(bool warning);
 
 
 #endif /* __LCD_HANDLER_H */

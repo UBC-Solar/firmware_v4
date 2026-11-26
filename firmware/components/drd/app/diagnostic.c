@@ -70,26 +70,32 @@ void DiagnosticSetMcuUnderVolt(bool fault){
 
 void DiagnosticSetSpeedTimeout(bool timeout){
     g_diagnostics.cyclic_flags.speed_timeout = timeout;
+    LcdHandlerSetDrdSpeedTimeoutWarning(timeout);
 }
 
 void DiagnosticSetDriveStateTimeout(bool timeout){
     g_diagnostics.cyclic_flags.drive_state_timeout = timeout;
+    LcdHandlerSetDrdDriveStateTimeoutWarning(timeout);
 }
 
 void DiagnosticSetSocTimeout(bool timeout){
     g_diagnostics.cyclic_flags.soc_timeout = timeout;
+    LcdHandlerSetDrdSocTimeoutWarning(timeout);
 }
 
 void DiagnosticSetVoltageTimeout(bool timeout){
     g_diagnostics.cyclic_flags.voltage_timeout = timeout;
+    LcdHandlerSetDrdPackVoltageTimeoutWarning(timeout);
 }
 
 void DiagnosticSetCurrentTimeout(bool timeout){
     g_diagnostics.cyclic_flags.current_timeout = timeout;
+    LcdHandlerSetDrdCurrentTimeoutWarning(timeout);
 }
 
 void DiagnosticSetAccelTimeout(bool timeout){
     g_diagnostics.cyclic_flags.accel_timeout = timeout;
+    LcdHandlerSetDrdAccelTimeoutWarning(timeout);
 }
 
 void DiagnosticTimeSinceBootup()

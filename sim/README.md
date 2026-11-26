@@ -20,6 +20,12 @@ sim/
   pytest.ini  requirements.txt
 ```
 
+## Open the Python Environment
+```
+python -m venv sim/.venv
+```
+Creates an isolated Python environment in `sim/.venv/`, to install pytest and pyrenode3 packages
+
 ## Setup (once)
 
 1. From the repo root, run the setup script for your OS:
@@ -54,7 +60,13 @@ sim/.venv/bin/pytest sim               # all boards
 sim/.venv/bin/pytest sim/tests/str     # one board
 sim/.venv/bin/pytest sim/tests/str -k boot   # one test
 sim/.venv/bin/pytest sim --build-type Release   # test the Release build (default: Debug)
+sim/.venv/bin/pytest sim --realtime   # firmware at wall-clock speed (on with --gdb)
 ```
+
+By default the firmware runs **as fast as the host can emulate it**, not limited to real time (Renode's
+AdvanceImmediately). Actual speed depends on the board and PC, and can be slower than real time.
+Results don't change: every check uses firmware time. With `--gdb` or `--realtime` it is held to
+wall-clock speed, so Live Watch and LEDs look natural. The VS Code "Renode: debug board" launch doesn't use pytest and always runs in real time.
 
 ## Write a test
 
@@ -146,6 +158,9 @@ Struct fields by name aren't supported: use `read_bytes` with the field's offset
 | Call | Does |
 |---|---|
 | `task_loops()` | Loop count per FreeRTOS task, to catch tasks that never run, hang or starve |
+
+`task_loops()` needs the test marked `@pytest.mark.rtos_trace`. Counting hooks every `osDelay` and
+queue wait, which slows the emulation several times over, so it's off unless asked for.
 
 **Old names** still work (existing tests use them): `send_can` = `can.send`, `can_frames_sent` =
 `can.sent`, `wait_for_can` = `can.wait_for`, `uart_bytes` = `uart.received`, `wait_for_uart` =

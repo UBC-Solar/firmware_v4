@@ -27,6 +27,18 @@ def pytest_addoption(parser):
         action="store_true",
         help="Print each test step (file:line, action, virtual time) to the terminal; on with --gdb",
     )
+    parser.addoption(
+        "--realtime",
+        action="store_true",
+        help="Run the firmware at wall-clock speed instead of as fast as possible; on with --gdb",
+    )
+
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers",
+        "rtos_trace: count FreeRTOS task loops so board.rtos.task_loops() works (slows the test)",
+    )
 
 
 def pytest_collectstart(collector):
@@ -90,6 +102,8 @@ def board(request):
         build_type=request.config.getoption("--build-type"),
         trace=request.config.getoption("--sim-trace"),
         say=say,
+        realtime=request.config.getoption("--realtime"),
+        rtos_trace=request.node.get_closest_marker("rtos_trace") is not None,
     )
     yield b
     b.close()

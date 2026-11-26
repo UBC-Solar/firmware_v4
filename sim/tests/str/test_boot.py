@@ -1,3 +1,5 @@
+import pytest
+
 from api import Board
 
 
@@ -6,6 +8,7 @@ def test_boots_without_fault(board: Board):
     assert board.symbol_at_pc() not in ("Error_Handler", "HardFault_Handler")
 
 
+@pytest.mark.rtos_trace
 def test_every_rtos_task_runs(board: Board):
     # The CAN Rx task only loops when a frame arrives
     for _ in range(3):

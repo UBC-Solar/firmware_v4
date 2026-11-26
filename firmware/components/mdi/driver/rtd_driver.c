@@ -6,6 +6,7 @@
  */
 
 #include "rtd_driver.h"
+#include "spi.h"
 
 #define COEFF_OF_RESISTANCE_PLAT 0.00385
 #define RESISTANCE_AT_0C 1000
@@ -51,8 +52,6 @@ static RtdStatus RtdReadResistance(uint16_t* buffer);
 static void RtdResistanceToTemp(uint16_t buffer, int32_t* temp);
 static void RtdClearFault(void);
 static void RtdUpdateFaultState(RtdFaultFlags faults);
-
-extern SPI_HandleTypeDef hspi1;
 
 /* Base configuration (VBIAS | AUTO | 3WIRE | 60Hz filter); kept so faults can
  * be cleared without disturbing the running conversion settings. */

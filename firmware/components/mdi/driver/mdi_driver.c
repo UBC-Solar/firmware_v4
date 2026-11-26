@@ -7,16 +7,54 @@
  */
 
 #include "mdi_driver.h"
-
 #include "main.h"
 #include "gpio_driver.h"
+#include "i2c.h"
 
-extern I2C_HandleTypeDef hi2c1;
-extern I2C_HandleTypeDef hi2c2;
+static bool s_dac_i2c_error = false;
+
+/* At least 5 us at 72 MHz. Running I2C slower than spec is fine. */
+static void MdiI2cHalfBitDelay(void)
+{
+    for (volatile uint32_t i = 0; i < 100U; i++)
+    {
+    }
+}
+
+/**
+ * @brief Frees a DAC stuck holding SDA low, clocks SCL until SDA is released, sends a
+ *        STOP, then re-inits the peripheral. Both I2C buses are on GPIOB.
+ */
+static void MdiI2cBusRecover(I2C_HandleTypeDef* hi2c, uint16_t scl_pin, uint16_t sda_pin)
+{
+    GPIO_InitTypeDef gpio = {
+        .Pin = scl_pin | sda_pin, .Mode = GPIO_MODE_OUTPUT_OD, .Speed = GPIO_SPEED_FREQ_HIGH};
+
+    HAL_I2C_DeInit(hi2c);
+    HAL_GPIO_WritePin(GPIOB, scl_pin | sda_pin, GPIO_PIN_SET);
+    HAL_GPIO_Init(GPIOB, &gpio);
+
+    for (uint8_t i = 0; (i < 9U) && (HAL_GPIO_ReadPin(GPIOB, sda_pin) == GPIO_PIN_RESET); i++)
+    {
+        HAL_GPIO_WritePin(GPIOB, scl_pin, GPIO_PIN_RESET);
+        MdiI2cHalfBitDelay();
+        HAL_GPIO_WritePin(GPIOB, scl_pin, GPIO_PIN_SET);
+        MdiI2cHalfBitDelay();
+    }
+
+    /* stop: set SDA low, then set SDA high while SCL is high*/
+    HAL_GPIO_WritePin(GPIOB, sda_pin, GPIO_PIN_RESET);
+    MdiI2cHalfBitDelay();
+    HAL_GPIO_WritePin(GPIOB, sda_pin, GPIO_PIN_SET);
+
+    HAL_I2C_Init(hi2c);
+}
 
 void MdiSetDacVoltage(MdiDacAddr dac_addr, uint16_t voltage_value)
 {
     uint8_t i2c_buffer[2] = {0};
+    bool is_accel = (dac_addr == MDI_DAC_ACCEL);
+    I2C_HandleTypeDef* hi2c = is_accel ? &hi2c2 : &hi2c1;
 
     if (voltage_value > MDI_MAX_DAC_VALUE)
     {
@@ -27,15 +65,22 @@ void MdiSetDacVoltage(MdiDacAddr dac_addr, uint16_t voltage_value)
     i2c_buffer[0] = (uint8_t)(voltage_value >> 8);
     i2c_buffer[1] = (uint8_t)(voltage_value & 0xFFU);
 
-    if (dac_addr == MDI_DAC_ACCEL)
+    /* No retry; the next motor command rewrites the DAC. */
+    if (HAL_I2C_Master_Transmit(hi2c, MDI_DAC7571_WRITE_ADDR, i2c_buffer, 2U, MDI_I2C_TIMEOUT_MS) !=
+        HAL_OK)
     {
-        HAL_I2C_Master_Transmit(&hi2c2, MDI_DAC7571_WRITE_ADDR, i2c_buffer, sizeof(i2c_buffer), HAL_MAX_DELAY);
+        s_dac_i2c_error = true;
+        MdiI2cBusRecover(hi2c,
+                         is_accel ? ACC_SCL_Pin : REG_SCL_Pin,
+                         is_accel ? ACC_SDA_Pin : REG_SDA_Pin);
     }
+}
 
-    if (dac_addr == MDI_DAC_REGEN)
-    {
-        HAL_I2C_Master_Transmit(&hi2c1, MDI_DAC7571_WRITE_ADDR, i2c_buffer, sizeof(i2c_buffer), HAL_MAX_DELAY);
-    }
+bool MdiTakeDacI2cError(void)
+{
+    bool had_error = s_dac_i2c_error;
+    s_dac_i2c_error = false;
+    return had_error;
 }
 
 void MdiSetMotorCommand(const MdiMotorCommand *command)

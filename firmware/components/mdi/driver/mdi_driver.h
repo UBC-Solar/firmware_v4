@@ -17,6 +17,7 @@
 #define MDI_DIAGNOSTICS_DELAY 1000U
 #define IWDG_REFRESH_DELAY 100
 #define MDI_DAC7571_WRITE_ADDR (0x4Cu << 1U)
+#define MDI_I2C_TIMEOUT_MS 2U
 
 typedef enum {
     MDI_DAC_REGEN = (0b0001101u << 1),
@@ -46,6 +47,11 @@ typedef struct {
  * @param voltage_value Requested DAC code before clamping/scaling.
  */
 void MdiSetDacVoltage(MdiDacAddr dac_addr, uint16_t voltage_value);
+
+/**
+ * @brief Returns true if any DAC I2C write failed since the last call, then clears it.
+ */
+bool MdiTakeDacI2cError(void);
 
 /**
  * @brief Applies a parsed motor command to DAC and GPIO outputs.

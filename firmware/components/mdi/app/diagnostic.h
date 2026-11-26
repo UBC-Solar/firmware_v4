@@ -18,6 +18,7 @@ typedef union {
         volatile bool mdi_motor_over_temp : 1;
         volatile bool mdi_rtd_fault : 1;
         volatile bool mdi_rtd_comm_error : 1;
+        volatile bool mdi_dac_i2c_error : 1;
     } bits;
     volatile uint8_t raw;
 } MdiDiagnosticFlags;

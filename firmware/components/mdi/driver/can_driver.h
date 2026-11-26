@@ -10,7 +10,7 @@
 
 #include "stm32f1xx_hal.h"
 
-extern CAN_HandleTypeDef hcan;
+#include "can.h"
 
 #define DRD_MOTOR_COMMAND_CAN_ID 0x401U
 #define MDI_TIME_SINCE_BOOTUP_CAN_ID 0x500U

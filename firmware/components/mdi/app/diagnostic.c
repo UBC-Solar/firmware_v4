@@ -7,6 +7,7 @@
 
 #include "can_driver.h"
 #include "git_version.h"
+#include "mdi_driver.h"
 #include "gpio_driver.h"
 #include "rtd_driver.h"
 #include "stm32f1xx_hal_gpio.h"
@@ -136,6 +137,7 @@ void DiagnosticSendRtdTemp(void){
 void DiagnosticSendFlags(void)
 {
 	uint8_t data[3];
+	s_diagnostic_flags.bits.mdi_dac_i2c_error = MdiTakeDacI2cError();
 	data[0] = s_diagnostic_flags.raw;
 	data[1] = CanDriverGetTec();
 	data[2] = CanDriverGetRec();

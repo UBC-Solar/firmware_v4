@@ -150,6 +150,47 @@ typedef struct
     volatile bool mosfet_overheat;
 } LcdAppMpptFaults;
 
+typedef struct
+{
+    volatile bool comm_fail;
+    volatile bool self_check_fail;
+    volatile bool cell_volt_high;
+    volatile bool cell_volt_low;
+    volatile bool cell_temp_high;
+    volatile bool cell_temp_low;
+} LcdAppMstFaults;
+
+typedef struct
+{
+    volatile bool mcu_undervolt;
+    volatile bool mcu_overtemp;
+} LcdAppStrFaults;
+
+typedef struct
+{
+    volatile bool watchdog_reset;
+    volatile bool imu_read_fail;
+    volatile bool imu_write_fail;
+    volatile bool gps_read_fail;
+    volatile bool gps_write_fail;
+    volatile bool mcu_overtemp;
+    volatile bool mcu_undervolt;
+} LcdAppTelFaults;
+
+typedef struct
+{
+    volatile bool hw_protection;
+    volatile bool temp_protection;
+    volatile bool input_volt_fault;
+    volatile bool output_undervolt;
+    volatile bool output_overvolt;
+    volatile bool output_overcurr;
+    volatile bool output_short;
+    volatile bool comm_timeout;
+    volatile bool socket_overheat;
+    volatile bool elec_lock_fault;
+} LcdAppObcFaults;
+
 typedef struct 
 {
     volatile bool low_volt_warning;
@@ -273,6 +314,39 @@ void LcdHandlerSetMpptHwOvervoltage(uint8_t mppt, bool fault);
 void LcdHandlerSetMpptHwOvercurrent(uint8_t mppt, bool fault);
 void LcdHandlerSetMppt12vUndervoltage(uint8_t mppt, bool fault);
 void LcdHandlerSetMpptMosfetOverheat(uint8_t mppt, bool fault);
+
+/* LCD HANDLER MST FAULT DATA SETTERS */
+void LcdHandlerSetMstCommFail(bool fault);
+void LcdHandlerSetMstSelfCheckFail(bool fault);
+void LcdHandlerSetMstCellVoltHigh(bool fault);
+void LcdHandlerSetMstCellVoltLow(bool fault);
+void LcdHandlerSetMstCellTempHigh(bool fault);
+void LcdHandlerSetMstCellTempLow(bool fault);
+
+/* LCD HANDLER STR FAULT DATA SETTERS */
+void LcdHandlerSetStrMcuUndervolt(bool fault);
+void LcdHandlerSetStrMcuOvertemp(bool fault);
+
+/* LCD HANDLER TEL FAULT DATA SETTERS */
+void LcdHandlerSetTelWatchdogReset(bool fault);
+void LcdHandlerSetTelImuReadFail(bool fault);
+void LcdHandlerSetTelImuWriteFail(bool fault);
+void LcdHandlerSetTelGpsReadFail(bool fault);
+void LcdHandlerSetTelGpsWriteFail(bool fault);
+void LcdHandlerSetTelMcuOvertemp(bool fault);
+void LcdHandlerSetTelMcuUndervolt(bool fault);
+
+/* LCD HANDLER OBC FAULT DATA SETTERS */
+void LcdHandlerSetObcHwProtection(bool fault);
+void LcdHandlerSetObcTempProtection(bool fault);
+void LcdHandlerSetObcInputVoltFault(bool fault);
+void LcdHandlerSetObcOutputUndervolt(bool fault);
+void LcdHandlerSetObcOutputOvervolt(bool fault);
+void LcdHandlerSetObcOutputOvercurr(bool fault);
+void LcdHandlerSetObcOutputShort(bool fault);
+void LcdHandlerSetObcCommTimeout(bool fault);
+void LcdHandlerSetObcSocketOverheat(bool fault);
+void LcdHandlerSetObcElecLockFault(bool fault);
 
 /* LCD HANDLER WARNING DATA SETTERS */
 void LcdHandlerSetLowVoltWarning(bool warning);

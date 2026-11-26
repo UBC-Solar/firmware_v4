@@ -160,6 +160,47 @@ void FaultHandlerParseMpptFaults(uint8_t mppt, uint8_t* can_rx_data){
     LcdHandlerSetMpptMosfetOverheat(mppt, GETBIT(can_rx_data[3], 6));
 }
 
+void FaultHandlerParseMstFaults(uint8_t* can_rx_data){
+    LcdHandlerSetMstCommFail(GETBIT(can_rx_data[4], 0));
+    LcdHandlerSetMstSelfCheckFail(GETBIT(can_rx_data[4], 1));
+    LcdHandlerSetMstCellVoltHigh(GETBIT(can_rx_data[4], 2));
+    LcdHandlerSetMstCellVoltLow(GETBIT(can_rx_data[4], 3));
+    LcdHandlerSetMstCellTempHigh(GETBIT(can_rx_data[4], 4));
+    LcdHandlerSetMstCellTempLow(GETBIT(can_rx_data[4], 5));
+}
+
+void FaultHandlerParseStrFaults(uint8_t* can_rx_data){
+    LcdHandlerSetStrMcuUndervolt(GETBIT(can_rx_data[0], 0));
+    LcdHandlerSetStrMcuOvertemp(GETBIT(can_rx_data[0], 1));
+}
+
+void FaultHandlerParseTelFaults(uint8_t* can_rx_data){
+    LcdHandlerSetTelWatchdogReset(GETBIT(can_rx_data[0], 0));
+    LcdHandlerSetTelImuReadFail(GETBIT(can_rx_data[0], 1));
+    LcdHandlerSetTelImuWriteFail(GETBIT(can_rx_data[0], 2));
+    LcdHandlerSetTelGpsReadFail(GETBIT(can_rx_data[0], 3));
+    LcdHandlerSetTelGpsWriteFail(GETBIT(can_rx_data[0], 4));
+    LcdHandlerSetTelMcuOvertemp(GETBIT(can_rx_data[0], 5));
+    LcdHandlerSetTelMcuUndervolt(GETBIT(can_rx_data[0], 6));
+}
+
+void FaultHandlerParseObcFaults(uint8_t* can_rx_data){
+    LcdHandlerSetObcHwProtection(GETBIT(can_rx_data[4], 0));
+    LcdHandlerSetObcTempProtection(GETBIT(can_rx_data[4], 1));
+    // Input voltage status: 0 normal, 1 undervoltage, 2 overvoltage, 3 no input
+    uint8_t input_volt_status = (can_rx_data[4] >> 2) & 0x03;
+    LcdHandlerSetObcInputVoltFault(input_volt_status == 1 || input_volt_status == 2);
+    LcdHandlerSetObcOutputUndervolt(GETBIT(can_rx_data[4], 4));
+    LcdHandlerSetObcOutputOvervolt(GETBIT(can_rx_data[4], 5));
+    LcdHandlerSetObcOutputOvercurr(GETBIT(can_rx_data[4], 6));
+    LcdHandlerSetObcOutputShort(GETBIT(can_rx_data[4], 7));
+    LcdHandlerSetObcCommTimeout(GETBIT(can_rx_data[5], 0));
+    LcdHandlerSetObcSocketOverheat(GETBIT(can_rx_data[6], 3));
+    // Lock state: 0 checking, 1 locked, 2 unlocked, 3 unlock fault, 4 locked fault
+    uint8_t lock_state = (can_rx_data[6] >> 4) & 0x07;
+    LcdHandlerSetObcElecLockFault(lock_state == 3 || lock_state == 4);
+}
+
 void FaultHandlerParseBatteryWarnings(uint8_t* can_rx_data) {
     LcdHandlerSetLowVoltWarning(GETBIT(can_rx_data[1], 5));
     LcdHandlerSetHighVoltWarning(GETBIT(can_rx_data[1], 6));

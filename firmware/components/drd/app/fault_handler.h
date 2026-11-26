@@ -72,6 +72,30 @@ void FaultHandlerParseMdiFaults(uint8_t* can_rx_data);
  * @param can_rx_data Pointer to the received CAN message data
  */
 void FaultHandlerParseMpptFaults(uint8_t mppt, uint8_t* can_rx_data);
+
+/**
+ * @brief Parses the MST fault flags and updates the LCD
+ * @param can_rx_data Pointer to the received CAN message data
+ */
+void FaultHandlerParseMstFaults(uint8_t* can_rx_data);
+
+/**
+ * @brief Parses the STR fault flags and updates the LCD
+ * @param can_rx_data Pointer to the received CAN message data
+ */
+void FaultHandlerParseStrFaults(uint8_t* can_rx_data);
+
+/**
+ * @brief Parses the TEL fault flags and updates the LCD
+ * @param can_rx_data Pointer to the received CAN message data
+ */
+void FaultHandlerParseTelFaults(uint8_t* can_rx_data);
+
+/**
+ * @brief Parses the OBC fault flags and updates the LCD
+ * @param can_rx_data Pointer to the received CAN message data
+ */
+void FaultHandlerParseObcFaults(uint8_t* can_rx_data);
 /**
  * @brief Parses battery warning data from received CAN messages and updates the cyclic data handler with the latest battery warning information.
  *

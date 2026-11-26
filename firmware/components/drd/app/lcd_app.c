@@ -204,11 +204,15 @@ void LcdAppDisplayFaultIndicator(LcdAppBattFaults* batt_faults,
                                 LcdAppDrdFaults* drd_faults, 
                                 LcdAppHvcFaults* hvc_faults, 
                                 LcdAppMdiFaults* mdi_faults, 
-                                LcdAppMpptFaults* mppt_faults)
+                                LcdAppMpptFaults* mppt_faults, 
+                                LcdAppMstFaults* mst_faults, 
+                                LcdAppStrFaults* str_faults, 
+                                LcdAppTelFaults* tel_faults, 
+                                LcdAppObcFaults* obc_faults)
 {
     LcdDriverClearBoundingBox(old_bb_fault_indicator.x1,old_bb_fault_indicator.y1,old_bb_fault_indicator.x2,old_bb_fault_indicator.y2);
 
-    uint8_t fault_count = LcdAppCheckFaults(batt_faults, motor_faults, drd_faults, hvc_faults, mdi_faults, mppt_faults);
+    uint8_t fault_count = LcdAppCheckFaults(batt_faults, motor_faults, drd_faults, hvc_faults, mdi_faults, mppt_faults, mst_faults, str_faults, tel_faults, obc_faults);
 
     // Check if there is an existing fault
     if (fault_count > 0)
@@ -247,7 +251,11 @@ uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults,
                             LcdAppDrdFaults* drd_faults, 
                             LcdAppHvcFaults* hvc_faults, 
                             LcdAppMdiFaults* mdi_faults, 
-                            LcdAppMpptFaults* mppt_faults)
+                            LcdAppMpptFaults* mppt_faults, 
+                            LcdAppMstFaults* mst_faults, 
+                            LcdAppStrFaults* str_faults, 
+                            LcdAppTelFaults* tel_faults, 
+                            LcdAppObcFaults* obc_faults)
 {
     // This clears the faults so we parse faults every time
     memset(g_faults, 0, sizeof(g_faults));  
@@ -645,6 +653,131 @@ uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults,
         sprintf(g_faults[fault_count], "%s", LCD_APP_MPPTD_FETH_FLT_CHARS);
         fault_count++;
     }
+    if (mst_faults->comm_fail)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MST_COMM_FLT_CHARS);
+        fault_count++;
+    }
+    if (mst_faults->self_check_fail)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MST_SCHK_FLT_CHARS);
+        fault_count++;
+    }
+    if (mst_faults->cell_volt_high)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MST_CVHI_FLT_CHARS);
+        fault_count++;
+    }
+    if (mst_faults->cell_volt_low)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MST_CVLO_FLT_CHARS);
+        fault_count++;
+    }
+    if (mst_faults->cell_temp_high)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MST_CTHI_FLT_CHARS);
+        fault_count++;
+    }
+    if (mst_faults->cell_temp_low)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MST_CTLO_FLT_CHARS);
+        fault_count++;
+    }
+    if (str_faults->mcu_undervolt)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_STR_MCUV_FLT_CHARS);
+        fault_count++;
+    }
+    if (str_faults->mcu_overtemp)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_STR_MCOT_FLT_CHARS);
+        fault_count++;
+    }
+    if (tel_faults->watchdog_reset)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_TEL_WDOG_FLT_CHARS);
+        fault_count++;
+    }
+    if (tel_faults->imu_read_fail)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_TEL_IMUR_FLT_CHARS);
+        fault_count++;
+    }
+    if (tel_faults->imu_write_fail)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_TEL_IMUW_FLT_CHARS);
+        fault_count++;
+    }
+    if (tel_faults->gps_read_fail)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_TEL_GPSR_FLT_CHARS);
+        fault_count++;
+    }
+    if (tel_faults->gps_write_fail)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_TEL_GPSW_FLT_CHARS);
+        fault_count++;
+    }
+    if (tel_faults->mcu_overtemp)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_TEL_MCOT_FLT_CHARS);
+        fault_count++;
+    }
+    if (tel_faults->mcu_undervolt)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_TEL_MCUV_FLT_CHARS);
+        fault_count++;
+    }
+    if (obc_faults->hw_protection)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_OBC_HWPR_FLT_CHARS);
+        fault_count++;
+    }
+    if (obc_faults->temp_protection)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_OBC_TMPR_FLT_CHARS);
+        fault_count++;
+    }
+    if (obc_faults->input_volt_fault)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_OBC_INV_FLT_CHARS);
+        fault_count++;
+    }
+    if (obc_faults->output_undervolt)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_OBC_OUV_FLT_CHARS);
+        fault_count++;
+    }
+    if (obc_faults->output_overvolt)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_OBC_OOV_FLT_CHARS);
+        fault_count++;
+    }
+    if (obc_faults->output_overcurr)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_OBC_OOC_FLT_CHARS);
+        fault_count++;
+    }
+    if (obc_faults->output_short)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_OBC_SHRT_FLT_CHARS);
+        fault_count++;
+    }
+    if (obc_faults->comm_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_OBC_COMM_FLT_CHARS);
+        fault_count++;
+    }
+    if (obc_faults->socket_overheat)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_OBC_SOCK_FLT_CHARS);
+        fault_count++;
+    }
+    if (obc_faults->elec_lock_fault)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_OBC_LOCK_FLT_CHARS);
+        fault_count++;
+    }
     return fault_count;
 }
 
@@ -659,9 +792,13 @@ void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults,
                         LcdAppDrdFaults* drd_faults, 
                         LcdAppHvcFaults* hvc_faults, 
                         LcdAppMdiFaults* mdi_faults, 
-                        LcdAppMpptFaults* mppt_faults)
+                        LcdAppMpptFaults* mppt_faults, 
+                        LcdAppMstFaults* mst_faults, 
+                        LcdAppStrFaults* str_faults, 
+                        LcdAppTelFaults* tel_faults, 
+                        LcdAppObcFaults* obc_faults)
 {
-    uint8_t fault_count = LcdAppCheckFaults(batt_faults, motor_faults, drd_faults, hvc_faults, mdi_faults, mppt_faults);
+    uint8_t fault_count = LcdAppCheckFaults(batt_faults, motor_faults, drd_faults, hvc_faults, mdi_faults, mppt_faults, mst_faults, str_faults, tel_faults, obc_faults);
 
     // This forces the screen to clear given no faults (clear doesn't update dirty pages)
     if(fault_count == 0 || fault_count < g_prev_fault_count){

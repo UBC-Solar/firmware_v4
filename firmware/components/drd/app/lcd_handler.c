@@ -22,6 +22,10 @@ static LcdAppMotorFaults g_lcd_motor_faults = {0};
 static LcdAppDrdFaults g_lcd_drd_faults = {0};
 static LcdAppHvcFaults g_lcd_hvc_faults = {0};
 static LcdAppMdiFaults g_lcd_mdi_faults = {0};
+static LcdAppMstFaults g_lcd_mst_faults = {0};
+static LcdAppStrFaults g_lcd_str_faults = {0};
+static LcdAppTelFaults g_lcd_tel_faults = {0};
+static LcdAppObcFaults g_lcd_obc_faults = {0};
 static LcdAppMpptFaults g_lcd_mppt_faults[LCD_APP_NUM_MPPTS] = {0};
 static LcdAppWarnings g_lcd_warnings = {0};
 static LcdAppTemperature g_lcd_temperatures[8] = {0};
@@ -59,7 +63,7 @@ void LcdHandlerPageController(void)
     LcdHandlerGetData();
 
     // Fault Logic - Trigger Page Change on rising edge of fault detection
-    bool check_fault = LcdAppCheckFaults(&g_lcd_batt_faults, &g_lcd_motor_faults, &g_lcd_drd_faults, &g_lcd_hvc_faults, &g_lcd_mdi_faults, g_lcd_mppt_faults);
+    bool check_fault = LcdAppCheckFaults(&g_lcd_batt_faults, &g_lcd_motor_faults, &g_lcd_drd_faults, &g_lcd_hvc_faults, &g_lcd_mdi_faults, g_lcd_mppt_faults, &g_lcd_mst_faults, &g_lcd_str_faults, &g_lcd_tel_faults, &g_lcd_obc_faults);
     // Page Logic - Trigger Page Change on flag set by CAN message
     if(g_str_change_page_flag){
         // Check if page is above 5 pages
@@ -92,11 +96,11 @@ void LcdHandlerPageController(void)
         LcdAppDisplaySocDrivePage((volatile uint32_t*)g_lcd_data.soc);
         LcdAppDisplayDriveModeDrivePage(g_lcd_data.drive_mode);
         LcdAppDisplayDriveStateDrivePage((volatile DriveStateStates*) g_lcd_data.drive_state);
-        LcdAppDisplayFaultIndicator(&g_lcd_batt_faults, &g_lcd_motor_faults, &g_lcd_drd_faults, &g_lcd_hvc_faults, &g_lcd_mdi_faults, g_lcd_mppt_faults);
+        LcdAppDisplayFaultIndicator(&g_lcd_batt_faults, &g_lcd_motor_faults, &g_lcd_drd_faults, &g_lcd_hvc_faults, &g_lcd_mdi_faults, g_lcd_mppt_faults, &g_lcd_mst_faults, &g_lcd_str_faults, &g_lcd_tel_faults, &g_lcd_obc_faults);
         LcdAppDisplayWarningIndicator(&g_lcd_warnings);
         break;
     case FAULTS_PAGE:
-        LcdAppDisplayFaults(&g_lcd_batt_faults, &g_lcd_motor_faults, &g_lcd_drd_faults, &g_lcd_hvc_faults, &g_lcd_mdi_faults, g_lcd_mppt_faults);
+        LcdAppDisplayFaults(&g_lcd_batt_faults, &g_lcd_motor_faults, &g_lcd_drd_faults, &g_lcd_hvc_faults, &g_lcd_mdi_faults, g_lcd_mppt_faults, &g_lcd_mst_faults, &g_lcd_str_faults, &g_lcd_tel_faults, &g_lcd_obc_faults);
         break;
     case WARNINGS_PAGE:
         LcdAppDisplayWarnings(&g_lcd_warnings);
@@ -232,6 +236,39 @@ void LcdHandlerSetMpptHwOvervoltage(uint8_t mppt, bool fault) { if (mppt < LCD_A
 void LcdHandlerSetMpptHwOvercurrent(uint8_t mppt, bool fault) { if (mppt < LCD_APP_NUM_MPPTS) { g_lcd_mppt_faults[mppt].hw_overcurrent = fault; } }
 void LcdHandlerSetMppt12vUndervoltage(uint8_t mppt, bool fault) { if (mppt < LCD_APP_NUM_MPPTS) { g_lcd_mppt_faults[mppt].undervoltage_12v = fault; } }
 void LcdHandlerSetMpptMosfetOverheat(uint8_t mppt, bool fault) { if (mppt < LCD_APP_NUM_MPPTS) { g_lcd_mppt_faults[mppt].mosfet_overheat = fault; } }
+
+/* LCD HANDLER MST FAULT DATA SETTERS */
+void LcdHandlerSetMstCommFail(bool fault) { g_lcd_mst_faults.comm_fail = fault; }
+void LcdHandlerSetMstSelfCheckFail(bool fault) { g_lcd_mst_faults.self_check_fail = fault; }
+void LcdHandlerSetMstCellVoltHigh(bool fault) { g_lcd_mst_faults.cell_volt_high = fault; }
+void LcdHandlerSetMstCellVoltLow(bool fault) { g_lcd_mst_faults.cell_volt_low = fault; }
+void LcdHandlerSetMstCellTempHigh(bool fault) { g_lcd_mst_faults.cell_temp_high = fault; }
+void LcdHandlerSetMstCellTempLow(bool fault) { g_lcd_mst_faults.cell_temp_low = fault; }
+
+/* LCD HANDLER STR FAULT DATA SETTERS */
+void LcdHandlerSetStrMcuUndervolt(bool fault) { g_lcd_str_faults.mcu_undervolt = fault; }
+void LcdHandlerSetStrMcuOvertemp(bool fault) { g_lcd_str_faults.mcu_overtemp = fault; }
+
+/* LCD HANDLER TEL FAULT DATA SETTERS */
+void LcdHandlerSetTelWatchdogReset(bool fault) { g_lcd_tel_faults.watchdog_reset = fault; }
+void LcdHandlerSetTelImuReadFail(bool fault) { g_lcd_tel_faults.imu_read_fail = fault; }
+void LcdHandlerSetTelImuWriteFail(bool fault) { g_lcd_tel_faults.imu_write_fail = fault; }
+void LcdHandlerSetTelGpsReadFail(bool fault) { g_lcd_tel_faults.gps_read_fail = fault; }
+void LcdHandlerSetTelGpsWriteFail(bool fault) { g_lcd_tel_faults.gps_write_fail = fault; }
+void LcdHandlerSetTelMcuOvertemp(bool fault) { g_lcd_tel_faults.mcu_overtemp = fault; }
+void LcdHandlerSetTelMcuUndervolt(bool fault) { g_lcd_tel_faults.mcu_undervolt = fault; }
+
+/* LCD HANDLER OBC FAULT DATA SETTERS */
+void LcdHandlerSetObcHwProtection(bool fault) { g_lcd_obc_faults.hw_protection = fault; }
+void LcdHandlerSetObcTempProtection(bool fault) { g_lcd_obc_faults.temp_protection = fault; }
+void LcdHandlerSetObcInputVoltFault(bool fault) { g_lcd_obc_faults.input_volt_fault = fault; }
+void LcdHandlerSetObcOutputUndervolt(bool fault) { g_lcd_obc_faults.output_undervolt = fault; }
+void LcdHandlerSetObcOutputOvervolt(bool fault) { g_lcd_obc_faults.output_overvolt = fault; }
+void LcdHandlerSetObcOutputOvercurr(bool fault) { g_lcd_obc_faults.output_overcurr = fault; }
+void LcdHandlerSetObcOutputShort(bool fault) { g_lcd_obc_faults.output_short = fault; }
+void LcdHandlerSetObcCommTimeout(bool fault) { g_lcd_obc_faults.comm_timeout = fault; }
+void LcdHandlerSetObcSocketOverheat(bool fault) { g_lcd_obc_faults.socket_overheat = fault; }
+void LcdHandlerSetObcElecLockFault(bool fault) { g_lcd_obc_faults.elec_lock_fault = fault; }
 
 /* LCD HANDLER WARNING DATA SETTERS */
 void LcdHandlerSetLowVoltWarning(bool warning) { g_lcd_warnings.low_volt_warning = warning; }

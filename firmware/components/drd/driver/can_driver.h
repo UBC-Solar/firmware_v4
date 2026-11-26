@@ -40,6 +40,10 @@
 #define CAN_ID_MDI_FAULTS                   0x501
 #define CAN_ID_HVC_FAULTS                   0x321
 #define CAN_ID_MTR_FAULTS                   0x08A50225
+#define CAN_ID_MST_FAULTS                   0x200
+#define CAN_ID_STR_FAULTS                   0x592
+#define CAN_ID_TEL_FAULTS                   0x751
+#define CAN_ID_OBC_FAULTS                   0x18FF50E5
 #define MDU_REQUEST_COMMAND_ID              0x08F89540
 #define MDU_REQUEST_SIZE                    1
 #define MDU_REQUEST_FRAME                   0b111

@@ -197,6 +197,18 @@ void FaultHandlerCanRxHandler(uint32_t msg_id, uint8_t* data)
     case CAN_ID_MTR_FAULTS:
         FaultHandlerParseMotorFaults(data);
         break;
+    case CAN_ID_MST_FAULTS:
+        FaultHandlerParseMstFaults(data);
+        break;
+    case CAN_ID_STR_FAULTS:
+        FaultHandlerParseStrFaults(data);
+        break;
+    case CAN_ID_TEL_FAULTS:
+        FaultHandlerParseTelFaults(data);
+        break;
+    case CAN_ID_OBC_FAULTS:
+        FaultHandlerParseObcFaults(data);
+        break;
         // Other motor faults are handled from drd diagnostics
     }
     // Temperatures come from multiple CAN messages so we parse them in the same handler based on the message ID

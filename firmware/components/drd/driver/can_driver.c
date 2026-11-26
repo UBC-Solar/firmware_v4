@@ -81,6 +81,19 @@ void CanFilterInit(CAN_FilterTypeDef* can_filter) {
     can_filter_mppt.FilterActivation = ENABLE;
     HAL_CAN_ConfigFilter(&hcan, &can_filter_mppt);
 
+    // ---- Filter Bank 2 ---- 
+    CAN_FilterTypeDef can_filter_boards = {0};
+    can_filter_boards.FilterIdHigh = (CAN_ID_MST_FAULTS << 5);
+    can_filter_boards.FilterMaskIdHigh = (CAN_ID_STR_FAULTS << 5);
+    can_filter_boards.FilterIdLow = (CAN_ID_TEL_FAULTS << 5);
+    can_filter_boards.FilterMaskIdLow = (CAN_ID_TEL_FAULTS << 5); 
+    can_filter_boards.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+    can_filter_boards.FilterBank = 2;
+    can_filter_boards.FilterMode = CAN_FILTERMODE_IDLIST;
+    can_filter_boards.FilterScale = CAN_FILTERSCALE_16BIT;
+    can_filter_boards.FilterActivation = ENABLE;
+    HAL_CAN_ConfigFilter(&hcan, &can_filter_boards);
+
     // ---- Filter Bank 3 ----
     can_filter3.FilterIdHigh = (MPPTA_TEMPERATURE_CAN_ID << 5);
     can_filter3.FilterMaskIdHigh = (MPPTB_TEMPERATURE_CAN_ID << 5);
@@ -118,4 +131,18 @@ void CanFilterInit(CAN_FilterTypeDef* can_filter) {
     can_filter2.FilterScale = CAN_FILTERSCALE_32BIT;
     can_filter2.FilterActivation = ENABLE;
     HAL_CAN_ConfigFilter(&hcan, &can_filter2); // Register filter with hardware
+
+    // ---- Filter Bank 6 ---- 
+    CAN_FilterTypeDef can_filter_obc = {0};
+    uint32_t obc_id = CAN_ID_OBC_FAULTS;
+    can_filter_obc.FilterIdHigh = (obc_id << 3) >> 16;
+    can_filter_obc.FilterIdLow  = ((obc_id << 3) & 0xFFFF) | 0x0004;
+    can_filter_obc.FilterMaskIdHigh = (obc_id << 3) >> 16; 
+    can_filter_obc.FilterMaskIdLow  = ((obc_id << 3) & 0xFFFF) | 0x0004;
+    can_filter_obc.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+    can_filter_obc.FilterBank = 6;
+    can_filter_obc.FilterMode = CAN_FILTERMODE_IDLIST;
+    can_filter_obc.FilterScale = CAN_FILTERSCALE_32BIT;
+    can_filter_obc.FilterActivation = ENABLE;
+    HAL_CAN_ConfigFilter(&hcan, &can_filter_obc);
 }

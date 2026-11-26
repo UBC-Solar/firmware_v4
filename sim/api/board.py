@@ -44,7 +44,7 @@ from .results import CanFrame, PinEdge, SimTimeout
 from .rtos import Rtos
 from .uart import Uart
 
-__all__ = ["Board", "CanFrame", "PinEdge", "SimTimeout", "find_elf"]
+__all__ = ["Board", "CanFrame", "PinEdge", "SimTimeout", "build_firmware", "find_elf"]
 
 SIM_DIR = Path(__file__).resolve().parents[1]  # sim/
 BOARDS_DIR = SIM_DIR / "emulation" / "boards"
@@ -82,6 +82,52 @@ def find_elf(board: str, build_type: str = "Debug") -> Path:
             f"&& cmake --build firmware/components/{board}/build/{build_type}"
         )
     return max(matching, key=lambda elf: elf.stat().st_mtime)
+
+
+def build_firmware(board: str, build_type: str = "Debug"):
+    """Build <board> into build/<build_type>/ (its CMake preset), configuring it first if needed.
+    Ninja only recompiles what changed, so an up-to-date board takes about a second.
+    Raises RuntimeError with the end of the build output if the build fails."""
+    source = COMPONENTS_DIR / board
+    build_dir = source / "build" / build_type
+    env = _cmake_env()
+    cmake = "cube-cmake"  # the real wrapper, or the stand-in _cmake_env() put on PATH
+    steps = []
+    if not (build_dir / "CMakeCache.txt").exists():
+        steps.append([cmake, "--preset", build_type, "-S", str(source)])
+    steps.append([cmake, "--build", str(build_dir)])
+    for cmd in steps:
+        result = subprocess.run(cmd, capture_output=True, text=True, env=env)
+        if result.returncode != 0:
+            output = (result.stdout + result.stderr).strip().splitlines()
+            raise RuntimeError(
+                f"Building {board} ({build_type}) failed: {' '.join(cmd)}\n" + "\n".join(output[-30:])
+            )
+
+
+def _cmake_env() -> dict:
+    """Environment for building outside VS Code. VS Code configures with ST's `cube-cmake` wrapper
+    ("cmake.cmakePath" in .vscode/settings.json), and those build folders call `cube-cmake` again
+    on every build. The wrapper only works inside VS Code, so when it isn't on PATH, put a stand-in
+    named cube-cmake on PATH that runs plain cmake (the STM32Cube bundle's if installed)."""
+    env = dict(os.environ)
+    if shutil.which("cube-cmake"):
+        return env
+    exe = "cmake.exe" if os.name == "nt" else "cmake"
+    bundled = sorted((Path.home() / ".local/share/stm32cube/bundles/cmake").glob(f"*/bin/{exe}"))
+    real = str(bundled[-1]) if bundled else shutil.which("cmake")
+    if real is None:
+        raise RuntimeError("cmake not found: install it, or the STM32Cube VS Code extension")
+    shim_dir = SIM_DIR / ".out" / "bin"
+    shim_dir.mkdir(parents=True, exist_ok=True)
+    if os.name == "nt":
+        (shim_dir / "cube-cmake.bat").write_text(f'@"{real}" %*\n')
+    else:
+        shim = shim_dir / "cube-cmake"
+        shim.write_text(f'#!/bin/sh\nexec "{real}" "$@"\n')
+        shim.chmod(0o755)
+    env["PATH"] = str(shim_dir) + os.pathsep + env.get("PATH", "")
+    return env
 
 
 class Board:

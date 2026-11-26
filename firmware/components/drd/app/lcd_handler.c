@@ -22,6 +22,7 @@ static LcdAppMotorFaults g_lcd_motor_faults = {0};
 static LcdAppDrdFaults g_lcd_drd_faults = {0};
 static LcdAppHvcFaults g_lcd_hvc_faults = {0};
 static LcdAppMdiFaults g_lcd_mdi_faults = {0};
+static LcdAppMpptFaults g_lcd_mppt_faults[LCD_APP_NUM_MPPTS] = {0};
 static LcdAppWarnings g_lcd_warnings = {0};
 static LcdAppTemperature g_lcd_temperatures[8] = {0};
 static uint8_t g_lcd_page = 1;
@@ -58,7 +59,7 @@ void LcdHandlerPageController(void)
     LcdHandlerGetData();
 
     // Fault Logic - Trigger Page Change on rising edge of fault detection
-    bool check_fault = LcdAppCheckFaults(&g_lcd_batt_faults, &g_lcd_motor_faults, &g_lcd_drd_faults, &g_lcd_hvc_faults, &g_lcd_mdi_faults);
+    bool check_fault = LcdAppCheckFaults(&g_lcd_batt_faults, &g_lcd_motor_faults, &g_lcd_drd_faults, &g_lcd_hvc_faults, &g_lcd_mdi_faults, g_lcd_mppt_faults);
     // Page Logic - Trigger Page Change on flag set by CAN message
     if(g_str_change_page_flag){
         // Check if page is above 5 pages
@@ -91,11 +92,11 @@ void LcdHandlerPageController(void)
         LcdAppDisplaySocDrivePage((volatile uint32_t*)g_lcd_data.soc);
         LcdAppDisplayDriveModeDrivePage(g_lcd_data.drive_mode);
         LcdAppDisplayDriveStateDrivePage((volatile DriveStateStates*) g_lcd_data.drive_state);
-        LcdAppDisplayFaultIndicator(&g_lcd_batt_faults, &g_lcd_motor_faults, &g_lcd_drd_faults, &g_lcd_hvc_faults, &g_lcd_mdi_faults);
+        LcdAppDisplayFaultIndicator(&g_lcd_batt_faults, &g_lcd_motor_faults, &g_lcd_drd_faults, &g_lcd_hvc_faults, &g_lcd_mdi_faults, g_lcd_mppt_faults);
         LcdAppDisplayWarningIndicator(&g_lcd_warnings);
         break;
     case FAULTS_PAGE:
-        LcdAppDisplayFaults(&g_lcd_batt_faults, &g_lcd_motor_faults, &g_lcd_drd_faults, &g_lcd_hvc_faults, &g_lcd_mdi_faults);
+        LcdAppDisplayFaults(&g_lcd_batt_faults, &g_lcd_motor_faults, &g_lcd_drd_faults, &g_lcd_hvc_faults, &g_lcd_mdi_faults, g_lcd_mppt_faults);
         break;
     case WARNINGS_PAGE:
         LcdAppDisplayWarnings(&g_lcd_warnings);
@@ -225,6 +226,12 @@ void LcdHandlerSetMdiOvervoltage(bool fault) { g_lcd_mdi_faults.overvoltage = fa
 void LcdHandlerSetMdiMotorOvertemp(bool fault) { g_lcd_mdi_faults.motor_overtemp = fault; }
 void LcdHandlerSetMdiRtdSensorFault(bool fault) { g_lcd_mdi_faults.rtd_sensor_fault = fault; }
 void LcdHandlerSetMdiRtdCommError(bool fault) { g_lcd_mdi_faults.rtd_comm_error = fault; }
+
+/* LCD HANDLER MPPT FAULT DATA SETTERS (out-of-range mppt indexes are ignored) */
+void LcdHandlerSetMpptHwOvervoltage(uint8_t mppt, bool fault) { if (mppt < LCD_APP_NUM_MPPTS) { g_lcd_mppt_faults[mppt].hw_overvoltage = fault; } }
+void LcdHandlerSetMpptHwOvercurrent(uint8_t mppt, bool fault) { if (mppt < LCD_APP_NUM_MPPTS) { g_lcd_mppt_faults[mppt].hw_overcurrent = fault; } }
+void LcdHandlerSetMppt12vUndervoltage(uint8_t mppt, bool fault) { if (mppt < LCD_APP_NUM_MPPTS) { g_lcd_mppt_faults[mppt].undervoltage_12v = fault; } }
+void LcdHandlerSetMpptMosfetOverheat(uint8_t mppt, bool fault) { if (mppt < LCD_APP_NUM_MPPTS) { g_lcd_mppt_faults[mppt].mosfet_overheat = fault; } }
 
 /* LCD HANDLER WARNING DATA SETTERS */
 void LcdHandlerSetLowVoltWarning(bool warning) { g_lcd_warnings.low_volt_warning = warning; }

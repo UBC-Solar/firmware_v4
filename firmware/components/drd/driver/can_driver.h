@@ -33,6 +33,10 @@
 
 #define BMS_TEMPERATURES_CAN_ID			    0x625
 
+#define CAN_ID_MPPTA_FAULTS                 0x6A5
+#define CAN_ID_MPPTB_FAULTS                 0x6B5
+#define CAN_ID_MPPTC_FAULTS                 0x6C5
+#define CAN_ID_MPPTD_FAULTS                 0x6D5
 #define CAN_ID_MDI_FAULTS                   0x501
 #define CAN_ID_HVC_FAULTS                   0x321
 #define CAN_ID_MTR_FAULTS                   0x08A50225

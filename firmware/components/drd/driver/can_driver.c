@@ -68,6 +68,19 @@ void CanFilterInit(CAN_FilterTypeDef* can_filter) {
     can_filter->FilterActivation = ENABLE;
     HAL_CAN_ConfigFilter(&hcan, can_filter);
 
+    // ---- Filter Bank 1 ----
+    CAN_FilterTypeDef can_filter_mppt = {0};
+    can_filter_mppt.FilterIdHigh = (CAN_ID_MPPTA_FAULTS << 5);
+    can_filter_mppt.FilterMaskIdHigh = (CAN_ID_MPPTB_FAULTS << 5);
+    can_filter_mppt.FilterIdLow = (CAN_ID_MPPTC_FAULTS << 5);
+    can_filter_mppt.FilterMaskIdLow = (CAN_ID_MPPTD_FAULTS << 5);
+    can_filter_mppt.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+    can_filter_mppt.FilterBank = 1;
+    can_filter_mppt.FilterMode = CAN_FILTERMODE_IDLIST;
+    can_filter_mppt.FilterScale = CAN_FILTERSCALE_16BIT;
+    can_filter_mppt.FilterActivation = ENABLE;
+    HAL_CAN_ConfigFilter(&hcan, &can_filter_mppt);
+
     // ---- Filter Bank 3 ----
     can_filter3.FilterIdHigh = (MPPTA_TEMPERATURE_CAN_ID << 5);
     can_filter3.FilterMaskIdHigh = (MPPTB_TEMPERATURE_CAN_ID << 5);

@@ -153,6 +153,13 @@ void FaultHandlerParseMdiFaults(uint8_t* can_rx_data){
     LcdHandlerSetMdiRtdCommError(GETBIT(can_rx_data[0], 4));
 }
 
+void FaultHandlerParseMpptFaults(uint8_t mppt, uint8_t* can_rx_data){
+    LcdHandlerSetMpptHwOvervoltage(mppt, GETBIT(can_rx_data[3], 0));
+    LcdHandlerSetMpptHwOvercurrent(mppt, GETBIT(can_rx_data[3], 1));
+    LcdHandlerSetMppt12vUndervoltage(mppt, GETBIT(can_rx_data[3], 3));
+    LcdHandlerSetMpptMosfetOverheat(mppt, GETBIT(can_rx_data[3], 6));
+}
+
 void FaultHandlerParseBatteryWarnings(uint8_t* can_rx_data) {
     LcdHandlerSetLowVoltWarning(GETBIT(can_rx_data[1], 5));
     LcdHandlerSetHighVoltWarning(GETBIT(can_rx_data[1], 6));

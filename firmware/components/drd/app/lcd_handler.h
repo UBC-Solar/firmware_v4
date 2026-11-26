@@ -135,6 +135,21 @@ typedef struct
     volatile bool rtd_comm_error;
 } LcdAppMdiFaults;
 
+// MPPT indexes
+#define LCD_APP_MPPT_A 0
+#define LCD_APP_MPPT_B 1
+#define LCD_APP_MPPT_C 2
+#define LCD_APP_MPPT_D 3
+#define LCD_APP_NUM_MPPTS 4
+
+typedef struct
+{
+    volatile bool hw_overvoltage;
+    volatile bool hw_overcurrent;
+    volatile bool undervoltage_12v;
+    volatile bool mosfet_overheat;
+} LcdAppMpptFaults;
+
 typedef struct 
 {
     volatile bool low_volt_warning;
@@ -252,6 +267,12 @@ void LcdHandlerSetMdiOvervoltage(bool fault);
 void LcdHandlerSetMdiMotorOvertemp(bool fault);
 void LcdHandlerSetMdiRtdSensorFault(bool fault);
 void LcdHandlerSetMdiRtdCommError(bool fault);
+
+/* LCD HANDLER MPPT FAULT DATA SETTERS */
+void LcdHandlerSetMpptHwOvervoltage(uint8_t mppt, bool fault);
+void LcdHandlerSetMpptHwOvercurrent(uint8_t mppt, bool fault);
+void LcdHandlerSetMppt12vUndervoltage(uint8_t mppt, bool fault);
+void LcdHandlerSetMpptMosfetOverheat(uint8_t mppt, bool fault);
 
 /* LCD HANDLER WARNING DATA SETTERS */
 void LcdHandlerSetLowVoltWarning(bool warning);

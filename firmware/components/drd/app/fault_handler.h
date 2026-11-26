@@ -65,6 +65,13 @@ void FaultHandlerParseHvcFaults(uint8_t* can_rx_data);
  * @param can_rx_data Pointer to the received CAN message data containing the MDI fault information.
  */
 void FaultHandlerParseMdiFaults(uint8_t* can_rx_data);
+
+/**
+ * @brief Parses an MPPT fault message and updates the LCD
+ * @param mppt which MPPT the fault came from
+ * @param can_rx_data Pointer to the received CAN message data
+ */
+void FaultHandlerParseMpptFaults(uint8_t mppt, uint8_t* can_rx_data);
 /**
  * @brief Parses battery warning data from received CAN messages and updates the cyclic data handler with the latest battery warning information.
  *

@@ -176,6 +176,18 @@ void FaultHandlerCanRxHandler(uint32_t msg_id, uint8_t* data)
     case CAN_ID_PACK_VOLTAGE:
         FaultHandlerParsePackVoltageFaults(data);
         break;
+    case CAN_ID_MPPTA_FAULTS:
+        FaultHandlerParseMpptFaults(LCD_APP_MPPT_A, data);
+        break;
+    case CAN_ID_MPPTB_FAULTS:
+        FaultHandlerParseMpptFaults(LCD_APP_MPPT_B, data);
+        break;
+    case CAN_ID_MPPTC_FAULTS:
+        FaultHandlerParseMpptFaults(LCD_APP_MPPT_C, data);
+        break;
+    case CAN_ID_MPPTD_FAULTS:
+        FaultHandlerParseMpptFaults(LCD_APP_MPPT_D, data);
+        break;
     case CAN_ID_MDI_FAULTS:
         FaultHandlerParseMdiFaults(data);
         break;

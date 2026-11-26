@@ -80,11 +80,6 @@ static void ClearDriveStateFlags(DriveStateCtx *ctx);
  */
 static void ComputeNextState(DriveStateCtx *ctx);
 /**
- * @brief Handles logic when the brake is engaged.
- * @param model Pointer to the drive state model.
- */
-static void BreakOnHandler(DriveStateCtx *ctx);
-/**
  * @brief Handles logic for eco power mode.
  * @param model Pointer to the drive state model.
  */
@@ -222,9 +217,9 @@ void DriveStateInterruptHandler(uint16_t toggle)
 
     switch (toggle)
     {
-    case BRAKE_INPUT_PIN:
-        BreakOnHandler(ctx);
-        break;
+    // BRAKE_INPUT_PIN is intentionally not handled here. The brake is polled by
+    // DriveStateFsmHandler() every DRIVE_STATE_FSM_DELAY ms, which owns the motor
+    // command. Sending from the ISR let a noisy/floating BRK_IN line flood the CAN bus.
 
     case DRIVE_NEXT_PIN:
         ctx->flags.next_state_request = true;
@@ -234,14 +229,6 @@ void DriveStateInterruptHandler(uint16_t toggle)
         ctx->flags.prev_state_request = true;
         break;
     }
-}
-
-static void BreakOnHandler(DriveStateCtx *ctx)
-{
-    ctx->flags.brake_on = true;
-    DriveStateMotorControl motor_command = GetMotorCommand(ctx, ACCEL_DAC_OFF, REGEN_DAC_OFF);
-    MotorCommandPackAndSend(&motor_command, true);
-    SetBrakeLedPin(BRAKE_LED_PORT, BRAKE_LED_PIN, 1);
 }
 
 static void EcoPowerHandler(DriveStateCtx *ctx)

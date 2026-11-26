@@ -170,6 +170,13 @@
 // Shunt resistor value in nano-ohms (Thx Bryan Cady of Moment Energy!)
 #define SHUNT_RESISTANCE_NOHMS          100496
 
+// Shunt current calibration: mA = calculated mA x SHUNT_CAL_GAIN_NUM / SHUNT_CAL_GAIN_DEN + SHUNT_CAL_OFFSET_MA
+// Fitted from the Nov 14 DC load runs (0-60 A, load setpoint as reference): read ~1.2% low before.
+// The alert thresholds below still use the raw shunt voltage.
+#define SHUNT_CAL_GAIN_NUM              101204 // 1.01204
+#define SHUNT_CAL_GAIN_DEN              100000
+#define SHUNT_CAL_OFFSET_MA             (-98)
+
 // --- Fault limits (shunt monitor alert) ---
 #define SHUNT_OVERCURRENT_A             60U // Positive overcurrent limit (A)
 #define SHUNT_REVERSE_CURRENT_A         20U // Reverse current magnitude limit (A)
@@ -189,6 +196,8 @@
 
 #define SUPP_SENSE_DIVIDER_NUM          5700U  // (R13.4 + R13.5)
 #define SUPP_SENSE_DIVIDER_DEN          1000U  // R13.5
+#define LV_12V_SENSE_DIVIDER_NUM        5700U  // (R309 + R311) = 4.7k + 1k
+#define LV_12V_SENSE_DIVIDER_DEN        1000U  // R311
 #define SUPP_LOW_THRESHOLD_MV           10500U // SUPP_LOW_LED on below this supp battery voltage
 
 // ==== LV current sensor ====
@@ -256,7 +265,13 @@
 // minimum time has passed.
 
 // --- Motor and MPPT ---
-#define PRECHARGE_SENSE_SCALE           61  // HV mV = ADC mV x this (used by adc_runtime)
+// Precharge sense calibration: HV mV = ADC mV x GAIN_NUM / PRECHARGE_GAIN_DEN, per channel (each
+// side has its own HCNR201 isolation amp). Fitted from the Nov 14 rolling chassis test: HVC readings
+// vs MST pack voltage, 105-128 V, contactors closed. Assumes the ADC self-calibrates at startup
+// (HAL_ADCEx_Calibration_Start) and ADC_ERROR_BIAS = 0. Was x61 for both sides: read 6-7% low.
+#define PRECHARGE_GAIN_DEN              1000
+#define MOTOR_PRECHARGE_GAIN_NUM        63127 // 63.127 HV mV per ADC mV
+#define MPPT_PRECHARGE_GAIN_NUM         63858 // 63.858 HV mV per ADC mV
 #define PRECHARGE_PCT_OF_PACK           85U // Precharge complete at this % of MST pack voltage
 
 // --- Motor ---

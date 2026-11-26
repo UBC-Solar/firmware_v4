@@ -16,9 +16,15 @@ void ADC_Runtime_ProcessReadings(void) {
     adc_values.supp_mv =
         (int32_t)((uint32_t)voltages.supp_sense * SUPP_SENSE_DIVIDER_NUM / SUPP_SENSE_DIVIDER_DEN);
 
+    // Convert mV at the ADC pin to mV before the 12V rail sense voltage divider
+    adc_values.lv_12v_mv =
+        (int32_t)((uint32_t)voltages.lv_12v_sense * LV_12V_SENSE_DIVIDER_NUM / LV_12V_SENSE_DIVIDER_DEN);
+
     // Convert mV at the ADC pin to mV on the HV side
-    adc_values.motor_precharge_mv = (int32_t)voltages.motor_precharge * PRECHARGE_SENSE_SCALE;
-    adc_values.mppt_precharge_mv = (int32_t)voltages.mppt_precharge * PRECHARGE_SENSE_SCALE;
+    adc_values.motor_precharge_mv =
+        (int32_t)voltages.motor_precharge * MOTOR_PRECHARGE_GAIN_NUM / PRECHARGE_GAIN_DEN;
+    adc_values.mppt_precharge_mv =
+        (int32_t)voltages.mppt_precharge * MPPT_PRECHARGE_GAIN_NUM / PRECHARGE_GAIN_DEN;
 
     // Remove the zero-current offset, then convert mV at the ADC pin to mA of current
     adc_values.lv_current_ma = ((int32_t)voltages.lv_curr_sense - LV_CURRENT_SENSOR_OFFSET_MV) *

@@ -31,6 +31,7 @@
 #define SUPP_VOLTAGE_ID             0x327U
 #define MOTOR_PRECHARGE_ID          0x328U
 #define MPPT_PRECHARGE_ID           0x329U
+#define LV_12V_VOLTAGE_ID           0x32AU
 #define COMMIT_HASH_ID              0x32BU
 #define CHARGER_CONTROL_ID          0x1806E5F4U // Extended ID, to the HK-MF-103-32 charger
 

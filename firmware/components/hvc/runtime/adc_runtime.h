@@ -7,6 +7,7 @@
  */
 typedef struct {
     int32_t supp_mv;            // Supplemental battery voltage (mV)
+    int32_t lv_12v_mv;          // 12V LV rail voltage (mV)
     int32_t motor_precharge_mv; // Motor precharge voltage, HV side (mV)
     int32_t mppt_precharge_mv;  // MPPT precharge voltage, HV side (mV)
     int32_t lv_current_ma;      // LV current (mA)

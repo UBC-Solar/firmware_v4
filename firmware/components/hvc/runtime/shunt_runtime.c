@@ -212,7 +212,11 @@ void SHUNT_ProcessShuntVoltage(void) {
         (int32_t)(((int64_t)raw_value * SHUNT_VSHUNT_LSB_NV_NUM) / SHUNT_VSHUNT_LSB_NV_DEN);
 
     // nV / nΩ = A; A * 1000 = mA
-    shunt_current_mA = (int32_t)(((int64_t)shunt_voltage_nV * 1000) / SHUNT_RESISTANCE_NOHMS);
+    int64_t uncalibrated_mA = ((int64_t)shunt_voltage_nV * 1000) / SHUNT_RESISTANCE_NOHMS;
+
+    // Apply the gain and offset fitted against a reference load (hvc_defs.h)
+    shunt_current_mA = (int32_t)((uncalibrated_mA * SHUNT_CAL_GAIN_NUM) / SHUNT_CAL_GAIN_DEN +
+                                 SHUNT_CAL_OFFSET_MA);
 }
 
 /**

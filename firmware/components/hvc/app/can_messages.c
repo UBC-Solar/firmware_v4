@@ -33,6 +33,7 @@ static void SendFaults(void);
 static void SendShuntCurrent(void);
 static void SendLvCurrent(void);
 static void SendSuppVoltage(void);
+static void SendLv12vVoltage(void);
 static void SendDcdcTemp(void);
 static void SendMotorPrecharge(void);
 static void SendMpptPrecharge(void);
@@ -69,6 +70,7 @@ void CAN_Messages_SendAll(void) {
         SendFaults();
         SendLvCurrent();
         SendSuppVoltage();
+        SendLv12vVoltage();
         SendDcdcTemp();
         SendMotorPrecharge();
         SendMpptPrecharge();
@@ -226,6 +228,26 @@ static void SendSuppVoltage(void) {
     tx_message.data[1] = (supp_mv >> 16) & 0xFF;
     tx_message.data[2] = (supp_mv >> 8)  & 0xFF;
     tx_message.data[3] = (supp_mv)       & 0xFF;
+
+    CAN_QueueTxMessage(&tx_message);
+}
+
+/**
+ * @brief Sends the 12V LV rail voltage (LV_12V_VOLTAGE_ID).
+ *
+ * Voltage is in mV, from g_shared.adc (converted in adc_runtime). Same format as SUPP_VOLTAGE_ID.
+ */
+static void SendLv12vVoltage(void) {
+    uint32_t lv_12v_mv = (uint32_t)g_shared.adc.lv_12v_mv;
+    CAN_TxMessage_t tx_message = {0};
+
+    tx_message.tx_header.StdId = LV_12V_VOLTAGE_ID;
+    tx_message.tx_header.DLC = 4;
+
+    tx_message.data[0] = (lv_12v_mv >> 24) & 0xFF;
+    tx_message.data[1] = (lv_12v_mv >> 16) & 0xFF;
+    tx_message.data[2] = (lv_12v_mv >> 8)  & 0xFF;
+    tx_message.data[3] = (lv_12v_mv)       & 0xFF;
 
     CAN_QueueTxMessage(&tx_message);
 }

@@ -52,7 +52,8 @@ install_renode() {
 
     TMP_DIR="$(mktemp -d)"
     echo "Downloading $URL (~100 MB)"
-    curl -fL --progress-bar -o "$TMP_DIR/renode.tar.gz" "$URL"
+    curl -fL --progress-bar --retry 5 --retry-delay 10 --retry-all-errors --connect-timeout 30 \
+        -o "$TMP_DIR/renode.tar.gz" "$URL"
 
     echo "$RENODE_SHA256  $TMP_DIR/renode.tar.gz" | sha256sum --check --quiet \
         || die "checksum mismatch on the Renode download: not installing"

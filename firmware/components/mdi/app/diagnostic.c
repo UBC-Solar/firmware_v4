@@ -137,7 +137,7 @@ void DiagnosticSendRtdTemp(void){
 void DiagnosticSendFlags(void)
 {
 	uint8_t data[3];
-	s_diagnostic_flags.bits.mdi_dac_i2c_error = MdiTake	DacI2cError();
+	s_diagnostic_flags.bits.mdi_dac_i2c_error = MdiTakeDacI2cError();
 	data[0] = s_diagnostic_flags.raw;
 	data[1] = CanDriverGetTec();
 	data[2] = CanDriverGetRec();

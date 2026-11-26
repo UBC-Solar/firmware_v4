@@ -18,9 +18,10 @@
 
 // --- I2C address ---
 // INA228/INA237 7-bit address with A1=GND, A0=GND is 0b1000000 = 0x40.
+// Breakout shunt board INA237 7-bit address with A1=VS, A0=VS is 0b1000101 = 0x45.
 // HAL expects the 8-bit form (7-bit << 1).
 
-#define SHUNT_I2C_ADDRESS (0x40 << 1)
+#define SHUNT_I2C_ADDRESS (0x45 << 1)
 
 // --- Register addresses ---
 // Table 7-3.

@@ -2,7 +2,17 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "CMake: build active target",
+            "type": "cmake",
+            "command": "build",
+            "targets": ["all"],
+            "group": "build",
+            "problemMatcher": ["$gcc"],
+            "detail": "Builds the board/preset picked in the CMake status bar (what the debug configs flash)"
+        },
+        {
             "label": "J-Link Release Flash",
+            "dependsOn": "CMake: build active target",
             "type": "shell",
             "command": "sh",
             "args": [
@@ -20,9 +30,9 @@
         {
             "label": "SIL: wait for Renode GDB server",
             "type": "shell",
-            "command": "timeout 60 sh -c 'until ss -ltn | grep -q \":3333 \"; do sleep 0.2; done'",
+            "command": "timeout 300 sh -c 'until ss -ltn | grep -q \":3333 \"; do sleep 0.2; done'",
             "windows": {
-                "command": "$d = (Get-Date).AddSeconds(60); while (-not (Get-NetTCPConnection -State Listen -LocalPort 3333 -ErrorAction SilentlyContinue)) { if ((Get-Date) -gt $d) { exit 1 }; Start-Sleep -Milliseconds 200 }"
+                "command": "$d = (Get-Date).AddSeconds(300); while (-not (Get-NetTCPConnection -State Listen -LocalPort 3333 -ErrorAction SilentlyContinue)) { if ((Get-Date) -gt $d) { exit 1 }; Start-Sleep -Milliseconds 200 }"
             },
             "problemMatcher": [],
             "presentation": {
@@ -32,6 +42,7 @@
         },
         {
             "label": "Renode: start board",
+            "dependsOn": "CMake: build active target",
             "type": "shell",
             "command": "elf='${command:cmake.launchTargetPath}'; board=$(basename \"$elf\" .elf); python3 sim/emulation/gdb_relay.py --listen 3333 --target 3334 & sim/.renode/renode --console -e \"\\$elf = '$elf'; include @sim/emulation/boards/$board.resc; machine StartGdbServer 3334\"",
             "windows": {

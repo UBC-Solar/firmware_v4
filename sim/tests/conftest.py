@@ -2,7 +2,7 @@ import re
 
 import pytest
 
-from api import Board
+from api import Board, build_firmware
 
 
 def pytest_addoption(parser):
@@ -16,6 +16,11 @@ def pytest_addoption(parser):
         default="Debug",
         choices=["Debug", "Release"],
         help="Which firmware build to test (read from each build folder's CMakeCache.txt)",
+    )
+    parser.addoption(
+        "--no-build",
+        action="store_true",
+        help="Don't build the boards under test first (run whatever ELF is already there)",
     )
     parser.addoption(
         "--sim-trace",
@@ -49,6 +54,23 @@ def pytest_collection_modifyitems(config, items):
             "Pick one: pytest <file>::<test_name> --gdb  (or -k <part of the name>).\n"
             "In VS Code: type the test's name when F5 asks for it."
         )
+    build_boards(config, items)
+
+
+def build_boards(config, items):
+    """Build every board that has a selected test, so a test never runs stale firmware.
+    The test's folder names the board: sim/tests/str/test_x.py -> "str"."""
+    if config.getoption("--no-build") or config.getoption("--collect-only"):
+        return
+    build_type = config.getoption("--build-type")
+    reporter = config.pluginmanager.getplugin("terminalreporter")
+    for board in sorted({item.path.parent.name for item in items}):
+        if reporter is not None:
+            reporter.write_line(f"Building {board} ({build_type}) ...")
+        try:
+            build_firmware(board, build_type)
+        except RuntimeError as err:
+            raise pytest.UsageError(str(err))
 
 
 @pytest.fixture

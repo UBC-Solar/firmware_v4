@@ -318,11 +318,6 @@ uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults,
         sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_DISCHARGE_OC_FLT_CHARS);
         fault_count++;
     }
-    if (batt_faults->reset_from_watchdog)
-    {
-        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_RST_FROM_WATCH_FLT_CHARS);
-        fault_count++;
-    }
     if (motor_faults->motor_system_error)
     {
         sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_SYSTEM_FLT_CHARS);
@@ -866,21 +861,6 @@ uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings)
     if (warnings->low_volt_warning)
     {
         sprintf(g_warning_char[warning_count], "%s", LCD_APP_LOWVOLT_WARN_CHARS);
-        warning_count++;
-    }
-    if (warnings->no_ecu_message)
-    {
-        sprintf(g_warning_char[warning_count], "%s", LCD_APP_NOMSG_WARN_CHARS);
-        warning_count++;
-    }
-    if (warnings->pack_overcharge)
-    {
-        sprintf(g_warning_char[warning_count], "%s", LCD_APP_PACK_OC_WARN_CHARS);
-        warning_count++;
-    }
-    if (warnings->pack_overdischarge)
-    {
-        sprintf(g_warning_char[warning_count], "%s", LCD_APP_PACK_OD_WARN_CHARS);
         warning_count++;
     }
     if (warnings->throttle_adc_outofrange)

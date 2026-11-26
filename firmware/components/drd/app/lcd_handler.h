@@ -66,7 +66,6 @@ typedef struct
     volatile bool overtemp_fault;
     volatile bool charge_overcurrent_fault;
     volatile bool discharge_overcurrent_fault;
-    volatile bool reset_from_watchdog;
 } LcdAppBattFaults;
 
 typedef struct
@@ -197,9 +196,6 @@ typedef struct
     volatile bool high_volt_warning;
     volatile bool low_temp_warning;
     volatile bool high_temp_warning;
-    volatile bool no_ecu_message;
-    volatile bool pack_overdischarge;
-    volatile bool pack_overcharge;
     volatile bool throttle_adc_outofrange;
     volatile bool throttle_adc_mismatch;
     volatile bool mst_cell_volt_high;
@@ -258,7 +254,6 @@ void LcdHandlerSetBatteryOvervoltFault(bool fault);
 void LcdHandlerSetBatteryUndervoltFault(bool fault);
 void LcdHandlerSetBatteryChargeOvercurrentFault(bool fault);
 void LcdHandlerSetBatteryDischargeOvercurrentFault(bool fault);
-void LcdHandlerSetBatteryResetFromWatchdogFault(bool fault);
 
 /* LCD HANDLER MOTOR FAULT DATA SETTERS */
 void LcdHandlerSetMotorSystemFault(bool fault);
@@ -362,9 +357,6 @@ void LcdHandlerSetLowVoltWarning(bool warning);
 void LcdHandlerSetHighVoltWarning(bool warning);
 void LcdHandlerSetLowTempWarning(bool warning);
 void LcdHandlerSetHighTempWarning(bool warning);
-void LcdHandlerSetNoEcuMessageWarning(bool warning);
-void LcdHandlerSetPackOverdischargeWarning(bool warning);
-void LcdHandlerSetPackOverchargeWarning(bool warning);  
 void LcdHandlerSetMotorThrottleAdcOutOfRange(bool warning);
 void LcdHandlerSetMotorThrottleAdcMismatch(bool warning);
 void LcdHandlerSetMstCellVoltHighWarning(bool warning);

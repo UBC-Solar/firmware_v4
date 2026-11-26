@@ -69,7 +69,6 @@
 #define MDI_COMMIT_HASH_ID                  0x504
 #define STR_COMMIT_HASH_ID                  0x583
 
-#define ECU_STATUS_ID                       0x450
 #define BMS_FAULTS_ID                       0x622
 #define BMS_VOLTAGE_SUMMARY_VOLTAGE_ID      0x623
 #define BMS_PACK_HEALTH_ID                  0x624

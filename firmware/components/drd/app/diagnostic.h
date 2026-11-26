@@ -24,7 +24,7 @@ typedef union {
 		volatile bool throttle_ADC_out_of_range : 1; // done
 		volatile bool throttle_ADC_mismatch 	: 1; // done
 		volatile bool watchdog_reset 			: 1; // done
-		volatile bool motor_comm_fault 			: 1; // never set in v3
+		volatile bool motor_comm_fault 			: 1; // TODO: never set. From CAN ID table: "Set to 1 if no motor speed message (FRAME0) within 400 ms"
 		volatile bool mcu_overtemp_fault		: 1;
 		volatile bool mcu_undervolt_fault		: 1;
 	};

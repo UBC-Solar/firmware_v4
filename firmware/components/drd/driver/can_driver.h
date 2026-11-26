@@ -22,7 +22,6 @@
 #define TIME_SINCE_BOOTUP_CAN_DATA_LENGTH	4
 #define COMMIT_HASH_CAN_ID					0x405
 
-#define CAN_ID_ECU		    		        0x450
 #define CAN_ID_BATT_FAULTS		 			0x622
 #define CAN_ID_PACK_VOLTAGE		    		0x623
 #define CAN_ID_PACK_HEALTH          		0x624

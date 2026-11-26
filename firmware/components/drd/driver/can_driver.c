@@ -60,7 +60,7 @@ void CanFilterInit(CAN_FilterTypeDef* can_filter) {
     can_filter->FilterIdHigh = (CAN_ID_BATT_FAULTS << 5);
     can_filter->FilterMaskIdHigh = (CAN_ID_PACK_VOLTAGE << 5);
     can_filter->FilterIdLow = (CAN_ID_PACK_HEALTH << 5);
-    can_filter->FilterMaskIdLow = (CAN_ID_ECU << 5);
+    can_filter->FilterMaskIdLow = (CAN_ID_PACK_HEALTH << 5);
     can_filter->FilterFIFOAssignment = CAN_FILTER_FIFO0;
     can_filter->FilterBank = 0;
     can_filter->FilterMode = CAN_FILTERMODE_IDLIST;

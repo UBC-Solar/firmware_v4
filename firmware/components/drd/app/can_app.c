@@ -136,13 +136,6 @@ void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data)
 void LcdAppCanRxHandler(uint32_t msg_id, uint8_t* data)
 { 
     switch (msg_id) {
-    case CAN_ID_ECU: { // Update pack current and voltage for SOC calculation
-        int16_t tmp_pack_current = (data[1] << 8) | (data[0]);
-        tmp_pack_current /= 65.535;
-        CyclicDataSetPackCurrent(tmp_pack_current);
-        g_pack_current_soc = tmp_pack_current;
-        break;
-    } 
     case CAN_ID_PACK_VOLTAGE: { // Update pack voltage and trigger SOC calculation
         uint16_t tmp_pack_voltage = (data[1] << 8) | (data[0]);
         tmp_pack_voltage /= PACK_VOLTAGE_DIVISOR;
@@ -167,11 +160,6 @@ void FaultHandlerCanRxHandler(uint32_t msg_id, uint8_t* data)
     case CAN_ID_BATT_FAULTS:
         FaultHandlerParseBatteryFaults(data);
         FaultHandlerParseBatteryWarnings(data);
-        break;
-    case CAN_ID_ECU:
-        FaultHandlerEStop(data);
-        FaultHandlerParseECUFaults(data);
-        FaultHandlerParseECUWarnings(data);
         break;
     case CAN_ID_PACK_VOLTAGE:
         FaultHandlerParsePackVoltageFaults(data);

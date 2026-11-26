@@ -171,7 +171,6 @@ void LcdHandlerSetBatteryOvervoltFault(bool fault) { g_lcd_batt_faults.overvolt_
 void LcdHandlerSetBatteryUndervoltFault(bool fault) { g_lcd_batt_faults.undervolt_fault = fault; }
 void LcdHandlerSetBatteryChargeOvercurrentFault(bool fault) { g_lcd_batt_faults.charge_overcurrent_fault = fault; }
 void LcdHandlerSetBatteryDischargeOvercurrentFault(bool fault) { g_lcd_batt_faults.discharge_overcurrent_fault = fault; }
-void LcdHandlerSetBatteryResetFromWatchdogFault(bool fault) { g_lcd_batt_faults.reset_from_watchdog = fault; }
 
 /* LCD HANDLER MOTOR FAULT DATA SETTERS */
 void LcdHandlerSetMotorSystemFault(bool fault) { g_lcd_motor_faults.motor_system_error = fault; }
@@ -275,9 +274,6 @@ void LcdHandlerSetLowVoltWarning(bool warning) { g_lcd_warnings.low_volt_warning
 void LcdHandlerSetHighVoltWarning(bool warning) { g_lcd_warnings.high_volt_warning = warning; }
 void LcdHandlerSetLowTempWarning(bool warning) { g_lcd_warnings.low_temp_warning = warning; }
 void LcdHandlerSetHighTempWarning(bool warning) { g_lcd_warnings.high_temp_warning = warning; }
-void LcdHandlerSetNoEcuMessageWarning(bool warning) { g_lcd_warnings.no_ecu_message = warning; }
-void LcdHandlerSetPackOverdischargeWarning(bool warning) { g_lcd_warnings.pack_overdischarge = warning; }
-void LcdHandlerSetPackOverchargeWarning(bool warning) { g_lcd_warnings.pack_overcharge = warning; }
 void LcdHandlerSetMotorThrottleAdcOutOfRange(bool warning) { g_lcd_warnings.throttle_adc_outofrange = warning; }
 void LcdHandlerSetMotorThrottleAdcMismatch(bool warning) { g_lcd_warnings.throttle_adc_mismatch = warning; }
 void LcdHandlerSetMstCellVoltHighWarning(bool warning) { g_lcd_warnings.mst_cell_volt_high = warning; }

@@ -111,7 +111,6 @@ void LcdTestFaultsPage(void)
             LcdHandlerSetBatteryDischargeOvercurrentFault(true);
             break;
         case 13:
-            LcdHandlerSetBatteryResetFromWatchdogFault(true);
             break;
         case 14:
             LcdHandlerSetMotorSystemFault(true);
@@ -151,7 +150,6 @@ void LcdTestFaultsPage(void)
             LcdHandlerSetBatteryUndervoltFault(false);
             LcdHandlerSetBatteryChargeOvercurrentFault(false);
             LcdHandlerSetBatteryDischargeOvercurrentFault(false);
-            LcdHandlerSetBatteryResetFromWatchdogFault(false);
             LcdHandlerSetMotorSystemFault(false);
             LcdHandlerSetMotorOvercurrentFault(false);
             LcdHandlerSetMotorOvervoltageFault(false);
@@ -191,36 +189,25 @@ void LcdTestWarningsPage(void)
             LcdHandlerSetHighTempWarning(true);
             break;
         case 6:
-            LcdHandlerSetNoEcuMessageWarning(true);
             break;
         case 7:
-            LcdHandlerSetPackOverdischargeWarning(false);
             break;
         case 8:
             LcdHandlerSetHighTempWarning(false);
-            LcdHandlerSetNoEcuMessageWarning(false);
-            LcdHandlerSetPackOverdischargeWarning(false);
             break;            
         case 9:
-            LcdHandlerSetPackOverchargeWarning(true);
             break;
         case 10:
             LcdHandlerSetLowVoltWarning(true);
             LcdHandlerSetHighVoltWarning(true);
             LcdHandlerSetLowTempWarning(true);
             LcdHandlerSetHighTempWarning(true);
-            LcdHandlerSetNoEcuMessageWarning(true);
-            LcdHandlerSetPackOverdischargeWarning(true);
-            LcdHandlerSetPackOverchargeWarning(true);
             break;
         case 11:
             LcdHandlerSetLowVoltWarning(false);
             LcdHandlerSetHighVoltWarning(false);
             LcdHandlerSetLowTempWarning(false);
             LcdHandlerSetHighTempWarning(false);
-            LcdHandlerSetNoEcuMessageWarning(false);
-            LcdHandlerSetPackOverdischargeWarning(false);
-            LcdHandlerSetPackOverchargeWarning(false);
             break;
     }
 }

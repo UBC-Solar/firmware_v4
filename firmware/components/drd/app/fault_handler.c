@@ -27,19 +27,13 @@
 
 static bool g_last_pack_current_sign = 0;
 static bool g_battery_fault = false;
-static bool g_ecu_fault = false;
 static bool g_pack_voltage_fault = false;
 static bool g_motor_fault = false;
 
 void FaultHandlerFlashLED() {
-    while(g_battery_fault || g_ecu_fault || g_pack_voltage_fault || g_motor_fault) {
+    while(g_battery_fault || g_pack_voltage_fault || g_motor_fault) {
         FaultHandlerDriverFlashDebug();
     }
-}
-
-void FaultHandlerEStop(uint8_t* can_rx_data) {
-    bool estop = GETBIT(can_rx_data[5], 5);
-    FaultHandlerDriverEStop(estop);
 }
 
 void FaultHandlerParseBatteryFaults(uint8_t* can_rx_data){    
@@ -65,13 +59,6 @@ void FaultHandlerParseBatteryFaults(uint8_t* can_rx_data){
     // General battery fault flag is set if any of the specific battery faults are set
     LcdHandlerSetBatteryFault(g_battery_fault);
 }
-void FaultHandlerParseECUFaults(uint8_t* can_rx_data){
-    // MSB of pack current is the sign bit, so we save it to determine if the overcurrent fault is a charge or discharge fault in the battery fault handler
-    g_last_pack_current_sign = GETBIT(can_rx_data[1],7);
-    LcdHandlerSetBatteryResetFromWatchdogFault(GETBIT(can_rx_data[5], 4));
-    g_ecu_fault = GETBIT(can_rx_data[5], 4);
-}
-
 void FaultHandlerParsePackVoltageFaults(uint8_t* can_rx_data){
     uint16_t pack_voltage = (can_rx_data[1] << 8) | can_rx_data[0];
     pack_voltage = pack_voltage / PACK_VOLTAGE_DIVISOR;
@@ -121,7 +108,9 @@ void FaultHandlerParseMotorFaults(uint8_t* can_rx_data){
 }
 
 void FaultHandlerParseHvcFaults(uint8_t* can_rx_data){
-    LcdHandlerSetHvcEstop(GETBIT(can_rx_data[0], 7));
+    bool estop = GETBIT(can_rx_data[0], 7);
+    LcdHandlerSetHvcEstop(estop);      // HVC_ESTP on the fault page
+    FaultHandlerDriverEStop(estop);    // E-stop output (PB14)
     LcdHandlerSetHvcImdFault(GETBIT(can_rx_data[0], 6));
     LcdHandlerSetHvcMstFault(GETBIT(can_rx_data[0], 5));
     LcdHandlerSetHvcMstUnhealthy(GETBIT(can_rx_data[0], 4));
@@ -209,13 +198,6 @@ void FaultHandlerParseBatteryWarnings(uint8_t* can_rx_data) {
     LcdHandlerSetHighVoltWarning(GETBIT(can_rx_data[1], 6));
     LcdHandlerSetLowTempWarning(GETBIT(can_rx_data[1], 7));
     LcdHandlerSetHighTempWarning(GETBIT(can_rx_data[2], 0));
-    //TODO: figure out what No ECU Message actually is
-    //LcdHandlerSetNoEcuMessageWarning(GETBIT(can_rx_data[2], 2));
-}
-
-void FaultHandlerParseECUWarnings(uint8_t* can_rx_data) {
-    LcdHandlerSetPackOverdischargeWarning(GETBIT(can_rx_data[5], 0));
-    LcdHandlerSetPackOverchargeWarning(GETBIT(can_rx_data[5], 1));
 }
 
 void FaultHandlerParseTemperatures(uint32_t msg_id, uint8_t* can_rx_data){

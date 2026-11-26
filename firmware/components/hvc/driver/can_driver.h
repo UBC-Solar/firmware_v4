@@ -46,7 +46,6 @@ typedef struct {
     volatile CAN_TxMessage_t tx_queue[CAN_TX_QUEUE_CAPACITY];
     volatile uint32_t tx_queue_push_index;
     volatile uint32_t tx_queue_pop_index;
-    volatile CAN_RxMessage_t rx_message_0x450;
 } CAN_Driver_t;
 
 /** 

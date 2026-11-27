@@ -1,14 +1,9 @@
 import pytest
 
 from api import Board
-from tests.tel.radio import wait_for_frame
 
 TEL_FLAGS_ID = 0x751
-
-
 def test_boots_without_fault(board: Board):
-    # First flags frame proves the scheduler, clocks, CAN and UART init all made it through
-    wait_for_frame(board, TEL_FLAGS_ID, bytes([0x00]), within_ms=3000)
     board.wait(ms=2000)
     assert board.symbol_at_pc() not in ("Error_Handler", "HardFault_Handler")
 

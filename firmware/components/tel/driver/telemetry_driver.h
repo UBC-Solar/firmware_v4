@@ -13,7 +13,7 @@
 #include "usart.h"
 #include "stdlib.h"
 #include "cmsis_os2.h"
-#include "car_configs.h"
+#include <stdbool.h>
 
 #define TEL_DATA_LENGTH                           8U
 #define TEL_MSG_TYPEDEF_SIZE                      sizeof(RADIO_Msg_TypeDef)
@@ -39,6 +39,13 @@ typedef struct {
 /* TODO: SEND THIS OVER CAN AND SEE ON GRAFANA NUMBER */
 extern telemetry_diagnostics_t telemetry_diagnostic;
 extern osSemaphoreId_t usart1_tx_semaphore;
+
+/**
+  * @brief Reads the RADIO/CEL_STATE jumper (PC6) once
+  *        Jumper on  -> cellular 
+  *        Jumper off -> radio.
+  */
+void TelemetryDriverInit(void);
 
 /**
   * @brief Transmits a telemetry message via UART

@@ -77,6 +77,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${COMMON_SOURCES}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/CAN_comms/CAN_comms.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/iwdg/iwdg_common.c
+    app/cruise_control.c
 )
 
 # Add include paths

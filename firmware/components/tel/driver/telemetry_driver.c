@@ -13,14 +13,9 @@ telemetry_diagnostics_t telemetry_diagnostic;
 
 static bool telemetry_is_cellular = false;
 
-void TelemetryDriverSetCellular(bool is_cellular)
-{
-    telemetry_is_cellular = is_cellular;
-}
-
 void TelemetryDriverInit(void)
 {
-    TelemetryDriverSetCellular(HAL_GPIO_ReadPin(RADIO_CEL_STATE_GPIO_Port, RADIO_CEL_STATE_Pin) == GPIO_PIN_SET);
+    telemetry_is_cellular = (HAL_GPIO_ReadPin(RADIO_CEL_STATE_GPIO_Port, RADIO_CEL_STATE_Pin) == GPIO_PIN_SET);
 }
 
 void UART_telemetry_transmit(TEL_Msg_TypeDef* can_tel_msg)

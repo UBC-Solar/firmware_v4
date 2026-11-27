@@ -115,6 +115,7 @@ int main(void)
   MX_IWDG_Init();
   #endif // DEBUG
   /* USER CODE BEGIN 2 */
+  TelemetryDriverInit();
   CanAppInit();
   /* USER CODE END 2 */
 

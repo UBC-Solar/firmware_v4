@@ -41,6 +41,19 @@ extern telemetry_diagnostics_t telemetry_diagnostic;
 extern osSemaphoreId_t usart1_tx_semaphore;
 
 /**
+  * @brief Reads the RADIO/CEL_STATE jumper (PC6) once
+  *        Jumper on  -> cellular 
+  *        Jumper off -> radio.
+  */
+void TelemetryDriverInit(void);
+
+/**
+  * @brief Sets the telemetry link used by UART_telemetry_transmit().
+  * @param is_cellular true for cellular, false for radio
+  */
+void TelemetryDriverSetCellular(bool is_cellular);
+
+/**
   * @brief Transmits a telemetry message via UART
   * @param can_tel_msg Pointer to the telemetry message to be transmitted
   */

@@ -13,7 +13,7 @@
 #include "usart.h"
 #include "stdlib.h"
 #include "cmsis_os2.h"
-#include "car_configs.h"
+#include <stdbool.h>
 
 #define TEL_DATA_LENGTH                           8U
 #define TEL_MSG_TYPEDEF_SIZE                      sizeof(RADIO_Msg_TypeDef)

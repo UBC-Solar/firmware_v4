@@ -199,11 +199,19 @@ void LcdAppDisplayDriveStateDrivePage(volatile DriveStateStates* state)
  *
  * @param fault_indicator A general indicator to signal a fault to prompt the driver to change pages
  */
-void LcdAppDisplayFaultIndicator(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults)
+void LcdAppDisplayFaultIndicator(LcdAppMotorFaults* motor_faults, 
+                                LcdAppDrdFaults* drd_faults, 
+                                LcdAppHvcFaults* hvc_faults, 
+                                LcdAppMdiFaults* mdi_faults, 
+                                LcdAppMpptFaults* mppt_faults, 
+                                LcdAppMstFaults* mst_faults, 
+                                LcdAppStrFaults* str_faults, 
+                                LcdAppTelFaults* tel_faults, 
+                                LcdAppObcFaults* obc_faults)
 {
     LcdDriverClearBoundingBox(old_bb_fault_indicator.x1,old_bb_fault_indicator.y1,old_bb_fault_indicator.x2,old_bb_fault_indicator.y2);
 
-    uint8_t fault_count = LcdAppCheckFaults(batt_faults, motor_faults);
+    uint8_t fault_count = LcdAppCheckFaults(motor_faults, drd_faults, hvc_faults, mdi_faults, mppt_faults, mst_faults, str_faults, tel_faults, obc_faults);
 
     // Check if there is an existing fault
     if (fault_count > 0)
@@ -237,7 +245,15 @@ void LcdAppDisplayWarningIndicator(LcdAppWarnings* warnings)
   PAGE 2 (FAULT PAGE) FUNCTIONS
 --------------------------------------------------------------------------*/
 
-uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults)
+uint8_t LcdAppCheckFaults(LcdAppMotorFaults* motor_faults, 
+                            LcdAppDrdFaults* drd_faults, 
+                            LcdAppHvcFaults* hvc_faults, 
+                            LcdAppMdiFaults* mdi_faults, 
+                            LcdAppMpptFaults* mppt_faults, 
+                            LcdAppMstFaults* mst_faults, 
+                            LcdAppStrFaults* str_faults, 
+                            LcdAppTelFaults* tel_faults, 
+                            LcdAppObcFaults* obc_faults)
 {
     // This clears the faults so we parse faults every time
     memset(g_faults, 0, sizeof(g_faults));  
@@ -245,66 +261,6 @@ uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* moto
     // Stores amount of fault
     uint8_t fault_count = 0;
 
-    if (batt_faults->battery_fault)
-    {
-        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_FLT_CHARS);
-        fault_count++;
-    }
-    if(batt_faults->selftest_fault)
-    {
-        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_SELFTEST_FLT_CHARS);
-        fault_count++;
-    }
-    if (batt_faults->supp_lo)
-    {
-        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_SUPPLO_FLT_CHARS);
-        fault_count++;
-    }
-    if (batt_faults->voltage_high)
-    {
-        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_VOLTHIGH_FLT_CHARS);
-        fault_count++;
-    }
-    if (batt_faults->voltage_low)
-    {
-        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_VOLTLOW_FLT_CHARS);
-        fault_count++;
-    }
-    if (batt_faults->slave_board_comm_fault)
-    {
-        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_SLAVE_COMM_FLT_CHARS);
-        fault_count++;
-    }
-    if (batt_faults->overvolt_fault)
-    {
-        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_OVERVOLT_FLT_CHARS);
-        fault_count++;
-    }
-    if (batt_faults->undervolt_fault)
-    {
-        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_UNDERVOLT_FLT_CHARS);
-        fault_count++;
-    }
-    if (batt_faults->overtemp_fault)
-    {
-        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_OVERTEMP_FLT_CHARS);
-        fault_count++;
-    }
-    if (batt_faults->charge_overcurrent_fault)
-    {
-        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_CHARGE_OC_FLT_CHARS);
-        fault_count++;
-    }
-    if (batt_faults->discharge_overcurrent_fault)
-    {
-        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_DISCHARGE_OC_FLT_CHARS);
-        fault_count++;
-    }
-    if (batt_faults->reset_from_watchdog)
-    {
-        sprintf(g_faults[fault_count], "%s", LCD_APP_BATT_RST_FROM_WATCH_FLT_CHARS);
-        fault_count++;
-    }
     if (motor_faults->motor_system_error)
     {
         sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_SYSTEM_FLT_CHARS);
@@ -330,19 +286,455 @@ uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* moto
         sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_COMM_FLT_CHARS);
         fault_count++;
     }
-
+    if (motor_faults->analog_sensor_error)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_ANALOG_SENSOR_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->motor_curr_sensor_u_error)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_CURR_SENSOR_U_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->motor_curr_sensor_w_error)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_CURR_SENSOR_W_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->batt_voltage_sensor_error)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_BATT_VOLT_SENSOR_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->batt_current_sensor_error)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_BATT_CURR_SENSOR_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->batt_current_sensor_adjust_error)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_BATT_CURR_SENSOR_ADJUST_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->motor_current_sensor_adjust_error)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_CURR_SENSOR_ADJUST_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->accelerator_position_error)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_ACCEL_POS_SENSOR_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->controller_voltage_sensor_error)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_CTRL_VOLT_SENSOR_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->power_system_fault)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_PWR_SYS_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->motor_overcurrent_limit)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_OVERCURR_LIMIT_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->motor_lock)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_LOCK_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->hall_sensor_short)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_HALL_SHORT_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->hall_sensor_open)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_HALL_OPEN_FLT_CHARS);
+        fault_count++;
+    }
+    if (motor_faults->motor_controller_overheat)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MTR_CTRL_OVERHEAT_FLT_CHARS);
+        fault_count++;
+    }
+    if (drd_faults->drd_watchdog_reset)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_DRD_WDOG_RESET_FLT_CHARS);
+        fault_count++;   
+    }
+    if (drd_faults->drd_mcu_overtemp)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_DRD_MCU_OVERTEMP_FLT_CHARS);
+        fault_count++;   
+    }
+    if (drd_faults->drd_mcu_undervolt)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_DRD_MCU_UNDERVOLT_FLT_CHARS);
+        fault_count++;   
+    }
+    if (hvc_faults->estop)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_ESTP_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->imd_fault)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_IMD_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->mst_fault)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_MSTF_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->mst_unhealthy)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_MSTU_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->overcurrent)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_OCUR_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->reverse_current)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_RCUR_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->dist_fault)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_DIST_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->dcdc_fault)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_DCDC_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->supp_fault)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_SUPP_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->watchdog_reset)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_WDOG_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->dcdc_overtemp)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_DCOT_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->tel_startup_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_TLST_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->mst_handshake_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_MSHK_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->mst_status_check_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_MSCK_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->hv_connect_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_HVCT_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->open_discharge_relay_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_DSCG_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->motor_precharge_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_MPRE_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->mppt_precharge_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_PPRE_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->lv_powerup_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_LVPU_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->tel_heartbeat_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_TLHB_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->mst_heartbeat_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_MSHB_FLT_CHARS);
+        fault_count++;
+    }
+    if (hvc_faults->dist_heartbeat_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_HVC_DSHB_FLT_CHARS);
+        fault_count++;
+    }
+    if (mdi_faults->watchdog_reset)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MDI_WDOG_FLT_CHARS);
+        fault_count++;
+    }
+    if (mdi_faults->overvoltage)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MDI_OVLT_FLT_CHARS);
+        fault_count++;
+    }
+    if (mdi_faults->motor_overtemp)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MDI_OTMP_FLT_CHARS);
+        fault_count++;
+    }
+    if (mdi_faults->rtd_sensor_fault)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MDI_RTDF_FLT_CHARS);
+        fault_count++;
+    }
+    if (mdi_faults->rtd_comm_error)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MDI_RTDC_FLT_CHARS);
+        fault_count++;
+    }
+    if (mppt_faults[LCD_APP_MPPT_A].hw_overvoltage)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MPPTA_HWOV_FLT_CHARS);
+        fault_count++;
+    }
+    if (mppt_faults[LCD_APP_MPPT_A].hw_overcurrent)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MPPTA_HWOC_FLT_CHARS);
+        fault_count++;
+    }
+    if (mppt_faults[LCD_APP_MPPT_A].undervoltage_12v)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MPPTA_12UV_FLT_CHARS);
+        fault_count++;
+    }
+    if (mppt_faults[LCD_APP_MPPT_A].mosfet_overheat)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MPPTA_FETH_FLT_CHARS);
+        fault_count++;
+    }
+    if (mppt_faults[LCD_APP_MPPT_B].hw_overvoltage)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MPPTB_HWOV_FLT_CHARS);
+        fault_count++;
+    }
+    if (mppt_faults[LCD_APP_MPPT_B].hw_overcurrent)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MPPTB_HWOC_FLT_CHARS);
+        fault_count++;
+    }
+    if (mppt_faults[LCD_APP_MPPT_B].undervoltage_12v)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MPPTB_12UV_FLT_CHARS);
+        fault_count++;
+    }
+    if (mppt_faults[LCD_APP_MPPT_B].mosfet_overheat)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MPPTB_FETH_FLT_CHARS);
+        fault_count++;
+    }
+    if (mppt_faults[LCD_APP_MPPT_C].hw_overvoltage)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MPPTC_HWOV_FLT_CHARS);
+        fault_count++;
+    }
+    if (mppt_faults[LCD_APP_MPPT_C].hw_overcurrent)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MPPTC_HWOC_FLT_CHARS);
+        fault_count++;
+    }
+    if (mppt_faults[LCD_APP_MPPT_C].undervoltage_12v)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MPPTC_12UV_FLT_CHARS);
+        fault_count++;
+    }
+    if (mppt_faults[LCD_APP_MPPT_C].mosfet_overheat)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MPPTC_FETH_FLT_CHARS);
+        fault_count++;
+    }
+    if (mppt_faults[LCD_APP_MPPT_D].hw_overvoltage)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MPPTD_HWOV_FLT_CHARS);
+        fault_count++;
+    }
+    if (mppt_faults[LCD_APP_MPPT_D].hw_overcurrent)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MPPTD_HWOC_FLT_CHARS);
+        fault_count++;
+    }
+    if (mppt_faults[LCD_APP_MPPT_D].undervoltage_12v)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MPPTD_12UV_FLT_CHARS);
+        fault_count++;
+    }
+    if (mppt_faults[LCD_APP_MPPT_D].mosfet_overheat)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MPPTD_FETH_FLT_CHARS);
+        fault_count++;
+    }
+    if (mst_faults->comm_fail)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MST_COMM_FLT_CHARS);
+        fault_count++;
+    }
+    if (mst_faults->self_check_fail)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MST_SCHK_FLT_CHARS);
+        fault_count++;
+    }
+    if (mst_faults->cell_volt_high)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MST_CVHI_FLT_CHARS);
+        fault_count++;
+    }
+    if (mst_faults->cell_volt_low)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MST_CVLO_FLT_CHARS);
+        fault_count++;
+    }
+    if (mst_faults->cell_temp_high)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MST_CTHI_FLT_CHARS);
+        fault_count++;
+    }
+    if (mst_faults->cell_temp_low)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_MST_CTLO_FLT_CHARS);
+        fault_count++;
+    }
+    if (str_faults->mcu_undervolt)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_STR_MCUV_FLT_CHARS);
+        fault_count++;
+    }
+    if (str_faults->mcu_overtemp)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_STR_MCOT_FLT_CHARS);
+        fault_count++;
+    }
+    if (tel_faults->watchdog_reset)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_TEL_WDOG_FLT_CHARS);
+        fault_count++;
+    }
+    if (tel_faults->imu_read_fail)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_TEL_IMUR_FLT_CHARS);
+        fault_count++;
+    }
+    if (tel_faults->imu_write_fail)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_TEL_IMUW_FLT_CHARS);
+        fault_count++;
+    }
+    if (tel_faults->gps_read_fail)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_TEL_GPSR_FLT_CHARS);
+        fault_count++;
+    }
+    if (tel_faults->gps_write_fail)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_TEL_GPSW_FLT_CHARS);
+        fault_count++;
+    }
+    if (tel_faults->mcu_overtemp)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_TEL_MCOT_FLT_CHARS);
+        fault_count++;
+    }
+    if (tel_faults->mcu_undervolt)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_TEL_MCUV_FLT_CHARS);
+        fault_count++;
+    }
+    if (obc_faults->hw_protection)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_OBC_HWPR_FLT_CHARS);
+        fault_count++;
+    }
+    if (obc_faults->temp_protection)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_OBC_TMPR_FLT_CHARS);
+        fault_count++;
+    }
+    if (obc_faults->input_volt_fault)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_OBC_INV_FLT_CHARS);
+        fault_count++;
+    }
+    if (obc_faults->output_undervolt)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_OBC_OUV_FLT_CHARS);
+        fault_count++;
+    }
+    if (obc_faults->output_overvolt)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_OBC_OOV_FLT_CHARS);
+        fault_count++;
+    }
+    if (obc_faults->output_overcurr)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_OBC_OOC_FLT_CHARS);
+        fault_count++;
+    }
+    if (obc_faults->output_short)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_OBC_SHRT_FLT_CHARS);
+        fault_count++;
+    }
+    if (obc_faults->comm_timeout)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_OBC_COMM_FLT_CHARS);
+        fault_count++;
+    }
+    if (obc_faults->socket_overheat)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_OBC_SOCK_FLT_CHARS);
+        fault_count++;
+    }
+    if (obc_faults->elec_lock_fault)
+    {
+        sprintf(g_faults[fault_count], "%s", LCD_APP_OBC_LOCK_FLT_CHARS);
+        fault_count++;
+    }
     return fault_count;
 }
 
 /**
- * @brief Dynamically displays battery and motor faults on the LCD
+ * @brief Dynamically displays faults on the LCD
  *
- * @param batt_faults The battery faults to be displayed on the LCD
  * @param motor_faults The motor faults to be displayed on the LCD
  */
-void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults)
+void LcdAppDisplayFaults(LcdAppMotorFaults* motor_faults, 
+                        LcdAppDrdFaults* drd_faults, 
+                        LcdAppHvcFaults* hvc_faults, 
+                        LcdAppMdiFaults* mdi_faults, 
+                        LcdAppMpptFaults* mppt_faults, 
+                        LcdAppMstFaults* mst_faults, 
+                        LcdAppStrFaults* str_faults, 
+                        LcdAppTelFaults* tel_faults, 
+                        LcdAppObcFaults* obc_faults)
 {
-    uint8_t fault_count = LcdAppCheckFaults(batt_faults, motor_faults);
+    uint8_t fault_count = LcdAppCheckFaults(motor_faults, drd_faults, hvc_faults, mdi_faults, mppt_faults, mst_faults, str_faults, tel_faults, obc_faults);
 
     // This forces the screen to clear given no faults (clear doesn't update dirty pages)
     if(fault_count == 0 || fault_count < g_prev_fault_count){
@@ -412,21 +804,6 @@ uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings)
         sprintf(g_warning_char[warning_count], "%s", LCD_APP_LOWVOLT_WARN_CHARS);
         warning_count++;
     }
-    if (warnings->no_ecu_message)
-    {
-        sprintf(g_warning_char[warning_count], "%s", LCD_APP_NOMSG_WARN_CHARS);
-        warning_count++;
-    }
-    if (warnings->pack_overcharge)
-    {
-        sprintf(g_warning_char[warning_count], "%s", LCD_APP_PACK_OC_WARN_CHARS);
-        warning_count++;
-    }
-    if (warnings->pack_overdischarge)
-    {
-        sprintf(g_warning_char[warning_count], "%s", LCD_APP_PACK_OD_WARN_CHARS);
-        warning_count++;
-    }
     if (warnings->throttle_adc_outofrange)
     {
         sprintf(g_warning_char[warning_count], "%s", LCD_APP_MTR_THROT_ADC_OOR_WARN_CHARS);
@@ -435,6 +812,51 @@ uint8_t LcdAppCheckWarnings(LcdAppWarnings* warnings)
     if (warnings->throttle_adc_mismatch)
     {
         sprintf(g_warning_char[warning_count], "%s", LCD_APP_MTR_THROT_ADC_MISMATCH_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->mst_cell_volt_high)
+    {
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_MST_WVHI_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->mst_cell_volt_low)
+    {
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_MST_WVLO_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->mst_cell_temp_high)
+    {
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_MST_WTHI_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->drd_speed_timeout)
+    {
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_DRD_SPTO_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->drd_drive_state_timeout)
+    {
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_DRD_DSTO_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->drd_soc_timeout)
+    {
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_DRD_SCTO_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->drd_pack_voltage_timeout)
+    {
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_DRD_PVTO_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->drd_current_timeout)
+    {
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_DRD_CUTO_WARN_CHARS);
+        warning_count++;
+    }
+    if (warnings->drd_accel_timeout)
+    {
+        sprintf(g_warning_char[warning_count], "%s", LCD_APP_DRD_ACTO_WARN_CHARS);
         warning_count++;
     }
 

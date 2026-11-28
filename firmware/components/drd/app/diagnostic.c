@@ -54,6 +54,7 @@ void DiagnosticSetThrottleADCMismatch(bool mismatch){
 
 void DiagnosticSetWatchdogReset(bool reset){
     g_diagnostics.flags.watchdog_reset = reset;
+    LcdHandlerSetDrdWatchdogReset(reset);
 }
 
 void DiagnosticSetMotorCommFault(bool fault){
@@ -62,34 +63,42 @@ void DiagnosticSetMotorCommFault(bool fault){
 
 void DiagnosticSetMcuOvertemp(bool fault){
     g_diagnostics.flags.mcu_overtemp_fault = fault;
+    LcdHandlerSetDrdMcuOvertemp(fault);
 }   
 
 void DiagnosticSetMcuUnderVolt(bool fault){
     g_diagnostics.flags.mcu_undervolt_fault = fault;
+    LcdHandlerSetDrdMcuUndervolt(fault);
 }   
 
 void DiagnosticSetSpeedTimeout(bool timeout){
     g_diagnostics.cyclic_flags.speed_timeout = timeout;
+    LcdHandlerSetDrdSpeedTimeoutWarning(timeout);
 }
 
 void DiagnosticSetDriveStateTimeout(bool timeout){
     g_diagnostics.cyclic_flags.drive_state_timeout = timeout;
+    LcdHandlerSetDrdDriveStateTimeoutWarning(timeout);
 }
 
 void DiagnosticSetSocTimeout(bool timeout){
     g_diagnostics.cyclic_flags.soc_timeout = timeout;
+    LcdHandlerSetDrdSocTimeoutWarning(timeout);
 }
 
 void DiagnosticSetVoltageTimeout(bool timeout){
     g_diagnostics.cyclic_flags.voltage_timeout = timeout;
+    LcdHandlerSetDrdPackVoltageTimeoutWarning(timeout);
 }
 
 void DiagnosticSetCurrentTimeout(bool timeout){
     g_diagnostics.cyclic_flags.current_timeout = timeout;
+    LcdHandlerSetDrdCurrentTimeoutWarning(timeout);
 }
 
 void DiagnosticSetAccelTimeout(bool timeout){
     g_diagnostics.cyclic_flags.accel_timeout = timeout;
+    LcdHandlerSetDrdAccelTimeoutWarning(timeout);
 }
 
 void DiagnosticTimeSinceBootup()

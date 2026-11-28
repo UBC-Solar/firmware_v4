@@ -122,24 +122,109 @@
 #define LCD_APP_FAULT_EIGHT_X8 64
 #define LCD_APP_FAULT_EIGHT_Y8 52
 
-#define LCD_APP_BATT_FLT_CHARS "BAT_FLT"
-#define LCD_APP_BATT_SELFTEST_FLT_CHARS "SELF_TST"
-#define LCD_APP_BATT_SUPPLO_FLT_CHARS "SUPP_LOW"
-#define LCD_APP_BATT_VOLTHIGH_FLT_CHARS "VOLT_HIGH"
-#define LCD_APP_BATT_VOLTLOW_FLT_CHARS "VOLT_LOW"
-#define LCD_APP_BATT_SLAVE_COMM_FLT_CHARS "SLV_COMM"
-#define LCD_APP_BATT_OVERVOLT_FLT_CHARS "BAT_OVLT"
-#define LCD_APP_BATT_UNDERVOLT_FLT_CHARS "BAT_UVLT"
-#define LCD_APP_BATT_OVERTEMP_FLT_CHARS "BAT_OTMP"
-#define LCD_APP_BATT_CHARGE_OC_FLT_CHARS "BAT_COC"
-#define LCD_APP_BATT_DISCHARGE_OC_FLT_CHARS "BAT_DCOC"
-#define LCD_APP_BATT_RST_FROM_WATCH_FLT_CHARS "ECU_RFW"
-
 #define LCD_APP_MTR_SYSTEM_FLT_CHARS "MTR_SYS"
 #define LCD_APP_MTR_OVERCURR_FLT_CHARS "MTR_OCUR"
 #define LCD_APP_MTR_OVERVOLT_FLT_CHARS "MTR_OVLT"
 #define LCD_APP_MTR_OVERTEMP_FLT_CHARS "MTR_OTMP"
 #define LCD_APP_MTR_COMM_FLT_CHARS "MTR_COMM"
+#define LCD_APP_MTR_ANALOG_SENSOR_FLT_CHARS "MTR_ASNS"
+#define LCD_APP_MTR_CURR_SENSOR_U_FLT_CHARS "MTR_CUSU"
+#define LCD_APP_MTR_CURR_SENSOR_W_FLT_CHARS "MTR_CUSW"
+#define LCD_APP_MTR_BATT_VOLT_SENSOR_FLT_CHARS "MTR_BVOS"
+#define LCD_APP_MTR_BATT_CURR_SENSOR_FLT_CHARS "MTR_BCUS"
+#define LCD_APP_MTR_BATT_CURR_SENSOR_ADJUST_FLT_CHARS "MTR_BCSA"
+#define LCD_APP_MTR_CURR_SENSOR_ADJUST_FLT_CHARS "MTR_MCSA"
+#define LCD_APP_MTR_ACCEL_POS_SENSOR_FLT_CHARS "MTR_ACCL"
+#define LCD_APP_MTR_CTRL_VOLT_SENSOR_FLT_CHARS "MTR_CVOS"
+#define LCD_APP_MTR_PWR_SYS_FLT_CHARS "MTR_PSYS"
+#define LCD_APP_MTR_OVERCURR_LIMIT_FLT_CHARS "MTR_OCLM"
+#define LCD_APP_MTR_LOCK_FLT_CHARS "MTR_LOCK"
+#define LCD_APP_MTR_HALL_SHORT_FLT_CHARS "MTR_HSHT"
+#define LCD_APP_MTR_HALL_OPEN_FLT_CHARS "MTR_HOPN"
+#define LCD_APP_MTR_CTRL_OVERHEAT_FLT_CHARS "MTR_OVHT"
+
+#define LCD_APP_DRD_WDOG_RESET_FLT_CHARS "DRD_WDG"
+#define LCD_APP_DRD_MCU_OVERTEMP_FLT_CHARS "DRD_MCOT"
+#define LCD_APP_DRD_MCU_UNDERVOLT_FLT_CHARS "DRD_MCUV"
+
+#define LCD_APP_HVC_ESTP_FLT_CHARS "HVC_ESTP"
+#define LCD_APP_HVC_IMD_FLT_CHARS "HVC_IMD"
+#define LCD_APP_HVC_MSTF_FLT_CHARS "HVC_MSTF"
+#define LCD_APP_HVC_MSTU_FLT_CHARS "HVC_MSTU"
+#define LCD_APP_HVC_OCUR_FLT_CHARS "HVC_OCUR"
+#define LCD_APP_HVC_RCUR_FLT_CHARS "HVC_RCUR"
+#define LCD_APP_HVC_DIST_FLT_CHARS "HVC_DIST"
+#define LCD_APP_HVC_DCDC_FLT_CHARS "HVC_DCDC"
+#define LCD_APP_HVC_SUPP_FLT_CHARS "HVC_SUPP"
+#define LCD_APP_HVC_WDOG_FLT_CHARS "HVC_WDG"
+#define LCD_APP_HVC_DCOT_FLT_CHARS "HVC_DCOT"
+#define LCD_APP_HVC_TLST_FLT_CHARS "HVC_TLST"
+#define LCD_APP_HVC_MSHK_FLT_CHARS "HVC_MSHK"
+#define LCD_APP_HVC_MSCK_FLT_CHARS "HVC_MSCK"
+#define LCD_APP_HVC_HVCT_FLT_CHARS "HVC_HVCT"
+#define LCD_APP_HVC_DSCG_FLT_CHARS "HVC_DSCG"
+#define LCD_APP_HVC_MPRE_FLT_CHARS "HVC_MPRE"
+#define LCD_APP_HVC_PPRE_FLT_CHARS "HVC_PPRE"
+#define LCD_APP_HVC_LVPU_FLT_CHARS "HVC_LVPU"
+#define LCD_APP_HVC_TLHB_FLT_CHARS "HVC_TLHB"
+#define LCD_APP_HVC_MSHB_FLT_CHARS "HVC_MSHB"
+#define LCD_APP_HVC_DSHB_FLT_CHARS "HVC_DSHB"
+
+#define LCD_APP_MDI_WDOG_FLT_CHARS "MDI_WDOG"
+#define LCD_APP_MDI_OVLT_FLT_CHARS "MDI_OVLT"
+#define LCD_APP_MDI_OTMP_FLT_CHARS "MDI_OTMP"
+#define LCD_APP_MDI_RTDF_FLT_CHARS "MDI_RTDF"
+#define LCD_APP_MDI_RTDC_FLT_CHARS "MDI_RTDC"
+
+/* MPPT fault labels */
+#define LCD_APP_MPPTA_HWOV_FLT_CHARS "MPA_HWOV"
+#define LCD_APP_MPPTA_HWOC_FLT_CHARS "MPA_HWOC"
+#define LCD_APP_MPPTA_12UV_FLT_CHARS "MPA_12UV"
+#define LCD_APP_MPPTA_FETH_FLT_CHARS "MPA_FETH"
+
+#define LCD_APP_MPPTB_HWOV_FLT_CHARS "MPB_HWOV"
+#define LCD_APP_MPPTB_HWOC_FLT_CHARS "MPB_HWOC"
+#define LCD_APP_MPPTB_12UV_FLT_CHARS "MPB_12UV"
+#define LCD_APP_MPPTB_FETH_FLT_CHARS "MPB_FETH"
+
+#define LCD_APP_MPPTC_HWOV_FLT_CHARS "MPC_HWOV"
+#define LCD_APP_MPPTC_HWOC_FLT_CHARS "MPC_HWOC"
+#define LCD_APP_MPPTC_12UV_FLT_CHARS "MPC_12UV"
+#define LCD_APP_MPPTC_FETH_FLT_CHARS "MPC_FETH"
+
+#define LCD_APP_MPPTD_HWOV_FLT_CHARS "MPD_HWOV"
+#define LCD_APP_MPPTD_HWOC_FLT_CHARS "MPD_HWOC"
+#define LCD_APP_MPPTD_12UV_FLT_CHARS "MPD_12UV"
+#define LCD_APP_MPPTD_FETH_FLT_CHARS "MPD_FETH"
+
+#define LCD_APP_MST_COMM_FLT_CHARS "MST_COMM"
+#define LCD_APP_MST_SCHK_FLT_CHARS "MST_SCHK"
+#define LCD_APP_MST_CVHI_FLT_CHARS "MST_CVHI"
+#define LCD_APP_MST_CVLO_FLT_CHARS "MST_CVLO"
+#define LCD_APP_MST_CTHI_FLT_CHARS "MST_CTHI"
+#define LCD_APP_MST_CTLO_FLT_CHARS "MST_CTLO"
+
+#define LCD_APP_STR_MCUV_FLT_CHARS "STR_MCUV"
+#define LCD_APP_STR_MCOT_FLT_CHARS "STR_MCOT"
+
+#define LCD_APP_TEL_WDOG_FLT_CHARS "TEL_WDOG"
+#define LCD_APP_TEL_IMUR_FLT_CHARS "TEL_IMUR"
+#define LCD_APP_TEL_IMUW_FLT_CHARS "TEL_IMUW"
+#define LCD_APP_TEL_GPSR_FLT_CHARS "TEL_GPSR"
+#define LCD_APP_TEL_GPSW_FLT_CHARS "TEL_GPSW"
+#define LCD_APP_TEL_MCOT_FLT_CHARS "TEL_MCOT"
+#define LCD_APP_TEL_MCUV_FLT_CHARS "TEL_MCUV"
+
+#define LCD_APP_OBC_HWPR_FLT_CHARS "OBC_HWPR"
+#define LCD_APP_OBC_TMPR_FLT_CHARS "OBC_TMPR"
+#define LCD_APP_OBC_INV_FLT_CHARS "OBC_INV"
+#define LCD_APP_OBC_OUV_FLT_CHARS "OBC_OUV"
+#define LCD_APP_OBC_OOV_FLT_CHARS "OBC_OOV"
+#define LCD_APP_OBC_OOC_FLT_CHARS "OBC_OOC"
+#define LCD_APP_OBC_SHRT_FLT_CHARS "OBC_SHRT"
+#define LCD_APP_OBC_COMM_FLT_CHARS "OBC_COMM"
+#define LCD_APP_OBC_SOCK_FLT_CHARS "OBC_SOCK"
+#define LCD_APP_OBC_LOCK_FLT_CHARS "OBC_LOCK"
 
 /** Warning Page */
 #define LCD_APP_WARNING_SPACING 1
@@ -182,11 +267,17 @@
 #define LCD_APP_HIGHVOLT_WARN_CHARS "HIGH_VOLT"
 #define LCD_APP_LOWTEMP_WARN_CHARS "LOW_TEMP"
 #define LCD_APP_HIGHTEMP_WARN_CHARS "HIGH_TEMP"
-#define LCD_APP_NOMSG_WARN_CHARS "NO_MSG"
-#define LCD_APP_PACK_OC_WARN_CHARS "PACK_OC"
-#define LCD_APP_PACK_OD_WARN_CHARS "PACK_ODC"
 #define LCD_APP_MTR_THROT_ADC_OOR_WARN_CHARS "THRT_OOR"
 #define LCD_APP_MTR_THROT_ADC_MISMATCH_WARN_CHARS "THRT_MSM"
+#define LCD_APP_MST_WVHI_WARN_CHARS "MST_WVHI"
+#define LCD_APP_MST_WVLO_WARN_CHARS "MST_WVLO"
+#define LCD_APP_MST_WTHI_WARN_CHARS "MST_WTHI"
+#define LCD_APP_DRD_SPTO_WARN_CHARS "DRD_SPTO"
+#define LCD_APP_DRD_DSTO_WARN_CHARS "DRD_DSTO"
+#define LCD_APP_DRD_SCTO_WARN_CHARS "DRD_SCTO"
+#define LCD_APP_DRD_PVTO_WARN_CHARS "DRD_PVTO"
+#define LCD_APP_DRD_CUTO_WARN_CHARS "DRD_CUTO"
+#define LCD_APP_DRD_ACTO_WARN_CHARS "DRD_ACTO"
 
 /** Temperature Page */
 #define LCD_APP_TEMP_FONT (Verdana12)
@@ -281,11 +372,18 @@
 /**
  * @brief Checks and updates the faults.
  *
- * @param batt_faults A struct containing the battery faults.
  * @param motor_faults A struct containing the motor faults.
  * @return The count of faults.
  */
-uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults);
+uint8_t LcdAppCheckFaults(LcdAppMotorFaults* motor_faults, 
+                            LcdAppDrdFaults* drd_faults, 
+                            LcdAppHvcFaults* hvc_faults, 
+                            LcdAppMdiFaults* mdi_faults, 
+                            LcdAppMpptFaults* mppt_faults, 
+                            LcdAppMstFaults* mst_faults, 
+                            LcdAppStrFaults* str_faults, 
+                            LcdAppTelFaults* tel_faults, 
+                            LcdAppObcFaults* obc_faults);
 /**
  * @brief Checks and updates the warnings.
  *
@@ -343,7 +441,15 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data);
  *
  * @param fault_indicator A general indicator to signal a fault to prompt the driver to change pages
  */
-void LcdAppDisplayFaultIndicator(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults);
+void LcdAppDisplayFaultIndicator(LcdAppMotorFaults* motor_faults, 
+                                    LcdAppDrdFaults* drd_faults, 
+                                    LcdAppHvcFaults* hvc_faults, 
+                                    LcdAppMdiFaults* mdi_faults, 
+                                    LcdAppMpptFaults* mppt_faults, 
+                                    LcdAppMstFaults* mst_faults, 
+                                    LcdAppStrFaults* str_faults, 
+                                    LcdAppTelFaults* tel_faults, 
+                                    LcdAppObcFaults* obc_faults);
 
 /**
  * @brief Displays a warning indicator on the LCD Drive Page
@@ -354,12 +460,19 @@ void LcdAppDisplayFaultIndicator(LcdAppBattFaults* batt_faults, LcdAppMotorFault
 void LcdAppDisplayWarningIndicator(LcdAppWarnings* warnings);
 
 /**
- * @brief Dynamically displays battery and motor faults on the LCD
+ * @brief Dynamically displays faults on the LCD
  *
- * @param batt_faults The battery faults to be displayed on the LCD
  * @param motor_faults The motor faults to be displayed on the LCD
  */
-void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, LcdAppMotorFaults* motor_faults);
+void LcdAppDisplayFaults(LcdAppMotorFaults* motor_faults, 
+                            LcdAppDrdFaults* drd_faults, 
+                            LcdAppHvcFaults* hvc_faults, 
+                            LcdAppMdiFaults* mdi_faults, 
+                            LcdAppMpptFaults* mppt_faults, 
+                            LcdAppMstFaults* mst_faults, 
+                            LcdAppStrFaults* str_faults, 
+                            LcdAppTelFaults* tel_faults, 
+                            LcdAppObcFaults* obc_faults);
 
 /**
  * @brief Dynamically displays car warnings on the LCD

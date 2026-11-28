@@ -25,7 +25,6 @@ static CanFilter_t filter_whitelist[]  __attribute__((unused)) = {
     { DRD_MOTOR_COMMAND_ID,                 4,     0               },
     { DRD_DIAGNOSTICS_ID,                   4,     0               },
     { DRD_TIME_SINCE_BOOTUP_ID,             1,     0               },
-    { ECU_STATUS_ID,                        1,     0               },
     { MDI_TIME_SINCE_BOOTUP_ID,             1,     0               },
     { MDI_DIAGNOSTICS_ID,                   1,     0               },
     { MDI_MOTOR_TEMP_ID,                    1,     0               },

@@ -136,13 +136,6 @@ void VehicleStateCanRxHandler(uint32_t msg_id, uint8_t* data)
 void LcdAppCanRxHandler(uint32_t msg_id, uint8_t* data)
 { 
     switch (msg_id) {
-    case CAN_ID_ECU: { // Update pack current and voltage for SOC calculation
-        int16_t tmp_pack_current = (data[1] << 8) | (data[0]);
-        tmp_pack_current /= 65.535;
-        CyclicDataSetPackCurrent(tmp_pack_current);
-        g_pack_current_soc = tmp_pack_current;
-        break;
-    } 
     case CAN_ID_PACK_VOLTAGE: { // Update pack voltage and trigger SOC calculation
         uint16_t tmp_pack_voltage = (data[1] << 8) | (data[0]);
         tmp_pack_voltage /= PACK_VOLTAGE_DIVISOR;
@@ -165,19 +158,40 @@ void FaultHandlerCanRxHandler(uint32_t msg_id, uint8_t* data)
     // How this is handled: https://docs.google.com/document/d/1lpAI_UW_a7WqzGdEOpQaXZ8MB8aLU-1VR9yYNUQGnVI/edit?usp=sharing
     switch (msg_id) {
     case CAN_ID_BATT_FAULTS:
-        FaultHandlerParseBatteryFaults(data);
         FaultHandlerParseBatteryWarnings(data);
         break;
-    case CAN_ID_ECU:
-        FaultHandlerEStop(data);
-        FaultHandlerParseECUFaults(data);
-        FaultHandlerParseECUWarnings(data);
+    case CAN_ID_MPPTA_FAULTS:
+        FaultHandlerParseMpptFaults(LCD_APP_MPPT_A, data);
         break;
-    case CAN_ID_PACK_VOLTAGE:
-        FaultHandlerParsePackVoltageFaults(data);
+    case CAN_ID_MPPTB_FAULTS:
+        FaultHandlerParseMpptFaults(LCD_APP_MPPT_B, data);
+        break;
+    case CAN_ID_MPPTC_FAULTS:
+        FaultHandlerParseMpptFaults(LCD_APP_MPPT_C, data);
+        break;
+    case CAN_ID_MPPTD_FAULTS:
+        FaultHandlerParseMpptFaults(LCD_APP_MPPT_D, data);
+        break;
+    case CAN_ID_MDI_FAULTS:
+        FaultHandlerParseMdiFaults(data);
+        break;
+    case CAN_ID_HVC_FAULTS:
+        FaultHandlerParseHvcFaults(data);
         break;
     case CAN_ID_MTR_FAULTS:
         FaultHandlerParseMotorFaults(data);
+        break;
+    case CAN_ID_MST_FAULTS:
+        FaultHandlerParseMstFaults(data);
+        break;
+    case CAN_ID_STR_FAULTS:
+        FaultHandlerParseStrFaults(data);
+        break;
+    case CAN_ID_TEL_FAULTS:
+        FaultHandlerParseTelFaults(data);
+        break;
+    case CAN_ID_OBC_FAULTS:
+        FaultHandlerParseObcFaults(data);
         break;
         // Other motor faults are handled from drd diagnostics
     }

@@ -13,7 +13,7 @@
 #include "can.h"
 
 /* DEFINES */
-#define MOTOR_DRIVE_CONTROL_ADDRESS 0x401
+#define MOTOR_DRIVE_CONTROL_ADDRESS         0x401
 #define DRIVE_COMMAND_SIZE 5
 
 #define DRD_DIAGNOSTIC_MESSAGE				0x403
@@ -22,7 +22,6 @@
 #define TIME_SINCE_BOOTUP_CAN_DATA_LENGTH	4
 #define COMMIT_HASH_CAN_ID					0x405
 
-#define CAN_ID_ECU		    		        0x450
 #define CAN_ID_BATT_FAULTS		 			0x622
 #define CAN_ID_PACK_VOLTAGE		    		0x623
 #define CAN_ID_PACK_HEALTH          		0x624
@@ -33,12 +32,22 @@
 
 #define BMS_TEMPERATURES_CAN_ID			    0x625
 
-#define CAN_ID_MTR_FAULTS 0x08A50225
-#define MDU_REQUEST_COMMAND_ID 0x08F89540
-#define MDU_REQUEST_SIZE 1
-#define MDU_REQUEST_FRAME 0b111
-#define FRAME0 0x08850225
-#define STR_CAN_MSG_ID 0x580
+#define CAN_ID_MPPTA_FAULTS                 0x6A5
+#define CAN_ID_MPPTB_FAULTS                 0x6B5
+#define CAN_ID_MPPTC_FAULTS                 0x6C5
+#define CAN_ID_MPPTD_FAULTS                 0x6D5
+#define CAN_ID_MDI_FAULTS                   0x501
+#define CAN_ID_HVC_FAULTS                   0x321
+#define CAN_ID_MTR_FAULTS                   0x08A50225
+#define CAN_ID_MST_FAULTS                   0x200
+#define CAN_ID_STR_FAULTS                   0x592
+#define CAN_ID_TEL_FAULTS                   0x751
+#define CAN_ID_OBC_FAULTS                   0x18FF50E5
+#define MDU_REQUEST_COMMAND_ID              0x08F89540
+#define MDU_REQUEST_SIZE                    1
+#define MDU_REQUEST_FRAME                   0b111
+#define FRAME0                              0x08850225
+#define STR_CAN_MSG_ID                      0x580
 
 #define DRD_MCU_HEALTH_CAN_ID               0x402
 #define DRD_MCU_HEALTH_CAN_DATA_LENGTH      6

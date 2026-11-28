@@ -58,60 +58,46 @@ void LcdTestFaultsPage(void)
 {
     /**
      * Sets up test data for FAULTS_PAGE
-     * - Battery faults>
+     * - MST faults
      * - Motor faults 
      * - All faults set to true for visible display
      */
 
-    /* Battery Faults - Set all to true for visible test display */
+    /* Set all faults to true for visible test display */
 
     switch(g_lcdtest_faultcount){
         // Input 8 faults with delay
         case 1:
-            LcdHandlerSetBatteryFault(true);
             break;
         case 2:
-            LcdHandlerSetBatterySupplyLow(true);
+            LcdHandlerSetMstCommFail(true);
             break;
         case 3:
-            LcdHandlerSetBMSSelfTestFault(true);
+            LcdHandlerSetMstSelfCheckFail(true);
             break;
         case 4:
-            LcdHandlerSetBatteryVoltageHigh(true);
+            LcdHandlerSetMstCellVoltHigh(true);
             break;
         case 5:
-            LcdHandlerSetBatteryVoltageLow(true);
+            LcdHandlerSetMstCellVoltLow(true);
             break;
         case 6:
-            LcdHandlerSetBatteryOvertemp(true);
+            LcdHandlerSetMstCellTempHigh(true);
             break;
         case 7:
-            LcdHandlerSetBatterySlaveBoardCommFault(true);
+            LcdHandlerSetMstCellTempLow(true);
             break;
         case 8:
-            LcdHandlerSetBatteryOvervoltFault(true);
             break;
         case 9: // Clear 8 faults
-            LcdHandlerSetBatteryFault(false);
-            LcdHandlerSetBatterySupplyLow(false);
-            LcdHandlerSetBMSSelfTestFault(false);
-            LcdHandlerSetBatteryVoltageHigh(false);
-            LcdHandlerSetBatteryVoltageLow(false);
-            LcdHandlerSetBatteryOvertemp(false);
-            LcdHandlerSetBatterySlaveBoardCommFault(false);
-            LcdHandlerSetBatteryOvervoltFault(false);
             break;
         case 10:
-            LcdHandlerSetBatteryUndervoltFault(true);
             break;
         case 11:
-            LcdHandlerSetBatteryChargeOvercurrentFault(true);
             break;
         case 12:
-            LcdHandlerSetBatteryDischargeOvercurrentFault(true);
             break;
         case 13:
-            LcdHandlerSetBatteryResetFromWatchdogFault(true);
             break;
         case 14:
             LcdHandlerSetMotorSystemFault(true);
@@ -126,9 +112,6 @@ void LcdTestFaultsPage(void)
             LcdHandlerSetMotorFetThermistorError(true);
             break;
         case 18: // clear 3 faults
-            LcdHandlerSetBatteryUndervoltFault(false);
-            LcdHandlerSetBatteryChargeOvercurrentFault(false);
-            LcdHandlerSetBatteryDischargeOvercurrentFault(false);
             break;
         case 19:
             LcdHandlerSetMotorCommFault(true);
@@ -140,18 +123,12 @@ void LcdTestFaultsPage(void)
             LcdHandlerSetMotorThrottleAdcMismatch(true);
             break;
         case 22: // clear all faults
-            LcdHandlerSetBatteryFault(false);
-            LcdHandlerSetBatterySupplyLow(false);
-            LcdHandlerSetBMSSelfTestFault(false);
-            LcdHandlerSetBatteryVoltageHigh(false);
-            LcdHandlerSetBatteryVoltageLow(false);
-            LcdHandlerSetBatteryOvertemp(false);
-            LcdHandlerSetBatterySlaveBoardCommFault(false);
-            LcdHandlerSetBatteryOvervoltFault(false);
-            LcdHandlerSetBatteryUndervoltFault(false);
-            LcdHandlerSetBatteryChargeOvercurrentFault(false);
-            LcdHandlerSetBatteryDischargeOvercurrentFault(false);
-            LcdHandlerSetBatteryResetFromWatchdogFault(false);
+            LcdHandlerSetMstCommFail(false);
+            LcdHandlerSetMstSelfCheckFail(false);
+            LcdHandlerSetMstCellVoltHigh(false);
+            LcdHandlerSetMstCellVoltLow(false);
+            LcdHandlerSetMstCellTempHigh(false);
+            LcdHandlerSetMstCellTempLow(false);
             LcdHandlerSetMotorSystemFault(false);
             LcdHandlerSetMotorOvercurrentFault(false);
             LcdHandlerSetMotorOvervoltageFault(false);
@@ -191,36 +168,25 @@ void LcdTestWarningsPage(void)
             LcdHandlerSetHighTempWarning(true);
             break;
         case 6:
-            LcdHandlerSetNoEcuMessageWarning(true);
             break;
         case 7:
-            LcdHandlerSetPackOverdischargeWarning(false);
             break;
         case 8:
             LcdHandlerSetHighTempWarning(false);
-            LcdHandlerSetNoEcuMessageWarning(false);
-            LcdHandlerSetPackOverdischargeWarning(false);
             break;            
         case 9:
-            LcdHandlerSetPackOverchargeWarning(true);
             break;
         case 10:
             LcdHandlerSetLowVoltWarning(true);
             LcdHandlerSetHighVoltWarning(true);
             LcdHandlerSetLowTempWarning(true);
             LcdHandlerSetHighTempWarning(true);
-            LcdHandlerSetNoEcuMessageWarning(true);
-            LcdHandlerSetPackOverdischargeWarning(true);
-            LcdHandlerSetPackOverchargeWarning(true);
             break;
         case 11:
             LcdHandlerSetLowVoltWarning(false);
             LcdHandlerSetHighVoltWarning(false);
             LcdHandlerSetLowTempWarning(false);
             LcdHandlerSetHighTempWarning(false);
-            LcdHandlerSetNoEcuMessageWarning(false);
-            LcdHandlerSetPackOverdischargeWarning(false);
-            LcdHandlerSetPackOverchargeWarning(false);
             break;
     }
 }

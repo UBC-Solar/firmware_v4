@@ -55,21 +55,6 @@ typedef enum
 
 typedef struct
 {
-    volatile bool battery_fault;
-    volatile bool selftest_fault;
-    volatile bool supp_lo;
-    volatile bool voltage_high;
-    volatile bool voltage_low;
-    volatile bool slave_board_comm_fault;
-    volatile bool overvolt_fault;
-    volatile bool undervolt_fault;
-    volatile bool overtemp_fault;
-    volatile bool charge_overcurrent_fault;
-    volatile bool discharge_overcurrent_fault;
-} LcdAppBattFaults;
-
-typedef struct
-{
     volatile bool motor_system_error;
     volatile bool overcurrent_fault;
     volatile bool overvoltage_fault;
@@ -241,19 +226,6 @@ void LcdHandlerPageController(void);
  */
 void LcdHandlerChangePage(bool change_page);
 
-
-/* LCD HANDLER BATTERY FAULT DATA SETTERS */
-void LcdHandlerSetBatteryFault(bool fault);
-void LcdHandlerSetBatterySupplyLow(bool fault);
-void LcdHandlerSetBMSSelfTestFault(bool fault);
-void LcdHandlerSetBatteryVoltageHigh(bool fault);
-void LcdHandlerSetBatteryVoltageLow(bool fault);
-void LcdHandlerSetBatteryOvertemp(bool fault);
-void LcdHandlerSetBatterySlaveBoardCommFault(bool fault);
-void LcdHandlerSetBatteryOvervoltFault(bool fault);
-void LcdHandlerSetBatteryUndervoltFault(bool fault);
-void LcdHandlerSetBatteryChargeOvercurrentFault(bool fault);
-void LcdHandlerSetBatteryDischargeOvercurrentFault(bool fault);
 
 /* LCD HANDLER MOTOR FAULT DATA SETTERS */
 void LcdHandlerSetMotorSystemFault(bool fault);

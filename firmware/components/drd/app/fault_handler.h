@@ -26,18 +26,6 @@
  */
 void FaultHandlerFlashLED();
 /**
- * @brief Parses battery fault data from received CAN messages and updates the cyclic data handler with the latest battery fault information.
- *
- * @param can_rx_data Pointer to the received CAN message data containing the battery fault information.
- */
-void FaultHandlerParseBatteryFaults(uint8_t* can_rx_data);
-/**
- * @brief Parses battery fault data for overvoltage from received CAN messages and updates the cyclic data handler with the latest battery fault information.
- *
- * @param can_rx_data Pointer to the received CAN message data containing the battery fault information.
- */
-void FaultHandlerParsePackVoltageFaults(uint8_t* can_rx_data);
-/**
  * @brief Parses motor fault data received from CAN messages from the motor and MDI
  *
  * @param can_rx_data Pointer to the received CAN message data containing the temperature information.

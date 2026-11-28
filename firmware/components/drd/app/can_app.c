@@ -158,11 +158,7 @@ void FaultHandlerCanRxHandler(uint32_t msg_id, uint8_t* data)
     // How this is handled: https://docs.google.com/document/d/1lpAI_UW_a7WqzGdEOpQaXZ8MB8aLU-1VR9yYNUQGnVI/edit?usp=sharing
     switch (msg_id) {
     case CAN_ID_BATT_FAULTS:
-        FaultHandlerParseBatteryFaults(data);
         FaultHandlerParseBatteryWarnings(data);
-        break;
-    case CAN_ID_PACK_VOLTAGE:
-        FaultHandlerParsePackVoltageFaults(data);
         break;
     case CAN_ID_MPPTA_FAULTS:
         FaultHandlerParseMpptFaults(LCD_APP_MPPT_A, data);

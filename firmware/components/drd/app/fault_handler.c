@@ -25,60 +25,11 @@
 // TODO: Make library with these macros
 #define GETBIT(value, bit) (((value) >> (bit)) & 0x01)
 
-static bool g_last_pack_current_sign = 0;
-static bool g_battery_fault = false;
-static bool g_pack_voltage_fault = false;
 static bool g_motor_fault = false;
 
 void FaultHandlerFlashLED() {
-    while(g_battery_fault || g_pack_voltage_fault || g_motor_fault) {
+    while(g_motor_fault) {
         FaultHandlerDriverFlashDebug();
-    }
-}
-
-void FaultHandlerParseBatteryFaults(uint8_t* can_rx_data){    
-    // TODO: v4 figure out what supplo is(v4 thing)
-    LcdHandlerSetBatterySlaveBoardCommFault(GETBIT(can_rx_data[0], 0));
-    LcdHandlerSetBMSSelfTestFault(GETBIT(can_rx_data[0], 1));
-    LcdHandlerSetBatteryOvertemp(GETBIT(can_rx_data[0], 2));
-    LcdHandlerSetBatteryUndervoltFault(GETBIT(can_rx_data[0], 3));
-    LcdHandlerSetBatteryVoltageHigh(GETBIT(can_rx_data[0], 4));
-
-    // Charging overcurrent fault if pack current is negative
-    bool charge_overcurrent = GETBIT(can_rx_data[0], 6) && g_last_pack_current_sign;
-    // Discharging overcurrent fault if pack current is positive
-    bool discharge_overcurrent = GETBIT(can_rx_data[0], 6) && !g_last_pack_current_sign;
-    LcdHandlerSetBatteryChargeOvercurrentFault(charge_overcurrent);
-    LcdHandlerSetBatteryDischargeOvercurrentFault(discharge_overcurrent);
-
-    g_battery_fault = 
-        charge_overcurrent || discharge_overcurrent || 
-        GETBIT(can_rx_data[0], 0) || GETBIT(can_rx_data[0], 1) || 
-        GETBIT(can_rx_data[0], 2) || GETBIT(can_rx_data[0], 3) || 
-        GETBIT(can_rx_data[0], 4);
-    // General battery fault flag is set if any of the specific battery faults are set
-    LcdHandlerSetBatteryFault(g_battery_fault);
-}
-void FaultHandlerParsePackVoltageFaults(uint8_t* can_rx_data){
-    uint16_t pack_voltage = (can_rx_data[1] << 8) | can_rx_data[0];
-    pack_voltage = pack_voltage / PACK_VOLTAGE_DIVISOR;
-    if(pack_voltage >= MAX_PACK_VOLTAGE)
-    {
-        LcdHandlerSetBatteryOvervoltFault(true);
-        LcdHandlerSetBatteryUndervoltFault(false);
-        g_pack_voltage_fault = true;
-    }
-    else if(pack_voltage <= MIN_PACK_VOLTAGE)
-    {
-        LcdHandlerSetBatteryOvervoltFault(false);
-        LcdHandlerSetBatteryUndervoltFault(true);
-        g_pack_voltage_fault = true;
-    }
-    else
-    {
-        LcdHandlerSetBatteryOvervoltFault(false);
-        LcdHandlerSetBatteryUndervoltFault(false);
-        g_pack_voltage_fault = false;
     }
 }
 

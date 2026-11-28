@@ -122,18 +122,6 @@
 #define LCD_APP_FAULT_EIGHT_X8 64
 #define LCD_APP_FAULT_EIGHT_Y8 52
 
-#define LCD_APP_BATT_FLT_CHARS "BAT_FLT"
-#define LCD_APP_BATT_SELFTEST_FLT_CHARS "SELF_TST"
-#define LCD_APP_BATT_SUPPLO_FLT_CHARS "SUPP_LOW"
-#define LCD_APP_BATT_VOLTHIGH_FLT_CHARS "VOLT_HIGH"
-#define LCD_APP_BATT_VOLTLOW_FLT_CHARS "VOLT_LOW"
-#define LCD_APP_BATT_SLAVE_COMM_FLT_CHARS "SLV_COMM"
-#define LCD_APP_BATT_OVERVOLT_FLT_CHARS "BAT_OVLT"
-#define LCD_APP_BATT_UNDERVOLT_FLT_CHARS "BAT_UVLT"
-#define LCD_APP_BATT_OVERTEMP_FLT_CHARS "BAT_OTMP"
-#define LCD_APP_BATT_CHARGE_OC_FLT_CHARS "BAT_COC"
-#define LCD_APP_BATT_DISCHARGE_OC_FLT_CHARS "BAT_DCOC"
-
 #define LCD_APP_MTR_SYSTEM_FLT_CHARS "MTR_SYS"
 #define LCD_APP_MTR_OVERCURR_FLT_CHARS "MTR_OCUR"
 #define LCD_APP_MTR_OVERVOLT_FLT_CHARS "MTR_OVLT"
@@ -384,12 +372,10 @@
 /**
  * @brief Checks and updates the faults.
  *
- * @param batt_faults A struct containing the battery faults.
  * @param motor_faults A struct containing the motor faults.
  * @return The count of faults.
  */
-uint8_t LcdAppCheckFaults(LcdAppBattFaults* batt_faults, 
-                            LcdAppMotorFaults* motor_faults, 
+uint8_t LcdAppCheckFaults(LcdAppMotorFaults* motor_faults, 
                             LcdAppDrdFaults* drd_faults, 
                             LcdAppHvcFaults* hvc_faults, 
                             LcdAppMdiFaults* mdi_faults, 
@@ -455,8 +441,7 @@ void LcdAppDisplayTemperature(LcdAppTemperature temperature_data);
  *
  * @param fault_indicator A general indicator to signal a fault to prompt the driver to change pages
  */
-void LcdAppDisplayFaultIndicator(LcdAppBattFaults* batt_faults, 
-                                    LcdAppMotorFaults* motor_faults, 
+void LcdAppDisplayFaultIndicator(LcdAppMotorFaults* motor_faults, 
                                     LcdAppDrdFaults* drd_faults, 
                                     LcdAppHvcFaults* hvc_faults, 
                                     LcdAppMdiFaults* mdi_faults, 
@@ -475,13 +460,11 @@ void LcdAppDisplayFaultIndicator(LcdAppBattFaults* batt_faults,
 void LcdAppDisplayWarningIndicator(LcdAppWarnings* warnings);
 
 /**
- * @brief Dynamically displays battery and motor faults on the LCD
+ * @brief Dynamically displays faults on the LCD
  *
- * @param batt_faults The battery faults to be displayed on the LCD
  * @param motor_faults The motor faults to be displayed on the LCD
  */
-void LcdAppDisplayFaults(LcdAppBattFaults* batt_faults, 
-                            LcdAppMotorFaults* motor_faults, 
+void LcdAppDisplayFaults(LcdAppMotorFaults* motor_faults, 
                             LcdAppDrdFaults* drd_faults, 
                             LcdAppHvcFaults* hvc_faults, 
                             LcdAppMdiFaults* mdi_faults, 

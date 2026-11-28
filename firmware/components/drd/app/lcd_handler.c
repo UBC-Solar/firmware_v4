@@ -17,7 +17,6 @@
 
 /* STATIC VARIABLES */
 static LcdAppData g_lcd_data = {0};
-static LcdAppBattFaults g_lcd_batt_faults = {0};
 static LcdAppMotorFaults g_lcd_motor_faults = {0};
 static LcdAppDrdFaults g_lcd_drd_faults = {0};
 static LcdAppHvcFaults g_lcd_hvc_faults = {0};
@@ -63,7 +62,7 @@ void LcdHandlerPageController(void)
     LcdHandlerGetData();
 
     // Fault Logic - Trigger Page Change on rising edge of fault detection
-    bool check_fault = LcdAppCheckFaults(&g_lcd_batt_faults, &g_lcd_motor_faults, &g_lcd_drd_faults, &g_lcd_hvc_faults, &g_lcd_mdi_faults, g_lcd_mppt_faults, &g_lcd_mst_faults, &g_lcd_str_faults, &g_lcd_tel_faults, &g_lcd_obc_faults);
+    bool check_fault = LcdAppCheckFaults(&g_lcd_motor_faults, &g_lcd_drd_faults, &g_lcd_hvc_faults, &g_lcd_mdi_faults, g_lcd_mppt_faults, &g_lcd_mst_faults, &g_lcd_str_faults, &g_lcd_tel_faults, &g_lcd_obc_faults);
     // Page Logic - Trigger Page Change on flag set by CAN message
     if(g_str_change_page_flag){
         // Check if page is above 5 pages
@@ -96,11 +95,11 @@ void LcdHandlerPageController(void)
         LcdAppDisplaySocDrivePage((volatile uint32_t*)g_lcd_data.soc);
         LcdAppDisplayDriveModeDrivePage(g_lcd_data.drive_mode);
         LcdAppDisplayDriveStateDrivePage((volatile DriveStateStates*) g_lcd_data.drive_state);
-        LcdAppDisplayFaultIndicator(&g_lcd_batt_faults, &g_lcd_motor_faults, &g_lcd_drd_faults, &g_lcd_hvc_faults, &g_lcd_mdi_faults, g_lcd_mppt_faults, &g_lcd_mst_faults, &g_lcd_str_faults, &g_lcd_tel_faults, &g_lcd_obc_faults);
+        LcdAppDisplayFaultIndicator(&g_lcd_motor_faults, &g_lcd_drd_faults, &g_lcd_hvc_faults, &g_lcd_mdi_faults, g_lcd_mppt_faults, &g_lcd_mst_faults, &g_lcd_str_faults, &g_lcd_tel_faults, &g_lcd_obc_faults);
         LcdAppDisplayWarningIndicator(&g_lcd_warnings);
         break;
     case FAULTS_PAGE:
-        LcdAppDisplayFaults(&g_lcd_batt_faults, &g_lcd_motor_faults, &g_lcd_drd_faults, &g_lcd_hvc_faults, &g_lcd_mdi_faults, g_lcd_mppt_faults, &g_lcd_mst_faults, &g_lcd_str_faults, &g_lcd_tel_faults, &g_lcd_obc_faults);
+        LcdAppDisplayFaults(&g_lcd_motor_faults, &g_lcd_drd_faults, &g_lcd_hvc_faults, &g_lcd_mdi_faults, g_lcd_mppt_faults, &g_lcd_mst_faults, &g_lcd_str_faults, &g_lcd_tel_faults, &g_lcd_obc_faults);
         break;
     case WARNINGS_PAGE:
         LcdAppDisplayWarnings(&g_lcd_warnings);
@@ -158,19 +157,6 @@ uint8_t LcdHandlerGetSpeedUnits(void)
 {
     return g_lcd_data.speed_units;
 }
-
-/* LCD HANDLER BATTERY FAULT DATA SETTERS */
-void LcdHandlerSetBatteryFault(bool fault) { g_lcd_batt_faults.battery_fault = fault; }
-void LcdHandlerSetBatterySupplyLow(bool fault) { g_lcd_batt_faults.supp_lo = fault; }
-void LcdHandlerSetBMSSelfTestFault(bool fault) { g_lcd_batt_faults.selftest_fault = fault; }
-void LcdHandlerSetBatteryVoltageHigh(bool fault) { g_lcd_batt_faults.voltage_high = fault; }
-void LcdHandlerSetBatteryVoltageLow(bool fault) { g_lcd_batt_faults.voltage_low = fault; }
-void LcdHandlerSetBatteryOvertemp(bool fault) { g_lcd_batt_faults.overtemp_fault = fault; }
-void LcdHandlerSetBatterySlaveBoardCommFault(bool fault) { g_lcd_batt_faults.slave_board_comm_fault = fault; }
-void LcdHandlerSetBatteryOvervoltFault(bool fault) { g_lcd_batt_faults.overvolt_fault = fault; }
-void LcdHandlerSetBatteryUndervoltFault(bool fault) { g_lcd_batt_faults.undervolt_fault = fault; }
-void LcdHandlerSetBatteryChargeOvercurrentFault(bool fault) { g_lcd_batt_faults.charge_overcurrent_fault = fault; }
-void LcdHandlerSetBatteryDischargeOvercurrentFault(bool fault) { g_lcd_batt_faults.discharge_overcurrent_fault = fault; }
 
 /* LCD HANDLER MOTOR FAULT DATA SETTERS */
 void LcdHandlerSetMotorSystemFault(bool fault) { g_lcd_motor_faults.motor_system_error = fault; }

@@ -54,6 +54,7 @@ void DiagnosticSetThrottleADCMismatch(bool mismatch){
 
 void DiagnosticSetWatchdogReset(bool reset){
     g_diagnostics.flags.watchdog_reset = reset;
+    LcdHandlerSetDrdWatchdogReset(reset);
 }
 
 void DiagnosticSetMotorCommFault(bool fault){
@@ -62,10 +63,12 @@ void DiagnosticSetMotorCommFault(bool fault){
 
 void DiagnosticSetMcuOvertemp(bool fault){
     g_diagnostics.flags.mcu_overtemp_fault = fault;
+    LcdHandlerSetDrdMcuOvertemp(fault);
 }   
 
 void DiagnosticSetMcuUnderVolt(bool fault){
     g_diagnostics.flags.mcu_undervolt_fault = fault;
+    LcdHandlerSetDrdMcuUndervolt(fault);
 }   
 
 void DiagnosticSetSpeedTimeout(bool timeout){

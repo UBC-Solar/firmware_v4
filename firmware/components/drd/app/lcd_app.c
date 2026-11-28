@@ -373,7 +373,7 @@ uint8_t LcdAppCheckFaults(LcdAppMotorFaults* motor_faults,
     }
     if (drd_faults->drd_mcu_undervolt)
     {
-        sprintf(g_faults[fault_count], "%s", LCD_APP_DRD_MCU_OVERVOLT_FLT_CHARS);
+        sprintf(g_faults[fault_count], "%s", LCD_APP_DRD_MCU_UNDERVOLT_FLT_CHARS);
         fault_count++;   
     }
     if (hvc_faults->estop)
